@@ -36,14 +36,9 @@ jobs:
 
       # A real end-to-end run against the actual upstream skills tree, on all
       # three operating systems: this is what proves the macOS path handling,
-      # not just that the code compiles for darwin.
-      - name: check out the upstream skills
-        uses: actions/checkout@v4
-        with:
-          repository: microsoft/skills-for-fabric
-          ref: v0.3.11
-          path: upstream
-
+      # not just that the code compiles for darwin. fabkit downloads and unpacks
+      # the pinned upstream tag itself, so this also exercises the fetch and tar
+      # extraction on each platform.
       - name: end-to-end install into a throwaway home
         shell: bash
         run: |
@@ -57,7 +52,6 @@ jobs:
             --bundle powerbi-authoring \
             --agents cursor,vscode-copilot,codex,gemini \
             --scope project --project "$proj" \
-            --source ./upstream \
             --home "$home" \
             --skip-prereq-check \
             --host-plugin=false
