@@ -55,6 +55,16 @@ func User() string {
 	return Root()
 }
 
+// Sandboxed reports whether fabkit is running against a redirected home. Targets
+// use it to decide whether a host's own environment override (CODEX_HOME and
+// friends) should be honoured: inside a sandbox it must not be, or a test would
+// write into the developer's real config.
+func Sandboxed() bool {
+	mu.RLock()
+	defer mu.RUnlock()
+	return override != "" || os.Getenv("FABKIT_HOME") != ""
+}
+
 func Cache() string   { return filepath.Join(Root(), "cache") }
 func Backups() string { return filepath.Join(Root(), "backups") }
 func StateFile() string {

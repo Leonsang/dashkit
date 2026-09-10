@@ -9,11 +9,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ericksang/fabkit/internal/catalog"
-	"github.com/ericksang/fabkit/internal/home"
-	"github.com/ericksang/fabkit/internal/install"
-	"github.com/ericksang/fabkit/internal/targets"
-	"github.com/ericksang/fabkit/internal/tui"
+	"github.com/leonsang/fabkit/internal/catalog"
+	"github.com/leonsang/fabkit/internal/home"
+	"github.com/leonsang/fabkit/internal/install"
+	"github.com/leonsang/fabkit/internal/targets"
+	"github.com/leonsang/fabkit/internal/tui"
 	"github.com/spf13/cobra"
 )
 

@@ -12,9 +12,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ericksang/fabkit/internal/catalog"
-	"github.com/ericksang/fabkit/internal/home"
-	"github.com/ericksang/fabkit/internal/targets"
+	"github.com/leonsang/fabkit/internal/catalog"
+	"github.com/leonsang/fabkit/internal/home"
+	"github.com/leonsang/fabkit/internal/targets"
 )
 
 // These tests run identically on Windows, macOS and Linux: everything happens
@@ -121,7 +121,7 @@ func TestInstallProjectScopeWritesEveryHostFormat(t *testing.T) {
 	agentsFile := filepath.Join(project, "AGENTS.md")
 	mustWrite(t, agentsFile, "# My project\n\nMy own notes.\n")
 
-	apply(t, request(t, bundle, upstream, project, "cursor", "vscode-copilot", "codex"))
+	apply(t, request(t, bundle, upstream, project, "cursor", "vscode-copilot", "codex", "gemini"))
 
 	rule := read(t, filepath.Join(project, ".cursor", "rules", "fabkit-powerbi-authoring.mdc"))
 	if !strings.HasPrefix(rule, "---\ndescription: ") || !strings.Contains(rule, "alwaysApply: true") {
@@ -165,6 +165,28 @@ func TestInstallProjectScopeWritesEveryHostFormat(t *testing.T) {
 	if !strings.Contains(vsMCP, `"servers"`) {
 		t.Errorf("VS Code MCP config must use the servers key:\n%s", vsMCP)
 	}
+
+	// A project install must stay inside the project: Codex reads its own
+	// .codex/config.toml, Gemini its own .gemini/settings.json.
+	codexConf := read(t, filepath.Join(project, ".codex", "config.toml"))
+	if !strings.Contains(codexConf, "[mcp_servers.powerbi-modeling-mcp]") {
+		t.Errorf("Codex MCP table missing:\n%s", codexConf)
+	}
+	if !strings.Contains(codexConf, `args = ["-y", "@microsoft/powerbi-modeling-mcp@latest", "--start"]`) {
+		t.Errorf("Codex args are not TOML arrays:\n%s", codexConf)
+	}
+	if _, err := os.Stat(filepath.Join(home.Root(), ".codex", "config.toml")); err == nil {
+		t.Error("a project-scoped install wrote to the global Codex config")
+	}
+
+	geminiSettings := read(t, filepath.Join(project, ".gemini", "settings.json"))
+	if !strings.Contains(geminiSettings, `"mcpServers"`) {
+		t.Errorf("Gemini settings must declare mcpServers:\n%s", geminiSettings)
+	}
+	geminiContext := read(t, filepath.Join(project, "GEMINI.md"))
+	if !strings.Contains(geminiContext, "<!-- fabkit:start:powerbi-authoring -->") {
+		t.Errorf("GEMINI.md has no managed block:\n%s", geminiContext)
+	}
 }
 
 func TestInstallIsIdempotent(t *testing.T) {
@@ -176,7 +198,7 @@ func TestInstallIsIdempotent(t *testing.T) {
 	project := t.TempDir()
 	mustWrite(t, filepath.Join(project, "AGENTS.md"), "# Mine\n\nText.\n")
 
-	req := request(t, bundle, upstream, project, "cursor", "codex", "claude")
+	req := request(t, bundle, upstream, project, "cursor", "codex", "gemini", "claude")
 	apply(t, req)
 	first := hashTree(t, project)
 	apply(t, req)
@@ -199,7 +221,7 @@ func TestUninstallRestoresTheProject(t *testing.T) {
 	mustWrite(t, filepath.Join(project, ".cursor", "mcp.json"), "{\n  \"mcpServers\": {\n    \"mine\": {\n      \"command\": \"x\"\n    }\n  }\n}\n")
 	before := hashTree(t, project)
 
-	apply(t, request(t, bundle, upstream, project, "cursor", "codex"))
+	apply(t, request(t, bundle, upstream, project, "cursor", "codex", "gemini"))
 	if hashTree(t, project) == before {
 		t.Fatal("install changed nothing")
 	}

@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # fabkit installer for macOS and Linux.
 #
-#   curl -fsSL https://raw.githubusercontent.com/ericksang/fabkit/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/leonsang/fabkit/main/install.sh | bash
 #
 # Environment:
 #   FABKIT_VERSION  release tag to install (default: latest)
 #   FABKIT_BIN_DIR  install directory (default: ~/.local/bin)
 set -euo pipefail
 
-REPO="${FABKIT_REPO:-ericksang/fabkit}"
+REPO="${FABKIT_REPO:-leonsang/fabkit}"
 VERSION="${FABKIT_VERSION:-latest}"
 BIN_DIR="${FABKIT_BIN_DIR:-$HOME/.local/bin}"
 

@@ -23,19 +23,19 @@ registers the MCP servers, and installs the prerequisites the Power BI skills ac
 **macOS / Linux**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ericksang/fabkit/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/leonsang/fabkit/main/install.sh | bash
 ```
 
 **Windows (PowerShell)**
 
 ```powershell
-irm https://raw.githubusercontent.com/ericksang/fabkit/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/leonsang/fabkit/main/install.ps1 | iex
 ```
 
 **From source** (any OS, needs Go 1.24+)
 
 ```bash
-go install github.com/ericksang/fabkit/cmd/fabkit@latest
+go install github.com/leonsang/fabkit/cmd/fabkit@latest
 ```
 
 ## Use
@@ -80,13 +80,14 @@ away.
 | `copilot-cli` | its own plugin manager, else `~/.copilot/instructions` | host config |
 | `vscode-copilot` | `.github/instructions/*.instructions.md` (+ chat modes) | `.vscode/mcp.json` (`servers`) |
 | `cursor` | `.cursor/rules/*.mdc` | `.cursor/mcp.json` |
-| `codex` ⚠ | managed block in `AGENTS.md` | `~/.codex/config.toml` |
-| `gemini` ⚠ | managed block in `GEMINI.md` | `~/.gemini/settings.json` |
+| `codex` | managed block in `~/.codex/AGENTS.md` or the repo root `AGENTS.md` | `~/.codex/config.toml`, or the project's `.codex/config.toml` |
+| `gemini` | managed block in `~/.gemini/GEMINI.md` or the project `GEMINI.md` | `~/.gemini/settings.json` or `.gemini/settings.json` |
 | `windsurf` ⚠ | `.windsurf/rules/*.md` | `~/.codeium/windsurf/mcp_config.json` |
 | `opencode` ⚠ | `~/.config/opencode/skill/` | written down for you to add by hand |
 
 ⚠ = experimental: the layout has not been re-verified against that tool's current docs, so it
-is only installed when you pass `--experimental` (or tick the box in the wizard).
+is only installed when you pass `--experimental` (or tick the box in the wizard). Codex also
+honours `CODEX_HOME`, and its project-scoped MCP servers only load once you trust the directory.
 
 ## Safety
 

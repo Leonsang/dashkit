@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ericksang/fabkit/internal/catalog"
-	"github.com/ericksang/fabkit/internal/plan"
+	"github.com/leonsang/fabkit/internal/catalog"
+	"github.com/leonsang/fabkit/internal/plan"
 )
 
 func init() {

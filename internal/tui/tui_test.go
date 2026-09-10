@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ericksang/fabkit/internal/home"
+	"github.com/leonsang/fabkit/internal/home"
 )
 
 // The wizard needs a TTY to run, but its screens are pure functions of the

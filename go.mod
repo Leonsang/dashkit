@@ -1,4 +1,4 @@
-module github.com/ericksang/fabkit
+module github.com/leonsang/fabkit
 
 go 1.27.0
 

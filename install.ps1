@@ -1,6 +1,6 @@
 # fabkit installer for Windows.
 #
-#   irm https://raw.githubusercontent.com/ericksang/fabkit/main/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/leonsang/fabkit/main/install.ps1 | iex
 #
 # Environment:
 #   FABKIT_VERSION  release tag to install (default: latest)
@@ -9,7 +9,7 @@ $ErrorActionPreference = 'Stop'
 
 function Write-Step($message) { Write-Host "fabkit " -NoNewline -ForegroundColor Cyan; Write-Host $message }
 
-$repo    = if ($env:FABKIT_REPO) { $env:FABKIT_REPO } else { 'ericksang/fabkit' }
+$repo    = if ($env:FABKIT_REPO) { $env:FABKIT_REPO } else { 'leonsang/fabkit' }
 $version = if ($env:FABKIT_VERSION) { $env:FABKIT_VERSION } else { 'latest' }
 $binDir  = if ($env:FABKIT_BIN_DIR) { $env:FABKIT_BIN_DIR } else { Join-Path $env:LOCALAPPDATA 'fabkit\bin' }
 

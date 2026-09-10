@@ -17,8 +17,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ericksang/fabkit/internal/catalog"
-	"github.com/ericksang/fabkit/internal/home"
+	"github.com/leonsang/fabkit/internal/catalog"
+	"github.com/leonsang/fabkit/internal/home"
 )
 
 // Tree is an extracted (or checked out) copy of the upstream repository.

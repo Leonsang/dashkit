@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ericksang/fabkit/internal/confmerge"
-	"github.com/ericksang/fabkit/internal/state"
+	"github.com/leonsang/fabkit/internal/confmerge"
+	"github.com/leonsang/fabkit/internal/state"
 )
 
 // revert undoes one surgical edit inside a file fabkit does not own, leaving

@@ -2,10 +2,14 @@ package targets
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 
-	"github.com/ericksang/fabkit/internal/catalog"
-	"github.com/ericksang/fabkit/internal/plan"
+	"github.com/leonsang/fabkit/internal/catalog"
+	"github.com/leonsang/fabkit/internal/home"
+	"github.com/leonsang/fabkit/internal/plan"
 )
 
 func init() {
@@ -19,15 +23,29 @@ func init() {
 
 // --- Codex CLI ---------------------------------------------------------------
 
+// codex writes the two files Codex reads: AGENTS.md — globally from its home
+// directory, per project from the repository root — and config.toml, whose MCP
+// servers are [mcp_servers.<name>] tables with an [.env] sub-table.
 type codex struct{}
 
 func (codex) ID() string               { return "codex" }
 func (codex) Title() string            { return "Codex CLI" }
-func (codex) Experimental() bool       { return true }
+func (codex) Experimental() bool       { return false }
 func (codex) SupportsScope(Scope) bool { return true }
 
+// codexHome honours CODEX_HOME, which moves Codex's whole config directory.
+// A redirected fabkit home wins, so tests and --home never escape their sandbox.
+func codexHome() string {
+	if !home.Sandboxed() {
+		if dir := os.Getenv("CODEX_HOME"); dir != "" {
+			return dir
+		}
+	}
+	return userPath(".codex")
+}
+
 func (codex) Detect() Detection {
-	if dir := userPath(".codex"); exists(dir) {
+	if dir := codexHome(); exists(dir) {
 		return Detection{Found: true, Where: dir}
 	}
 	if bin := binaryOnPath("codex"); bin != "" {
@@ -36,8 +54,11 @@ func (codex) Detect() Detection {
 	return Detection{}
 }
 
-func (codex) Hint(Options) string {
-	return "start `codex`; the fabkit block in AGENTS.md is read at session start"
+func (codex) Hint(opts Options) string {
+	if opts.Scope == Project {
+		return "start `codex` in the project; project-scoped MCP servers only load once you trust the directory"
+	}
+	return "start `codex`; the fabkit block in ~/.codex/AGENTS.md is read at session start"
 }
 
 func (codex) Plan(b catalog.Bundle, opts Options) (plan.Plan, error) {
@@ -46,10 +67,15 @@ func (codex) Plan(b catalog.Bundle, opts Options) (plan.Plan, error) {
 		return nil, err
 	}
 
-	agentsFile := userPath(".codex", "AGENTS.md")
+	agentsFile := filepath.Join(codexHome(), "AGENTS.md")
+	configFile := filepath.Join(codexHome(), "config.toml")
 	if opts.Scope == Project {
 		agentsFile = filepath.Join(opts.ProjectDir, "AGENTS.md")
+		// Codex reads a project's own .codex/config.toml (for trusted projects),
+		// so a project install has no business editing the global one.
+		configFile = filepath.Join(opts.ProjectDir, ".codex", "config.toml")
 	}
+
 	p = append(p, plan.MarkdownBlock{
 		Path:    agentsFile,
 		ID:      b.ID,
@@ -58,9 +84,15 @@ func (codex) Plan(b catalog.Bundle, opts Options) (plan.Plan, error) {
 	})
 
 	if opts.MCP {
-		for name, server := range b.MCPServers {
-			// Codex only speaks stdio; remote servers are skipped rather than
-			// written in a shape it cannot launch.
+		names := make([]string, 0, len(b.MCPServers))
+		for name := range b.MCPServers {
+			names = append(names, name)
+		}
+		sort.Strings(names)
+		for _, name := range names {
+			server := b.MCPServers[name]
+			// Codex launches stdio servers; a remote one is written down for the
+			// user rather than expressed in a shape Codex cannot start.
 			if server.Command == "" {
 				continue
 			}
@@ -72,10 +104,17 @@ func (codex) Plan(b catalog.Bundle, opts Options) (plan.Plan, error) {
 				values["env"] = server.Env
 			}
 			p = append(p, plan.MergeTOML{
-				Path:   userPath(".codex", "config.toml"),
+				Path:   configFile,
 				Table:  "mcp_servers." + name,
 				Values: values,
 				What:   "Codex MCP server",
+			})
+		}
+		if hasRemoteServer(b) {
+			p = append(p, plan.WriteFile{
+				Path: filepath.Join(vendorRoot(b, opts), "MCP-SERVERS.md"),
+				Data: []byte(mcpNotes(b, remote)),
+				What: "remote MCP servers to add by hand",
 			})
 		}
 	}
@@ -84,11 +123,15 @@ func (codex) Plan(b catalog.Bundle, opts Options) (plan.Plan, error) {
 
 // --- Gemini CLI --------------------------------------------------------------
 
+// gemini writes GEMINI.md, which the CLI loads hierarchically (~/.gemini/GEMINI.md
+// for every project, then the ones it finds walking down to the working
+// directory), and settings.json, whose MCP servers live under a top-level
+// "mcpServers" key in either the user or the project file.
 type gemini struct{}
 
 func (gemini) ID() string               { return "gemini" }
 func (gemini) Title() string            { return "Gemini CLI" }
-func (gemini) Experimental() bool       { return true }
+func (gemini) Experimental() bool       { return false }
 func (gemini) SupportsScope(Scope) bool { return true }
 
 func (gemini) Detect() Detection {
@@ -110,9 +153,12 @@ func (gemini) Plan(b catalog.Bundle, opts Options) (plan.Plan, error) {
 	}
 
 	contextFile := userPath(".gemini", "GEMINI.md")
+	settings := userPath(".gemini", "settings.json")
 	if opts.Scope == Project {
 		contextFile = filepath.Join(opts.ProjectDir, "GEMINI.md")
+		settings = filepath.Join(opts.ProjectDir, ".gemini", "settings.json")
 	}
+
 	p = append(p, plan.MarkdownBlock{
 		Path:    contextFile,
 		ID:      b.ID,
@@ -121,10 +167,7 @@ func (gemini) Plan(b catalog.Bundle, opts Options) (plan.Plan, error) {
 	})
 
 	if opts.MCP && len(b.MCPServers) > 0 {
-		p = append(p, mcpActions(b,
-			userPath(".gemini", "settings.json"),
-			[]string{"mcpServers"},
-			"Gemini CLI MCP servers")...)
+		p = append(p, mcpActions(b, settings, []string{"mcpServers"}, "Gemini CLI MCP servers")...)
 	}
 	return p, nil
 }
@@ -172,24 +215,52 @@ func (opencode) Plan(b catalog.Bundle, opts Options) (plan.Plan, error) {
 	if len(b.MCPServers) > 0 && opts.MCP {
 		p = append(p, plan.WriteFile{
 			Path: filepath.Join(vendorRoot(b, opts), "MCP-SERVERS.md"),
-			Data: []byte(mcpNotes(b)),
+			Data: []byte(mcpNotes(b, nil)),
 			What: "MCP servers to add by hand",
 		})
 	}
 	return p, nil
 }
 
+// hasRemoteServer reports whether the bundle ships an HTTP MCP server, which not
+// every host can be configured for automatically.
+func hasRemoteServer(b catalog.Bundle) bool {
+	for _, s := range b.MCPServers {
+		if s.Command == "" {
+			return true
+		}
+	}
+	return false
+}
+
 // mcpNotes writes down the servers a host could not be configured for, so the
-// information is not simply lost.
-func mcpNotes(b catalog.Bundle) string {
+// information is not simply lost. include selects which ones to write.
+func mcpNotes(b catalog.Bundle, include func(catalog.MCPServer) bool) string {
 	out := fmt.Sprintf("# MCP servers for %s\n\nfabkit could not write these into this host's config automatically.\n\n", b.Title)
-	for name, s := range b.MCPServers {
-		out += fmt.Sprintf("## %s\n\n", name)
-		if s.Command != "" {
-			out += fmt.Sprintf("- transport: stdio\n- command: `%s %v`\n\n", s.Command, s.Args)
+
+	names := make([]string, 0, len(b.MCPServers))
+	for name := range b.MCPServers {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	for _, name := range names {
+		s := b.MCPServers[name]
+		if include != nil && !include(s) {
 			continue
 		}
-		out += fmt.Sprintf("- transport: %s\n- url: %s\n\n", s.Type, s.URL)
+		out += fmt.Sprintf("## %s\n\n", name)
+		if s.Command != "" {
+			out += fmt.Sprintf("- transport: stdio\n- command: `%s %s`\n\n", s.Command, strings.Join(s.Args, " "))
+			continue
+		}
+		out += fmt.Sprintf("- transport: %s\n- url: %s\n", s.Type, s.URL)
+		for header, value := range s.Headers {
+			out += fmt.Sprintf("- header: `%s: %s`\n", header, value)
+		}
+		out += "\n"
 	}
 	return out
 }
+
+func remote(s catalog.MCPServer) bool { return s.Command == "" }

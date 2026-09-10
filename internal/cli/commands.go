@@ -6,11 +6,11 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/ericksang/fabkit/internal/catalog"
-	"github.com/ericksang/fabkit/internal/install"
-	"github.com/ericksang/fabkit/internal/prereq"
-	"github.com/ericksang/fabkit/internal/state"
-	"github.com/ericksang/fabkit/internal/targets"
+	"github.com/leonsang/fabkit/internal/catalog"
+	"github.com/leonsang/fabkit/internal/install"
+	"github.com/leonsang/fabkit/internal/prereq"
+	"github.com/leonsang/fabkit/internal/state"
+	"github.com/leonsang/fabkit/internal/targets"
 	"github.com/spf13/cobra"
 )
 

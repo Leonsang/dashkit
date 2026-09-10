@@ -13,11 +13,11 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/ericksang/fabkit/internal/catalog"
-	"github.com/ericksang/fabkit/internal/install"
-	"github.com/ericksang/fabkit/internal/plan"
-	"github.com/ericksang/fabkit/internal/prereq"
-	"github.com/ericksang/fabkit/internal/targets"
+	"github.com/leonsang/fabkit/internal/catalog"
+	"github.com/leonsang/fabkit/internal/install"
+	"github.com/leonsang/fabkit/internal/plan"
+	"github.com/leonsang/fabkit/internal/prereq"
+	"github.com/leonsang/fabkit/internal/targets"
 )
 
 type step int

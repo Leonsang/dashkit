@@ -55,8 +55,7 @@ jobs:
 
           go run ./cmd/fabkit install \
             --bundle powerbi-authoring \
-            --agents cursor,vscode-copilot,codex \
-            --experimental \
+            --agents cursor,vscode-copilot,codex,gemini \
             --scope project --project "$proj" \
             --source ./upstream \
             --home "$home" \
@@ -66,6 +65,8 @@ jobs:
           test -f "$proj/.cursor/rules/fabkit-powerbi-authoring.mdc"
           test -f "$proj/.github/instructions/fabkit-powerbi-authoring.instructions.md"
           test -f "$proj/.fabkit/powerbi-authoring/skills/powerbi-report-authoring/SKILL.md"
+          grep -q '\[mcp_servers.powerbi-modeling-mcp\]' "$proj/.codex/config.toml"
+          grep -q 'mcpServers' "$proj/.gemini/settings.json"
           grep -q 'fabkit:start:powerbi-authoring' "$proj/AGENTS.md"
           grep -q 'My notes.' "$proj/AGENTS.md"
           ! grep -rq '\.\./\.\./common/' "$proj/.fabkit"

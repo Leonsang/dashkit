@@ -10,11 +10,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/ericksang/fabkit/internal/catalog"
-	"github.com/ericksang/fabkit/internal/home"
-	"github.com/ericksang/fabkit/internal/plan"
-	"github.com/ericksang/fabkit/internal/skillmeta"
-	"github.com/ericksang/fabkit/internal/source"
+	"github.com/leonsang/fabkit/internal/catalog"
+	"github.com/leonsang/fabkit/internal/home"
+	"github.com/leonsang/fabkit/internal/plan"
+	"github.com/leonsang/fabkit/internal/skillmeta"
+	"github.com/leonsang/fabkit/internal/source"
 )
 
 // Scope decides whether an install lands in the user's global tool config or in
@@ -65,14 +65,15 @@ var registry []Target
 
 func register(t Target) { registry = append(registry, t) }
 
-// All returns every known target, stable order, verified ones first.
+// All returns every known target: verified ones first, then alphabetically, so
+// the list does not depend on which file's init ran first.
 func All() []Target {
 	out := append([]Target(nil), registry...)
 	sort.SliceStable(out, func(i, j int) bool {
 		if out[i].Experimental() != out[j].Experimental() {
 			return !out[i].Experimental()
 		}
-		return false
+		return out[i].Title() < out[j].Title()
 	})
 	return out
 }
