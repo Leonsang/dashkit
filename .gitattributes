@@ -1,0 +1,5 @@
+# Authored on Windows, run on macOS and Linux: install.sh must never reach a
+# checkout with CRLF line endings or bash will refuse it.
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.bat text eol=crlf
