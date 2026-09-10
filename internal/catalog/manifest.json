@@ -1,0 +1,305 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "repo": "microsoft/skills-for-fabric",
+    "ref": "v0.3.11",
+    "upstreamVersion": "0.3.11"
+  },
+  "bundles": [
+    {
+      "id": "powerbi-authoring",
+      "title": "Power BI authoring",
+      "description": "Developer skills for authoring Microsoft Power BI solutions.",
+      "dir": "plugins/powerbi-authoring",
+      "skills": [
+        "check-updates",
+        "semantic-model-authoring",
+        "powerbi-report-planning",
+        "powerbi-report-design",
+        "powerbi-report-authoring",
+        "powerbi-report-management"
+      ],
+      "agents": [],
+      "common": [
+        "COMMON-CLI.md",
+        "COMMON-CORE.md",
+        "ITEM-DEFINITIONS-CORE.md"
+      ],
+      "mcpServers": {
+        "powerbi-modeling-mcp": {
+          "type": "stdio",
+          "command": "npx",
+          "args": [
+            "-y",
+            "@microsoft/powerbi-modeling-mcp@latest",
+            "--start"
+          ]
+        }
+      },
+      "prereqs": {
+        "required": [
+          "git",
+          "node20",
+          "npm:@microsoft/powerbi-report-authoring-cli"
+        ],
+        "optional": [
+          "npm:@microsoft/powerbi-desktop-bridge-cli",
+          "az",
+          "powerbi-desktop"
+        ]
+      }
+    },
+    {
+      "id": "fabric-skills",
+      "title": "Fabric — everything",
+      "description": "Complete bundle: all Microsoft Skills for Fabric for developers and consumers",
+      "dir": "plugins/fabric-skills",
+      "skills": [
+        "check-updates",
+        "fabriciq",
+        "semantic-model-authoring",
+        "sqldw-consumption-cli",
+        "sqldw-authoring-cli",
+        "spark-consumption-cli",
+        "spark-authoring-cli",
+        "eventhouse-cli",
+        "eventstream-cli",
+        "eventschemaset-consumption-cli",
+        "activator-cli",
+        "sqldw-operations-cli",
+        "sqldb-cli",
+        "spark-operations-cli",
+        "mlv-operations-cli",
+        "azmon-mirroredcatalogs-operations-cli",
+        "dataflows-cli",
+        "search-consumption-cli",
+        "fabriciq-ontology-cli",
+        "deployment-pipelines-authoring-cli",
+        "databricks-migration",
+        "pipeline-migration",
+        "synapse-migration",
+        "hdinsight-migration",
+        "e2e-medallion-architecture",
+        "git-integration-operations-cli",
+        "e2e-fabric-cost-estimation"
+      ],
+      "agents": [
+        "FabricAdmin.agent.md",
+        "FabricDataEngineer.agent.md",
+        "FabricAppDev.agent.md",
+        "FabricIQ.agent.md"
+      ],
+      "common": [
+        "COMMON-CLI.md",
+        "COMMON-CORE.md",
+        "DATAFLOWS-AUTHORING-CORE.md",
+        "DATAFLOWS-CONSUMPTION-CORE.md",
+        "EVENTHOUSE-AUTHORING-CORE.md",
+        "EVENTHOUSE-CONSUMPTION-CORE.md",
+        "EVENTSTREAM-AUTHORING-CORE.md",
+        "EVENTSTREAM-CONSUMPTION-CORE.md",
+        "ITEM-DEFINITIONS-CORE.md",
+        "SPARK-AUTHORING-CORE.md",
+        "SPARK-CONSUMPTION-CORE.md",
+        "SPARK-MONITORING-CORE.md",
+        "SPARK-NOTEBOOK-AUTHORING-CORE.md",
+        "SQLDB-AUTHORING-CORE.md",
+        "SQLDB-CONSUMPTION-CORE.md",
+        "SQLDW-AUTHORING-CORE.md",
+        "SQLDW-CONSUMPTION-CORE.md"
+      ],
+      "mcpServers": {
+        "FabricIQ": {
+          "type": "http",
+          "url": "https://api.fabric.microsoft.com/v1/mcp/fabricaihub/integrations/m365",
+          "headers": {
+            "X-VARIANTS": "Fabric.Routing.PowerBIDataExploration"
+          }
+        },
+        "fabric-sqlendpoint": {
+          "type": "http",
+          "url": "https://api.fabric.microsoft.com/v1/mcp/dataPlane/sqlEndpoint"
+        }
+      },
+      "prereqs": {
+        "required": [
+          "git",
+          "az"
+        ],
+        "optional": [
+          "node20",
+          "sqlcmd"
+        ]
+      }
+    },
+    {
+      "id": "fabric-authoring",
+      "title": "Fabric authoring",
+      "description": "Developer skills for authoring Microsoft Skills for Fabric solutions - SDKs, APIs, automation scripts, CI/CD",
+      "dir": "plugins/fabric-authoring",
+      "skills": [
+        "check-updates",
+        "sqldw-authoring-cli",
+        "sqldb-cli",
+        "spark-authoring-cli",
+        "eventhouse-cli",
+        "eventstream-cli",
+        "activator-cli",
+        "semantic-model-authoring",
+        "dataflows-cli",
+        "fabriciq-ontology-cli",
+        "deployment-pipelines-authoring-cli",
+        "e2e-medallion-architecture"
+      ],
+      "agents": [
+        "FabricAdmin.agent.md",
+        "FabricDataEngineer.agent.md",
+        "FabricAppDev.agent.md"
+      ],
+      "common": [
+        "COMMON-CLI.md",
+        "COMMON-CORE.md",
+        "DATAFLOWS-AUTHORING-CORE.md",
+        "DATAFLOWS-CONSUMPTION-CORE.md",
+        "EVENTHOUSE-AUTHORING-CORE.md",
+        "EVENTHOUSE-CONSUMPTION-CORE.md",
+        "EVENTSTREAM-AUTHORING-CORE.md",
+        "EVENTSTREAM-CONSUMPTION-CORE.md",
+        "ITEM-DEFINITIONS-CORE.md",
+        "SPARK-AUTHORING-CORE.md",
+        "SPARK-CONSUMPTION-CORE.md",
+        "SPARK-NOTEBOOK-AUTHORING-CORE.md",
+        "SQLDB-AUTHORING-CORE.md",
+        "SQLDB-CONSUMPTION-CORE.md",
+        "SQLDW-AUTHORING-CORE.md",
+        "SQLDW-CONSUMPTION-CORE.md"
+      ],
+      "mcpServers": {
+        "fabric-sqlendpoint": {
+          "type": "http",
+          "url": "https://api.fabric.microsoft.com/v1/mcp/dataPlane/sqlEndpoint"
+        }
+      },
+      "prereqs": {
+        "required": [
+          "git",
+          "az"
+        ],
+        "optional": [
+          "sqlcmd"
+        ]
+      }
+    },
+    {
+      "id": "fabric-consumption",
+      "title": "Fabric consumption",
+      "description": "Consumer skills for interactive Microsoft Skills for Fabric operations - queries, exploration, monitoring",
+      "dir": "plugins/fabric-consumption",
+      "skills": [
+        "check-updates",
+        "fabriciq",
+        "sqldw-consumption-cli",
+        "sqldb-cli",
+        "spark-consumption-cli",
+        "eventhouse-cli",
+        "eventstream-cli",
+        "eventschemaset-consumption-cli",
+        "activator-cli",
+        "dataflows-cli",
+        "search-consumption-cli",
+        "fabriciq-ontology-cli"
+      ],
+      "agents": [
+        "FabricAdmin.agent.md",
+        "FabricDataEngineer.agent.md",
+        "FabricAppDev.agent.md",
+        "FabricIQ.agent.md"
+      ],
+      "common": [
+        "COMMON-CLI.md",
+        "COMMON-CORE.md",
+        "DATAFLOWS-AUTHORING-CORE.md",
+        "DATAFLOWS-CONSUMPTION-CORE.md",
+        "EVENTHOUSE-AUTHORING-CORE.md",
+        "EVENTHOUSE-CONSUMPTION-CORE.md",
+        "EVENTSTREAM-AUTHORING-CORE.md",
+        "EVENTSTREAM-CONSUMPTION-CORE.md",
+        "ITEM-DEFINITIONS-CORE.md",
+        "SPARK-CONSUMPTION-CORE.md",
+        "SQLDB-AUTHORING-CORE.md",
+        "SQLDB-CONSUMPTION-CORE.md",
+        "SQLDW-CONSUMPTION-CORE.md"
+      ],
+      "mcpServers": {
+        "FabricIQ": {
+          "type": "http",
+          "url": "https://api.fabric.microsoft.com/v1/mcp/fabricaihub/integrations/m365",
+          "headers": {
+            "X-VARIANTS": "Fabric.Routing.PowerBIDataExploration"
+          }
+        },
+        "fabric-sqlendpoint": {
+          "type": "http",
+          "url": "https://api.fabric.microsoft.com/v1/mcp/dataPlane/sqlEndpoint"
+        }
+      },
+      "prereqs": {
+        "required": [
+          "git",
+          "az"
+        ],
+        "optional": [
+          "sqlcmd"
+        ]
+      }
+    },
+    {
+      "id": "fabric-operations",
+      "title": "Fabric operations",
+      "description": "Operations skills for diagnosing Microsoft Fabric performance and health - system views, multi-step investigation workflows",
+      "dir": "plugins/fabric-operations",
+      "skills": [
+        "check-updates",
+        "azmon-mirroredcatalogs-operations-cli",
+        "mlv-operations-cli",
+        "sqldw-operations-cli",
+        "sqldb-cli",
+        "spark-operations-cli",
+        "git-integration-operations-cli"
+      ],
+      "agents": [
+        "FabricAdmin.agent.md",
+        "FabricDataEngineer.agent.md",
+        "FabricAppDev.agent.md"
+      ],
+      "common": [
+        "COMMON-CLI.md",
+        "COMMON-CORE.md",
+        "EVENTHOUSE-CONSUMPTION-CORE.md",
+        "ITEM-DEFINITIONS-CORE.md",
+        "SPARK-AUTHORING-CORE.md",
+        "SPARK-CONSUMPTION-CORE.md",
+        "SPARK-MONITORING-CORE.md",
+        "SQLDB-AUTHORING-CORE.md",
+        "SQLDB-CONSUMPTION-CORE.md",
+        "SQLDW-AUTHORING-CORE.md",
+        "SQLDW-CONSUMPTION-CORE.md"
+      ],
+      "mcpServers": {
+        "fabric-sqlendpoint": {
+          "type": "http",
+          "url": "https://api.fabric.microsoft.com/v1/mcp/dataPlane/sqlEndpoint"
+        }
+      },
+      "prereqs": {
+        "required": [
+          "git",
+          "az"
+        ],
+        "optional": [
+          "sqlcmd"
+        ]
+      }
+    }
+  ]
+}

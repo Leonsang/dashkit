@@ -1,0 +1,103 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: vet
+        run: go vet ./...
+
+      - name: test
+        run: go test ./... -count=1
+
+      - name: build
+        run: go build ./...
+
+      # A real end-to-end run against the actual upstream skills tree, on all
+      # three operating systems: this is what proves the macOS path handling,
+      # not just that the code compiles for darwin.
+      - name: check out the upstream skills
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/skills-for-fabric
+          ref: v0.3.11
+          path: upstream
+
+      - name: end-to-end install into a throwaway home
+        shell: bash
+        run: |
+          set -euo pipefail
+          home="$RUNNER_TEMP/fabkit-home"
+          proj="$RUNNER_TEMP/project"
+          mkdir -p "$proj"
+          printf '# Project\n\nMy notes.\n' > "$proj/AGENTS.md"
+
+          go run ./cmd/fabkit install \
+            --bundle powerbi-authoring \
+            --agents cursor,vscode-copilot,codex \
+            --experimental \
+            --scope project --project "$proj" \
+            --source ./upstream \
+            --home "$home" \
+            --skip-prereq-check \
+            --host-plugin=false
+
+          test -f "$proj/.cursor/rules/fabkit-powerbi-authoring.mdc"
+          test -f "$proj/.github/instructions/fabkit-powerbi-authoring.instructions.md"
+          test -f "$proj/.fabkit/powerbi-authoring/skills/powerbi-report-authoring/SKILL.md"
+          grep -q 'fabkit:start:powerbi-authoring' "$proj/AGENTS.md"
+          grep -q 'My notes.' "$proj/AGENTS.md"
+          ! grep -rq '\.\./\.\./common/' "$proj/.fabkit"
+
+          go run ./cmd/fabkit uninstall --home "$home"
+          test ! -d "$proj/.fabkit/powerbi-authoring/skills/powerbi-report-authoring"
+          grep -q 'My notes.' "$proj/AGENTS.md"
+          ! grep -q 'fabkit:start' "$proj/AGENTS.md"
+
+      - name: doctor runs and reports
+        shell: bash
+        run: go run ./cmd/fabkit doctor --home "$RUNNER_TEMP/fabkit-home" || true
+
+  installers:
+    name: installer scripts
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: syntax check install.sh
+        if: runner.os != 'Windows'
+        run: bash -n install.sh
+
+      - name: syntax check install.ps1
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path ./install.ps1), [ref]$null, [ref]$errors) | Out-Null
+          if ($errors) { $errors; exit 1 }

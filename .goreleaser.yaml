@@ -1,0 +1,46 @@
+version: 2
+
+project_name: fabkit
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: fabkit
+    main: ./cmd/fabkit
+    binary: fabkit
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+
+archives:
+  - id: default
+    # install.sh and install.ps1 expect this exact name.
+    name_template: "fabkit_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - README.md
+      - LICENSE
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  use: github
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+
+release:
+  draft: false
+  prerelease: auto
