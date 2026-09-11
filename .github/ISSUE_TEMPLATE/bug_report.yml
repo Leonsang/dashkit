@@ -1,0 +1,48 @@
+name: Bug report
+description: dashkit installed something wrong, broke a config, or failed to detect a tool.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks. If the problem is in what a skill *says*, it belongs to that skill's project — see the links on the previous page.
+  - type: textarea
+    id: command
+    attributes:
+      label: What you ran
+      description: The exact command, or which choices you made in the wizard.
+      placeholder: dashkit install --bundle powerbi-authoring --agents cursor
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and what happened instead
+    validations:
+      required: true
+  - type: textarea
+    id: plan
+    attributes:
+      label: Output of the same command with --dry-run
+      render: text
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `dashkit doctor`
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: dashkit version
+      placeholder: dashkit --version
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [Windows, macOS, Linux]
+    validations:
+      required: true

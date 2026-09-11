@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: A Microsoft skill says something wrong
+    url: https://github.com/microsoft/skills-for-fabric/issues
+    about: dashkit installs skills-for-fabric but doesn't author it. Content issues go there.
+  - name: A data-goblin plugin or hook misbehaves
+    url: https://github.com/data-goblin/power-bi-agentic-development/issues
+    about: dashkit asks your tool to install these plugins; their behaviour belongs to that project.
+  - name: Report a security vulnerability
+    url: https://github.com/leonsang/dashkit/security/advisories/new
+    about: Please report privately rather than in a public issue.

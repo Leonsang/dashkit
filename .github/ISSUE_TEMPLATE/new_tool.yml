@@ -1,0 +1,23 @@
+name: Support another AI tool
+description: Ask dashkit to install into a tool it doesn't know yet.
+labels: [target]
+body:
+  - type: input
+    id: tool
+    attributes:
+      label: Tool
+      placeholder: e.g. Zed, JetBrains AI Assistant
+    validations:
+      required: true
+  - type: textarea
+    id: docs
+    attributes:
+      label: Where it reads instructions and MCP servers from
+      description: Links to the tool's current documentation. A tool is only marked verified once its paths are confirmed against its docs, so this is the most useful part of the request.
+    validations:
+      required: true
+  - type: textarea
+    id: plugins
+    attributes:
+      label: Does it have a plugin manager?
+      description: If so, dashkit can also install data-goblin's plugins through it.
