@@ -204,7 +204,7 @@ func SetPath(root *Object, path []string, value any) (string, error) {
 }
 
 // DeletePath removes a nested key, pruning objects that it leaves empty only if
-// fabkit created them (signalled by pruneEmpty).
+// dashkit created them (signalled by pruneEmpty).
 func DeletePath(root *Object, path []string, pruneEmpty bool) error {
 	if len(path) == 0 {
 		return nil

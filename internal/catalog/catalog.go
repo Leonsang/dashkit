@@ -1,6 +1,6 @@
 // Package catalog describes which skills, agents and MCP servers make up each
 // upstream bundle. The manifest is generated from the upstream marketplace file
-// by tools/gen-manifest.mjs and embedded in the binary, so `fabkit` can show the
+// by tools/gen-manifest.mjs and embedded in the binary, so `dashkit` can show the
 // bundle list and plan an install before any network call happens.
 package catalog
 
@@ -31,20 +31,55 @@ type Prereqs struct {
 	Optional []string `json:"optional"`
 }
 
+// Kind says how a bundle reaches the user's tools.
+type Kind string
+
+const (
+	// Vendored bundles are downloaded from the pinned upstream tree and written
+	// into each host's native format. Only possible when the licence allows it.
+	Vendored Kind = "vendored"
+	// Marketplace bundles are never copied: dashkit asks the host's own plugin
+	// manager to install them, so the author's licence, updates and hooks all
+	// stay theirs. Hosts without a plugin manager are skipped with an explanation.
+	Marketplace Kind = "marketplace"
+)
+
+// MarketplaceRef points at a plugin in a third-party marketplace.
+type MarketplaceRef struct {
+	Repo   string `json:"repo"`   // GitHub owner/repo the marketplace lives in
+	Name   string `json:"name"`   // the name it registers under
+	Plugin string `json:"plugin"` // plugin id inside it
+}
+
+// Credit names who made a bundle, for the docs and ATTRIBUTIONS.md.
+type Credit struct {
+	Author   string `json:"author"`
+	License  string `json:"license"`
+	Homepage string `json:"homepage"`
+}
+
 // Bundle is one installable set of skills, matching an upstream plugin.
 type Bundle struct {
 	ID          string               `json:"id"`
+	Kind        Kind                 `json:"kind"`
 	Title       string               `json:"title"`
 	Description string               `json:"description"`
-	Dir         string               `json:"dir"` // path inside the upstream tree, e.g. plugins/powerbi-authoring
+	Dir         string               `json:"dir,omitempty"` // path inside the upstream tree, e.g. plugins/powerbi-authoring
 	Skills      []string             `json:"skills"`
-	Agents      []string             `json:"agents"`
-	Common      []string             `json:"common"`
-	MCPServers  map[string]MCPServer `json:"mcpServers"`
+	Agents      []string             `json:"agents,omitempty"`
+	Common      []string             `json:"common,omitempty"`
+	MCPServers  map[string]MCPServer `json:"mcpServers,omitempty"`
 	Prereqs     Prereqs              `json:"prereqs"`
+	// Hooks lists what a marketplace bundle enforces automatically, for display.
+	Hooks       []string        `json:"hooks,omitempty"`
+	Marketplace *MarketplaceRef `json:"marketplace,omitempty"`
+	Credit      Credit          `json:"credit"`
 }
 
-// Source pins which upstream revision this fabkit build installs.
+// IsMarketplace reports whether the bundle is installed by a host plugin manager.
+func (b Bundle) IsMarketplace() bool { return b.Kind == Marketplace }
+
+// Source pins which upstream revision this dashkit build installs.
 type Source struct {
 	Repo            string `json:"repo"`
 	Ref             string `json:"ref"`
@@ -78,7 +113,7 @@ func Find(id string) (Bundle, error) {
 			return b, nil
 		}
 	}
-	return Bundle{}, fmt.Errorf("unknown bundle %q (try `fabkit list`)", id)
+	return Bundle{}, fmt.Errorf("unknown bundle %q (try `dashkit list`)", id)
 }
 
 // Resolve turns user-supplied bundle ids into bundles, accepting "all".

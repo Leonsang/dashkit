@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "source": {
     "repo": "microsoft/skills-for-fabric",
     "ref": "v0.3.11",
@@ -8,6 +8,7 @@
   "bundles": [
     {
       "id": "powerbi-authoring",
+      "kind": "vendored",
       "title": "Power BI authoring",
       "description": "Developer skills for authoring Microsoft Power BI solutions.",
       "dir": "plugins/powerbi-authoring",
@@ -44,13 +45,20 @@
         ],
         "optional": [
           "npm:@microsoft/powerbi-desktop-bridge-cli",
+          "pbir-cli",
           "az",
           "powerbi-desktop"
         ]
+      },
+      "credit": {
+        "author": "Microsoft",
+        "license": "MIT",
+        "homepage": "https://github.com/microsoft/skills-for-fabric"
       }
     },
     {
       "id": "fabric-skills",
+      "kind": "vendored",
       "title": "Fabric — everything",
       "description": "Complete bundle: all Microsoft Skills for Fabric for developers and consumers",
       "dir": "plugins/fabric-skills",
@@ -130,10 +138,16 @@
           "node20",
           "sqlcmd"
         ]
+      },
+      "credit": {
+        "author": "Microsoft",
+        "license": "MIT",
+        "homepage": "https://github.com/microsoft/skills-for-fabric"
       }
     },
     {
       "id": "fabric-authoring",
+      "kind": "vendored",
       "title": "Fabric authoring",
       "description": "Developer skills for authoring Microsoft Skills for Fabric solutions - SDKs, APIs, automation scripts, CI/CD",
       "dir": "plugins/fabric-authoring",
@@ -188,10 +202,16 @@
         "optional": [
           "sqlcmd"
         ]
+      },
+      "credit": {
+        "author": "Microsoft",
+        "license": "MIT",
+        "homepage": "https://github.com/microsoft/skills-for-fabric"
       }
     },
     {
       "id": "fabric-consumption",
+      "kind": "vendored",
       "title": "Fabric consumption",
       "description": "Consumer skills for interactive Microsoft Skills for Fabric operations - queries, exploration, monitoring",
       "dir": "plugins/fabric-consumption",
@@ -251,10 +271,16 @@
         "optional": [
           "sqlcmd"
         ]
+      },
+      "credit": {
+        "author": "Microsoft",
+        "license": "MIT",
+        "homepage": "https://github.com/microsoft/skills-for-fabric"
       }
     },
     {
       "id": "fabric-operations",
+      "kind": "vendored",
       "title": "Fabric operations",
       "description": "Operations skills for diagnosing Microsoft Fabric performance and health - system views, multi-step investigation workflows",
       "dir": "plugins/fabric-operations",
@@ -299,6 +325,161 @@
         "optional": [
           "sqlcmd"
         ]
+      },
+      "credit": {
+        "author": "Microsoft",
+        "license": "MIT",
+        "homepage": "https://github.com/microsoft/skills-for-fabric"
+      }
+    },
+    {
+      "id": "goblin-pbip",
+      "kind": "marketplace",
+      "title": "PBIP guardrails",
+      "description": "Checks PBIR structure, TMDL syntax and report-to-model binding automatically after every edit, with PBIR and TMDL format references. Ships native validators for macOS, Linux and Windows.",
+      "skills": [
+        "pbip",
+        "pbir-format",
+        "tmdl"
+      ],
+      "prereqs": {
+        "required": [],
+        "optional": [
+          "python3",
+          "pbir-cli"
+        ]
+      },
+      "hooks": [
+        "PBIR structure and schema, after any edit inside a .Report folder",
+        "TMDL syntax, after any .tmdl edit",
+        "report-to-model binding, after definition.pbir edits"
+      ],
+      "marketplace": {
+        "repo": "data-goblin/power-bi-agentic-development",
+        "name": "power-bi-agentic-development",
+        "plugin": "pbip"
+      },
+      "credit": {
+        "author": "Kurt Buhler, Data Goblins",
+        "license": "GPL-3.0",
+        "homepage": "https://github.com/data-goblin/power-bi-agentic-development"
+      }
+    },
+    {
+      "id": "goblin-pbi-desktop",
+      "kind": "marketplace",
+      "title": "Live model guardrails",
+      "description": "Connects to an open Power BI Desktop model and checks DAX references, measure metadata and referential integrity as the agent changes it. Windows only, with Power BI Desktop running.",
+      "skills": [
+        "connect-pbid"
+      ],
+      "prereqs": {
+        "required": [
+          "windows-desktop"
+        ],
+        "optional": []
+      },
+      "hooks": [
+        "DAX references resolve to real tables, columns and measures",
+        "new measures carry a display folder, description and format string",
+        "referential integrity after relationship or key-column changes"
+      ],
+      "marketplace": {
+        "repo": "data-goblin/power-bi-agentic-development",
+        "name": "power-bi-agentic-development",
+        "plugin": "pbi-desktop"
+      },
+      "credit": {
+        "author": "Kurt Buhler, Data Goblins",
+        "license": "GPL-3.0",
+        "homepage": "https://github.com/data-goblin/power-bi-agentic-development"
+      }
+    },
+    {
+      "id": "goblin-semantic-models",
+      "kind": "marketplace",
+      "title": "Semantic model craft",
+      "description": "DAX, Power Query, naming conventions, lineage analysis and refresh, with an auditor agent that reviews a whole model.",
+      "skills": [
+        "dax",
+        "lineage-analysis",
+        "power-query",
+        "refresh-semantic-model",
+        "semantic-model",
+        "standardize-naming-conventions"
+      ],
+      "prereqs": {
+        "required": [],
+        "optional": []
+      },
+      "hooks": [],
+      "marketplace": {
+        "repo": "data-goblin/power-bi-agentic-development",
+        "name": "power-bi-agentic-development",
+        "plugin": "semantic-models"
+      },
+      "credit": {
+        "author": "Kurt Buhler, Data Goblins",
+        "license": "GPL-3.0",
+        "homepage": "https://github.com/data-goblin/power-bi-agentic-development"
+      }
+    },
+    {
+      "id": "goblin-reports",
+      "kind": "marketplace",
+      "title": "Report craft",
+      "description": "Report creation and design, theme JSON, report review and pbir-cli, with reviewer agents for Deneb, SVG, R and Python visuals.",
+      "skills": [
+        "create-pbi-report",
+        "modifying-theme-json",
+        "pbi-report-design",
+        "pbir-cli",
+        "review-report"
+      ],
+      "prereqs": {
+        "required": [],
+        "optional": [
+          "pbir-cli"
+        ]
+      },
+      "hooks": [],
+      "marketplace": {
+        "repo": "data-goblin/power-bi-agentic-development",
+        "name": "power-bi-agentic-development",
+        "plugin": "reports"
+      },
+      "credit": {
+        "author": "Kurt Buhler, Data Goblins",
+        "license": "GPL-3.0",
+        "homepage": "https://github.com/data-goblin/power-bi-agentic-development"
+      }
+    },
+    {
+      "id": "goblin-tabular-editor",
+      "kind": "marketplace",
+      "title": "Tabular Editor",
+      "description": "Best Practice Analyzer rules, C# scripting and Tabular Editor 2/3 CLI automation.",
+      "skills": [
+        "bpa-rules",
+        "c-sharp-scripting",
+        "te-cli",
+        "te-docs",
+        "te2-cli"
+      ],
+      "prereqs": {
+        "required": [],
+        "optional": []
+      },
+      "hooks": [],
+      "marketplace": {
+        "repo": "data-goblin/power-bi-agentic-development",
+        "name": "power-bi-agentic-development",
+        "plugin": "tabular-editor"
+      },
+      "credit": {
+        "author": "Kurt Buhler, Data Goblins",
+        "license": "GPL-3.0",
+        "homepage": "https://github.com/data-goblin/power-bi-agentic-development"
       }
     }
   ]

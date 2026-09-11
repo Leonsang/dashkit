@@ -1,4 +1,4 @@
-// Package skillmeta reads the small amount of YAML front matter fabkit needs
+// Package skillmeta reads the small amount of YAML front matter dashkit needs
 // from a SKILL.md: the skill's name and its description. A full YAML parser is
 // overkill here — upstream front matter only uses plain scalars and folded
 // blocks — and keeping it dependency-free keeps the binary honest.

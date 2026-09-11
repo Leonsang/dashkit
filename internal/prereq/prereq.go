@@ -8,8 +8,11 @@ import (
 	"fmt"
 	"os/exec"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/leonsang/dashkit/internal/catalog"
 )
 
 // Status is the outcome of one check.
@@ -41,14 +44,19 @@ type Result struct {
 	Title  string
 	Status Status
 	Detail string
+	// Required is true when a selected bundle cannot work without it; optional
+	// prerequisites are reported but never fail doctor or block an install.
+	Required bool
 	// Fix is the command that would install or upgrade it on this OS, empty when
-	// fabkit has no safe automated answer.
+	// dashkit has no safe automated answer.
 	Fix []string
 	// Manual is guidance shown when Fix is empty.
 	Manual string
 }
 
-// Check is one prerequisite fabkit knows how to look for.
+func (r Result) missing() bool { return r.Status == Missing || r.Status == Outdated }
+
+// Check is one prerequisite dashkit knows how to look for.
 type Check struct {
 	ID    string
 	Title string
@@ -96,6 +104,42 @@ func Registry() map[string]Check {
 			},
 			Manual: "Power BI Desktop only runs on Windows; on macOS and Linux the report skills work against PBIP files without the Desktop bridge",
 		},
+		// Unlike powerbi-desktop above, which is optional and not applicable off
+		// Windows, this one is a hard requirement: the bundle connects to a live
+		// Desktop model and simply cannot work on macOS or Linux.
+		"windows-desktop": {
+			ID: "windows-desktop", Title: "Power BI Desktop running on Windows",
+			Probe: func() (Status, string) {
+				if runtime.GOOS != "windows" {
+					return Missing, "needs Windows; not available on " + runtime.GOOS
+				}
+				return powerBIDesktopProbe()
+			},
+			Install: func() []string {
+				if runtime.GOOS != "windows" {
+					return nil
+				}
+				return []string{"winget", "install", "--id", "Microsoft.PowerBI", "--accept-package-agreements", "--accept-source-agreements"}
+			},
+			Manual: "this bundle connects to a live Power BI Desktop model, which only exists on Windows",
+		},
+		"python3": {
+			ID: "python3", Title: "Python 3",
+			Probe:   pythonProbe,
+			Install: pkg("Python.Python.3.12", "python", "python3"),
+		},
+		// pbir-cli is proprietary: its licence allows non-commercial use only
+		// (commercial explicitly includes paid consulting and development) and
+		// forbids use inside other software without the authors' consent. So
+		// dashkit reports it and explains, but never installs it: whether a
+		// person's use qualifies is theirs to decide, not an installer's.
+		"pbir-cli": {
+			ID: "pbir-cli", Title: "pbir-cli (deep PBIR validation)",
+			Probe: versionProbe("pbir", "--version"),
+			Manual: "proprietary, non-commercial licence — commercial use, including paid consulting or " +
+				"development, needs the authors' permission. If your use qualifies: `uv tool install pbir-cli` " +
+				"(see https://github.com/data-goblin/pbir-cli)",
+		},
 	}
 
 	for _, p := range []string{
@@ -113,22 +157,55 @@ func Registry() map[string]Check {
 	return checks
 }
 
-// Run evaluates the named prerequisites, in the order given.
-func Run(ids []string) []Result {
-	reg := Registry()
-	out := make([]Result, 0, len(ids))
-	for _, id := range ids {
-		check, ok := reg[id]
-		if !ok {
-			out = append(out, Result{ID: id, Title: id, Status: Unknown, Detail: "no check defined"})
-			continue
+// ForBundles checks every prerequisite the bundles declare, required ones
+// first. Something one bundle requires and another only suggests is required.
+func ForBundles(bundles []catalog.Bundle) []Result {
+	var required, optional []string
+	isRequired := map[string]bool{}
+	for _, b := range bundles {
+		for _, id := range b.Prereqs.Required {
+			if !isRequired[id] {
+				isRequired[id] = true
+				required = append(required, id)
+			}
 		}
-		status, detail := check.Probe()
-		r := Result{ID: id, Title: check.Title, Status: status, Detail: detail, Manual: check.Manual}
-		if status != OK && check.Install != nil {
-			r.Fix = check.Install()
+	}
+	seen := map[string]bool{}
+	for _, b := range bundles {
+		for _, id := range b.Prereqs.Optional {
+			if !isRequired[id] && !seen[id] {
+				seen[id] = true
+				optional = append(optional, id)
+			}
+		}
+	}
+	sort.Strings(required)
+	sort.Strings(optional)
+	return Run(required, optional)
+}
+
+// Run evaluates the named prerequisites, in the order given.
+func Run(required, optional []string) []Result {
+	reg := Registry()
+	out := make([]Result, 0, len(required)+len(optional))
+	check := func(id string, req bool) {
+		c, ok := reg[id]
+		if !ok {
+			out = append(out, Result{ID: id, Title: id, Status: Unknown, Detail: "no check defined", Required: req})
+			return
+		}
+		status, detail := c.Probe()
+		r := Result{ID: id, Title: c.Title, Status: status, Detail: detail, Manual: c.Manual, Required: req}
+		if status != OK && c.Install != nil {
+			r.Fix = c.Install()
 		}
 		out = append(out, r)
+	}
+	for _, id := range required {
+		check(id, true)
+	}
+	for _, id := range optional {
+		check(id, false)
 	}
 	return out
 }
@@ -175,7 +252,7 @@ func nodeProbe() (Status, string) {
 }
 
 // npmGlobalProbe asks npm what is installed globally. It shells out, which is
-// the slowest check fabkit runs — hence --skip-prereq-check.
+// the slowest check dashkit runs — hence --skip-prereq-check.
 func npmGlobalProbe(pkg string) (Status, string) {
 	out, err := run("npm", "ls", "-g", "--depth", "0", "--json", pkg)
 	if err != nil && out == "" {
@@ -204,6 +281,32 @@ func powerBIDesktopProbe() (Status, string) {
 		return Missing, "not installed"
 	}
 	return OK, "installed"
+}
+
+// pythonProbe accepts the first interpreter that actually answers as Python 3.
+// Being on PATH is not enough: on Windows, `python3` usually resolves to the
+// Microsoft Store alias, a stub that offers to install Python instead of running
+// it. macOS and Linux usually only guarantee `python3`, Windows `python`.
+func pythonProbe() (Status, string) {
+	names := []string{"python3", "python"}
+	if runtime.GOOS == "windows" {
+		names = []string{"python", "py", "python3"}
+	}
+	found := false
+	for _, name := range names {
+		if _, err := exec.LookPath(name); err != nil {
+			continue
+		}
+		found = true
+		out, err := run(name, "--version")
+		if err == nil && strings.HasPrefix(out, "Python 3") {
+			return OK, firstLine(out)
+		}
+	}
+	if found {
+		return Missing, "only a stub or an old Python is on PATH"
+	}
+	return Missing, "not on PATH"
 }
 
 // pkg picks the right package manager invocation for this OS.
@@ -248,11 +351,24 @@ func firstLine(s string) string {
 	return s
 }
 
-// Blocking returns the results that should stop an install.
+// Blocking returns the required prerequisites that are missing: the only ones
+// that should fail doctor.
 func Blocking(results []Result) []Result {
 	var out []Result
 	for _, r := range results {
-		if r.Status == Missing || r.Status == Outdated {
+		if r.Required && r.missing() {
+			out = append(out, r)
+		}
+	}
+	return out
+}
+
+// Unmet returns everything missing or outdated, required or not: what
+// --with-prereqs offers to install and what doctor lists under "to fix".
+func Unmet(results []Result) []Result {
+	var out []Result
+	for _, r := range results {
+		if r.missing() {
 			out = append(out, r)
 		}
 	}

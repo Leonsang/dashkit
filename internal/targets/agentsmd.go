@@ -7,9 +7,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/leonsang/fabkit/internal/catalog"
-	"github.com/leonsang/fabkit/internal/home"
-	"github.com/leonsang/fabkit/internal/plan"
+	"github.com/leonsang/dashkit/internal/catalog"
+	"github.com/leonsang/dashkit/internal/home"
+	"github.com/leonsang/dashkit/internal/plan"
 )
 
 func init() {
@@ -18,7 +18,7 @@ func init() {
 	register(opencode{})
 }
 
-// These hosts read a single shared instructions file. fabkit owns one delimited
+// These hosts read a single shared instructions file. dashkit owns one delimited
 // block inside it and leaves the rest of the user's text alone.
 
 // --- Codex CLI ---------------------------------------------------------------
@@ -34,7 +34,7 @@ func (codex) Experimental() bool       { return false }
 func (codex) SupportsScope(Scope) bool { return true }
 
 // codexHome honours CODEX_HOME, which moves Codex's whole config directory.
-// A redirected fabkit home wins, so tests and --home never escape their sandbox.
+// A redirected dashkit home wins, so tests and --home never escape their sandbox.
 func codexHome() string {
 	if !home.Sandboxed() {
 		if dir := os.Getenv("CODEX_HOME"); dir != "" {
@@ -58,7 +58,7 @@ func (codex) Hint(opts Options) string {
 	if opts.Scope == Project {
 		return "start `codex` in the project; project-scoped MCP servers only load once you trust the directory"
 	}
-	return "start `codex`; the fabkit block in ~/.codex/AGENTS.md is read at session start"
+	return "start `codex`; the dashkit block in ~/.codex/AGENTS.md is read at session start"
 }
 
 func (codex) Plan(b catalog.Bundle, opts Options) (plan.Plan, error) {
@@ -175,7 +175,7 @@ func (gemini) Plan(b catalog.Bundle, opts Options) (plan.Plan, error) {
 // --- OpenCode ----------------------------------------------------------------
 
 // opencode has its own skill loader, so skills go in whole. Its MCP config uses
-// a different shape from every other host, so fabkit leaves that to the user
+// a different shape from every other host, so dashkit leaves that to the user
 // rather than guessing.
 type opencode struct{}
 
@@ -236,7 +236,7 @@ func hasRemoteServer(b catalog.Bundle) bool {
 // mcpNotes writes down the servers a host could not be configured for, so the
 // information is not simply lost. include selects which ones to write.
 func mcpNotes(b catalog.Bundle, include func(catalog.MCPServer) bool) string {
-	out := fmt.Sprintf("# MCP servers for %s\n\nfabkit could not write these into this host's config automatically.\n\n", b.Title)
+	out := fmt.Sprintf("# MCP servers for %s\n\ndashkit could not write these into this host's config automatically.\n\n", b.Title)
 
 	names := make([]string, 0, len(b.MCPServers))
 	for name := range b.MCPServers {

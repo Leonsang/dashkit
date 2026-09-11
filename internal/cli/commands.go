@@ -6,11 +6,11 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/leonsang/fabkit/internal/catalog"
-	"github.com/leonsang/fabkit/internal/install"
-	"github.com/leonsang/fabkit/internal/prereq"
-	"github.com/leonsang/fabkit/internal/state"
-	"github.com/leonsang/fabkit/internal/targets"
+	"github.com/leonsang/dashkit/internal/catalog"
+	"github.com/leonsang/dashkit/internal/install"
+	"github.com/leonsang/dashkit/internal/prereq"
+	"github.com/leonsang/dashkit/internal/state"
+	"github.com/leonsang/dashkit/internal/targets"
 	"github.com/spf13/cobra"
 )
 
@@ -48,21 +48,24 @@ func doctorCmd() *cobra.Command {
 			w.Flush()
 
 			fmt.Println("\nPrerequisites")
-			results := prereq.Run(prereqIDsFor(resolved))
+			results := prereq.ForBundles(resolved)
 			w = tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 			for _, r := range results {
 				mark := "+"
 				if r.Status != prereq.OK {
 					mark = "-"
 				}
-				fmt.Fprintf(w, "  %s %s\t%s\t%s\n", mark, r.Title, r.Status, r.Detail)
+				need := "optional"
+				if r.Required {
+					need = "required"
+				}
+				fmt.Fprintf(w, "  %s %s\t%s\t%s\t%s\n", mark, r.Title, need, r.Status, r.Detail)
 			}
 			w.Flush()
 
-			blocking := prereq.Blocking(results)
-			if len(blocking) > 0 {
+			if unmet := prereq.Unmet(results); len(unmet) > 0 {
 				fmt.Println("\nTo fix:")
-				for _, r := range blocking {
+				for _, r := range unmet {
 					if len(r.Fix) > 0 {
 						fmt.Printf("  %s\n", strings.Join(r.Fix, " "))
 						continue
@@ -71,31 +74,20 @@ func doctorCmd() *cobra.Command {
 						fmt.Printf("  %s: %s\n", r.Title, r.Manual)
 					}
 				}
-				fmt.Println("\nOr let fabkit do it: fabkit install --with-prereqs")
-				return fmt.Errorf("%d prerequisite(s) missing", len(blocking))
+				fmt.Println("\nOr let dashkit install what it can: dashkit install --with-prereqs")
 			}
-			fmt.Println("\nEverything the selected bundles need is present.")
+
+			// Only a missing *required* prerequisite is a failure; optional ones
+			// are information, and must not break a script that runs doctor.
+			if blocking := prereq.Blocking(results); len(blocking) > 0 {
+				return fmt.Errorf("%d required prerequisite(s) missing", len(blocking))
+			}
+			fmt.Println("\nEverything the selected bundles require is present.")
 			return nil
 		},
 	}
 	cmd.Flags().StringSliceVarP(&bundles, "bundle", "b", []string{"powerbi-authoring"}, "which bundles' prerequisites to check")
 	return cmd
-}
-
-// prereqIDsFor mirrors install's collection so doctor reports the same set.
-func prereqIDsFor(bundles []catalog.Bundle) []string {
-	var out []string
-	seen := map[string]bool{}
-	for _, b := range bundles {
-		for _, id := range append(append([]string{}, b.Prereqs.Required...), b.Prereqs.Optional...) {
-			if seen[id] {
-				continue
-			}
-			seen[id] = true
-			out = append(out, id)
-		}
-	}
-	return out
 }
 
 func listCmd() *cobra.Command {
@@ -125,13 +117,25 @@ func listCmd() *cobra.Command {
 			}
 
 			m := catalog.Load()
-			fmt.Printf("upstream %s @ %s (v%s)\n\n", m.Source.Repo, m.Source.Ref, m.Source.UpstreamVersion)
+			fmt.Printf("Microsoft bundles pinned to %s @ %s\n\n", m.Source.Repo, m.Source.Ref)
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-			fmt.Fprintln(w, "ID\tSKILLS\tTITLE")
+			fmt.Fprintln(w, "ID\tSKILLS\tHOOKS\tBY\tINSTALLS VIA\tTITLE")
 			for _, b := range m.Bundles {
-				fmt.Fprintf(w, "%s\t%d\t%s\n", b.ID, len(b.Skills), b.Title)
+				via := "dashkit"
+				if b.IsMarketplace() {
+					via = "host plugin manager"
+				}
+				hooks := "-"
+				if len(b.Hooks) > 0 {
+					hooks = fmt.Sprint(len(b.Hooks))
+				}
+				fmt.Fprintf(w, "%s\t%d\t%s\t%s\t%s\t%s\n", b.ID, len(b.Skills), hooks, b.Credit.Author, via, b.Title)
 			}
-			return w.Flush()
+			if err := w.Flush(); err != nil {
+				return err
+			}
+			fmt.Println("\nEvery installed skill competes for the agent's attention: install what a project uses, not everything.")
+			return nil
 		},
 	}
 	cmd.Flags().BoolVar(&showTargets, "targets", false, "list supported AI tools instead of bundles")
@@ -150,7 +154,7 @@ func updateCmd() *cobra.Command {
 				return err
 			}
 			if len(st.Installs) == 0 {
-				fmt.Println("nothing installed yet — run `fabkit` to start the wizard")
+				fmt.Println("nothing installed yet — run `dashkit` to start the wizard")
 				return nil
 			}
 
@@ -192,44 +196,55 @@ func uninstallCmd() *cobra.Command {
 		bundle string
 		agent  string
 		dryRun bool
+		yes    bool
 	)
 
 	cmd := &cobra.Command{
 		Use:   "uninstall",
-		Short: "Remove what fabkit installed, and only that",
+		Short: "Remove what dashkit installed, and only that",
 		RunE: func(*cobra.Command, []string) error {
-			return install.Uninstall(bundle, agent, dryRun, os.Stdout)
+			return install.Uninstall(bundle, agent, dryRun, os.Stdout, confirmer(yes))
 		},
 	}
 	cmd.Flags().StringVarP(&bundle, "bundle", "b", "", "limit to one bundle id")
 	cmd.Flags().StringVarP(&agent, "agents", "a", "", "limit to one target id")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "print what would be removed")
+	cmd.Flags().BoolVarP(&yes, "yes", "y", false, "do not ask before asking a host to remove its plugins")
 	return cmd
 }
 
 // --- shared output -----------------------------------------------------------
 
 func printPrereqs(built *install.Built) {
-	blocking := prereq.Blocking(built.Prereqs)
-	if len(blocking) == 0 {
+	unmet := prereq.Unmet(built.Prereqs)
+	if len(unmet) == 0 {
 		return
 	}
-	fmt.Println("Prerequisites still missing:")
-	for _, r := range blocking {
-		fmt.Printf("  - %s (%s)\n", r.Title, r.Detail)
+	fmt.Println("Prerequisites not present:")
+	for _, r := range unmet {
+		need := "optional"
+		if r.Required {
+			need = "required"
+		}
+		fmt.Printf("  - %s, %s (%s)\n", r.Title, need, r.Detail)
 	}
-	fmt.Println("  the skills install anyway; add --with-prereqs to have fabkit install these")
+	fmt.Println("  the skills install anyway; --with-prereqs installs what dashkit can")
 }
 
 func printReport(r *install.Report, dryRun bool) {
+	// Skips are shown even on a dry run: that is exactly when someone needs to
+	// know a combination will not happen, and why.
+	if len(r.Skipped) > 0 {
+		fmt.Println()
+		for _, s := range r.Skipped {
+			fmt.Printf("skipped %s -> %s: %s\n", s.Bundle.ID, s.Target.ID(), s.Skipped)
+		}
+	}
 	if dryRun {
 		fmt.Println("\ndry run — nothing was written")
 		return
 	}
 	fmt.Printf("\nInstalled %d bundle/tool combination(s).\n", len(r.Installed))
-	for _, s := range r.Skipped {
-		fmt.Printf("  skipped %s -> %s: %s\n", s.Bundle.ID, s.Target.ID(), s.Skipped)
-	}
 	if r.BackupDir != "" {
 		fmt.Printf("  backups of every file touched: %s\n", r.BackupDir)
 	}

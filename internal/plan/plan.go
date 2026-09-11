@@ -1,19 +1,20 @@
 // Package plan is the unit of work shared by the wizard and the non-interactive
 // CLI: every target turns a bundle into a list of Actions, which are printed for
-// --dry-run and executed otherwise. Nothing else in fabkit touches the disk.
+// --dry-run and executed otherwise. Nothing else in dashkit touches the disk.
 package plan
 
 import (
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
-	"github.com/leonsang/fabkit/internal/backup"
-	"github.com/leonsang/fabkit/internal/confmerge"
-	"github.com/leonsang/fabkit/internal/state"
+	"github.com/leonsang/dashkit/internal/backup"
+	"github.com/leonsang/dashkit/internal/confmerge"
+	"github.com/leonsang/dashkit/internal/state"
 )
 
 // Env carries everything an Action needs to apply itself, and collects the
@@ -21,12 +22,35 @@ import (
 type Env struct {
 	DryRun bool
 	Backup *backup.Session
-	// Record accumulates the paths and edits made, for `fabkit uninstall`.
+	// Record accumulates the paths and edits made, for `dashkit uninstall`.
 	Record *state.Install
 	// Log receives one human-readable line per action.
 	Log func(string)
 	// Confirm is asked before anything that runs a command. Nil means "no".
 	Confirm func(prompt string) bool
+	// Out receives the output of commands that run. The wizard points it at its
+	// log pane; nil means the terminal.
+	Out io.Writer
+}
+
+func (e *Env) out() io.Writer {
+	if e.Out != nil {
+		return e.Out
+	}
+	return os.Stdout
+}
+
+// run executes a command after showing and confirming it.
+func (e *Env) run(dir, name string, args ...string) error {
+	line := strings.Join(append([]string{name}, args...), " ")
+	if e.Confirm == nil || !e.Confirm(line) {
+		return fmt.Errorf("declined: %s", line)
+	}
+	cmd := exec.Command(name, args...)
+	cmd.Dir = dir
+	cmd.Stdout = e.out()
+	cmd.Stderr = e.out()
+	return cmd.Run()
 }
 
 func (e *Env) logf(format string, args ...any) {
@@ -68,7 +92,7 @@ func (p Plan) Apply(env *Env) error {
 
 // --- WriteFile ---------------------------------------------------------------
 
-// WriteFile creates or replaces a file fabkit owns entirely.
+// WriteFile creates or replaces a file dashkit owns entirely.
 type WriteFile struct {
 	Path string
 	Data []byte
@@ -98,7 +122,7 @@ func (w WriteFile) Apply(env *Env) error {
 
 // --- CopyTree ----------------------------------------------------------------
 
-// CopyTree copies a directory from the upstream tree into a destination fabkit
+// CopyTree copies a directory from the upstream tree into a destination dashkit
 // owns, optionally rewriting text files on the way through.
 type CopyTree struct {
 	Src string
@@ -267,7 +291,7 @@ type MarkdownBlock struct {
 }
 
 func (m MarkdownBlock) Describe() string {
-	return fmt.Sprintf("update fabkit block in %s (%s)", m.Path, m.What)
+	return fmt.Sprintf("update dashkit block in %s (%s)", m.Path, m.What)
 }
 
 func (m MarkdownBlock) Apply(env *Env) error {
@@ -319,12 +343,78 @@ func (r Run) Apply(env *Env) error {
 	if env.DryRun {
 		return nil
 	}
-	if env.Confirm != nil && !env.Confirm(strings.Join(append([]string{r.Name}, r.Args...), " ")) {
-		return fmt.Errorf("declined")
+	return env.run(r.Dir, r.Name, r.Args...)
+}
+
+// --- PluginInstall -----------------------------------------------------------
+
+// PluginInstall hands a plugin to a host's own plugin manager (Claude Code or
+// Copilot CLI): register the marketplace, then install the plugin into the
+// chosen scope. It records itself so `dashkit uninstall` can ask the same host
+// to remove it — the host owns those files, dashkit only asked for them.
+type PluginInstall struct {
+	Host string // target id, e.g. "claude"
+	Bin  string // the host CLI
+	// MarketplaceRepo is the GitHub "owner/repo" the marketplace lives in, and
+	// Marketplace the name it registers under.
+	MarketplaceRepo string
+	Marketplace     string
+	Plugin          string
+	// Scope is the host's own scope word: user or project.
+	Scope string
+	// Dir is where a project-scoped install is recorded.
+	Dir string
+	// AssumeYes passes the host's non-interactive flag, which some hosts need
+	// whenever stdin is not a terminal.
+	AssumeYes bool
+	// Declared reports whether the marketplace is already declared in this
+	// scope. Nil means the host cannot say, so dashkit never removes it.
+	Declared func() bool
+}
+
+func (p PluginInstall) ref() string { return p.Plugin + "@" + p.Marketplace }
+
+// scopeArgs is empty for hosts whose plugin manager has no scopes.
+func (p PluginInstall) scopeArgs() []string {
+	if p.Scope == "" {
+		return nil
 	}
-	cmd := exec.Command(r.Name, r.Args...)
-	cmd.Dir = r.Dir
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	return []string{"--scope", p.Scope}
+}
+
+func (p PluginInstall) Describe() string {
+	scope := p.Scope
+	if scope == "" {
+		scope = "user"
+	}
+	return fmt.Sprintf("install plugin %s through %s's plugin manager (%s scope)", p.ref(), p.Host, scope)
+}
+
+func (p PluginInstall) Apply(env *Env) error {
+	env.logf("%s", p.Describe())
+	if env.DryRun {
+		return nil
+	}
+	// Asked before adding: if the declaration was already there, it is the
+	// user's, and uninstall must leave it alone.
+	owns := p.Declared != nil && !p.Declared()
+
+	add := append([]string{"plugin", "marketplace", "add", p.MarketplaceRepo}, p.scopeArgs()...)
+	if err := env.run(p.Dir, p.Bin, add...); err != nil {
+		return err
+	}
+	install := append([]string{"plugin", "install", p.ref()}, p.scopeArgs()...)
+	if p.AssumeYes {
+		install = append(install, "--yes")
+	}
+	if err := env.run(p.Dir, p.Bin, install...); err != nil {
+		return err
+	}
+	if env.Record != nil {
+		env.Record.Plugins = append(env.Record.Plugins, state.Plugin{
+			Host: p.Host, Bin: p.Bin, Ref: p.ref(), Marketplace: p.Marketplace,
+			Scope: p.Scope, Dir: p.Dir, OwnsMarketplace: owns,
+		})
+	}
+	return nil
 }

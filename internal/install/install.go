@@ -8,16 +8,15 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sort"
 	"time"
 
-	"github.com/leonsang/fabkit/internal/backup"
-	"github.com/leonsang/fabkit/internal/catalog"
-	"github.com/leonsang/fabkit/internal/plan"
-	"github.com/leonsang/fabkit/internal/prereq"
-	"github.com/leonsang/fabkit/internal/source"
-	"github.com/leonsang/fabkit/internal/state"
-	"github.com/leonsang/fabkit/internal/targets"
+	"github.com/leonsang/dashkit/internal/backup"
+	"github.com/leonsang/dashkit/internal/catalog"
+	"github.com/leonsang/dashkit/internal/plan"
+	"github.com/leonsang/dashkit/internal/prereq"
+	"github.com/leonsang/dashkit/internal/source"
+	"github.com/leonsang/dashkit/internal/state"
+	"github.com/leonsang/dashkit/internal/targets"
 )
 
 // Request is one invocation's worth of choices.
@@ -58,22 +57,24 @@ type Built struct {
 // Build resolves the source tree, checks prerequisites and plans every
 // bundle/target pair without touching the disk.
 func Build(ctx context.Context, req Request) (*Built, error) {
-	var (
-		tree *source.Tree
-		err  error
-	)
-	if req.SourceDir != "" {
-		tree, err = source.Local(req.SourceDir)
-	} else {
-		tree, err = source.Get(ctx, catalog.Load().Source, req.Refresh)
-	}
-	if err != nil {
-		return nil, err
+	// Only vendored bundles need the upstream tree; a run that only hands
+	// plugins to host plugin managers should not download anything.
+	var tree *source.Tree
+	if needsTree(req.Bundles) {
+		var err error
+		if req.SourceDir != "" {
+			tree, err = source.Local(req.SourceDir)
+		} else {
+			tree, err = source.Get(ctx, catalog.Load().Source, req.Refresh)
+		}
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	built := &Built{Tree: tree}
 	if !req.SkipPrereqCheck {
-		built.Prereqs = prereq.Run(prereqIDs(req.Bundles))
+		built.Prereqs = prereq.ForBundles(req.Bundles)
 	}
 
 	opts := targets.Options{
@@ -86,6 +87,10 @@ func Build(ctx context.Context, req Request) (*Built, error) {
 
 	for _, b := range req.Bundles {
 		for _, t := range req.Targets {
+			if b.IsMarketplace() {
+				built.Steps = append(built.Steps, planMarketplace(b, t, opts))
+				continue
+			}
 			if !t.SupportsScope(req.Scope) {
 				built.Steps = append(built.Steps, Step{
 					Bundle: b, Target: t,
@@ -104,36 +109,37 @@ func Build(ctx context.Context, req Request) (*Built, error) {
 	return built, nil
 }
 
+// planMarketplace routes a marketplace bundle to the host's plugin manager. A
+// host that cannot take it is a skip with a reason, never an error: the other
+// tools in the same run should still get their install.
+func planMarketplace(b catalog.Bundle, t targets.Target, opts targets.Options) Step {
+	mp, ok := t.(targets.MarketplacePlanner)
+	if !ok {
+		return Step{Bundle: b, Target: t, Skipped: fmt.Sprintf(
+			"%s has no plugin manager, and %s is licensed %s by %s, which does not allow copying its skills into another tool; install it from Claude Code or Copilot CLI",
+			t.Title(), b.Title, b.Credit.License, b.Credit.Author)}
+	}
+	p, err := mp.PlanMarketplace(b, opts)
+	if err != nil {
+		return Step{Bundle: b, Target: t, Skipped: err.Error()}
+	}
+	return Step{Bundle: b, Target: t, Plan: p}
+}
+
+func needsTree(bundles []catalog.Bundle) bool {
+	for _, b := range bundles {
+		if !b.IsMarketplace() {
+			return true
+		}
+	}
+	return false
+}
+
 func otherScope(s targets.Scope) targets.Scope {
 	if s == targets.Project {
 		return targets.Global
 	}
 	return targets.Project
-}
-
-// prereqIDs collects the required and optional prerequisites of every bundle,
-// required first, without duplicates.
-func prereqIDs(bundles []catalog.Bundle) []string {
-	var required, optional []string
-	seen := map[string]bool{}
-	add := func(dst *[]string, ids []string) {
-		for _, id := range ids {
-			if seen[id] {
-				continue
-			}
-			seen[id] = true
-			*dst = append(*dst, id)
-		}
-	}
-	for _, b := range bundles {
-		add(&required, b.Prereqs.Required)
-	}
-	for _, b := range bundles {
-		add(&optional, b.Prereqs.Optional)
-	}
-	sort.Strings(required)
-	sort.Strings(optional)
-	return append(required, optional...)
 }
 
 // Report summarises an applied install.
@@ -174,7 +180,7 @@ func Apply(req Request, built *Built, out io.Writer, confirm func(string) bool) 
 			Bundle:  step.Bundle.ID,
 			Target:  step.Target.ID(),
 			Scope:   string(req.Scope),
-			Ref:     built.Tree.Ref,
+			Ref:     recordRef(step.Bundle, built.Tree),
 			Version: catalog.Load().Source.UpstreamVersion,
 			At:      time.Now().UTC(),
 		}
@@ -188,6 +194,7 @@ func Apply(req Request, built *Built, out io.Writer, confirm func(string) bool) 
 			Record:  &record,
 			Log:     log,
 			Confirm: confirm,
+			Out:     out,
 		}
 		if err := step.Plan.Apply(env); err != nil {
 			return report, err
@@ -219,9 +226,9 @@ func Apply(req Request, built *Built, out io.Writer, confirm func(string) bool) 
 // installPrereqs runs the fix command for anything missing, one at a time, with
 // the exact command shown first.
 func installPrereqs(results []prereq.Result, out io.Writer, confirm func(string) bool) error {
-	for _, r := range prereq.Blocking(results) {
+	for _, r := range prereq.Unmet(results) {
 		if len(r.Fix) == 0 {
-			fmt.Fprintf(out, "  ! %s is %s and fabkit has no installer for this OS\n", r.Title, r.Status)
+			fmt.Fprintf(out, "  ! %s is %s; dashkit does not install it automatically\n", r.Title, r.Status)
 			if r.Manual != "" {
 				fmt.Fprintf(out, "    %s\n", r.Manual)
 			}
@@ -232,6 +239,7 @@ func installPrereqs(results []prereq.Result, out io.Writer, confirm func(string)
 			Log:     func(line string) { fmt.Fprintf(out, "  %s\n", line) },
 			Backup:  backup.NewSession(),
 			Confirm: confirm,
+			Out:     out,
 		}
 		if err := action.Apply(env); err != nil {
 			// A failed prerequisite is worth reporting but should not abort the
@@ -243,9 +251,51 @@ func installPrereqs(results []prereq.Result, out io.Writer, confirm func(string)
 	return nil
 }
 
-// Uninstall removes what the recorded installs created, restoring edited files
-// from their backups where fabkit only changed part of a file.
-func Uninstall(bundleID, targetID string, dryRun bool, out io.Writer) error {
+// releaseMarketplace removes a marketplace declaration once nothing dashkit
+// installed needs it any more — but only one dashkit itself added. If another
+// recorded plugin still uses it, the duty to remove it passes to that record,
+// so whichever plugin goes last cleans up.
+func releaseMarketplace(st *state.State, in state.Install, pl state.Plugin, env *plan.Env) {
+	if !pl.OwnsMarketplace || pl.Marketplace == "" {
+		return
+	}
+	for i := range st.Installs {
+		if st.Installs[i].Key() == in.Key() {
+			continue
+		}
+		for j := range st.Installs[i].Plugins {
+			if st.Installs[i].Plugins[j].SameMarketplace(pl) {
+				st.Installs[i].Plugins[j].OwnsMarketplace = true
+				return
+			}
+		}
+	}
+	args := []string{"plugin", "marketplace", "remove", pl.Marketplace}
+	if pl.Scope != "" {
+		args = append(args, "--scope", pl.Scope)
+	}
+	action := plan.Run{Name: pl.Bin, Args: args, Dir: pl.Dir, Why: "remove the marketplace declaration dashkit added"}
+	if err := action.Apply(env); err != nil {
+		env.Log("! " + err.Error())
+	}
+}
+
+// recordRef names what an install came from: the pinned upstream tree for a
+// vendored bundle, the plugin reference for a marketplace one.
+func recordRef(b catalog.Bundle, tree *source.Tree) string {
+	if b.IsMarketplace() {
+		return b.Marketplace.Plugin + "@" + b.Marketplace.Name
+	}
+	if tree == nil {
+		return ""
+	}
+	return tree.Ref
+}
+
+// Uninstall removes what the recorded installs created: files dashkit wrote are
+// deleted, surgical edits to other files are reverted in place, and plugins that
+// a host's plugin manager installed are handed back to that host to remove.
+func Uninstall(bundleID, targetID string, dryRun bool, out io.Writer, confirm func(string) bool) error {
 	st, err := state.Load()
 	if err != nil {
 		return err
@@ -276,9 +326,40 @@ func Uninstall(bundleID, targetID string, dryRun bool, out io.Writer) error {
 				fmt.Fprintf(out, "  ! %v\n", err)
 			}
 		}
-		if !dryRun {
-			st.Remove(in.Key())
+		// A plugin the host did not remove — declined, or the command failed —
+		// stays on record, or dashkit would lose the only note that it exists.
+		var remaining []state.Plugin
+		for _, pl := range in.Plugins {
+			args := []string{"plugin", "uninstall", pl.Ref}
+			if pl.Scope != "" {
+				args = append(args, "--scope", pl.Scope)
+			}
+			action := plan.Run{Name: pl.Bin, Args: args, Dir: pl.Dir, Why: "ask " + pl.Host + " to remove the plugin it installed"}
+			env := &plan.Env{
+				DryRun:  dryRun,
+				Log:     func(line string) { fmt.Fprintf(out, "  %s\n", line) },
+				Confirm: confirm,
+				Out:     out,
+			}
+			if err := action.Apply(env); err != nil {
+				fmt.Fprintf(out, "  ! %v\n", err)
+				remaining = append(remaining, pl)
+				continue
+			}
+			if !dryRun {
+				releaseMarketplace(st, in, pl, env)
+			}
 		}
+		if dryRun {
+			continue
+		}
+		if len(remaining) > 0 {
+			in.Owned, in.Edits, in.Plugins = nil, nil, remaining
+			st.Record(in)
+			fmt.Fprintf(out, "  %d plugin(s) still installed; kept on record so `dashkit uninstall` can try again\n", len(remaining))
+			continue
+		}
+		st.Remove(in.Key())
 	}
 	if dryRun {
 		return nil

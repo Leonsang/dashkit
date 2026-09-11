@@ -1,4 +1,4 @@
-// Package backup keeps a timestamped copy of every file fabkit is about to
+// Package backup keeps a timestamped copy of every file dashkit is about to
 // overwrite, so a bad install is always recoverable.
 package backup
 
@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/leonsang/fabkit/internal/home"
+	"github.com/leonsang/dashkit/internal/home"
 )
 
 // Session is one install's worth of backups. Created lazily: if nothing needs

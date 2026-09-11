@@ -1,17 +1,17 @@
-# fabkit installer for Windows.
+# dashkit installer for Windows.
 #
-#   irm https://raw.githubusercontent.com/leonsang/fabkit/main/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/leonsang/dashkit/main/install.ps1 | iex
 #
 # Environment:
-#   FABKIT_VERSION  release tag to install (default: latest)
-#   FABKIT_BIN_DIR  install directory (default: %LOCALAPPDATA%\fabkit\bin)
+#   DASHKIT_VERSION  release tag to install (default: latest)
+#   DASHKIT_BIN_DIR  install directory (default: %LOCALAPPDATA%\dashkit\bin)
 $ErrorActionPreference = 'Stop'
 
-function Write-Step($message) { Write-Host "fabkit " -NoNewline -ForegroundColor Cyan; Write-Host $message }
+function Write-Step($message) { Write-Host "dashkit " -NoNewline -ForegroundColor Cyan; Write-Host $message }
 
-$repo    = if ($env:FABKIT_REPO) { $env:FABKIT_REPO } else { 'leonsang/fabkit' }
-$version = if ($env:FABKIT_VERSION) { $env:FABKIT_VERSION } else { 'latest' }
-$binDir  = if ($env:FABKIT_BIN_DIR) { $env:FABKIT_BIN_DIR } else { Join-Path $env:LOCALAPPDATA 'fabkit\bin' }
+$repo    = if ($env:DASHKIT_REPO) { $env:DASHKIT_REPO } else { 'leonsang/dashkit' }
+$version = if ($env:DASHKIT_VERSION) { $env:DASHKIT_VERSION } else { 'latest' }
+$binDir  = if ($env:DASHKIT_BIN_DIR) { $env:DASHKIT_BIN_DIR } else { Join-Path $env:LOCALAPPDATA 'dashkit\bin' }
 
 $arch = switch ($env:PROCESSOR_ARCHITECTURE) {
     'AMD64' { 'amd64' }
@@ -23,12 +23,12 @@ if ($version -eq 'latest') {
     Write-Step 'looking up the latest release'
     $release = Invoke-RestMethod "https://api.github.com/repos/$repo/releases/latest"
     $version = $release.tag_name
-    if (-not $version) { throw 'could not determine the latest release; set FABKIT_VERSION' }
+    if (-not $version) { throw 'could not determine the latest release; set DASHKIT_VERSION' }
 }
 
-$asset = "fabkit_$($version.TrimStart('v'))_windows_$arch.zip"
+$asset = "dashkit_$($version.TrimStart('v'))_windows_$arch.zip"
 $url   = "https://github.com/$repo/releases/download/$version/$asset"
-$tmp   = Join-Path ([System.IO.Path]::GetTempPath()) ("fabkit-" + [System.Guid]::NewGuid().ToString('N'))
+$tmp   = Join-Path ([System.IO.Path]::GetTempPath()) ("dashkit-" + [System.Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $tmp | Out-Null
 
 try {
@@ -50,9 +50,9 @@ try {
 
     Expand-Archive -Path $archive -DestinationPath $tmp -Force
     New-Item -ItemType Directory -Path $binDir -Force | Out-Null
-    Copy-Item -Path (Join-Path $tmp 'fabkit.exe') -Destination (Join-Path $binDir 'fabkit.exe') -Force
+    Copy-Item -Path (Join-Path $tmp 'dashkit.exe') -Destination (Join-Path $binDir 'dashkit.exe') -Force
 
-    Write-Step "installed to $binDir\fabkit.exe"
+    Write-Step "installed to $binDir\dashkit.exe"
 
     $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
     if ($userPath -notlike "*$binDir*") {
@@ -60,7 +60,7 @@ try {
         Write-Step 'added it to your user PATH — open a new terminal to pick it up'
     }
 
-    Write-Step "run 'fabkit' to start the wizard, or 'fabkit doctor' to check prerequisites"
+    Write-Step "run 'dashkit' to start the wizard, or 'dashkit doctor' to check prerequisites"
 }
 finally {
     Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue

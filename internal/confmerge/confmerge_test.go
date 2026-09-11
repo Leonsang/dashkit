@@ -18,11 +18,11 @@ func TestJSONMergeKeepsForeignKeysAndOrder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	locator, err := SetPath(obj, []string{"mcpServers", "fabkit-added"}, map[string]string{"command": "npx"})
+	locator, err := SetPath(obj, []string{"mcpServers", "dashkit-added"}, map[string]string{"command": "npx"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if locator != "mcpServers.fabkit-added" {
+	if locator != "mcpServers.dashkit-added" {
 		t.Fatalf("locator = %q", locator)
 	}
 
@@ -32,7 +32,7 @@ func TestJSONMergeKeepsForeignKeysAndOrder(t *testing.T) {
 	}
 	got := string(out)
 
-	for _, want := range []string{`"numStartups": 7`, `"mine"`, `"theme": "dark"`, `"fabkit-added"`} {
+	for _, want := range []string{`"numStartups": 7`, `"mine"`, `"theme": "dark"`, `"dashkit-added"`} {
 		if !strings.Contains(got, want) {
 			t.Errorf("output lost %s:\n%s", want, got)
 		}
@@ -68,22 +68,22 @@ func TestJSONMergeIsIdempotent(t *testing.T) {
 }
 
 func TestJSONDeletePathPrunesOnlyEmptyParents(t *testing.T) {
-	original := []byte(`{"mcpServers":{"mine":{"command":"x"},"fabkit":{"command":"y"}},"keep":1}`)
+	original := []byte(`{"mcpServers":{"mine":{"command":"x"},"dashkit":{"command":"y"}},"keep":1}`)
 	obj, err := ParseJSONObject(original)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := DeletePath(obj, []string{"mcpServers", "fabkit"}, true); err != nil {
+	if err := DeletePath(obj, []string{"mcpServers", "dashkit"}, true); err != nil {
 		t.Fatal(err)
 	}
 	out, _ := RenderJSON(obj, original)
-	if !strings.Contains(string(out), `"mine"`) || strings.Contains(string(out), `"fabkit"`) {
+	if !strings.Contains(string(out), `"mine"`) || strings.Contains(string(out), `"dashkit"`) {
 		t.Fatalf("unexpected result:\n%s", out)
 	}
 
 	// Removing the last child should take the now-empty parent with it.
-	obj, _ = ParseJSONObject([]byte(`{"mcpServers":{"fabkit":{}},"keep":1}`))
-	if err := DeletePath(obj, []string{"mcpServers", "fabkit"}, true); err != nil {
+	obj, _ = ParseJSONObject([]byte(`{"mcpServers":{"dashkit":{}},"keep":1}`))
+	if err := DeletePath(obj, []string{"mcpServers", "dashkit"}, true); err != nil {
 		t.Fatal(err)
 	}
 	out, _ = RenderJSON(obj, original)
@@ -98,16 +98,16 @@ func TestJSONDeletePathPrunesOnlyEmptyParents(t *testing.T) {
 func TestMarkdownBlockRoundTrip(t *testing.T) {
 	original := []byte("# My notes\n\nSomething I wrote.\n")
 
-	once := SetBlock(original, "powerbi", "Fabkit says hello.")
+	once := SetBlock(original, "powerbi", "Dashkit says hello.")
 	if !HasBlock(once, "powerbi") {
 		t.Fatal("block not written")
 	}
-	twice := SetBlock(once, "powerbi", "Fabkit says hello.")
+	twice := SetBlock(once, "powerbi", "Dashkit says hello.")
 	if string(once) != string(twice) {
 		t.Errorf("not idempotent:\nfirst:\n%q\nsecond:\n%q", once, twice)
 	}
 
-	updated := SetBlock(twice, "powerbi", "Fabkit says something else.")
+	updated := SetBlock(twice, "powerbi", "Dashkit says something else.")
 	if strings.Contains(string(updated), "hello") {
 		t.Errorf("old content survived:\n%s", updated)
 	}
@@ -131,7 +131,7 @@ func TestMarkdownBlockInEmptyFileIsRemovedEntirely(t *testing.T) {
 func TestTOMLTableAddReplaceRemove(t *testing.T) {
 	original := []byte("# my codex config\nmodel = \"gpt-5\"\n\n[mcp_servers.mine]\ncommand = \"x\"\n")
 
-	added, err := SetTable(original, "mcp_servers.fabkit", map[string]any{
+	added, err := SetTable(original, "mcp_servers.dashkit", map[string]any{
 		"command": "npx",
 		"args":    []string{"-y", "pkg@latest"},
 		"env":     map[string]string{"TOKEN": "abc"},
@@ -140,22 +140,22 @@ func TestTOMLTableAddReplaceRemove(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := string(added)
-	for _, want := range []string{"# my codex config", `model = "gpt-5"`, "[mcp_servers.mine]", "[mcp_servers.fabkit]", `args = ["-y", "pkg@latest"]`, "[mcp_servers.fabkit.env]"} {
+	for _, want := range []string{"# my codex config", `model = "gpt-5"`, "[mcp_servers.mine]", "[mcp_servers.dashkit]", `args = ["-y", "pkg@latest"]`, "[mcp_servers.dashkit.env]"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("missing %q in:\n%s", want, got)
 		}
 	}
 
-	twice, err := SetTable(added, "mcp_servers.fabkit", map[string]any{"command": "npx"})
+	twice, err := SetTable(added, "mcp_servers.dashkit", map[string]any{"command": "npx"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Count(string(twice), "[mcp_servers.fabkit]") != 1 {
+	if strings.Count(string(twice), "[mcp_servers.dashkit]") != 1 {
 		t.Errorf("table duplicated:\n%s", twice)
 	}
 
-	removed := string(RemoveTable(twice, "mcp_servers.fabkit"))
-	if strings.Contains(removed, "fabkit") {
+	removed := string(RemoveTable(twice, "mcp_servers.dashkit"))
+	if strings.Contains(removed, "dashkit") {
 		t.Errorf("table survived removal:\n%s", removed)
 	}
 	if !strings.Contains(removed, "[mcp_servers.mine]") || !strings.Contains(removed, "# my codex config") {

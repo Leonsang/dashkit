@@ -6,11 +6,11 @@ import (
 	"strings"
 )
 
-// Managed blocks let fabkit own a region of a file the user also writes in
+// Managed blocks let dashkit own a region of a file the user also writes in
 // (AGENTS.md, GEMINI.md, CLAUDE.md). Everything outside the markers is left
 // exactly as it was.
-func blockStart(id string) string { return fmt.Sprintf("<!-- fabkit:start:%s -->", id) }
-func blockEnd(id string) string   { return fmt.Sprintf("<!-- fabkit:end:%s -->", id) }
+func blockStart(id string) string { return fmt.Sprintf("<!-- dashkit:start:%s -->", id) }
+func blockEnd(id string) string   { return fmt.Sprintf("<!-- dashkit:end:%s -->", id) }
 
 func blockRe(id string) *regexp.Regexp {
 	return regexp.MustCompile(`(?s)\n*` + regexp.QuoteMeta(blockStart(id)) + `.*?` + regexp.QuoteMeta(blockEnd(id)) + `\n*`)

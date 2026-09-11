@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
-# fabkit installer for macOS and Linux.
+# dashkit installer for macOS and Linux.
 #
-#   curl -fsSL https://raw.githubusercontent.com/leonsang/fabkit/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/leonsang/dashkit/main/install.sh | bash
 #
 # Environment:
-#   FABKIT_VERSION  release tag to install (default: latest)
-#   FABKIT_BIN_DIR  install directory (default: ~/.local/bin)
+#   DASHKIT_VERSION  release tag to install (default: latest)
+#   DASHKIT_BIN_DIR  install directory (default: ~/.local/bin)
 set -euo pipefail
 
-REPO="${FABKIT_REPO:-leonsang/fabkit}"
-VERSION="${FABKIT_VERSION:-latest}"
-BIN_DIR="${FABKIT_BIN_DIR:-$HOME/.local/bin}"
+REPO="${DASHKIT_REPO:-leonsang/dashkit}"
+VERSION="${DASHKIT_VERSION:-latest}"
+BIN_DIR="${DASHKIT_BIN_DIR:-$HOME/.local/bin}"
 
-say() { printf '\033[1mfabkit\033[0m %s\n' "$1"; }
-die() { printf '\033[31mfabkit: %s\033[0m\n' "$1" >&2; exit 1; }
+say() { printf '\033[1mdashkit\033[0m %s\n' "$1"; }
+die() { printf '\033[31mdashkit: %s\033[0m\n' "$1" >&2; exit 1; }
 
 need() { command -v "$1" >/dev/null 2>&1 || die "$1 is required but not installed"; }
 need uname
@@ -44,35 +44,35 @@ if [ "$VERSION" = "latest" ]; then
   say "looking up the latest release"
   VERSION="$(fetch_stdout "https://api.github.com/repos/${REPO}/releases/latest" \
     | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p' | head -n1)"
-  [ -n "$VERSION" ] || die "could not determine the latest release; set FABKIT_VERSION"
+  [ -n "$VERSION" ] || die "could not determine the latest release; set DASHKIT_VERSION"
 fi
 
-asset="fabkit_${VERSION#v}_${os}_${arch}.tar.gz"
+asset="dashkit_${VERSION#v}_${os}_${arch}.tar.gz"
 url="https://github.com/${REPO}/releases/download/${VERSION}/${asset}"
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
 say "downloading ${VERSION} for ${os}/${arch}"
-fetch "$url" "$tmp/fabkit.tar.gz" || die "download failed: $url"
+fetch "$url" "$tmp/dashkit.tar.gz" || die "download failed: $url"
 
 # Verify against the release checksums when they are published.
 if fetch "https://github.com/${REPO}/releases/download/${VERSION}/checksums.txt" "$tmp/checksums.txt" 2>/dev/null; then
   if command -v shasum >/dev/null 2>&1; then
     expected="$(grep " ${asset}\$" "$tmp/checksums.txt" | awk '{print $1}')"
-    actual="$(shasum -a 256 "$tmp/fabkit.tar.gz" | awk '{print $1}')"
+    actual="$(shasum -a 256 "$tmp/dashkit.tar.gz" | awk '{print $1}')"
     [ -n "$expected" ] && [ "$expected" != "$actual" ] && die "checksum mismatch for ${asset}"
   fi
 fi
 
-tar -xzf "$tmp/fabkit.tar.gz" -C "$tmp"
+tar -xzf "$tmp/dashkit.tar.gz" -C "$tmp"
 mkdir -p "$BIN_DIR"
-install -m 0755 "$tmp/fabkit" "$BIN_DIR/fabkit" 2>/dev/null || {
-  cp "$tmp/fabkit" "$BIN_DIR/fabkit"
-  chmod 0755 "$BIN_DIR/fabkit"
+install -m 0755 "$tmp/dashkit" "$BIN_DIR/dashkit" 2>/dev/null || {
+  cp "$tmp/dashkit" "$BIN_DIR/dashkit"
+  chmod 0755 "$BIN_DIR/dashkit"
 }
 
-say "installed to $BIN_DIR/fabkit"
+say "installed to $BIN_DIR/dashkit"
 
 case ":$PATH:" in
   *":$BIN_DIR:"*) ;;
@@ -82,4 +82,4 @@ case ":$PATH:" in
     ;;
 esac
 
-say "run 'fabkit' to start the wizard, or 'fabkit doctor' to check prerequisites"
+say "run 'dashkit' to start the wizard, or 'dashkit doctor' to check prerequisites"

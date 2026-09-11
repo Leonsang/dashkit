@@ -1,15 +1,15 @@
 version: 2
 
-project_name: fabkit
+project_name: dashkit
 
 before:
   hooks:
     - go mod tidy
 
 builds:
-  - id: fabkit
-    main: ./cmd/fabkit
-    binary: fabkit
+  - id: dashkit
+    main: ./cmd/dashkit
+    binary: dashkit
     env:
       - CGO_ENABLED=0
     ldflags:
@@ -20,7 +20,7 @@ builds:
 archives:
   - id: default
     # install.sh and install.ps1 expect this exact name.
-    name_template: "fabkit_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    name_template: "dashkit_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     formats: [tar.gz]
     format_overrides:
       - goos: windows

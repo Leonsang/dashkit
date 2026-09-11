@@ -12,9 +12,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/leonsang/fabkit/internal/catalog"
-	"github.com/leonsang/fabkit/internal/home"
-	"github.com/leonsang/fabkit/internal/targets"
+	"github.com/leonsang/dashkit/internal/catalog"
+	"github.com/leonsang/dashkit/internal/home"
+	"github.com/leonsang/dashkit/internal/targets"
 )
 
 // These tests run identically on Windows, macOS and Linux: everything happens
@@ -117,21 +117,21 @@ func TestInstallProjectScopeWritesEveryHostFormat(t *testing.T) {
 	upstream := fakeUpstream(t, bundle)
 	project := t.TempDir()
 
-	// A file the user already owns: fabkit must add to it, not replace it.
+	// A file the user already owns: dashkit must add to it, not replace it.
 	agentsFile := filepath.Join(project, "AGENTS.md")
 	mustWrite(t, agentsFile, "# My project\n\nMy own notes.\n")
 
 	apply(t, request(t, bundle, upstream, project, "cursor", "vscode-copilot", "codex", "gemini"))
 
-	rule := read(t, filepath.Join(project, ".cursor", "rules", "fabkit-powerbi-authoring.mdc"))
+	rule := read(t, filepath.Join(project, ".cursor", "rules", "dashkit-powerbi-authoring.mdc"))
 	if !strings.HasPrefix(rule, "---\ndescription: ") || !strings.Contains(rule, "alwaysApply: true") {
 		t.Errorf("cursor rule is missing its front matter:\n%s", rule[:min(200, len(rule))])
 	}
-	if !strings.Contains(rule, ".fabkit/powerbi-authoring/skills/powerbi-report-design/SKILL.md") {
+	if !strings.Contains(rule, ".dashkit/powerbi-authoring/skills/powerbi-report-design/SKILL.md") {
 		t.Errorf("cursor rule does not point at the vendored skill:\n%s", rule)
 	}
 
-	instructions := read(t, filepath.Join(project, ".github", "instructions", "fabkit-powerbi-authoring.instructions.md"))
+	instructions := read(t, filepath.Join(project, ".github", "instructions", "dashkit-powerbi-authoring.instructions.md"))
 	if !strings.Contains(instructions, "applyTo: '**'") {
 		t.Errorf("VS Code instructions need applyTo or they are never loaded:\n%s", instructions)
 	}
@@ -140,19 +140,19 @@ func TestInstallProjectScopeWritesEveryHostFormat(t *testing.T) {
 	if !strings.Contains(agents, "My own notes.") {
 		t.Error("the user's own AGENTS.md content was lost")
 	}
-	if !strings.Contains(agents, "<!-- fabkit:start:powerbi-authoring -->") {
+	if !strings.Contains(agents, "<!-- dashkit:start:powerbi-authoring -->") {
 		t.Error("no managed block was added to AGENTS.md")
 	}
 
 	// Relative links inside the skills must be repointed at the vendored copy.
-	skill := read(t, filepath.Join(project, ".fabkit", "powerbi-authoring", "skills", "powerbi-report-authoring", "SKILL.md"))
+	skill := read(t, filepath.Join(project, ".dashkit", "powerbi-authoring", "skills", "powerbi-report-authoring", "SKILL.md"))
 	if strings.Contains(skill, "../../common/") {
 		t.Errorf("common links were not rewritten:\n%s", skill)
 	}
-	if !strings.Contains(skill, "../_fabkit-common/COMMON-CLI.md") {
+	if !strings.Contains(skill, "../_dashkit-common/COMMON-CLI.md") {
 		t.Errorf("common links point somewhere unexpected:\n%s", skill)
 	}
-	commonDoc := filepath.Join(project, ".fabkit", "powerbi-authoring", "skills", "_fabkit-common", "COMMON-CLI.md")
+	commonDoc := filepath.Join(project, ".dashkit", "powerbi-authoring", "skills", "_dashkit-common", "COMMON-CLI.md")
 	if _, err := os.Stat(commonDoc); err != nil {
 		t.Errorf("shared docs missing where the rewritten link points: %v", err)
 	}
@@ -184,7 +184,7 @@ func TestInstallProjectScopeWritesEveryHostFormat(t *testing.T) {
 		t.Errorf("Gemini settings must declare mcpServers:\n%s", geminiSettings)
 	}
 	geminiContext := read(t, filepath.Join(project, "GEMINI.md"))
-	if !strings.Contains(geminiContext, "<!-- fabkit:start:powerbi-authoring -->") {
+	if !strings.Contains(geminiContext, "<!-- dashkit:start:powerbi-authoring -->") {
 		t.Errorf("GEMINI.md has no managed block:\n%s", geminiContext)
 	}
 }
@@ -226,7 +226,7 @@ func TestUninstallRestoresTheProject(t *testing.T) {
 		t.Fatal("install changed nothing")
 	}
 
-	if err := Uninstall("", "", false, io.Discard); err != nil {
+	if err := Uninstall("", "", false, io.Discard, func(string) bool { return false }); err != nil {
 		t.Fatal(err)
 	}
 	if got := hashTree(t, project); got != before {

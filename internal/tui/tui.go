@@ -13,12 +13,16 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/leonsang/fabkit/internal/catalog"
-	"github.com/leonsang/fabkit/internal/install"
-	"github.com/leonsang/fabkit/internal/plan"
-	"github.com/leonsang/fabkit/internal/prereq"
-	"github.com/leonsang/fabkit/internal/targets"
+	"github.com/leonsang/dashkit/internal/catalog"
+	"github.com/leonsang/dashkit/internal/install"
+	"github.com/leonsang/dashkit/internal/plan"
+	"github.com/leonsang/dashkit/internal/prereq"
+	"github.com/leonsang/dashkit/internal/targets"
 )
+
+// scopes is the order the wizard offers them in: project first, because it is
+// the default and the one that keeps skills out of unrelated sessions.
+var scopes = []targets.Scope{targets.Project, targets.Global}
 
 type step int
 
@@ -81,7 +85,7 @@ func newModel(ctx context.Context, version string) *model {
 		bundles:    catalog.Bundles(),
 		bundlePick: map[int]bool{0: true}, // Power BI, the common case
 		toolPick:   map[int]bool{},
-		scope:      targets.Global,
+		scope:      targets.Project,
 		mcp:        true,
 		prereqs:    true,
 		hostPlugin: true,
@@ -165,7 +169,7 @@ func (m *model) toggle() {
 	case stepTargets:
 		m.toolPick[m.cursor] = !m.toolPick[m.cursor]
 	case stepScope:
-		m.scope = []targets.Scope{targets.Global, targets.Project}[m.cursor]
+		m.scope = scopes[m.cursor]
 	case stepOptions:
 		switch m.cursor {
 		case 0:
@@ -183,7 +187,7 @@ func (m *model) toggle() {
 func (m *model) advance() (tea.Model, tea.Cmd) {
 	switch m.step {
 	case stepScope:
-		m.scope = []targets.Scope{targets.Global, targets.Project}[m.cursor]
+		m.scope = scopes[m.cursor]
 	case stepReview:
 		m.step = stepRunning
 		return m, tea.Batch(m.start(), waitFor(m.events))
@@ -286,16 +290,26 @@ func (m *model) View() string {
 	}
 	var b strings.Builder
 	fmt.Fprintf(&b, "%s %s\n%s\n\n",
-		titleStyle.Render("fabkit"),
+		titleStyle.Render("dashkit"),
 		dimStyle.Render(m.version),
-		dimStyle.Render("Microsoft Fabric & Power BI skills for your AI tools"))
+		dimStyle.Render("Power BI & Fabric skills, set up right for your AI tools"))
 
 	switch m.step {
 	case stepBundles:
 		b.WriteString(titleStyle.Render("1/5  Which skills?") + "\n\n")
 		for i, bundle := range m.bundles {
+			if i > 0 && bundle.IsMarketplace() && !m.bundles[i-1].IsMarketplace() {
+				b.WriteString("\n" + dimStyle.Render("  from data-goblin · installed through your tool's own plugin manager") + "\n")
+			}
+			detail := fmt.Sprintf("%d skills", len(bundle.Skills))
+			if len(bundle.Hooks) > 0 {
+				detail += " · guardrails"
+			}
 			fmt.Fprintf(&b, "%s\n", m.checkbox(i, m.bundlePick[i],
-				fmt.Sprintf("%-22s %s", bundle.Title, dimStyle.Render(fmt.Sprintf("%d skills", len(bundle.Skills))))))
+				fmt.Sprintf("%-24s %s", bundle.Title, dimStyle.Render(detail))))
+		}
+		if warning := install.ContextWarning(m.request().Bundles, m.scope); warning != "" {
+			b.WriteString("\n  " + warnStyle.Render(wrap(warning, 76)) + "\n")
 		}
 	case stepTargets:
 		b.WriteString(titleStyle.Render("2/5  Which AI tools?") + "\n\n")
@@ -316,11 +330,11 @@ func (m *model) View() string {
 		b.WriteString(titleStyle.Render("3/5  Where?") + "\n\n")
 		cwd, _ := os.Getwd()
 		labels := []string{
-			"Global — your user config, available in every project",
 			"This project — " + cwd,
+			"Global — your user config, loaded in every session on this machine",
 		}
 		for i, label := range labels {
-			fmt.Fprintf(&b, "%s\n", m.radio(i, m.scope == []targets.Scope{targets.Global, targets.Project}[i], label))
+			fmt.Fprintf(&b, "%s\n", m.radio(i, m.scope == scopes[i], label))
 		}
 	case stepOptions:
 		b.WriteString(titleStyle.Render("4/5  Options") + "\n\n")
@@ -380,29 +394,56 @@ func (m *model) reviewBody() string {
 		fmt.Fprintf(&b, "  %s -> %s (%d changes)\n", s.Bundle.Title, s.Target.Title(), len(s.Plan))
 		actions += len(s.Plan)
 		for _, a := range s.Plan {
-			if run, ok := a.(plan.Run); ok {
+			switch a.(type) {
+			case plan.Run, plan.PluginInstall:
 				commands++
-				fmt.Fprintf(&b, "      %s\n", warnStyle.Render(run.Describe()))
+				fmt.Fprintf(&b, "      %s\n", warnStyle.Render(a.Describe()))
 			}
 		}
 	}
 
 	if m.prereqs {
-		if blocking := prereq.Blocking(m.built.Prereqs); len(blocking) > 0 {
+		if unmet := prereq.Unmet(m.built.Prereqs); len(unmet) > 0 {
 			b.WriteString("\n  Prerequisites to install first:\n")
-			for _, r := range blocking {
+			for _, r := range unmet {
 				if len(r.Fix) > 0 {
 					fmt.Fprintf(&b, "      %s\n", warnStyle.Render(strings.Join(r.Fix, " ")))
 					continue
 				}
-				fmt.Fprintf(&b, "      %s %s\n", r.Title, dimStyle.Render("(no automatic installer — "+r.Manual+")"))
+				fmt.Fprintf(&b, "      %s %s\n", r.Title, dimStyle.Render("(not installed automatically — "+r.Manual+")"))
 			}
 		}
+	}
+
+	if warning := install.ContextWarning(m.request().Bundles, m.scope); warning != "" {
+		fmt.Fprintf(&b, "\n  %s\n", warnStyle.Render(wrap(warning, 74)))
 	}
 
 	fmt.Fprintf(&b, "\n  %s\n", dimStyle.Render(fmt.Sprintf(
 		"%d file changes, %d commands. Every file touched is backed up first.", actions-commands, commands)))
 	return b.String()
+}
+
+// wrap breaks a long line at word boundaries for the terminal, indenting the
+// continuation lines to sit under the first.
+func wrap(text string, width int) string {
+	var lines []string
+	line := ""
+	for _, word := range strings.Fields(text) {
+		if line != "" && len(line)+1+len(word) > width {
+			lines = append(lines, line)
+			line = word
+			continue
+		}
+		if line != "" {
+			line += " "
+		}
+		line += word
+	}
+	if line != "" {
+		lines = append(lines, line)
+	}
+	return strings.Join(lines, "\n  ")
 }
 
 func (m *model) checkbox(i int, on bool, label string) string {

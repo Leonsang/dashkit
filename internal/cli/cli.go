@@ -9,11 +9,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/leonsang/fabkit/internal/catalog"
-	"github.com/leonsang/fabkit/internal/home"
-	"github.com/leonsang/fabkit/internal/install"
-	"github.com/leonsang/fabkit/internal/targets"
-	"github.com/leonsang/fabkit/internal/tui"
+	"github.com/leonsang/dashkit/internal/catalog"
+	"github.com/leonsang/dashkit/internal/home"
+	"github.com/leonsang/dashkit/internal/install"
+	"github.com/leonsang/dashkit/internal/targets"
+	"github.com/leonsang/dashkit/internal/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -26,7 +26,7 @@ func Execute(version string) error {
 	var g globalFlags
 
 	root := &cobra.Command{
-		Use:           "fabkit",
+		Use:           "dashkit",
 		Short:         "Install Microsoft Fabric and Power BI skills into your AI coding tools",
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -40,7 +40,7 @@ func Execute(version string) error {
 			return tui.Run(cmd.Context(), version)
 		},
 	}
-	root.PersistentFlags().StringVar(&g.home, "home", "", "override the fabkit home directory (default ~/.fabkit, or $FABKIT_HOME)")
+	root.PersistentFlags().StringVar(&g.home, "home", "", "override the dashkit home directory (default ~/.dashkit, or $DASHKIT_HOME)")
 
 	root.AddCommand(installCmd(), doctorCmd(), listCmd(), updateCmd(), uninstallCmd())
 	return root.ExecuteContext(context.Background())
@@ -69,14 +69,28 @@ func installCmd() *cobra.Command {
 		Use:   "install",
 		Short: "Install one or more bundles into one or more AI tools",
 		Example: strings.TrimSpace(`
-  fabkit install --bundle powerbi-authoring --agents detected
-  fabkit install --bundle all --agents claude,cursor --scope project --yes
-  fabkit install --bundle fabric-skills --agents all --dry-run`),
+  dashkit install --bundle powerbi-authoring,goblin-pbip --agents detected
+  dashkit install --bundle powerbi-authoring --agents claude,cursor --with-prereqs
+  dashkit install --bundle fabric-consumption --agents claude --scope global --dry-run`),
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			req, err := buildRequest(f)
 			if err != nil {
 				return err
 			}
+
+			// Every installed skill competes for the agent's attention in every
+			// session its scope covers. "all" is the one choice that almost always
+			// overdoes it, so it has to be asked for twice.
+			if warning := install.ContextWarning(req.Bundles, req.Scope); warning != "" {
+				fmt.Fprintf(os.Stderr, "warning: %s\n", warning)
+			}
+			if isAll(f.bundles) && !f.yes && !f.dryRun {
+				question := fmt.Sprintf("install all %d bundles (%d skills)", len(req.Bundles), install.SkillCount(req.Bundles))
+				if !ask(question) {
+					return fmt.Errorf("cancelled; pick bundles with --bundle, or pass --yes to install everything")
+				}
+			}
+
 			built, err := install.Build(cmd.Context(), req)
 			if err != nil {
 				return err
@@ -93,7 +107,7 @@ func installCmd() *cobra.Command {
 
 	cmd.Flags().StringSliceVarP(&f.bundles, "bundle", "b", []string{"powerbi-authoring"}, "bundle ids, or \"all\"")
 	cmd.Flags().StringSliceVarP(&f.agents, "agents", "a", []string{"detected"}, "target ids, \"detected\", or \"all\"")
-	cmd.Flags().StringVar(&f.scope, "scope", "global", "install into the user config (global) or one project (project)")
+	cmd.Flags().StringVar(&f.scope, "scope", "project", "install into this project (project) or your user config, loaded in every session (global)")
 	cmd.Flags().StringVar(&f.project, "project", ".", "project directory when --scope project")
 	cmd.Flags().BoolVar(&f.mcp, "mcp", true, "register the bundle's MCP servers")
 	cmd.Flags().BoolVar(&f.prereqs, "with-prereqs", false, "install missing prerequisites (Node, Azure CLI, Power BI CLIs)")
@@ -158,19 +172,26 @@ func buildRequest(f installFlags) (install.Request, error) {
 	}, nil
 }
 
+func isAll(ids []string) bool { return len(ids) == 1 && ids[0] == "all" }
+
+var stdin = bufio.NewReader(os.Stdin)
+
+// ask puts a yes/no question on the terminal. Anything but yes is no, including
+// a closed stdin, so an unattended run never agrees to something by accident.
+func ask(question string) bool {
+	fmt.Printf("    %s? [y/N] ", question)
+	line, err := stdin.ReadString('\n')
+	if err != nil {
+		return false
+	}
+	answer := strings.ToLower(strings.TrimSpace(line))
+	return answer == "y" || answer == "yes"
+}
+
 // confirmer asks on the terminal before a command runs, unless --yes.
 func confirmer(assumeYes bool) func(string) bool {
 	if assumeYes {
 		return func(string) bool { return true }
 	}
-	reader := bufio.NewReader(os.Stdin)
-	return func(command string) bool {
-		fmt.Printf("    run `%s`? [y/N] ", command)
-		line, err := reader.ReadString('\n')
-		if err != nil {
-			return false
-		}
-		answer := strings.ToLower(strings.TrimSpace(line))
-		return answer == "y" || answer == "yes"
-	}
+	return func(command string) bool { return ask(fmt.Sprintf("run `%s`", command)) }
 }

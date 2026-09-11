@@ -1,5 +1,5 @@
-// Package state records what fabkit wrote and where, so `fabkit uninstall`
-// removes exactly what it created and nothing else, and `fabkit update` knows
+// Package state records what dashkit wrote and where, so `dashkit uninstall`
+// removes exactly what it created and nothing else, and `dashkit update` knows
 // which bundle/target pairs to refresh.
 package state
 
@@ -12,18 +12,18 @@ import (
 	"sort"
 	"time"
 
-	"github.com/leonsang/fabkit/internal/home"
+	"github.com/leonsang/dashkit/internal/home"
 )
 
 const schemaVersion = 1
 
-// EditKind names the kind of surgical change made to a file fabkit does not own.
+// EditKind names the kind of surgical change made to a file dashkit does not own.
 type EditKind string
 
 const (
 	EditJSONKey  EditKind = "json-key" // a key added under a JSON path
 	EditTOMLKey  EditKind = "toml-key" // a table added to a TOML file
-	EditMarkdown EditKind = "md-block" // a managed <!-- fabkit:... --> block
+	EditMarkdown EditKind = "md-block" // a managed <!-- dashkit:... --> block
 )
 
 // Edit is a reversible change inside a file owned by someone else.
@@ -31,7 +31,7 @@ type Edit struct {
 	Kind EditKind `json:"kind"`
 	Path string   `json:"path"`
 	// Locator is the JSON path ("mcpServers.powerbi-modeling-mcp"), TOML table
-	// ("mcp_servers.FabricIQ") or markdown block id that fabkit added.
+	// ("mcp_servers.FabricIQ") or markdown block id that dashkit added.
 	Locator string `json:"locator"`
 }
 
@@ -44,12 +44,33 @@ type Install struct {
 	Ref       string    `json:"ref"`
 	Version   string    `json:"version"`
 	At        time.Time `json:"at"`
-	// Owned paths were created wholly by fabkit and are safe to delete.
+	// Owned paths were created wholly by dashkit and are safe to delete.
 	Owned []string `json:"owned"`
 	// Edits are changes inside pre-existing files.
 	Edits []Edit `json:"edits"`
+	// Plugins were installed through a host's own plugin manager; uninstall asks
+	// that host to remove them rather than deleting files it does not own.
+	Plugins []Plugin `json:"plugins,omitempty"`
 	// BackupDir is where the pre-install copies of edited files live.
 	BackupDir string `json:"backupDir,omitempty"`
+}
+
+// Plugin is one plugin handed to a host's plugin manager.
+type Plugin struct {
+	Host        string `json:"host"`
+	Bin         string `json:"bin"`
+	Ref         string `json:"ref"` // plugin@marketplace
+	Marketplace string `json:"marketplace,omitempty"`
+	Scope       string `json:"scope,omitempty"`
+	Dir         string `json:"dir,omitempty"`
+	// OwnsMarketplace is true when dashkit declared the marketplace itself: it
+	// was not declared in this scope before. Only then may uninstall remove it.
+	OwnsMarketplace bool `json:"ownsMarketplace,omitempty"`
+}
+
+// SameMarketplace reports whether two plugins rely on one declaration.
+func (p Plugin) SameMarketplace(o Plugin) bool {
+	return p.Host == o.Host && p.Marketplace == o.Marketplace && p.Scope == o.Scope && p.Dir == o.Dir
 }
 
 // Key identifies an install slot: re-running the same bundle/target/scope

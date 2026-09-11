@@ -10,11 +10,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/leonsang/fabkit/internal/catalog"
-	"github.com/leonsang/fabkit/internal/home"
-	"github.com/leonsang/fabkit/internal/plan"
-	"github.com/leonsang/fabkit/internal/skillmeta"
-	"github.com/leonsang/fabkit/internal/source"
+	"github.com/leonsang/dashkit/internal/catalog"
+	"github.com/leonsang/dashkit/internal/home"
+	"github.com/leonsang/dashkit/internal/plan"
+	"github.com/leonsang/dashkit/internal/skillmeta"
+	"github.com/leonsang/dashkit/internal/source"
 )
 
 // Scope decides whether an install lands in the user's global tool config or in
@@ -34,11 +34,11 @@ type Options struct {
 	// MCP registers the bundle's MCP servers in the host's config.
 	MCP bool
 	// PreferHostPlugin lets a host that ships its own plugin manager install the
-	// upstream bundle natively instead of fabkit copying files around.
+	// upstream bundle natively instead of dashkit copying files around.
 	PreferHostPlugin bool
 }
 
-// Detection is what fabkit could learn about a tool on this machine.
+// Detection is what dashkit could learn about a tool on this machine.
 type Detection struct {
 	Found bool
 	// Where is the config directory or binary that proved it.
@@ -47,11 +47,11 @@ type Detection struct {
 	Note string
 }
 
-// Target is one AI coding tool fabkit can install into.
+// Target is one AI coding tool dashkit can install into.
 type Target interface {
 	ID() string
 	Title() string
-	// Experimental marks targets whose config layout fabkit has not verified
+	// Experimental marks targets whose config layout dashkit has not verified
 	// against that tool's current documentation.
 	Experimental() bool
 	Detect() Detection
@@ -59,6 +59,13 @@ type Target interface {
 	Plan(b catalog.Bundle, opts Options) (plan.Plan, error)
 	// Hint is the one-line "what to do next" shown after a successful install.
 	Hint(opts Options) string
+}
+
+// MarketplacePlanner is implemented by targets whose host has its own plugin
+// manager. Only those can take a marketplace bundle: dashkit never copies a
+// marketplace bundle's files, so a host without a plugin manager has no way in.
+type MarketplacePlanner interface {
+	PlanMarketplace(b catalog.Bundle, opts Options) (plan.Plan, error)
 }
 
 var registry []Target
@@ -85,7 +92,7 @@ func Find(id string) (Target, error) {
 			return t, nil
 		}
 	}
-	return nil, fmt.Errorf("unknown target %q (try `fabkit list --targets`)", id)
+	return nil, fmt.Errorf("unknown target %q (try `dashkit list --targets`)", id)
 }
 
 // Resolve expands user input: "all" means every non-experimental target,
@@ -134,9 +141,9 @@ func Resolve(ids []string) ([]Target, error) {
 
 // commonDirName is the sibling directory holding a bundle's shared reference
 // docs when skills are installed into a host's own skills folder.
-const commonDirName = "_fabkit-common"
+const commonDirName = "_dashkit-common"
 
-// userPath builds a path under the user's home (redirected by FABKIT_HOME in tests).
+// userPath builds a path under the user's home (redirected by DASHKIT_HOME in tests).
 func userPath(parts ...string) string {
 	return filepath.Join(append([]string{home.User()}, parts...)...)
 }
@@ -148,7 +155,7 @@ func exists(path string) bool {
 }
 
 // rewriteCommon repoints the upstream `../../common/X.md` links (relative to
-// skills/<name>/SKILL.md) at wherever fabkit actually put the common docs.
+// skills/<name>/SKILL.md) at wherever dashkit actually put the common docs.
 func rewriteCommon(prefix string) func(rel string, data []byte) []byte {
 	return func(_ string, data []byte) []byte {
 		return []byte(strings.ReplaceAll(string(data), "../../common/", prefix))
@@ -156,7 +163,7 @@ func rewriteCommon(prefix string) func(rel string, data []byte) []byte {
 }
 
 // skillsIntoDir copies each of the bundle's skills into dir/<skill>/ and the
-// shared docs into dir/_fabkit-common/, which is the layout every host with a
+// shared docs into dir/_dashkit-common/, which is the layout every host with a
 // real skill loader expects.
 func skillsIntoDir(b catalog.Bundle, opts Options, dir string) (plan.Plan, error) {
 	var p plan.Plan
@@ -182,11 +189,11 @@ func skillsIntoDir(b catalog.Bundle, opts Options, dir string) (plan.Plan, error
 	return p, nil
 }
 
-// vendorRoot is where fabkit keeps a full bundle copy for hosts that read files
+// vendorRoot is where dashkit keeps a full bundle copy for hosts that read files
 // by path rather than loading skills themselves.
 func vendorRoot(b catalog.Bundle, opts Options) string {
 	if opts.Scope == Project {
-		return filepath.Join(opts.ProjectDir, ".fabkit", b.ID)
+		return filepath.Join(opts.ProjectDir, ".dashkit", b.ID)
 	}
 	return filepath.Join(home.Skills(), b.ID)
 }
@@ -242,7 +249,7 @@ type entry struct {
 // the agent which skills exist and where to read the full instructions.
 func routerBody(b catalog.Bundle, entries []entry, opts Options) string {
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "# %s (installed by fabkit)\n\n", b.Title)
+	fmt.Fprintf(&sb, "# %s (installed by dashkit)\n\n", b.Title)
 	fmt.Fprintf(&sb, "%s\n\n", b.Description)
 	sb.WriteString("These skills are reference instructions on disk. When a request matches one of\n")
 	sb.WriteString("the descriptions below, read that file in full before answering, and follow it.\n\n")

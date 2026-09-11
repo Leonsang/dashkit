@@ -5,9 +5,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/leonsang/fabkit/internal/catalog"
-	"github.com/leonsang/fabkit/internal/plan"
-	"github.com/leonsang/fabkit/internal/skillmeta"
+	"github.com/leonsang/dashkit/internal/catalog"
+	"github.com/leonsang/dashkit/internal/confmerge"
+	"github.com/leonsang/dashkit/internal/plan"
+	"github.com/leonsang/dashkit/internal/skillmeta"
 )
 
 func init() { register(claudeCode{}) }
@@ -39,22 +40,63 @@ func (claudeCode) Hint(opts Options) string {
 	return "restart Claude Code, then run /skills"
 }
 
+// claudePlugin installs through `claude plugin`, which has user and project
+// scopes of its own — so a project install stays in the project's
+// .claude/settings.json instead of loading in every session everywhere.
+func claudePlugin(bin, repo, marketplace, plugin string, opts Options) plan.PluginInstall {
+	scope, dir := "user", ""
+	settings := userPath(".claude", "settings.json")
+	if opts.Scope == Project {
+		scope, dir = "project", opts.ProjectDir
+		settings = filepath.Join(opts.ProjectDir, ".claude", "settings.json")
+	}
+	return plan.PluginInstall{
+		Host: "claude", Bin: bin,
+		MarketplaceRepo: repo, Marketplace: marketplace, Plugin: plugin,
+		Scope: scope, Dir: dir, AssumeYes: true,
+		Declared: func() bool { return marketplaceDeclared(settings, marketplace) },
+	}
+}
+
+// marketplaceDeclared reports whether a Claude Code settings file already
+// declares the marketplace. `claude plugin marketplace list` merges every scope
+// together, so the settings file of the scope in question is the only place
+// that can answer "was this here before?".
+func marketplaceDeclared(settings, name string) bool {
+	data, err := os.ReadFile(settings)
+	if err != nil {
+		return false
+	}
+	obj, err := confmerge.ParseJSONObject(data)
+	if err != nil {
+		// Unreadable settings: assume it was there, so nothing gets removed.
+		return true
+	}
+	known, err := obj.Child("extraKnownMarketplaces")
+	if err != nil {
+		return true
+	}
+	_, ok := known.Get(name)
+	return ok
+}
+
+// PlanMarketplace installs a third-party plugin through Claude Code itself.
+func (claudeCode) PlanMarketplace(b catalog.Bundle, opts Options) (plan.Plan, error) {
+	bin := binaryOnPath("claude")
+	if bin == "" {
+		return nil, fmt.Errorf("%s installs through the claude CLI, which is not on PATH", b.Title)
+	}
+	m := b.Marketplace
+	return plan.Plan{claudePlugin(bin, m.Repo, m.Name, m.Plugin, opts)}, nil
+}
+
 func (claudeCode) Plan(b catalog.Bundle, opts Options) (plan.Plan, error) {
 	// Claude Code can install the upstream bundle through its own plugin
 	// marketplace. Where that is available it beats copying files, because
 	// updates then flow through `claude plugin update`.
 	if opts.PreferHostPlugin {
 		if bin := binaryOnPath("claude"); bin != "" {
-			return plan.Plan{
-				plan.Run{
-					Name: bin, Args: []string{"plugin", "marketplace", "add", "microsoft/skills-for-fabric"},
-					Why: "register the upstream marketplace",
-				},
-				plan.Run{
-					Name: bin, Args: []string{"plugin", "install", b.ID + "@fabric-collection"},
-					Why: "install " + b.Title + " as a Claude Code plugin",
-				},
-			}, nil
+			return plan.Plan{claudePlugin(bin, "microsoft/skills-for-fabric", "fabric-collection", b.ID, opts)}, nil
 		}
 	}
 

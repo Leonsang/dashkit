@@ -36,19 +36,19 @@ jobs:
 
       # A real end-to-end run against the actual upstream skills tree, on all
       # three operating systems: this is what proves the macOS path handling,
-      # not just that the code compiles for darwin. fabkit downloads and unpacks
+      # not just that the code compiles for darwin. dashkit downloads and unpacks
       # the pinned upstream tag itself, so this also exercises the fetch and tar
       # extraction on each platform.
       - name: end-to-end install into a throwaway home
         shell: bash
         run: |
           set -euo pipefail
-          home="$RUNNER_TEMP/fabkit-home"
+          home="$RUNNER_TEMP/dashkit-home"
           proj="$RUNNER_TEMP/project"
           mkdir -p "$proj"
           printf '# Project\n\nMy notes.\n' > "$proj/AGENTS.md"
 
-          go run ./cmd/fabkit install \
+          go run ./cmd/dashkit install \
             --bundle powerbi-authoring \
             --agents cursor,vscode-copilot,codex,gemini \
             --scope project --project "$proj" \
@@ -56,23 +56,23 @@ jobs:
             --skip-prereq-check \
             --host-plugin=false
 
-          test -f "$proj/.cursor/rules/fabkit-powerbi-authoring.mdc"
-          test -f "$proj/.github/instructions/fabkit-powerbi-authoring.instructions.md"
-          test -f "$proj/.fabkit/powerbi-authoring/skills/powerbi-report-authoring/SKILL.md"
+          test -f "$proj/.cursor/rules/dashkit-powerbi-authoring.mdc"
+          test -f "$proj/.github/instructions/dashkit-powerbi-authoring.instructions.md"
+          test -f "$proj/.dashkit/powerbi-authoring/skills/powerbi-report-authoring/SKILL.md"
           grep -q '\[mcp_servers.powerbi-modeling-mcp\]' "$proj/.codex/config.toml"
           grep -q 'mcpServers' "$proj/.gemini/settings.json"
-          grep -q 'fabkit:start:powerbi-authoring' "$proj/AGENTS.md"
+          grep -q 'dashkit:start:powerbi-authoring' "$proj/AGENTS.md"
           grep -q 'My notes.' "$proj/AGENTS.md"
-          ! grep -rq '\.\./\.\./common/' "$proj/.fabkit"
+          ! grep -rq '\.\./\.\./common/' "$proj/.dashkit"
 
-          go run ./cmd/fabkit uninstall --home "$home"
-          test ! -d "$proj/.fabkit/powerbi-authoring/skills/powerbi-report-authoring"
+          go run ./cmd/dashkit uninstall --home "$home"
+          test ! -d "$proj/.dashkit/powerbi-authoring/skills/powerbi-report-authoring"
           grep -q 'My notes.' "$proj/AGENTS.md"
-          ! grep -q 'fabkit:start' "$proj/AGENTS.md"
+          ! grep -q 'dashkit:start' "$proj/AGENTS.md"
 
       - name: doctor runs and reports
         shell: bash
-        run: go run ./cmd/fabkit doctor --home "$RUNNER_TEMP/fabkit-home" || true
+        run: go run ./cmd/dashkit doctor --home "$RUNNER_TEMP/dashkit-home" || true
 
   installers:
     name: installer scripts

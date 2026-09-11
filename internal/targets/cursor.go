@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/leonsang/fabkit/internal/catalog"
-	"github.com/leonsang/fabkit/internal/plan"
+	"github.com/leonsang/dashkit/internal/catalog"
+	"github.com/leonsang/dashkit/internal/plan"
 )
 
 func init() {
@@ -25,7 +25,7 @@ func (cursor) Title() string      { return "Cursor" }
 func (cursor) Experimental() bool { return false }
 
 // Cursor's rules live per project; the global equivalent is free-text user rules
-// in the UI, which fabkit will not edit on someone's behalf.
+// in the UI, which dashkit will not edit on someone's behalf.
 func (cursor) SupportsScope(s Scope) bool { return s == Project }
 
 func (cursor) Detect() Detection {
@@ -56,7 +56,7 @@ func (cursor) Plan(b catalog.Bundle, opts Options) (plan.Plan, error) {
 		"---\n\n"
 
 	p = append(p, plan.WriteFile{
-		Path: filepath.Join(opts.ProjectDir, ".cursor", "rules", "fabkit-"+b.ID+".mdc"),
+		Path: filepath.Join(opts.ProjectDir, ".cursor", "rules", "dashkit-"+b.ID+".mdc"),
 		Data: []byte(front + routerBody(b, entries, opts)),
 		What: "Cursor rule",
 	})
@@ -102,7 +102,7 @@ func (windsurf) Plan(b catalog.Bundle, opts Options) (plan.Plan, error) {
 	}
 	front := "---\ntrigger: always_on\n---\n\n"
 	p = append(p, plan.WriteFile{
-		Path: filepath.Join(opts.ProjectDir, ".windsurf", "rules", "fabkit-"+b.ID+".md"),
+		Path: filepath.Join(opts.ProjectDir, ".windsurf", "rules", "dashkit-"+b.ID+".md"),
 		Data: []byte(front + routerBody(b, entries, opts)),
 		What: "Windsurf rule",
 	})

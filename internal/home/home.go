@@ -1,4 +1,4 @@
-// Package home resolves the directories fabkit owns. Every path fabkit reads or
+// Package home resolves the directories dashkit owns. Every path dashkit reads or
 // writes for its own bookkeeping goes through here so tests (and the --home
 // flag) can redirect the whole tree somewhere disposable.
 package home
@@ -14,14 +14,14 @@ var (
 	override string
 )
 
-// SetRoot overrides the fabkit home for this process. Empty restores the default.
+// SetRoot overrides the dashkit home for this process. Empty restores the default.
 func SetRoot(dir string) {
 	mu.Lock()
 	defer mu.Unlock()
 	override = dir
 }
 
-// Root is ~/.fabkit, or $FABKIT_HOME, or whatever SetRoot was given.
+// Root is ~/.dashkit, or $DASHKIT_HOME, or whatever SetRoot was given.
 func Root() string {
 	mu.RLock()
 	o := override
@@ -29,24 +29,24 @@ func Root() string {
 	if o != "" {
 		return o
 	}
-	if env := os.Getenv("FABKIT_HOME"); env != "" {
+	if env := os.Getenv("DASHKIT_HOME"); env != "" {
 		return env
 	}
 	h, err := os.UserHomeDir()
 	if err != nil {
-		// Nowhere better to go; a relative dir still keeps fabkit self-contained.
-		return ".fabkit"
+		// Nowhere better to go; a relative dir still keeps dashkit self-contained.
+		return ".dashkit"
 	}
-	return filepath.Join(h, ".fabkit")
+	return filepath.Join(h, ".dashkit")
 }
 
-// User is the user's home directory, or the fabkit root's parent when a test
+// User is the user's home directory, or the dashkit root's parent when a test
 // home is in effect, so target paths like ~/.claude stay inside the sandbox.
 func User() string {
 	mu.RLock()
 	o := override
 	mu.RUnlock()
-	if o == "" && os.Getenv("FABKIT_HOME") == "" {
+	if o == "" && os.Getenv("DASHKIT_HOME") == "" {
 		h, err := os.UserHomeDir()
 		if err == nil {
 			return h
@@ -55,14 +55,14 @@ func User() string {
 	return Root()
 }
 
-// Sandboxed reports whether fabkit is running against a redirected home. Targets
+// Sandboxed reports whether dashkit is running against a redirected home. Targets
 // use it to decide whether a host's own environment override (CODEX_HOME and
 // friends) should be honoured: inside a sandbox it must not be, or a test would
 // write into the developer's real config.
 func Sandboxed() bool {
 	mu.RLock()
 	defer mu.RUnlock()
-	return override != "" || os.Getenv("FABKIT_HOME") != ""
+	return override != "" || os.Getenv("DASHKIT_HOME") != ""
 }
 
 func Cache() string   { return filepath.Join(Root(), "cache") }
@@ -71,6 +71,6 @@ func StateFile() string {
 	return filepath.Join(Root(), "state.json")
 }
 
-// Skills is where fabkit vendors bundle content that hosts read by path rather
+// Skills is where dashkit vendors bundle content that hosts read by path rather
 // than by their own skill loader.
 func Skills() string { return filepath.Join(Root(), "skills") }

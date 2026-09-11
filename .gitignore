@@ -1,5 +1,5 @@
 dist/
-/fabkit
-/fabkit.exe
+/dashkit
+/dashkit.exe
 *.test
 .DS_Store

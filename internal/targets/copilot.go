@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/leonsang/fabkit/internal/catalog"
-	"github.com/leonsang/fabkit/internal/plan"
+	"github.com/leonsang/dashkit/internal/catalog"
+	"github.com/leonsang/dashkit/internal/plan"
 )
 
 func init() {
@@ -38,18 +38,32 @@ func (copilotCLI) Hint(Options) string {
 	return "open `copilot` and ask for a Fabric task; run `/plugin` to confirm the bundle"
 }
 
+// copilotPlugin installs through `copilot plugin`, which has no scopes: plugins
+// are per user. Callers only use it for global installs, so a project install
+// never quietly turns into a user-wide one.
+func copilotPlugin(bin, repo, marketplace, plugin string) plan.PluginInstall {
+	return plan.PluginInstall{
+		Host: "copilot-cli", Bin: bin,
+		MarketplaceRepo: repo, Marketplace: marketplace, Plugin: plugin,
+	}
+}
+
+// PlanMarketplace installs a third-party plugin through Copilot CLI itself.
+func (copilotCLI) PlanMarketplace(b catalog.Bundle, opts Options) (plan.Plan, error) {
+	if opts.Scope == Project {
+		return nil, fmt.Errorf("Copilot CLI installs plugins per user, not per project; re-run with --scope global to add %s there", b.Title)
+	}
+	bin := binaryOnPath("copilot")
+	if bin == "" {
+		return nil, fmt.Errorf("%s installs through the copilot CLI, which is not on PATH", b.Title)
+	}
+	m := b.Marketplace
+	return plan.Plan{copilotPlugin(bin, m.Repo, m.Name, m.Plugin)}, nil
+}
+
 func (copilotCLI) Plan(b catalog.Bundle, opts Options) (plan.Plan, error) {
-	if bin := binaryOnPath("copilot"); bin != "" && opts.PreferHostPlugin {
-		return plan.Plan{
-			plan.Run{
-				Name: bin, Args: []string{"plugin", "marketplace", "add", "microsoft/skills-for-fabric"},
-				Why: "register the upstream marketplace",
-			},
-			plan.Run{
-				Name: bin, Args: []string{"plugin", "install", b.ID + "@fabric-collection"},
-				Why: "install " + b.Title + " as a Copilot CLI plugin",
-			},
-		}, nil
+	if bin := binaryOnPath("copilot"); bin != "" && opts.PreferHostPlugin && opts.Scope == Global {
+		return plan.Plan{copilotPlugin(bin, "microsoft/skills-for-fabric", "fabric-collection", b.ID)}, nil
 	}
 
 	// Without the CLI (or with the plugin path declined) fall back to vendored
@@ -58,9 +72,9 @@ func (copilotCLI) Plan(b catalog.Bundle, opts Options) (plan.Plan, error) {
 	if err != nil {
 		return nil, err
 	}
-	router := filepath.Join(userPath(".copilot", "instructions"), "fabkit-"+b.ID+".md")
+	router := filepath.Join(userPath(".copilot", "instructions"), "dashkit-"+b.ID+".md")
 	if opts.Scope == Project {
-		router = filepath.Join(opts.ProjectDir, ".github", "instructions", "fabkit-"+b.ID+".instructions.md")
+		router = filepath.Join(opts.ProjectDir, ".github", "instructions", "dashkit-"+b.ID+".instructions.md")
 	}
 	p = append(p, plan.WriteFile{
 		Path: router,
@@ -82,7 +96,7 @@ func (copilotVSCode) Title() string      { return "GitHub Copilot (VS Code)" }
 func (copilotVSCode) Experimental() bool { return false }
 
 // VS Code customisation is per-workspace; a global install has nowhere sensible
-// to go, so fabkit keeps this target project-scoped.
+// to go, so dashkit keeps this target project-scoped.
 func (copilotVSCode) SupportsScope(s Scope) bool { return s == Project }
 
 func (copilotVSCode) Detect() Detection {
@@ -112,7 +126,7 @@ func (copilotVSCode) Plan(b catalog.Bundle, opts Options) (plan.Plan, error) {
 		return nil, err
 	}
 	p = append(p, plan.WriteFile{
-		Path: filepath.Join(opts.ProjectDir, ".github", "instructions", "fabkit-"+b.ID+".instructions.md"),
+		Path: filepath.Join(opts.ProjectDir, ".github", "instructions", "dashkit-"+b.ID+".instructions.md"),
 		Data: []byte(instructionsFrontMatter(opts) + routerBody(b, entries, opts)),
 		What: "VS Code Copilot instructions",
 	})

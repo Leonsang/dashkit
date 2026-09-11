@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// fabkit only ever adds whole tables to a TOML file (Codex's config.toml), so it
+// dashkit only ever adds whole tables to a TOML file (Codex's config.toml), so it
 // edits the text directly instead of round-tripping through a parser. That keeps
 // the user's comments, ordering and formatting untouched.
 

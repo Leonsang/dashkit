@@ -5,11 +5,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/leonsang/fabkit/internal/confmerge"
-	"github.com/leonsang/fabkit/internal/state"
+	"github.com/leonsang/dashkit/internal/confmerge"
+	"github.com/leonsang/dashkit/internal/state"
 )
 
-// revert undoes one surgical edit inside a file fabkit does not own, leaving
+// revert undoes one surgical edit inside a file dashkit does not own, leaving
 // every other part of that file exactly as the user has it now — which matters
 // more than restoring the whole backup, since the file may have changed since.
 func revert(e state.Edit) error {
@@ -31,7 +31,7 @@ func revert(e state.Edit) error {
 			return err
 		}
 		if len(obj.Keys()) == 0 {
-			// fabkit's key was the only thing in there; leaving an empty {} file
+			// dashkit's key was the only thing in there; leaving an empty {} file
 			// behind would be litter.
 			return os.Remove(e.Path)
 		}

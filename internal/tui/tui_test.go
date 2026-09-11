@@ -5,7 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/leonsang/fabkit/internal/home"
+	"github.com/leonsang/dashkit/internal/home"
+	"github.com/leonsang/dashkit/internal/targets"
 )
 
 // The wizard needs a TTY to run, but its screens are pure functions of the
@@ -20,7 +21,7 @@ func TestEveryScreenRenders(t *testing.T) {
 		m.step = s
 		m.cursor = 0
 		view := m.View()
-		if !strings.Contains(view, "fabkit") {
+		if !strings.Contains(view, "dashkit") {
 			t.Errorf("step %d rendered without a header:\n%s", s, view)
 		}
 		if strings.TrimSpace(view) == "" {
@@ -60,4 +61,42 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+func TestBundleScreenShowsWhereEachBundleComesFrom(t *testing.T) {
+	home.SetRoot(t.TempDir())
+	t.Cleanup(func() { home.SetRoot("") })
+
+	m := newModel(context.Background(), "test")
+	m.step = stepBundles
+	view := m.View()
+	for _, want := range []string{"from data-goblin", "guardrails", "PBIP guardrails"} {
+		if !strings.Contains(view, want) {
+			t.Errorf("bundle screen is missing %q:\n%s", want, view)
+		}
+	}
+}
+
+func TestBundleScreenWarnsBeforeAGlobalFloodOfSkills(t *testing.T) {
+	home.SetRoot(t.TempDir())
+	t.Cleanup(func() { home.SetRoot("") })
+
+	m := newModel(context.Background(), "test")
+	if m.scope != targets.Project {
+		t.Fatalf("the wizard should default to project scope, got %q", m.scope)
+	}
+	m.step = stepBundles
+	if strings.Contains(m.View(), "competes for the agent's attention") {
+		t.Error("the default selection should not trigger the context warning")
+	}
+
+	m.scope = targets.Global
+	for i, b := range m.bundles {
+		if b.ID == "fabric-skills" {
+			m.bundlePick[i] = true
+		}
+	}
+	if !strings.Contains(m.View(), "every session") {
+		t.Errorf("27 global skills should warn on the bundle screen:\n%s", m.View())
+	}
 }

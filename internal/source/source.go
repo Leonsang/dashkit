@@ -1,6 +1,6 @@
 // Package source obtains the upstream skills tree. Content is fetched from
-// GitHub at the ref pinned in the catalog and cached under the fabkit home, so
-// repeat installs and `fabkit update` are offline-fast, and a local checkout can
+// GitHub at the ref pinned in the catalog and cached under the dashkit home, so
+// repeat installs and `dashkit update` are offline-fast, and a local checkout can
 // be substituted with --source for air-gapped use or upstream development.
 package source
 
@@ -17,8 +17,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/leonsang/fabkit/internal/catalog"
-	"github.com/leonsang/fabkit/internal/home"
+	"github.com/leonsang/dashkit/internal/catalog"
+	"github.com/leonsang/dashkit/internal/home"
 )
 
 // Tree is an extracted (or checked out) copy of the upstream repository.
@@ -30,7 +30,7 @@ type Tree struct {
 
 // marker is written once an extraction completed, so an interrupted download is
 // never mistaken for a usable cache entry.
-const marker = ".fabkit-complete"
+const marker = ".dashkit-complete"
 
 // Local validates a user-supplied checkout of skills-for-fabric.
 func Local(dir string) (*Tree, error) {
@@ -89,7 +89,7 @@ func download(ctx context.Context, src catalog.Source, dst string) error {
 	if err != nil {
 		return err
 	}
-	req.Header.Set("User-Agent", "fabkit")
+	req.Header.Set("User-Agent", "dashkit")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("download %s: %w", url, err)

@@ -1,4 +1,4 @@
-module github.com/leonsang/fabkit
+module github.com/leonsang/dashkit
 
 go 1.27.0
 
