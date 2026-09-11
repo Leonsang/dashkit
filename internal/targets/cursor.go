@@ -62,10 +62,10 @@ func (cursor) Plan(b catalog.Bundle, opts Options) (plan.Plan, error) {
 	})
 
 	if opts.MCP && len(b.MCPServers) > 0 {
-		p = append(p, mcpActions(b,
+		p = append(p, mcpActions(b, opts,
 			filepath.Join(opts.ProjectDir, ".cursor", "mcp.json"),
 			[]string{"mcpServers"},
-			"Cursor MCP servers")...)
+			"Cursor MCP servers", false)...)
 	}
 	return p, nil
 }
@@ -108,10 +108,10 @@ func (windsurf) Plan(b catalog.Bundle, opts Options) (plan.Plan, error) {
 	})
 
 	if opts.MCP && len(b.MCPServers) > 0 {
-		p = append(p, mcpActions(b,
+		p = append(p, mcpActions(b, opts,
 			userPath(".codeium", "windsurf", "mcp_config.json"),
 			[]string{"mcpServers"},
-			"Windsurf MCP servers")...)
+			"Windsurf MCP servers", false)...)
 	}
 	return p, nil
 }

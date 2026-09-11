@@ -188,10 +188,12 @@ func ask(question string) bool {
 	return answer == "y" || answer == "yes"
 }
 
-// confirmer asks on the terminal before a command runs, unless --yes.
+// confirmer asks on the terminal before a command runs, unless --yes. The
+// command itself is always on the line just above the question, printed by
+// the action, so the question does not repeat it.
 func confirmer(assumeYes bool) func(string) bool {
 	if assumeYes {
 		return func(string) bool { return true }
 	}
-	return func(command string) bool { return ask(fmt.Sprintf("run `%s`", command)) }
+	return func(string) bool { return ask("  proceed") }
 }

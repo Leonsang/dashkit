@@ -161,7 +161,12 @@ func updateCmd() *cobra.Command {
 			for _, in := range st.Installs {
 				bundle, err := catalog.Find(in.Bundle)
 				if err != nil {
-					return err
+					// Upstream retires bundles (v0.3.16 folded three persona bundles
+					// into fabric-skills). One stale record must not stop the rest.
+					fmt.Printf("\nskipping %s -> %s: the bundle is no longer offered; "+
+						"`dashkit uninstall --bundle %s` removes it, and `dashkit list` shows what replaced it\n",
+						in.Bundle, in.Target, in.Bundle)
+					continue
 				}
 				target, err := targets.Find(in.Target)
 				if err != nil {
@@ -247,6 +252,11 @@ func printReport(r *install.Report, dryRun bool) {
 	fmt.Printf("\nInstalled %d bundle/tool combination(s).\n", len(r.Installed))
 	if r.BackupDir != "" {
 		fmt.Printf("  backups of every file touched: %s\n", r.BackupDir)
+	}
+	// Notices come before the hints: they are what stops the install working
+	// if ignored.
+	for _, n := range r.Notices {
+		fmt.Printf("\n! %s\n", n)
 	}
 	if len(r.Hints) > 0 {
 		fmt.Println("\nNext:")

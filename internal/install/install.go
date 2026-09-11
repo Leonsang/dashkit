@@ -5,13 +5,16 @@ package install
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/leonsang/dashkit/internal/backup"
 	"github.com/leonsang/dashkit/internal/catalog"
+	"github.com/leonsang/dashkit/internal/pathenv"
 	"github.com/leonsang/dashkit/internal/plan"
 	"github.com/leonsang/dashkit/internal/prereq"
 	"github.com/leonsang/dashkit/internal/source"
@@ -148,6 +151,10 @@ type Report struct {
 	Skipped   []Step
 	BackupDir string
 	Hints     []string
+	// Notices are things the person has to act on for the install to work,
+	// shown before the hints — above all, restarting tools that were already
+	// running when a prerequisite was installed.
+	Notices []string
 }
 
 // Apply executes the plan, recording what was written so uninstall can undo it.
@@ -163,9 +170,7 @@ func Apply(req Request, built *Built, out io.Writer, confirm func(string) bool) 
 	log := func(line string) { fmt.Fprintf(out, "  %s\n", line) }
 
 	if req.WithPrereqs && !req.DryRun {
-		if err := installPrereqs(built.Prereqs, out, confirm); err != nil {
-			return nil, err
-		}
+		report.Notices = append(report.Notices, installPrereqs(built.Prereqs, out, confirm)...)
 	}
 
 	seenHint := map[string]bool{}
@@ -197,6 +202,13 @@ func Apply(req Request, built *Built, out io.Writer, confirm func(string) bool) 
 			Out:     out,
 		}
 		if err := step.Plan.Apply(env); err != nil {
+			// Saying no to a step skips that step; it does not abort the run.
+			if errors.Is(err, plan.ErrDeclined) {
+				step.Skipped = "you declined it"
+				report.Skipped = append(report.Skipped, step)
+				fmt.Fprintf(out, "  - skipped: you declined\n")
+				continue
+			}
 			return report, err
 		}
 		if !req.DryRun {
@@ -224,31 +236,84 @@ func Apply(req Request, built *Built, out io.Writer, confirm func(string) bool) 
 }
 
 // installPrereqs runs the fix command for anything missing, one at a time, with
-// the exact command shown first.
-func installPrereqs(results []prereq.Result, out io.Writer, confirm func(string) bool) error {
+// the exact command shown first, and returns notices the person must act on.
+func installPrereqs(results []prereq.Result, out io.Writer, confirm func(string) bool) []string {
+	var installed []prereq.Result
 	for _, r := range prereq.Unmet(results) {
 		if len(r.Fix) == 0 {
-			fmt.Fprintf(out, "  ! %s is %s; dashkit does not install it automatically\n", r.Title, r.Status)
+			fmt.Fprintf(out, "  - %s is %s; dashkit does not install it automatically\n", r.Title, r.Status)
 			if r.Manual != "" {
 				fmt.Fprintf(out, "    %s\n", r.Manual)
 			}
 			continue
 		}
-		action := plan.Run{Name: r.Fix[0], Args: r.Fix[1:], Why: "install " + r.Title}
+		action := plan.Run{Name: r.Fix[0], Args: r.Fix[1:], Why: "install " + shortName(r)}
 		env := &plan.Env{
 			Log:     func(line string) { fmt.Fprintf(out, "  %s\n", line) },
 			Backup:  backup.NewSession(),
 			Confirm: confirm,
 			Out:     out,
 		}
-		if err := action.Apply(env); err != nil {
+		err := action.Apply(env)
+		switch {
+		case errors.Is(err, plan.ErrDeclined):
+			fmt.Fprintf(out, "  - skipped %s: you declined\n", shortName(r))
+		case err != nil:
 			// A failed prerequisite is worth reporting but should not abort the
 			// skills install: the skills are still useful, just not everything
 			// they describe will run yet.
-			fmt.Fprintf(out, "  ! could not install %s: %v\n", r.Title, err)
+			fmt.Fprintf(out, "  ! could not install %s: %v\n", shortName(r), err)
+		default:
+			installed = append(installed, r)
 		}
 	}
-	return nil
+	return afterPrereqs(installed, out)
+}
+
+// afterPrereqs re-checks what was just installed with a freshly loaded PATH,
+// and explains the one thing that trips everyone up: programs that were
+// already running keep their old PATH, so an open Claude Code would not see a
+// new jq and its hooks would silently do nothing until it is restarted.
+func afterPrereqs(installed []prereq.Result, out io.Writer) []string {
+	if len(installed) == 0 {
+		return nil
+	}
+	if err := pathenv.Refresh(); err != nil {
+		fmt.Fprintf(out, "  ! could not reload PATH: %v\n", err)
+	}
+	ids := make([]string, len(installed))
+	names := make([]string, len(installed))
+	for i, r := range installed {
+		ids[i], names[i] = r.ID, shortName(r)
+	}
+	var notices, stillMissing []string
+	for _, r := range prereq.Run(ids, nil) {
+		if r.Status != prereq.OK {
+			stillMissing = append(stillMissing, shortName(r))
+		}
+	}
+	notices = append(notices, fmt.Sprintf(
+		"Installed %s. Restart any AI tool or terminal that was already open — it keeps the old PATH and won't see %s until it restarts.",
+		strings.Join(names, ", "), plural(len(names), "it", "them")))
+	if len(stillMissing) > 0 {
+		notices = append(notices, fmt.Sprintf(
+			"%s installed but still not found on PATH; open a new terminal and run `dashkit doctor`.",
+			strings.Join(stillMissing, ", ")))
+	}
+	return notices
+}
+
+// shortName is a prerequisite's bare name, for sentences: "jq", not "jq
+// (guardrail hooks depend on it)"; npm packages lose their "npm:" prefix.
+func shortName(r prereq.Result) string {
+	return strings.TrimPrefix(r.ID, "npm:")
+}
+
+func plural(n int, one, many string) string {
+	if n == 1 {
+		return one
+	}
+	return many
 }
 
 // releaseMarketplace removes a marketplace declaration once nothing dashkit
@@ -342,7 +407,11 @@ func Uninstall(bundleID, targetID string, dryRun bool, out io.Writer, confirm fu
 				Out:     out,
 			}
 			if err := action.Apply(env); err != nil {
-				fmt.Fprintf(out, "  ! %v\n", err)
+				if errors.Is(err, plan.ErrDeclined) {
+					fmt.Fprintf(out, "  - left %s installed: you declined\n", pl.Ref)
+				} else {
+					fmt.Fprintf(out, "  ! %v\n", err)
+				}
 				remaining = append(remaining, pl)
 				continue
 			}

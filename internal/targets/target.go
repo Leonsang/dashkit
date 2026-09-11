@@ -281,19 +281,37 @@ func routerBody(b catalog.Bundle, entries []entry, opts Options) string {
 func collapse(s string) string { return strings.Join(strings.Fields(s), " ") }
 
 // mcpActions registers the bundle's MCP servers in a JSON config under key.
-func mcpActions(b catalog.Bundle, path string, key []string, what string) plan.Plan {
+//
+// A server that authenticates through headersHelper is only registered where
+// the host runs that command (Claude Code). Anywhere else it would be written
+// without its credentials and fail on every call, so it is written down for the
+// person to set up instead — never registered half-working.
+func mcpActions(b catalog.Bundle, opts Options, path string, key []string, what string, headersHelper bool) plan.Plan {
 	var p plan.Plan
 	names := make([]string, 0, len(b.MCPServers))
 	for name := range b.MCPServers {
 		names = append(names, name)
 	}
 	sort.Strings(names)
+	skipped := false
 	for _, name := range names {
+		s := b.MCPServers[name]
+		if s.NeedsHeadersHelper() && !headersHelper {
+			skipped = true
+			continue
+		}
 		p = append(p, plan.MergeJSON{
 			Path:  path,
 			Key:   append(append([]string{}, key...), name),
-			Value: b.MCPServers[name],
+			Value: s,
 			What:  what,
+		})
+	}
+	if skipped {
+		p = append(p, plan.WriteFile{
+			Path: filepath.Join(vendorRoot(b, opts), "MCP-SERVERS.md"),
+			Data: []byte(mcpNotes(b, catalog.MCPServer.NeedsHeadersHelper)),
+			What: "MCP servers that need a token command this tool cannot run",
 		})
 	}
 	return p

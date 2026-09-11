@@ -39,7 +39,18 @@ later uninstall can finish the job.
 - **The network**: `codeload.github.com`, to download Microsoft's skills at the pinned tag (cached in
   `~/.dashkit/cache`), and GitHub releases for the installer. Use `--source <checkout>` to work offline.
 - **Commands**: your package manager (`winget`, `brew`, `apt-get`, `dnf`, `npm`) for prerequisites you
-  approve, and `claude plugin` / `copilot plugin` for plugins you choose. Nothing else.
+  approve, and `claude plugin` / `copilot plugin` for plugins you choose. Nothing else. A plugin's
+  two commands (declare the marketplace, install the plugin) are approved together, so saying no
+  leaves nothing half-installed.
+- **Commands your tool will run later**: the `fabric-skills` MCP servers authenticate through a
+  `headersHelper`, a command Claude Code runs to fetch an Azure token
+  (`az account get-access-token …`). dashkit registers it exactly as Microsoft ships it, and only in
+  Claude Code; see [targets](targets.md).
+
+After installing a prerequisite, dashkit reloads PATH and checks it again. Programs that were
+already open — your AI tool, VS Code, terminals — keep their old PATH until restarted; dashkit
+says so, because an open Claude Code would otherwise run data-goblin's hooks without `jq`, and
+they would silently do nothing.
 
 ## The dashkit binary
 

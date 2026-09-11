@@ -22,7 +22,16 @@ type MCPServer struct {
 	URL     string            `json:"url,omitempty"`
 	Headers map[string]string `json:"headers,omitempty"`
 	Env     map[string]string `json:"env,omitempty"`
+	// HeadersHelper is a command the host runs to produce request headers —
+	// upstream uses it to fetch an Azure token for the remote Fabric servers.
+	// Only Claude Code understands it; elsewhere the server would get no auth.
+	HeadersHelper string   `json:"headersHelper,omitempty"`
+	Tools         []string `json:"tools,omitempty"`
 }
+
+// NeedsHeadersHelper reports whether the server can only authenticate through
+// a host that runs headersHelper commands.
+func (s MCPServer) NeedsHeadersHelper() bool { return s.HeadersHelper != "" }
 
 // Prereqs lists prerequisite ids (see internal/prereq). Required ones block an
 // install unless the user overrides; optional ones are only reported.

@@ -137,7 +137,7 @@ func (claudeCode) Plan(b catalog.Bundle, opts Options) (plan.Plan, error) {
 		if opts.Scope == Project {
 			mcpPath = filepath.Join(opts.ProjectDir, ".mcp.json")
 		}
-		p = append(p, mcpActions(b, mcpPath, []string{"mcpServers"}, "Claude Code MCP servers")...)
+		p = append(p, mcpActions(b, opts, mcpPath, []string{"mcpServers"}, "Claude Code MCP servers", true)...)
 	}
 
 	return p, nil

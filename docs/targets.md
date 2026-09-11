@@ -19,6 +19,15 @@ recorded in `~/.dashkit/state.json` and reversed by `dashkit uninstall`.
 When skills are copied rather than installed as a plugin, the upstream links to `../../common/*.md`
 are rewritten to a sibling `_dashkit-common/` directory so every reference still resolves.
 
+**Which version you get depends on the route.** Through the plugin manager (the default), Claude Code
+installs whatever the marketplace publishes at that moment, and later updates arrive through
+`claude plugin update`. Copied with `--host-plugin=false`, you get the tag this dashkit release pins.
+
+MCP servers that authenticate with a `headersHelper` command (the remote Fabric servers in
+`fabric-skills` run `az account get-access-token`) are only registered in Claude Code, which runs
+that command. Every other tool gets them written to `.dashkit/<bundle>/MCP-SERVERS.md` instead of
+a registration that would fail without credentials.
+
 ## GitHub Copilot CLI — verified
 
 | | Project | Global |

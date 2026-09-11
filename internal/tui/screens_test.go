@@ -58,8 +58,21 @@ func TestScreens(t *testing.T) {
 	enter := tea.KeyMsg{Type: tea.KeyEnter}
 
 	shot("01-skills")
-	// Add the PBIP guardrails: five rows down from Power BI authoring.
-	press(down, down, down, down, down, space)
+	// Add the PBIP guardrails, moving down to them as a person would. The row
+	// is found by id because the catalog's order changes with upstream.
+	target := -1
+	for i, b := range m.bundles {
+		if b.ID == "goblin-pbip" {
+			target = i
+		}
+	}
+	if target < 0 {
+		t.Fatal("goblin-pbip is not in the catalog")
+	}
+	for i := 0; i < target; i++ {
+		press(down)
+	}
+	press(space)
 	shot("02-skills-guardrails")
 	press(enter)
 	shot("03-tools")

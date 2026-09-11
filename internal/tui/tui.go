@@ -375,6 +375,9 @@ func (m *model) View() string {
 				b.WriteString(errStyle.Render("failed: "+m.err.Error()) + "\n")
 			} else {
 				b.WriteString(okStyle.Render("Done.") + "\n")
+				for _, n := range m.report.Notices {
+					fmt.Fprintf(&b, "  %s\n", warnStyle.Render(wrap("! "+n, 76)))
+				}
 				for _, h := range m.report.Hints {
 					fmt.Fprintf(&b, "  %s %s\n", dimStyle.Render("next:"), h)
 				}
@@ -388,23 +391,24 @@ func (m *model) View() string {
 
 func (m *model) reviewBody() string {
 	var b strings.Builder
-	var actions, commands int
+	var files, commands int
 	for _, s := range m.built.Steps {
 		if s.Skipped != "" {
 			fmt.Fprintf(&b, "  %s %s -> %s: %s\n", warnStyle.Render("skip"), s.Bundle.ID, s.Target.ID(), s.Skipped)
 			continue
 		}
-		changes := "changes"
-		if len(s.Plan) == 1 {
-			changes = "change"
-		}
-		fmt.Fprintf(&b, "  %s -> %s (%d %s)\n", s.Bundle.Title, s.Target.Title(), len(s.Plan), changes)
-		actions += len(s.Plan)
+		fmt.Fprintf(&b, "  %s -> %s\n", s.Bundle.Title, s.Target.Title())
+		// Pressing enter here approves every command at once, so each one is
+		// listed in full — not summarised. Everything else writes a file.
 		for _, a := range s.Plan {
-			switch a.(type) {
-			case plan.Run, plan.PluginInstall:
+			c, ok := a.(plan.Commander)
+			if !ok {
+				files++
+				continue
+			}
+			for _, cmd := range c.Commands() {
 				commands++
-				fmt.Fprintf(&b, "      %s\n", warnStyle.Render(a.Describe()))
+				fmt.Fprintf(&b, "      %s\n", warnStyle.Render("$ "+cmd))
 			}
 		}
 	}
@@ -427,8 +431,16 @@ func (m *model) reviewBody() string {
 	}
 
 	fmt.Fprintf(&b, "\n  %s\n", dimStyle.Render(fmt.Sprintf(
-		"%d file changes, %d commands. Every file touched is backed up first.", actions-commands, commands)))
+		"%s, %s. Every file touched is backed up first.",
+		count(files, "file change", "file changes"), count(commands, "command", "commands"))))
 	return b.String()
+}
+
+func count(n int, one, many string) string {
+	if n == 1 {
+		return "1 " + one
+	}
+	return fmt.Sprintf("%d %s", n, many)
 }
 
 // wrap breaks a long line at word boundaries for the terminal, indenting the

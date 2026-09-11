@@ -4,6 +4,7 @@
 package plan
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -40,17 +41,47 @@ func (e *Env) out() io.Writer {
 	return os.Stdout
 }
 
-// run executes a command after showing and confirming it.
-func (e *Env) run(dir, name string, args ...string) error {
-	line := strings.Join(append([]string{name}, args...), " ")
-	if e.Confirm == nil || !e.Confirm(line) {
-		return fmt.Errorf("declined: %s", line)
+// ErrDeclined means the person said no to a command. It is a decision, not a
+// failure: callers skip what depended on it instead of reporting an error.
+var ErrDeclined = errors.New("declined")
+
+// commandLine renders a command the way it is shown and confirmed.
+func commandLine(name string, args ...string) string {
+	return strings.Join(append([]string{name}, args...), " ")
+}
+
+// confirm asks once for everything in lines, which the caller has already put
+// on screen, so the question itself never repeats them.
+func (e *Env) confirm(lines ...string) error {
+	all := strings.Join(lines, "\n")
+	if e.Confirm == nil || !e.Confirm(all) {
+		return fmt.Errorf("%w: %s", ErrDeclined, strings.Join(lines, "; "))
 	}
+	return nil
+}
+
+// exec runs a command that has already been shown and approved.
+func (e *Env) exec(dir, name string, args ...string) error {
 	cmd := exec.Command(name, args...)
 	cmd.Dir = dir
 	cmd.Stdout = e.out()
 	cmd.Stderr = e.out()
 	return cmd.Run()
+}
+
+// run confirms and executes one command whose exact text the caller has
+// already shown.
+func (e *Env) run(dir, name string, args ...string) error {
+	if err := e.confirm(commandLine(name, args...)); err != nil {
+		return err
+	}
+	return e.exec(dir, name, args...)
+}
+
+// Commander is implemented by actions that run commands, so a review screen
+// can list every one of them before anything is approved.
+type Commander interface {
+	Commands() []string
 }
 
 func (e *Env) logf(format string, args ...any) {
@@ -335,8 +366,10 @@ type Run struct {
 }
 
 func (r Run) Describe() string {
-	return fmt.Sprintf("run `%s` (%s)", strings.Join(append([]string{r.Name}, r.Args...), " "), r.Why)
+	return fmt.Sprintf("run `%s` (%s)", commandLine(r.Name, r.Args...), r.Why)
 }
+
+func (r Run) Commands() []string { return []string{commandLine(r.Name, r.Args...)} }
 
 func (r Run) Apply(env *Env) error {
 	env.logf("%s", r.Describe())
@@ -390,24 +423,45 @@ func (p PluginInstall) Describe() string {
 	return fmt.Sprintf("install plugin %s through %s's plugin manager (%s scope)", p.ref(), p.Host, scope)
 }
 
+func (p PluginInstall) addArgs() []string {
+	return append([]string{"plugin", "marketplace", "add", p.MarketplaceRepo}, p.scopeArgs()...)
+}
+
+func (p PluginInstall) installArgs() []string {
+	args := append([]string{"plugin", "install", p.ref()}, p.scopeArgs()...)
+	if p.AssumeYes {
+		args = append(args, "--yes")
+	}
+	return args
+}
+
+func (p PluginInstall) Commands() []string {
+	return []string{commandLine(p.Bin, p.addArgs()...), commandLine(p.Bin, p.installArgs()...)}
+}
+
 func (p PluginInstall) Apply(env *Env) error {
 	env.logf("%s", p.Describe())
+	// Both commands are listed — on a dry run too, so --dry-run shows every
+	// command rather than a summary — and approved together: declining must
+	// not leave a marketplace declared with no plugin installed from it.
+	cmds := p.Commands()
+	for _, c := range cmds {
+		env.logf("  $ %s", c)
+	}
 	if env.DryRun {
 		return nil
 	}
+	if err := env.confirm(cmds...); err != nil {
+		return err
+	}
+
 	// Asked before adding: if the declaration was already there, it is the
 	// user's, and uninstall must leave it alone.
 	owns := p.Declared != nil && !p.Declared()
-
-	add := append([]string{"plugin", "marketplace", "add", p.MarketplaceRepo}, p.scopeArgs()...)
-	if err := env.run(p.Dir, p.Bin, add...); err != nil {
+	if err := env.exec(p.Dir, p.Bin, p.addArgs()...); err != nil {
 		return err
 	}
-	install := append([]string{"plugin", "install", p.ref()}, p.scopeArgs()...)
-	if p.AssumeYes {
-		install = append(install, "--yes")
-	}
-	if err := env.run(p.Dir, p.Bin, install...); err != nil {
+	if err := env.exec(p.Dir, p.Bin, p.installArgs()...); err != nil {
 		return err
 	}
 	if env.Record != nil {

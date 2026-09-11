@@ -82,50 +82,23 @@ dashkit uninstall   # remove exactly what dashkit installed — nothing else
 
 <!-- bundles:start -->
 
-**From Microsoft** — downloaded at a pinned tag, written into each tool's native format.
+**From Microsoft** — copied at the pinned tag `v0.3.16` into tools without a plugin manager; installed at the marketplace's current version by Claude Code and Copilot CLI.
 
 <details>
-<summary><strong>Power BI authoring</strong> &ensp;<code>powerbi-authoring</code> &ensp;Microsoft · 6 skills</summary>
+<summary><strong>Power BI authoring</strong> &ensp;<code>powerbi-authoring</code> &ensp;Microsoft · 5 skills</summary>
 
 Developer skills for authoring Microsoft Power BI solutions.
 
-`check-updates` · `semantic-model-authoring` · `powerbi-report-planning` · `powerbi-report-design` · `powerbi-report-authoring` · `powerbi-report-management`
+`semantic-model-authoring` · `powerbi-report-planning` · `powerbi-report-design` · `powerbi-report-authoring` · `powerbi-report-management`
 
 </details>
 
 <details>
-<summary><strong>Fabric — everything</strong> &ensp;<code>fabric-skills</code> &ensp;Microsoft · 27 skills</summary>
+<summary><strong>Fabric — everything</strong> &ensp;<code>fabric-skills</code> &ensp;Microsoft · 23 skills</summary>
 
 Complete bundle: all Microsoft Skills for Fabric for developers and consumers
 
-`check-updates` · `fabriciq` · `semantic-model-authoring` · `sqldw-consumption-cli` · `sqldw-authoring-cli` · `spark-consumption-cli` · `spark-authoring-cli` · `eventhouse-cli` · `eventstream-cli` · `eventschemaset-consumption-cli` · `activator-cli` · `sqldw-operations-cli` · `sqldb-cli` · `spark-operations-cli` · `mlv-operations-cli` · `azmon-mirroredcatalogs-operations-cli` · `dataflows-cli` · `search-consumption-cli` · `fabriciq-ontology-cli` · `deployment-pipelines-authoring-cli` · `databricks-migration` · `pipeline-migration` · `synapse-migration` · `hdinsight-migration` · `e2e-medallion-architecture` · `git-integration-operations-cli` · `e2e-fabric-cost-estimation`
-
-</details>
-
-<details>
-<summary><strong>Fabric authoring</strong> &ensp;<code>fabric-authoring</code> &ensp;Microsoft · 12 skills</summary>
-
-Developer skills for authoring Microsoft Skills for Fabric solutions - SDKs, APIs, automation scripts, CI/CD
-
-`check-updates` · `sqldw-authoring-cli` · `sqldb-cli` · `spark-authoring-cli` · `eventhouse-cli` · `eventstream-cli` · `activator-cli` · `semantic-model-authoring` · `dataflows-cli` · `fabriciq-ontology-cli` · `deployment-pipelines-authoring-cli` · `e2e-medallion-architecture`
-
-</details>
-
-<details>
-<summary><strong>Fabric consumption</strong> &ensp;<code>fabric-consumption</code> &ensp;Microsoft · 12 skills</summary>
-
-Consumer skills for interactive Microsoft Skills for Fabric operations - queries, exploration, monitoring
-
-`check-updates` · `fabriciq` · `sqldw-consumption-cli` · `sqldb-cli` · `spark-consumption-cli` · `eventhouse-cli` · `eventstream-cli` · `eventschemaset-consumption-cli` · `activator-cli` · `dataflows-cli` · `search-consumption-cli` · `fabriciq-ontology-cli`
-
-</details>
-
-<details>
-<summary><strong>Fabric operations</strong> &ensp;<code>fabric-operations</code> &ensp;Microsoft · 7 skills</summary>
-
-Operations skills for diagnosing Microsoft Fabric performance and health - system views, multi-step investigation workflows
-
-`check-updates` · `azmon-mirroredcatalogs-operations-cli` · `mlv-operations-cli` · `sqldw-operations-cli` · `sqldb-cli` · `spark-operations-cli` · `git-integration-operations-cli`
+`fabriciq` · `semantic-model-authoring` · `spark-cli` · `sqldw-cli` · `eventhouse-cli` · `eventstream-cli` · `eventschemaset-cli` · `activator-cli` · `sqldb-cli` · `azmon-mirroredcatalogs-operations-cli` · `dataflows-cli` · `search-consumption-cli` · `onelake-catalog-govern-cli` · `fabriciq-ontology-cli` · `variable-library-cli` · `deployment-pipelines-authoring-cli` · `databricks-migration` · `pipeline-migration` · `synapse-migration` · `hdinsight-migration` · `e2e-medallion-architecture` · `git-integration-operations-cli` · `e2e-fabric-cost-estimation`
 
 </details>
 
@@ -248,7 +221,7 @@ skill's *content* to its project; problems with how dashkit installed it, here.
 ```bash
 go test ./...                                 # unit tests + full install/uninstall round trips
 go run ./cmd/dashkit --home /tmp/dk doctor    # --home sandboxes both dashkit and every ~/ path
-node tools/gen-manifest.mjs <skills-for-fabric> v0.3.11 --goblin <power-bi-agentic-development>
+node tools/gen-manifest.mjs <skills-for-fabric> v0.3.16 --goblin <power-bi-agentic-development>
 node tools/gen-docs.mjs <skills-for-fabric>   # regenerates docs/bundles.md and the list above
 ```
 

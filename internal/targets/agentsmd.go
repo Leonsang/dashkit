@@ -167,7 +167,7 @@ func (gemini) Plan(b catalog.Bundle, opts Options) (plan.Plan, error) {
 	})
 
 	if opts.MCP && len(b.MCPServers) > 0 {
-		p = append(p, mcpActions(b, settings, []string{"mcpServers"}, "Gemini CLI MCP servers")...)
+		p = append(p, mcpActions(b, opts, settings, []string{"mcpServers"}, "Gemini CLI MCP servers", false)...)
 	}
 	return p, nil
 }
@@ -257,6 +257,10 @@ func mcpNotes(b catalog.Bundle, include func(catalog.MCPServer) bool) string {
 		out += fmt.Sprintf("- transport: %s\n- url: %s\n", s.Type, s.URL)
 		for header, value := range s.Headers {
 			out += fmt.Sprintf("- header: `%s: %s`\n", header, value)
+		}
+		if s.HeadersHelper != "" {
+			out += "- authentication: the server expects the headers this command prints (an Azure token):\n\n"
+			out += "  ```\n  " + s.HeadersHelper + "\n  ```\n"
 		}
 		out += "\n"
 	}

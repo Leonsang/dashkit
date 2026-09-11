@@ -8,6 +8,7 @@ import (
 
 	"github.com/leonsang/dashkit/internal/catalog"
 	"github.com/leonsang/dashkit/internal/home"
+	"github.com/leonsang/dashkit/internal/plan"
 	"github.com/leonsang/dashkit/internal/state"
 	"github.com/leonsang/dashkit/internal/targets"
 )
@@ -209,5 +210,37 @@ func TestEveryBundleWithHooksRequiresJq(t *testing.T) {
 		if !found {
 			t.Errorf("%s ships hooks but does not require jq; its guardrails would silently do nothing", b.ID)
 		}
+	}
+}
+
+// Saying no to one step skips it; the rest of the run carries on.
+func TestADeclinedStepIsSkippedNotFatal(t *testing.T) {
+	home.SetRoot(t.TempDir())
+	t.Cleanup(func() { home.SetRoot("") })
+
+	claude, err := targets.Find("claude")
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, _ := catalog.Find("goblin-pbip")
+	built := &Built{Steps: []Step{{Bundle: b, Target: claude, Plan: plan.Plan{plan.PluginInstall{
+		Host: "claude", Bin: "dashkit-test-no-such-host", MarketplaceRepo: "data-goblin/power-bi-agentic-development",
+		Marketplace: "power-bi-agentic-development", Plugin: "pbip", Scope: "project", Dir: t.TempDir(),
+	}}}}}
+	req := Request{Bundles: []catalog.Bundle{b}, Targets: []targets.Target{claude}, Scope: targets.Project, ProjectDir: t.TempDir()}
+
+	var out strings.Builder
+	report, err := Apply(req, built, &out, func(string) bool { return false })
+	if err != nil {
+		t.Fatalf("declining should not fail the run: %v", err)
+	}
+	if len(report.Skipped) != 1 || report.Skipped[0].Skipped != "you declined it" {
+		t.Errorf("expected the step to be reported as declined, got %+v", report.Skipped)
+	}
+	if strings.Contains(out.String(), "!") {
+		t.Errorf("a decision should not be printed as an error:\n%s", out.String())
+	}
+	if len(report.Installed) != 0 {
+		t.Error("nothing should be recorded as installed")
 	}
 }

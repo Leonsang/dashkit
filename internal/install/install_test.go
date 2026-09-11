@@ -286,3 +286,42 @@ func min(a, b int) int {
 	}
 	return b
 }
+
+// A server that authenticates through headersHelper is registered only where
+// the host runs that command; anywhere else it is written down, not registered
+// half-working without its credentials.
+func TestHeadersHelperServersOnlyGoWhereTheyCanAuthenticate(t *testing.T) {
+	home.SetRoot(t.TempDir())
+	t.Cleanup(func() { home.SetRoot("") })
+
+	bundle, err := catalog.Find("fabric-skills")
+	if err != nil {
+		t.Fatal(err)
+	}
+	helped := 0
+	for _, s := range bundle.MCPServers {
+		if s.NeedsHeadersHelper() {
+			helped++
+		}
+	}
+	if helped == 0 {
+		t.Skip("the pinned fabric-skills has no headersHelper servers")
+	}
+
+	upstream := fakeUpstream(t, bundle)
+	project := t.TempDir()
+	apply(t, request(t, bundle, upstream, project, "claude", "cursor"))
+
+	claudeMCP := read(t, filepath.Join(project, ".mcp.json"))
+	if !strings.Contains(claudeMCP, `"headersHelper"`) {
+		t.Errorf("Claude Code runs headersHelper, so the servers belong in .mcp.json with it:\n%s", claudeMCP)
+	}
+
+	if data, err := os.ReadFile(filepath.Join(project, ".cursor", "mcp.json")); err == nil && strings.Contains(string(data), "fabric.microsoft.com") {
+		t.Errorf("Cursor cannot run headersHelper; its config must not carry servers it cannot authenticate:\n%s", data)
+	}
+	notes := read(t, filepath.Join(project, ".dashkit", "fabric-skills", "MCP-SERVERS.md"))
+	if !strings.Contains(notes, "az account get-access-token") {
+		t.Errorf("the note should say how to authenticate:\n%s", notes)
+	}
+}
