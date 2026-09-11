@@ -1,0 +1,22 @@
+table Sales
+	measure Revenue = SUM(Sales[Amount])
+		formatString: #,0
+		displayFolder: KPIs
+
+	/// Share of revenue.
+	measure 'Revenue %' = [Revenue] / 100
+		formatString: 0%
+		displayFolder: KPIs
+
+	measure Unused = 1
+
+	column Amount
+		dataType: double
+
+	partition Sales = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents("C:\Users\someone\sales.csv"))
+				in
+				    Source

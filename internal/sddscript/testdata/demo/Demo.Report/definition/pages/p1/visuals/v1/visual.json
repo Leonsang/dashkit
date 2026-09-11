@@ -1,0 +1,4 @@
+{"name":"v1","visual":{"visualType":"barChart","query":{"queryState":{
+ "Category":{"projections":[{"field":{"Column":{"Expression":{"SourceRef":{"Entity":"Sales"}},"Property":"Amount"}}}]},
+ "Y":{"projections":[{"field":{"Measure":{"Expression":{"SourceRef":{"Entity":"Sales"}},"Property":"Revenue"}}},
+                     {"field":{"Measure":{"Expression":{"SourceRef":{"Entity":"Sales"}},"Property":"Ghost"}}}]}}}}}

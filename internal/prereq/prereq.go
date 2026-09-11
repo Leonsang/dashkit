@@ -6,7 +6,9 @@ package prereq
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"sort"
 	"strconv"
@@ -95,14 +97,9 @@ func Registry() map[string]Check {
 		},
 		"powerbi-desktop": {
 			ID: "powerbi-desktop", Title: "Power BI Desktop (Windows only)",
-			Probe: powerBIDesktopProbe,
-			Install: func() []string {
-				if runtime.GOOS != "windows" {
-					return nil
-				}
-				return []string{"winget", "install", "--id", "Microsoft.PowerBI", "--accept-package-agreements", "--accept-source-agreements"}
-			},
-			Manual: "Power BI Desktop only runs on Windows; on macOS and Linux the report skills work against PBIP files without the Desktop bridge",
+			Probe:   powerBIDesktopProbe,
+			Install: powerBIInstall,
+			Manual:  "Power BI Desktop only runs on Windows; on macOS and Linux the report skills work against PBIP files without the Desktop bridge",
 		},
 		// Unlike powerbi-desktop above, which is optional and not applicable off
 		// Windows, this one is a hard requirement: the bundle connects to a live
@@ -115,13 +112,8 @@ func Registry() map[string]Check {
 				}
 				return powerBIDesktopProbe()
 			},
-			Install: func() []string {
-				if runtime.GOOS != "windows" {
-					return nil
-				}
-				return []string{"winget", "install", "--id", "Microsoft.PowerBI", "--accept-package-agreements", "--accept-source-agreements"}
-			},
-			Manual: "this bundle connects to a live Power BI Desktop model, which only exists on Windows",
+			Install: powerBIInstall,
+			Manual:  "this bundle connects to a live Power BI Desktop model, which only exists on Windows",
 		},
 		// data-goblin's guardrail hooks parse their input with jq and exit 0
 		// when it is missing: no error, no warning, no validation. Without this
@@ -281,15 +273,40 @@ func npmGlobalProbe(pkg string) (Status, string) {
 	return Missing, "not installed globally"
 }
 
+// powerBIDesktopProbe looks at the two places Power BI Desktop can live — the
+// Microsoft Store package and the MSI in Program Files — instead of asking
+// winget, whose list outlives an uninstall: the MSI's installer bundle can stay
+// registered with nothing behind it. Two installs at once is its own problem
+// (they fight over which one opens a .pbip), so it is reported, not hidden.
 func powerBIDesktopProbe() (Status, string) {
 	if runtime.GOOS != "windows" {
 		return OK, "not applicable on " + runtime.GOOS
 	}
-	out, err := run("winget", "list", "--id", "Microsoft.PowerBI", "--exact")
-	if err != nil || !strings.Contains(out, "Microsoft.PowerBI") {
-		return Missing, "not installed"
+	var found []string
+	if out, err := run("powershell", "-NoProfile", "-Command", "(Get-AppxPackage Microsoft.MicrosoftPowerBIDesktop).Version"); err == nil && strings.TrimSpace(out) != "" {
+		found = append(found, "Store "+firstLine(out))
 	}
-	return OK, "installed"
+	msi := filepath.Join(os.Getenv("ProgramFiles"), "Microsoft Power BI Desktop", "bin", "PBIDesktop.exe")
+	if _, err := os.Stat(msi); err == nil {
+		found = append(found, "MSI in Program Files")
+	}
+	switch len(found) {
+	case 0:
+		return Missing, "not installed"
+	case 1:
+		return OK, found[0]
+	default:
+		return OK, strings.Join(found, " + ") + " — two installs; keep one, or they fight over which opens a .pbip"
+	}
+}
+
+// powerBIInstall installs the Microsoft Store edition, which updates itself —
+// the MSI has to be reinstalled by hand every month.
+func powerBIInstall() []string {
+	if runtime.GOOS != "windows" {
+		return nil
+	}
+	return []string{"winget", "install", "--id", "9NTXR16HNW1T", "--source", "msstore", "--accept-package-agreements", "--accept-source-agreements"}
 }
 
 // pythonProbe accepts the first interpreter that actually answers as Python 3.

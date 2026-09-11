@@ -51,6 +51,25 @@ if (!modelDir && existsSync(join(root, `${name}.SemanticModel`))) modelDir = joi
 const pages = [];
 const fieldUses = new Map(); // "Table|Name" -> Set(page names)
 const refKinds = new Map(); // "Table|Name" -> "Measure" | "Column" | ...
+const pageIds = new Map(); // page id -> display name
+const navLinks = []; // { from, tooltip, kind: "page" | "bookmark", target }
+const bookmarks = []; // { name, displayName, page }
+
+// A literal in PBIR is quoted inside the string: "'ReportSection…'".
+const literal = (v) => v?.expr?.Literal?.Value?.replace(/^'(.*)'$/, "$1");
+
+function collectLinks(visual, from) {
+  for (const link of visual.visual?.visualContainerObjects?.visualLink ?? []) {
+    const p = link.properties ?? {};
+    const type = literal(p.type);
+    const tooltip = literal(p.tooltip) ?? "";
+    if (type === "PageNavigation" && literal(p.navigationSection)) {
+      navLinks.push({ from, tooltip, kind: "page", target: literal(p.navigationSection) });
+    } else if (type === "Bookmark" && literal(p.bookmark)) {
+      navLinks.push({ from, tooltip, kind: "bookmark", target: literal(p.bookmark) });
+    }
+  }
+}
 
 // Every field reference in PBIR has the same shape wherever it appears — query,
 // filters, conditional formatting: { <Kind>: { Expression: { SourceRef: { Entity } }, Property } }.
@@ -76,6 +95,7 @@ if (existsSync(join(defDir, "pages"))) {
     const pdir = join(defDir, "pages", id);
     if (!existsSync(join(pdir, "page.json"))) continue;
     const page = readJSON(join(pdir, "page.json"));
+    pageIds.set(page.name ?? id, page.displayName ?? id);
     // Page-level filters use fields too; missing them would call a measure
     // unused when it is filtering a whole page.
     collectRefs(page, page.displayName ?? id);
@@ -89,6 +109,7 @@ if (existsSync(join(defDir, "pages"))) {
       types[t] = (types[t] ?? 0) + 1;
       if (vis.isHidden) hidden++;
       collectRefs(vis, page.displayName ?? id);
+      collectLinks(vis, page.displayName ?? id);
     }
     pages.push({
       name: page.displayName ?? id,
@@ -105,9 +126,22 @@ if (existsSync(join(defDir, "pages"))) {
 if (existsSync(join(defDir, "report.json"))) collectRefs(readJSON(join(defDir, "report.json")), "report filters");
 if (existsSync(join(defDir, "bookmarks"))) {
   for (const f of readdirSync(join(defDir, "bookmarks")).filter((f) => f.endsWith(".bookmark.json"))) {
-    collectRefs(readJSON(join(defDir, "bookmarks", f)), "bookmarks");
+    const bm = readJSON(join(defDir, "bookmarks", f));
+    collectRefs(bm, "bookmarks");
+    bookmarks.push({ name: bm.name ?? basename(f, ".bookmark.json"), displayName: bm.displayName ?? bm.name, page: bm.explorationState?.activeSection });
   }
 }
+
+// Navigation that leads nowhere: buttons to deleted pages or bookmarks, and
+// bookmarks that restore a page that is gone. None of these show as errors in
+// Desktop; the button simply does nothing when a reader clicks it.
+const bookmarkNames = new Set(bookmarks.map((b) => b.name));
+const brokenNavigation = navLinks.filter((l) => (l.kind === "page" ? !pageIds.has(l.target) : !bookmarkNames.has(l.target)));
+const orphanBookmarks = bookmarks.filter((b) => b.page && !pageIds.has(b.page));
+const navTargets = new Set(navLinks.filter((l) => l.kind === "page").map((l) => l.target));
+const unreachablePages = navLinks.length
+  ? [...pageIds].filter(([id]) => !navTargets.has(id)).map(([, name]) => name)
+  : [];
 
 // ---- model: TMDL -------------------------------------------------------------
 // A light TMDL reader: objects start at one tab of indentation, their
@@ -310,6 +344,10 @@ const survey = {
     localFileSources: localSources.map((s) => ({ table: s.table, file: s.file })),
     busyPages: busyPages.map((p) => p.name),
     autoDateTables,
+    brokenNavigation: brokenNavigation.map((l) => ({ from: l.from, button: l.tooltip, goesTo: l.kind, target: l.target }))
+      .filter((v, i, a) => a.findIndex((w) => w.from === v.from && w.target === v.target) === i),
+    orphanBookmarks: orphanBookmarks.map((b) => b.displayName),
+    pagesNoButtonLeadsTo: unreachablePages,
   },
 };
 
@@ -351,6 +389,8 @@ if (modelDir) {
 const f = survey.findings;
 out.push("## Findings", "");
 out.push(`### Broken references (${f.brokenReferences.length})`, "", ...list(f.brokenReferences.map((b) => `${b.kind} \`${b.table}[${b.name}]\` used on ${b.pages.join(", ")} does not exist in the model`)), "");
+out.push(`### Navigation that leads nowhere (${f.brokenNavigation.length} buttons, ${f.orphanBookmarks.length} bookmarks)`, "", "Buttons whose target page or bookmark no longer exists do nothing when clicked; bookmarks that restore a deleted page fail the same way.", "", ...list(f.brokenNavigation.map((n) => `${n.from}: button \"${n.button || "(no tooltip)"}\" → missing ${n.goesTo} \`${n.target}\``)), ...(f.orphanBookmarks.length ? ["", "Bookmarks for deleted pages:", "", ...list(f.orphanBookmarks)] : []), "");
+out.push(`### Pages no button leads to (${f.pagesNoButtonLeadsTo.length})`, "", "Reachable only from the page tabs; check each is meant to be hidden from the navigation.", "", ...list(f.pagesNoButtonLeadsTo), "");
 out.push(`### Local file sources (${f.localFileSources.length})`, "", "These paths only exist on one machine; a refresh anywhere else, including the Power BI service, fails.", "", ...list(f.localFileSources.map((s) => `${s.table}: \`${s.file}\``)), "");
 out.push(`### Unused measures (${f.unusedMeasures.length})`, "", "Not on any visual, filter or format rule, and not referenced by another measure.", "", ...list(f.unusedMeasures), "");
 out.push(`### Measures without a description (${f.measuresWithoutDescription.length} of ${measures.length})`, "", ...list(f.measuresWithoutDescription, 8), "");
