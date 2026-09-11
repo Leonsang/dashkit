@@ -136,7 +136,7 @@ working. Tools without a plugin manager are skipped with an explanation.
 <details>
 <summary><strong>PBIP guardrails</strong> &ensp;<code>goblin-pbip</code> &ensp;data-goblin · 3 skills · 3 guardrail hooks</summary>
 
-Checks PBIR structure, TMDL syntax and report-to-model binding automatically after every edit, with PBIR and TMDL format references. Ships native validators for macOS, Linux and Windows.
+Checks PBIR structure, TMDL syntax and report-to-model binding automatically after every edit, with PBIR and TMDL format references. Ships native validators for macOS, Linux and Windows; its hooks need jq, and silently do nothing without it.
 
 Checks that run automatically, without being asked:
 

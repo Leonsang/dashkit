@@ -123,6 +123,15 @@ func Registry() map[string]Check {
 			},
 			Manual: "this bundle connects to a live Power BI Desktop model, which only exists on Windows",
 		},
+		// data-goblin's guardrail hooks parse their input with jq and exit 0
+		// when it is missing: no error, no warning, no validation. Without this
+		// check a user would believe they had guardrails and have none.
+		"jq": {
+			ID: "jq", Title: "jq (guardrail hooks depend on it)",
+			Probe:   versionProbe("jq", "--version"),
+			Install: pkg("jqlang.jq", "jq", "jq"),
+			Manual:  "install from https://jqlang.org/download/",
+		},
 		"python3": {
 			ID: "python3", Title: "Python 3",
 			Probe:   pythonProbe,

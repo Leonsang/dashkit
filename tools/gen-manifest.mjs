@@ -79,13 +79,13 @@ const CURATED = [
     id: "goblin-pbip",
     title: "PBIP guardrails",
     description:
-      "Checks PBIR structure, TMDL syntax and report-to-model binding automatically after every edit, with PBIR and TMDL format references. Ships native validators for macOS, Linux and Windows.",
+      "Checks PBIR structure, TMDL syntax and report-to-model binding automatically after every edit, with PBIR and TMDL format references. Ships native validators for macOS, Linux and Windows; its hooks need jq, and silently do nothing without it.",
     hooks: [
       "PBIR structure and schema, after any edit inside a .Report folder",
       "TMDL syntax, after any .tmdl edit",
       "report-to-model binding, after definition.pbir edits",
     ],
-    prereqs: { required: [], optional: ["python3", "pbir-cli"] },
+    prereqs: { required: ["jq"], optional: ["python3", "pbir-cli"] },
   },
   {
     plugin: "pbi-desktop",
@@ -98,7 +98,7 @@ const CURATED = [
       "new measures carry a display folder, description and format string",
       "referential integrity after relationship or key-column changes",
     ],
-    prereqs: { required: ["windows-desktop"], optional: [] },
+    prereqs: { required: ["windows-desktop", "jq"], optional: [] },
   },
   {
     plugin: "semantic-models",

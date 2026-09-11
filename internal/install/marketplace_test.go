@@ -192,3 +192,22 @@ func TestAMarketplaceTheUserDeclaredIsNeverRemoved(t *testing.T) {
 		}
 	}
 }
+
+// data-goblin's hooks exit 0 when jq is missing, so a bundle that ships hooks
+// without requiring jq would install guardrails that silently never run.
+func TestEveryBundleWithHooksRequiresJq(t *testing.T) {
+	for _, b := range catalog.Bundles() {
+		if len(b.Hooks) == 0 {
+			continue
+		}
+		found := false
+		for _, id := range b.Prereqs.Required {
+			if id == "jq" {
+				found = true
+			}
+		}
+		if !found {
+			t.Errorf("%s ships hooks but does not require jq; its guardrails would silently do nothing", b.ID)
+		}
+	}
+}

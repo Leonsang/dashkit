@@ -336,14 +336,16 @@
       "id": "goblin-pbip",
       "kind": "marketplace",
       "title": "PBIP guardrails",
-      "description": "Checks PBIR structure, TMDL syntax and report-to-model binding automatically after every edit, with PBIR and TMDL format references. Ships native validators for macOS, Linux and Windows.",
+      "description": "Checks PBIR structure, TMDL syntax and report-to-model binding automatically after every edit, with PBIR and TMDL format references. Ships native validators for macOS, Linux and Windows; its hooks need jq, and silently do nothing without it.",
       "skills": [
         "pbip",
         "pbir-format",
         "tmdl"
       ],
       "prereqs": {
-        "required": [],
+        "required": [
+          "jq"
+        ],
         "optional": [
           "python3",
           "pbir-cli"
@@ -375,7 +377,8 @@
       ],
       "prereqs": {
         "required": [
-          "windows-desktop"
+          "windows-desktop",
+          "jq"
         ],
         "optional": []
       },

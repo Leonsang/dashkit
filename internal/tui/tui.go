@@ -302,6 +302,9 @@ func (m *model) View() string {
 				b.WriteString("\n" + dimStyle.Render("  from data-goblin · installed through your tool's own plugin manager") + "\n")
 			}
 			detail := fmt.Sprintf("%d skills", len(bundle.Skills))
+			if len(bundle.Skills) == 1 {
+				detail = "1 skill"
+			}
 			if len(bundle.Hooks) > 0 {
 				detail += " · guardrails"
 			}
@@ -391,7 +394,11 @@ func (m *model) reviewBody() string {
 			fmt.Fprintf(&b, "  %s %s -> %s: %s\n", warnStyle.Render("skip"), s.Bundle.ID, s.Target.ID(), s.Skipped)
 			continue
 		}
-		fmt.Fprintf(&b, "  %s -> %s (%d changes)\n", s.Bundle.Title, s.Target.Title(), len(s.Plan))
+		changes := "changes"
+		if len(s.Plan) == 1 {
+			changes = "change"
+		}
+		fmt.Fprintf(&b, "  %s -> %s (%d %s)\n", s.Bundle.Title, s.Target.Title(), len(s.Plan), changes)
 		actions += len(s.Plan)
 		for _, a := range s.Plan {
 			switch a.(type) {
