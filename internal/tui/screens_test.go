@@ -17,7 +17,7 @@ import (
 // screenshots. It reads the real machine (detection, prerequisites, the
 // upstream tree) but stops at the review screen, so it never installs anything.
 //
-//	DASHKIT_SCREENS=out/ DASHKIT_SCREENS_PROJECT=path/to/project go test ./internal/tui -run TestScreens
+//	DASHKIT_SCREENS=out/ DASHKIT_SCREENS_PROJECT=path/to/project DASHKIT_SCREENS_VERSION=0.2.1 \n//		go test ./internal/tui -run TestScreens
 func TestScreens(t *testing.T) {
 	out := os.Getenv("DASHKIT_SCREENS")
 	project := os.Getenv("DASHKIT_SCREENS_PROJECT")
@@ -37,7 +37,11 @@ func TestScreens(t *testing.T) {
 	// Not a terminal here, so lipgloss would strip colour; a real terminal keeps it.
 	lipgloss.SetColorProfile(termenv.TrueColor)
 
-	m := newModel(context.Background(), "0.2.0")
+	version := os.Getenv("DASHKIT_SCREENS_VERSION")
+	if version == "" {
+		version = "dev"
+	}
+	m := newModel(context.Background(), version)
 	shot := func(name string) {
 		t.Helper()
 		if err := os.WriteFile(filepath.Join(out, name+".ansi"), []byte(m.View()), 0o644); err != nil {
@@ -62,8 +66,6 @@ func TestScreens(t *testing.T) {
 	press(enter)
 	shot("04-scope")
 	press(enter)
-	// Leave prerequisites to doctor: untick "install missing prerequisites".
-	press(down, space)
 	shot("05-options")
 	press(enter) // plans the install against the project; nothing is written
 	if m.err != nil {
