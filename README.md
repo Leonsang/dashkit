@@ -68,7 +68,7 @@ The wizard asks four things — which skills, which tools, where, which options 
 will touch and every command it will run, and only then does anything. Or skip it:
 
 ```bash
-dashkit install --bundle powerbi-authoring,goblin-pbip --agents detected
+dashkit install --bundle powerbi-authoring,pbi-sdd,goblin-pbip --agents detected
 ```
 
 ```bash
@@ -77,6 +77,28 @@ dashkit list        # every bundle, who makes it, and how it installs
 dashkit update      # re-apply everything recorded, from a fresh upstream copy
 dashkit uninstall   # remove exactly what dashkit installed — nothing else
 ```
+
+## Then, in your AI tool: a spec-driven workflow
+
+`pbi-sdd` turns Power BI work into written, reviewable steps kept next to the `.pbip` in `sdd/`.
+It adds no craft of its own — it decides when Microsoft's and data-goblin's skills are used and what
+gets written down.
+
+```
+new project   /pbi-sdd new ─▶ spec ─▶ tasks ─▶ build ─▶ verify
+                                ▲
+published     /pbi-sdd survey ──┘   levantamiento: inventory, findings, as-is spec
+```
+
+- **`survey`** — for a report that already exists, or is published and not in the repo. A bundled
+  script inventories pages, visuals, measures, relationships and sources, and flags what a person
+  would miss: measures nothing uses, broken field references, local file paths that break refresh,
+  Auto date/time tables, measures without descriptions or formats.
+- **`new`** — runs Microsoft's report-planning rounds and ends in a spec with acceptance criteria.
+- **`spec → tasks → build → verify`** — no task before you approve the spec; one task at a time,
+  each with its own check; verification with evidence for every criterion.
+
+Artifacts are written in the language you use with the agent.
 
 ## What you can install
 
@@ -99,6 +121,17 @@ Developer skills for authoring Microsoft Power BI solutions.
 Complete bundle: all Microsoft Skills for Fabric for developers and consumers
 
 `fabriciq` · `semantic-model-authoring` · `spark-cli` · `sqldw-cli` · `eventhouse-cli` · `eventstream-cli` · `eventschemaset-cli` · `activator-cli` · `sqldb-cli` · `azmon-mirroredcatalogs-operations-cli` · `dataflows-cli` · `search-consumption-cli` · `onelake-catalog-govern-cli` · `fabriciq-ontology-cli` · `variable-library-cli` · `deployment-pipelines-authoring-cli` · `databricks-migration` · `pipeline-migration` · `synapse-migration` · `hdinsight-migration` · `e2e-medallion-architecture` · `git-integration-operations-cli` · `e2e-fabric-cost-estimation`
+
+</details>
+
+**From dashkit** — its own workflow over those skills, embedded in the binary.
+
+<details>
+<summary><strong>Spec-driven workflow</strong> &ensp;<code>pbi-sdd</code> &ensp;dashkit · 1 skill</summary>
+
+A thin spec-driven workflow for Power BI: survey an existing or published report (levantamiento), or start a new one, then spec, tasks, build and verify with written, approved steps. Leans on the Microsoft and data-goblin skills rather than repeating them.
+
+`pbi-sdd`
 
 </details>
 

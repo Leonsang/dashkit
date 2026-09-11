@@ -45,10 +45,12 @@ const goblinLink = (b, s) =>
 
 const vendored = manifest.bundles.filter((b) => b.kind === "vendored");
 const market = manifest.bundles.filter((b) => b.kind === "marketplace");
+const builtin = manifest.bundles.filter((b) => b.kind === "builtin");
 
 function table(b) {
   const rows = b.skills.map((s) => {
     if (b.kind === "marketplace") return `| [\`${s}\`](${goblinLink(b, s)}) | |`;
+    if (b.kind === "builtin") return `| [\`${s}\`](../bundles/${b.dir}/skills/${s}/SKILL.md) | ${b.description.replace(/\|/g, "\|")} |`;
     const md = join(upstream, b.dir, "skills", s, "SKILL.md");
     const d = existsSync(md) ? firstSentence(description(md)) : "";
     return `| [\`${s}\`](${msLink(b, s)}) | ${d} |`;
@@ -57,7 +59,7 @@ function table(b) {
 }
 
 function details(b, full) {
-  const by = b.kind === "marketplace" ? "data-goblin" : "Microsoft";
+  const by = { marketplace: "data-goblin", builtin: "dashkit" }[b.kind] ?? "Microsoft";
   const hooks = b.hooks?.length ? ` · ${b.hooks.length} guardrail hooks` : "";
   const out = [
     "<details>",
@@ -95,6 +97,11 @@ const doc = [
   `Copied at \`${ref}\` into tools without a plugin manager; Claude Code and Copilot CLI install the marketplace's current version instead.`,
   "",
   ...vendored.map((b) => details(b, true)),
+  "## From dashkit",
+  "",
+  "dashkit's own, embedded in the binary and MIT-licensed. A workflow over the skills above rather than more of them.",
+  "",
+  ...builtin.map((b) => details(b, true)),
   "## From data-goblin",
   "",
   "Installed by Claude Code or Copilot CLI themselves. dashkit never copies these files: the project's",
@@ -116,6 +123,9 @@ const block = [
   `**From Microsoft** — copied at the pinned tag \`${ref}\` into tools without a plugin manager; installed at the marketplace's current version by Claude Code and Copilot CLI.`,
   "",
   ...vendored.map((b) => details(b, false)),
+  "**From dashkit** — its own workflow over those skills, embedded in the binary.",
+  "",
+  ...builtin.map((b) => details(b, false)),
   "**From data-goblin** — installed through Claude Code's or Copilot CLI's own plugin manager.",
   "",
   ...market.map((b) => details(b, false)),

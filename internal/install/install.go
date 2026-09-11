@@ -75,20 +75,31 @@ func Build(ctx context.Context, req Request) (*Built, error) {
 		}
 	}
 
+	// dashkit's own bundles come out of the binary, not from upstream.
+	var builtin *source.Tree
+	if hasKind(req.Bundles, catalog.Builtin) {
+		var err error
+		if builtin, err = source.Builtin(); err != nil {
+			return nil, err
+		}
+	}
+
 	built := &Built{Tree: tree}
 	if !req.SkipPrereqCheck {
 		built.Prereqs = prereq.ForBundles(req.Bundles)
 	}
 
-	opts := targets.Options{
-		Scope:            req.Scope,
-		ProjectDir:       req.ProjectDir,
-		Tree:             tree,
-		MCP:              req.MCP,
-		PreferHostPlugin: req.PreferHostPlugin,
-	}
-
 	for _, b := range req.Bundles {
+		opts := targets.Options{
+			Scope:            req.Scope,
+			ProjectDir:       req.ProjectDir,
+			Tree:             tree,
+			MCP:              req.MCP,
+			PreferHostPlugin: req.PreferHostPlugin,
+		}
+		if b.Kind == catalog.Builtin {
+			opts.Tree = builtin
+		}
 		for _, t := range req.Targets {
 			if b.IsMarketplace() {
 				built.Steps = append(built.Steps, planMarketplace(b, t, opts))
@@ -129,9 +140,12 @@ func planMarketplace(b catalog.Bundle, t targets.Target, opts targets.Options) S
 	return Step{Bundle: b, Target: t, Plan: p}
 }
 
-func needsTree(bundles []catalog.Bundle) bool {
+// needsTree reports whether any bundle comes from the upstream Microsoft tree.
+func needsTree(bundles []catalog.Bundle) bool { return hasKind(bundles, catalog.Vendored) }
+
+func hasKind(bundles []catalog.Bundle, k catalog.Kind) bool {
 	for _, b := range bundles {
-		if !b.IsMarketplace() {
+		if b.Kind == k {
 			return true
 		}
 	}
@@ -350,6 +364,9 @@ func releaseMarketplace(st *state.State, in state.Install, pl state.Plugin, env 
 func recordRef(b catalog.Bundle, tree *source.Tree) string {
 	if b.IsMarketplace() {
 		return b.Marketplace.Plugin + "@" + b.Marketplace.Name
+	}
+	if b.Kind == catalog.Builtin {
+		return "dashkit-builtin"
 	}
 	if tree == nil {
 		return ""

@@ -63,6 +63,21 @@ Complete bundle: all Microsoft Skills for Fabric for developers and consumers
 
 </details>
 
+## From dashkit
+
+dashkit's own, embedded in the binary and MIT-licensed. A workflow over the skills above rather than more of them.
+
+<details>
+<summary><strong>Spec-driven workflow</strong> &ensp;<code>pbi-sdd</code> &ensp;dashkit · 1 skill</summary>
+
+A thin spec-driven workflow for Power BI: survey an existing or published report (levantamiento), or start a new one, then spec, tasks, build and verify with written, approved steps. Leans on the Microsoft and data-goblin skills rather than repeating them.
+
+| Skill | What it does |
+|---|---|
+| [`pbi-sdd`](../bundles/pbi-sdd/skills/pbi-sdd/SKILL.md) | A thin spec-driven workflow for Power BI: survey an existing or published report (levantamiento), or start a new one, then spec, tasks, build and verify with written, approved steps. Leans on the Microsoft and data-goblin skills rather than repeating them. |
+
+</details>
+
 ## From data-goblin
 
 Installed by Claude Code or Copilot CLI themselves. dashkit never copies these files: the project's

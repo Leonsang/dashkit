@@ -168,6 +168,31 @@ for (const p of marketplace.plugins) {
 const order = ["powerbi-authoring", "fabric-skills", "fabric-authoring", "fabric-consumption", "fabric-operations"];
 bundles.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
 
+// dashkit's own bundles, embedded in the binary (see bundles/embed.go).
+const BUILTIN = {
+  "pbi-sdd": {
+    title: "Spec-driven workflow",
+    description:
+      "A thin spec-driven workflow for Power BI: survey an existing or published report (levantamiento), or start a new one, then spec, tasks, build and verify with written, approved steps. Leans on the Microsoft and data-goblin skills rather than repeating them.",
+    prereqs: { required: ["node20"], optional: [] },
+  },
+};
+for (const [id, meta] of Object.entries(BUILTIN)) {
+  const skillsDir = join(process.cwd(), "bundles", id, "skills");
+  if (!existsSync(skillsDir)) throw new Error(`builtin bundle ${id} has no skills/ directory`);
+  const skills = readdirSync(skillsDir).filter((s) => existsSync(join(skillsDir, s, "SKILL.md"))).sort();
+  bundles.push({
+    id,
+    kind: "builtin",
+    title: meta.title,
+    description: meta.description,
+    dir: id,
+    skills,
+    prereqs: meta.prereqs,
+    credit: { author: "dashkit", license: "MIT", homepage: "https://github.com/leonsang/dashkit" },
+  });
+}
+
 if (goblinRoot) {
   const goblinMarket = JSON.parse(
     readFileSync(join(goblinRoot, ".claude-plugin", "marketplace.json"), "utf8"),
@@ -213,5 +238,5 @@ const out = join(process.cwd(), "internal", "catalog", "manifest.json");
 writeFileSync(out, JSON.stringify(manifest, null, 2) + "\n");
 const byKind = (k) => bundles.filter((b) => b.kind === k).length;
 console.log(
-  `wrote ${out}: ${byKind("vendored")} vendored + ${byKind("marketplace")} marketplace bundles, ref ${ref}`,
+  `wrote ${out}: ${byKind("vendored")} vendored + ${byKind("builtin")} builtin + ${byKind("marketplace")} marketplace bundles, ref ${ref}`,
 );

@@ -325,3 +325,35 @@ func TestHeadersHelperServersOnlyGoWhereTheyCanAuthenticate(t *testing.T) {
 		t.Errorf("the note should say how to authenticate:\n%s", notes)
 	}
 }
+
+// dashkit's own workflow is in no marketplace, so it is copied into every host —
+// references and script included — even where a plugin manager exists.
+func TestBuiltinSDDInstallsWithItsReferencesAndScript(t *testing.T) {
+	home.SetRoot(t.TempDir())
+	t.Cleanup(func() { home.SetRoot("") })
+
+	b, err := catalog.Find("pbi-sdd")
+	if err != nil {
+		t.Fatal(err)
+	}
+	project := t.TempDir()
+	req := request(t, b, "", project, "claude", "cursor")
+	req.PreferHostPlugin = true
+	apply(t, req)
+
+	for _, rel := range []string{
+		".claude/skills/pbi-sdd/SKILL.md",
+		".claude/skills/pbi-sdd/references/survey.md",
+		".claude/skills/pbi-sdd/references/verify.md",
+		".claude/skills/pbi-sdd/scripts/survey.mjs",
+		".dashkit/pbi-sdd/skills/pbi-sdd/scripts/survey.mjs",
+	} {
+		if _, err := os.Stat(filepath.Join(project, filepath.FromSlash(rel))); err != nil {
+			t.Errorf("missing %s: %v", rel, err)
+		}
+	}
+	rule := read(t, filepath.Join(project, ".cursor", "rules", "dashkit-pbi-sdd.mdc"))
+	if !strings.Contains(rule, ".dashkit/pbi-sdd/skills/pbi-sdd/SKILL.md") {
+		t.Errorf("the Cursor rule should point at the vendored skill:\n%s", rule)
+	}
+}

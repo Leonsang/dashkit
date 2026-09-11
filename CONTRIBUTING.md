@@ -21,6 +21,13 @@ Thanks for helping. A few things make a contribution easy to accept.
    — and respect scopes: never widen a project install into a user-wide one.
 4. Extend `TestInstallProjectScopeWritesEveryHostFormat` and the idempotency and uninstall tests.
 
+## dashkit's own bundles
+
+`bundles/<id>/skills/<skill>/` holds skills dashkit authors (today, `pbi-sdd`). They are embedded in
+the binary by `bundles/embed.go` and installed like any vendored bundle. Keep them thin: a workflow
+that calls the Microsoft and data-goblin skills, never a second copy of what those skills teach.
+Register a new one in `BUILTIN` in `tools/gen-manifest.mjs` and in the `go:embed` line.
+
 ## Rules every change keeps
 
 - Back up before writing; never rewrite a file dashkit doesn't own — merge into it.

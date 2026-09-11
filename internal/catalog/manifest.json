@@ -147,6 +147,27 @@
       }
     },
     {
+      "id": "pbi-sdd",
+      "kind": "builtin",
+      "title": "Spec-driven workflow",
+      "description": "A thin spec-driven workflow for Power BI: survey an existing or published report (levantamiento), or start a new one, then spec, tasks, build and verify with written, approved steps. Leans on the Microsoft and data-goblin skills rather than repeating them.",
+      "dir": "pbi-sdd",
+      "skills": [
+        "pbi-sdd"
+      ],
+      "prereqs": {
+        "required": [
+          "node20"
+        ],
+        "optional": []
+      },
+      "credit": {
+        "author": "dashkit",
+        "license": "MIT",
+        "homepage": "https://github.com/leonsang/dashkit"
+      }
+    },
+    {
       "id": "goblin-pbip",
       "kind": "marketplace",
       "title": "PBIP guardrails",

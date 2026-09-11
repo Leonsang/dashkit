@@ -83,13 +83,20 @@ func newModel(ctx context.Context, version string) *model {
 		version:    version,
 		ctx:        ctx,
 		bundles:    catalog.Bundles(),
-		bundlePick: map[int]bool{0: true}, // Power BI, the common case
+		bundlePick: map[int]bool{},
 		toolPick:   map[int]bool{},
 		scope:      targets.Project,
 		mcp:        true,
 		prereqs:    true,
 		hostPlugin: true,
 		events:     make(chan tea.Msg, 64),
+	}
+	// The common case, preselected: Power BI authoring and the workflow that
+	// guides its use — six skills between them, well inside the context budget.
+	for i, b := range m.bundles {
+		if b.ID == "powerbi-authoring" || b.ID == "pbi-sdd" {
+			m.bundlePick[i] = true
+		}
 	}
 	for i, t := range targets.All() {
 		d := t.Detect()
@@ -298,8 +305,10 @@ func (m *model) View() string {
 	case stepBundles:
 		b.WriteString(titleStyle.Render("1/5  Which skills?") + "\n\n")
 		for i, bundle := range m.bundles {
-			if i > 0 && bundle.IsMarketplace() && !m.bundles[i-1].IsMarketplace() {
-				b.WriteString("\n" + dimStyle.Render("  from data-goblin · installed through your tool's own plugin manager") + "\n")
+			if i == 0 || bundle.Kind != m.bundles[i-1].Kind {
+				if header := groupHeader(bundle.Kind); header != "" && i > 0 {
+					b.WriteString("\n" + dimStyle.Render("  "+header) + "\n")
+				}
 			}
 			detail := fmt.Sprintf("%d skills", len(bundle.Skills))
 			if len(bundle.Skills) == 1 {
@@ -441,6 +450,18 @@ func count(n int, one, many string) string {
 		return "1 " + one
 	}
 	return fmt.Sprintf("%d %s", n, many)
+}
+
+// groupHeader introduces each kind of bundle in the list, so where a bundle
+// comes from — and how it gets installed — is visible before it is chosen.
+func groupHeader(k catalog.Kind) string {
+	switch k {
+	case catalog.Builtin:
+		return "from dashkit · a workflow over the skills above"
+	case catalog.Marketplace:
+		return "from data-goblin · installed through your tool's own plugin manager"
+	}
+	return ""
 }
 
 // wrap breaks a long line at word boundaries for the terminal, indenting the

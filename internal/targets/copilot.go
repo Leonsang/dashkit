@@ -62,7 +62,7 @@ func (copilotCLI) PlanMarketplace(b catalog.Bundle, opts Options) (plan.Plan, er
 }
 
 func (copilotCLI) Plan(b catalog.Bundle, opts Options) (plan.Plan, error) {
-	if bin := binaryOnPath("copilot"); bin != "" && opts.PreferHostPlugin && opts.Scope == Global {
+	if bin := binaryOnPath("copilot"); bin != "" && opts.PreferHostPlugin && opts.Scope == Global && b.Kind == catalog.Vendored {
 		return plan.Plan{copilotPlugin(bin, "microsoft/skills-for-fabric", "fabric-collection", b.ID)}, nil
 	}
 

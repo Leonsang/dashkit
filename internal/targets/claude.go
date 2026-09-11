@@ -94,7 +94,8 @@ func (claudeCode) Plan(b catalog.Bundle, opts Options) (plan.Plan, error) {
 	// Claude Code can install the upstream bundle through its own plugin
 	// marketplace. Where that is available it beats copying files, because
 	// updates then flow through `claude plugin update`.
-	if opts.PreferHostPlugin {
+	// Only Microsoft's bundles live in that marketplace; dashkit's own are copied.
+	if opts.PreferHostPlugin && b.Kind == catalog.Vendored {
 		if bin := binaryOnPath("claude"); bin != "" {
 			return plan.Plan{claudePlugin(bin, "microsoft/skills-for-fabric", "fabric-collection", b.ID, opts)}, nil
 		}

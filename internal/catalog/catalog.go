@@ -51,6 +51,9 @@ const (
 	// manager to install them, so the author's licence, updates and hooks all
 	// stay theirs. Hosts without a plugin manager are skipped with an explanation.
 	Marketplace Kind = "marketplace"
+	// Builtin bundles are dashkit's own, embedded in the binary and written
+	// into each host exactly like vendored ones.
+	Builtin Kind = "builtin"
 )
 
 // MarketplaceRef points at a plugin in a third-party marketplace.
