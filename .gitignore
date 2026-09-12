@@ -3,3 +3,6 @@ dist/
 /dashkit.exe
 *.test
 .DS_Store
+
+# tgrep index (local search cache)
+/.tgrep/
