@@ -144,3 +144,11 @@ def test_calculations_land_after_aliases_on_a_file_source(wb):
     assert tags.index("aliases") < max(i for i, t in enumerate(tags) if t == "column"), tags
     first_calc = next(i for i, c in enumerate(ds) if c.find("calculation") is not None)
     assert first_calc > tags.index("aliases"), tags
+
+
+def test_a_filter_without_values_keeps_every_member(wb):
+    root, _ = wb
+    A.add_filter(root, "Por mes", "Region")
+    gf = next(f for f in root.iter("filter") if f.get("column", "").endswith(":Region:nk]")).find("groupfilter")
+    assert gf.get("function") == "level-members"
+    assert gf.get("{http://www.tableausoftware.com/xml/user}ui-enumeration") == "all"

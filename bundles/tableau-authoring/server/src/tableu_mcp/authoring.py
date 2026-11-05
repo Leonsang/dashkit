@@ -729,8 +729,15 @@ def _build_filter(column: str, level: str, datatype: str, values=None, exclude=F
         lm.set(U + "ui-enumeration", "all")
         lm.set(U + "ui-marker", "enumerate")
         return flt
+    if not values:
+        # No values = keep everything: Tableau writes "all members" as level-members/all. An empty
+        # inclusive union means "nothing", and Desktop drops it on load as an invalid filter.
+        lm = etree.SubElement(flt, "groupfilter", function="level-members", level=level)
+        lm.set(U + "ui-enumeration", "all")
+        lm.set(U + "ui-marker", "enumerate")
+        return flt
     members = [etree.Element("groupfilter", function="member", level=level, member=_literal(v, datatype))
-               for v in values or []]
+               for v in values]
     if exclude:
         ex = etree.SubElement(flt, "groupfilter", function="except")
         ex.set(U + "ui-domain", "database")
