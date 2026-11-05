@@ -1984,12 +1984,14 @@ async function bindFieldsScript(args) {
     if (r.startsWith("=")) {
       let formula = r.slice(1).trim();
       let out;
-      const typed = formula.match(/^(.*\S)\s*::\s*(BOOLEAN|TEXT|NUMBER)$/i);
+      let pct = false;
+      const typed = formula.match(/^(.*\S)\s*::\s*(BOOLEAN|TEXT|NUMBER|PERCENT)$/i);
       if (typed) {
         formula = typed[1].trim();
-        out = { BOOLEAN: 3, TEXT: 0, NUMBER: 2 }[typed[2].toUpperCase()];
+        pct = typed[2].toUpperCase() === "PERCENT";
+        out = { BOOLEAN: 3, TEXT: 0, NUMBER: 2, PERCENT: 2 }[typed[2].toUpperCase()];
       } else if (!/^\s*(CASE|IF)\b/i.test(formula) && /(<=|>=|!=|<>|[^<>!=]=[^=]|[<>]|\bIN\s*\(|\bIS\s+(NOT\s+)?NULL\b|\b(REGEXP_MATCH|REGEXP_CONTAINS|CONTAINS_TEXT|STARTS_WITH|ENDS_WITH)\s*\(|\b(AND|OR|NOT)\b)/i.test(formula)) out = 3;
-      return { f: null, agg: void 0, label, formula, out };
+      return { f: null, agg: void 0, label, formula, out, pct };
     }
     const m = r.match(/^([A-Za-z_]+)\((.+)\)$/);
     if (m && want === 1) {
@@ -2020,9 +2022,9 @@ async function bindFieldsScript(args) {
     if (want === 0 && (preset === "control-checkbox" || preset === "button-filter") && f.dataType !== 3) {
       warnings.push(`"${ref}" no es booleano en el origen: la casilla o el boton de filtro dara reason 116. Crea un campo booleano en el ORIGEN con add_source_field (CLI: fields add), p. ej. UPPER(campo) IN ("TRUE","SI"), y vincula ese campo.`);
     }
-    return { f, agg, label, formula: void 0, out: void 0 };
+    return { f, agg, label, formula: void 0, out: void 0, pct: false };
   };
-  const mkDef = ({ f, agg, label, formula, out, dim }) => {
+  const mkDef = ({ f, agg, label, formula, out, dim, pct }) => {
     const qt = "qt_" + Math.random().toString(36).slice(2, 12).padEnd(10, "0");
     const ns = String(f && f.namespace || "t0");
     let dataTransformation;
@@ -2045,7 +2047,7 @@ async function bindFieldsScript(args) {
         formulaOutputDataType: out ?? 2,
         aggregation: 7
       };
-      const semantic = { 2: 33, 3: 34 }[out ?? 2];
+      const semantic = pct ? 14 : { 2: 33, 3: 34 }[out ?? 2];
       if (semantic) displayTransformation.outputSemanticInfo = { semanticConfig: [{ semanticType: semantic }] };
     } else {
       dataTransformation = { sourceFieldName: String(f.name) };

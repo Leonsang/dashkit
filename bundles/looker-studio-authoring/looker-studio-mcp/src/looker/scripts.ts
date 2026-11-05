@@ -423,11 +423,17 @@ export async function bindFieldsScript(args: BindFieldsArgs): Promise<BindFields
       // (a checkbox control only takes booleans, reason 116), else NUMBER as before.
       let formula = r.slice(1).trim();
       let out: number | undefined;
-      const typed = formula.match(/^(.*\S)\s*::\s*(BOOLEAN|TEXT|NUMBER)$/i);
-      if (typed) { formula = typed[1]!.trim(); out = ({ BOOLEAN: 3, TEXT: 0, NUMBER: 2 } as Record<string, number>)[typed[2]!.toUpperCase()]; }
+      // PERCENT is a NUMBER shown as a percentage (semantic type 14, as the editor's own ratio fields).
+      let pct = false;
+      const typed = formula.match(/^(.*\S)\s*::\s*(BOOLEAN|TEXT|NUMBER|PERCENT)$/i);
+      if (typed) {
+        formula = typed[1]!.trim();
+        pct = typed[2]!.toUpperCase() === 'PERCENT';
+        out = ({ BOOLEAN: 3, TEXT: 0, NUMBER: 2, PERCENT: 2 } as Record<string, number>)[typed[2]!.toUpperCase()];
+      }
       else if (!/^\s*(CASE|IF)\b/i.test(formula) &&
         /(<=|>=|!=|<>|[^<>!=]=[^=]|[<>]|\bIN\s*\(|\bIS\s+(NOT\s+)?NULL\b|\b(REGEXP_MATCH|REGEXP_CONTAINS|CONTAINS_TEXT|STARTS_WITH|ENDS_WITH)\s*\(|\b(AND|OR|NOT)\b)/i.test(formula)) out = 3;
-      return { f: null, agg: undefined, label, formula, out };
+      return { f: null, agg: undefined, label, formula, out, pct };
     }
     const m = r.match(/^([A-Za-z_]+)\((.+)\)$/);
     if (m && want === 1) {
@@ -457,9 +463,9 @@ export async function bindFieldsScript(args: BindFieldsArgs): Promise<BindFields
     }
     // Native metrics: no explicit aggregation unless asked. An aggregation different from the
     // source's default counts as "custom" and fails (reason 93) when the source forbids editing fields.
-    return { f, agg, label, formula: undefined as string | undefined, out: undefined as number | undefined };
+    return { f, agg, label, formula: undefined as string | undefined, out: undefined as number | undefined, pct: false };
   };
-  const mkDef = ({ f, agg, label, formula, out, dim }: { f: any; agg?: number; label?: string; formula?: string; out?: number; dim?: boolean }) => {
+  const mkDef = ({ f, agg, label, formula, out, dim, pct }: { f: any; agg?: number; label?: string; formula?: string; out?: number; dim?: boolean; pct?: boolean }) => {
     const qt = 'qt_' + Math.random().toString(36).slice(2, 12).padEnd(10, '0');
     const ns = String((f && f.namespace) || 't0');
     let dataTransformation: Record<string, unknown>;
@@ -488,7 +494,7 @@ export async function bindFieldsScript(args: BindFieldsArgs): Promise<BindFields
             sourceType: 1, sourceFieldName: 'qt_' + Math.random().toString(36).slice(2, 12).padEnd(10, '0'),
             textFormula: tf, frontendTextFormula: tf, formulaOutputDataType: out ?? 2, aggregation: 7,
           };
-      const semantic = ({ 2: 33, 3: 34 } as Record<number, number>)[out ?? 2];
+      const semantic = pct ? 14 : ({ 2: 33, 3: 34 } as Record<number, number>)[out ?? 2];
       if (semantic) displayTransformation.outputSemanticInfo = { semanticConfig: [{ semanticType: semantic }] };
     } else {
       dataTransformation = { sourceFieldName: String(f.name) };
