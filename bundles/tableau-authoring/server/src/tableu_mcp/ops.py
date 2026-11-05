@@ -132,7 +132,31 @@ def save(target: str, xml: str, out: str | None = None, force: bool = False) -> 
         return out_
     dest = out or target
     path = twb.write_workbook_file(dest, xml, base_twbx=target if (not _is_live(target) and str(target).lower().endswith(".twbx")) else None)
-    return {"applied": True, "path": str(path), "validation": v}
+    out_ = {"applied": True, "path": str(path), "validation": v}
+    if v.get("isValid") is None:
+        out_["schemaChecked"] = False  # no Desktop running: only well-formedness was checked
+    opened = _open_in_desktop(path)
+    if opened:
+        out_["openInDesktop"] = opened
+        out_["next"] = ("This file is open in Tableau Desktop, which keeps its loaded copy (and locks its "
+                        ".hyper): it will not show this change until the workbook is reopened. Close it there, "
+                        "or ask the user before workbook Reopen.")
+    return out_
+
+
+def _open_in_desktop(path) -> int | None:
+    """The pid of a running Desktop that has this workbook file open, if any."""
+    from .client import list_instances  # noqa: PLC0415
+
+    want = os.path.normcase(os.path.abspath(str(path)))
+    for inst in list_instances():
+        try:
+            loc = DesktopClient(inst, timeout=5).get_json("/v0/workbook").get("location") or ""
+        except Exception:  # noqa: BLE001 - a busy or half-started Desktop is not an error here
+            continue
+        if loc and os.path.normcase(os.path.abspath(loc)) == want:
+            return inst.pid
+    return None
 
 
 def edit(target: str, fn: Callable[[etree._Element], object], out: str | None = None, dry_run: bool = False, force: bool = False) -> dict:
@@ -194,6 +218,88 @@ def show_sheet(sheet: str, confirm: bool = False) -> dict:
     pending = PENDING_DIR / f"{time.strftime('%Y%m%d-%H%M%S')}-show-{''.join(ch if ch.isalnum() else '_' for ch in sheet)}.twb"
     pending.write_text(twb.serialize(root), encoding="utf-8")
     return {"sheet": sheet, **reopen(str(pending), confirm=confirm)}
+
+
+def preflight(target: str) -> dict:
+    """Check a workbook for what makes Desktop refuse to load it, before opening it: the schema (with
+    Desktop's own validator when one is running), element order inside data sources, missing data or
+    .hyper files, locked extracts, filters that keep nothing, dashboards pointing at missing sheets.
+    Desktop's own load errors are often opaque ("Internal Error 501CF476"); this names the cause."""
+    from . import authoring  # noqa: PLC0415
+
+    issues: list[dict] = []
+
+    def add(severity: str, where: str, problem: str, fix: str) -> None:
+        issues.append({"severity": severity, "where": where, "problem": problem, "fix": fix})
+
+    xml = load(target)
+    root = twb.parse(xml)
+    v = validate(xml, target)
+    for msg in v.get("validationIssues") or []:
+        add("error", "schema", str(msg), "fix the element named in the message; the order rules are in authoring.*_ORDER")
+    schema_checked = v.get("isValid") is not None
+
+    order = authoring.DATASOURCE_ORDER
+    for ds in root.iter("datasource"):
+        name = ds.get("caption") or ds.get("name") or "?"
+        last = -1
+        for child in ds:
+            if not isinstance(child.tag, str):
+                continue
+            tag = child.tag.split("...")[-1]
+            if tag not in order:
+                continue
+            rank = order.index(tag)
+            if rank < last:
+                add("error", f"datasource {name}", f"<{tag}> comes after an element that must follow it",
+                    "re-create the element with tableu (it inserts in schema order), or move it up")
+                break
+            last = rank
+        for conn in ds.iter("connection"):
+            cls = conn.get("class")
+            files = []
+            if cls == "textscan" and conn.get("filename"):
+                files.append(Path(conn.get("directory") or "") / conn.get("filename"))
+            elif cls == "excel-direct" and conn.get("filename"):
+                files.append(Path(conn.get("filename")))
+            elif cls == "hyper" and conn.get("dbname"):
+                files.append(Path(conn.get("dbname")))
+            for f in files:
+                if not f.exists():
+                    add("error", f"datasource {name}", f"{cls} file not found: {f}",
+                        "point the connection at the file, or recreate the data source / extract")
+                elif cls == "hyper":
+                    from .extracts import _locked  # noqa: PLC0415
+
+                    if _locked(f):
+                        add("info", f"datasource {name}", f"{f.name} is locked (open in Tableau Desktop)",
+                            "fine if this is the workbook Desktop has open; to rebuild the extract, close it there "
+                            "or let CreateExtract write a new file")
+    for ws in root.iter("worksheet"):
+        for flt in ws.iter("filter"):
+            gf = flt.find("groupfilter")
+            if (flt.get("class") == "categorical" and gf is not None and gf.get("function") == "union"
+                    and len(gf) == 0):
+                add("error", f"worksheet {ws.get('name')}", f"filter on {flt.get('column')} keeps nothing "
+                    "(empty union); Desktop removes it as invalid", "re-add it with filter Add / AddShared")
+    sheets = set(twb.sheet_names(root)["worksheets"])
+    if not sheets:
+        add("error", "workbook", "no worksheets: Desktop cannot open it and says only 'Internal Error "
+            "501CF476' (typically a build that stopped early)", "finish the build, or rebuild it from the start")
+    for db in root.iter("dashboard"):
+        for z in db.iter("zone"):
+            n = z.get("name")
+            if n and not z.get("type-v2") and n not in sheets:
+                add("error", f"dashboard {db.get('name')}", f"zone shows sheet {n!r}, which does not exist",
+                    "remove the zone or create the sheet")
+    pid = _open_in_desktop(target) if not _is_live(target) else None
+    if pid:
+        add("info", "Desktop", f"open in Tableau Desktop (pid {pid}); it will not see changes to the file",
+            "close it there, or workbook Reopen")
+    ok = not any(i["severity"] == "error" for i in issues)
+    return {"ok": ok, "schemaChecked": schema_checked, "issues": issues,
+            **({} if schema_checked else {"note": "start Tableau Desktop for its schema check; "
+                                                   "structural checks above ran regardless"})}
 
 
 def restore(backup_path: str, target: str = "live") -> dict:

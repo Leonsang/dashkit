@@ -130,6 +130,13 @@ def create_extract(root, datasource: str, hyper_path: str | None = None) -> dict
 
     target = Path(hyper_path) if hyper_path else EXTRACT_DIR / f"{(ds.get('caption') or 'extract').replace(' ', '_')}_{uuid.uuid4().hex[:8]}.hyper"
     target.parent.mkdir(parents=True, exist_ok=True)
+    # Tableau Desktop keeps the .hyper of an open workbook locked. Never fail on that: write a new file
+    # beside it and point this workbook there; the locked one is left for Desktop.
+    notes = []
+    if _locked(target):
+        locked, target = target, _free_name(target)
+        notes.append(f"{locked.name} is in use (open in Tableau Desktop?); wrote {target.name} instead. "
+                     f"Delete {locked.name} once Desktop has released it.")
     table = TableDefinition(TableName("Extract", "Extract"),
                             [TableDefinition.Column(c["name"], _sql_type(c["type"])) for c in cols])
     # hyperd writes its log to the working directory unless told otherwise: keep it out of the user's project.
@@ -175,5 +182,29 @@ def create_extract(root, datasource: str, hyper_path: str | None = None) -> dict
             if obj.find("properties[@context='extract']") is None:
                 props = etree.SubElement(obj, "properties", context="extract")
                 etree.SubElement(props, "relation", name="Extract", table="[Extract].[Extract]", type="table")
-    return {"datasource": ds.get("caption") or ds.get("name"), "hyper": str(target), "rows": len(rows),
-            "columns": len(cols)}
+    out = {"datasource": ds.get("caption") or ds.get("name"), "hyper": str(target), "rows": len(rows),
+           "columns": len(cols)}
+    return {**out, "notes": notes} if notes else out
+
+
+def _locked(path: Path) -> bool:
+    """True when another process holds the file: renaming it onto itself fails on Windows then."""
+    if not path.exists():
+        return False
+    try:
+        path.replace(path)
+        with open(path, "r+b"):
+            pass
+    except PermissionError:
+        return True
+    except OSError:
+        return True
+    return False
+
+
+def _free_name(path: Path) -> Path:
+    for i in range(2, 1000):
+        candidate = path.with_name(f"{path.stem}-{i}{path.suffix}")
+        if not candidate.exists() or not _locked(candidate):
+            return candidate
+    return path.with_name(f"{path.stem}-{uuid.uuid4().hex[:8]}{path.suffix}")

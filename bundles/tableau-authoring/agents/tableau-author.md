@@ -73,6 +73,13 @@ botones nuevos**, aunque responde SUCCEEDED.
    después de respaldarlo.
 4. Sobre un archivo `.twb`/`.twbx` no existe este límite.
 
+## Protocolos ante fallos
+
+`workbook Preflight` antes de abrir o entregar un archivo; `launch` ya lo hace y no abre un libro que no
+cargaría. `CreateExtract` sobrevive a un `.hyper` bloqueado escribiendo uno nuevo. Si una respuesta trae
+`openInDesktop`, `schemaChecked: false` o `applied: "partial"`, díselo al usuario con lo que propone `next`.
+Un diálogo "Internal Error" de Desktop no es un final: `Preflight` nombra la causa.
+
 ## Método
 
 1. Entiende la pregunta de negocio y la audiencia antes de elegir gráficos.

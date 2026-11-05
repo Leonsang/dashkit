@@ -101,6 +101,21 @@ nuevos**, aunque responde SUCCEEDED. `tableu` lo detecta y contesta
 Si el libro nunca se guardó, Reopen no tiene ruta: pide que lo guarden en
 Desktop primero, o trabaja sobre un archivo.
 
+## Protocolos ante fallos (los aplica tableu solo; tú lee lo que devuelve)
+
+- **Antes de abrir un archivo en Desktop:** `tableu launch` pasa `workbook Preflight` y no abre un libro que
+  no cargaría (sin hojas, elementos fuera de orden, archivos de datos o `.hyper` que faltan, filtros que
+  excluyen todo, dashboards con hojas inexistentes). Desktop solo diría "Internal Error 501CF476".
+  Ejecuta `workbook Preflight` tú mismo ante cualquier error de carga.
+- **`.hyper` bloqueado** (el libro está abierto en Desktop): `CreateExtract` escribe `ventas-2.hyper` al
+  lado y lo dice en `notes`. No hace falta cerrar Desktop.
+- **Archivo abierto en Desktop:** si editas un `.twb` que Desktop tiene abierto, la respuesta trae
+  `openInDesktop` y `next`: Desktop no verá el cambio hasta reabrirlo. Pide permiso antes de `Reopen`.
+- **Esquema sin revisar:** `schemaChecked: false` significa que Desktop no estaba abierto y solo se
+  revisó el XML. Antes de dar por bueno un libro, ábrelo (vía `launch`) o pasa `Preflight` con Desktop abierto.
+- **Nunca cierres Desktop por tu cuenta:** `Reopen` y `ShowSheet` requieren `confirm=true` y el permiso
+  del usuario.
+
 ## Errores
 
 - **Una llamada en vivo que se cuelga** suele ser un diálogo modal:

@@ -52,6 +52,7 @@ def main(argv: list[str] | None = None) -> int:
     sp = cmd("launch", "Start Tableau Desktop (optionally opening a workbook)")
     sp.add_argument("workbook", nargs="?")
     sp.add_argument("--wait", type=int, default=90, help="seconds to wait for the API")
+    sp.add_argument("--force", action="store_true", help="open the workbook even if Preflight finds load errors")
     cmd("instances", "List running Desktop instances exposing the API")
     sp = cmd("api", "Raw GET against the External Client API")
     sp.add_argument("path", help="e.g. /v0/app or /openapi.json")
@@ -176,6 +177,13 @@ def _run(a) -> int:
     elif c == "disable":
         _out({**desktop_setup.disable(a.version).as_dict(), "next": "Restart Tableau Desktop."})
     elif c == "launch":
+        if a.workbook and not a.force:
+            check = ops.preflight(a.workbook)
+            if not check["ok"]:
+                _out({"refused": "workbook Preflight found what would stop Desktop loading it",
+                      "issues": [i for i in check["issues"] if i["severity"] == "error"],
+                      "hint": "fix those, or pass --force to open it anyway"})
+                return 1
         running = desktop_setup.tableau_running()
         if running:
             _out({"refused": "Tableau Desktop is already running", "runningPids": running})

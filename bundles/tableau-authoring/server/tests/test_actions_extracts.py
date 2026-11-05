@@ -163,3 +163,65 @@ def test_dashboard_rows_lay_out_a_kpi_row_on_top(wb):
     flow = [z for z in db.iter("zone") if z.get("param") == "horz"]
     assert [[c.get("name") for c in r] for r in flow] == [["K1", "K2"], ["Por region", "Por mes"]]
     assert int(flow[0].get("h")) < int(flow[1].get("h")) and int(flow[1].get("y")) > int(flow[0].get("y"))
+
+
+def _save(root, path):
+    path.write_text(twb.serialize(root), encoding="utf-8")
+    return str(path)
+
+
+def test_preflight_names_the_load_breakers_seen_in_practice(wb):
+    root, tmp = wb
+    ds = twb.find_datasource(root, "Ventas")
+    # 1. a calculation placed before <aliases>
+    calc = etree.Element("column", name="[Calculation_1]", caption="x", datatype="real", role="measure", type="quantitative")
+    etree.SubElement(calc, "calculation", {"class": "tableau", "formula": "1"})
+    ds.find("connection").addnext(calc)
+    # 2. a categorical filter that keeps nothing
+    ws = next(w for w in root.iter("worksheet") if w.get("name") == "Por mes")
+    view = ws.find(".//view")
+    f = etree.SubElement(view, "filter", {"class": "categorical", "column": "[x].[none:Region:nk]"})
+    etree.SubElement(f, "groupfilter", function="union")
+    # 3. an extract whose .hyper is missing
+    ex = etree.SubElement(ds, "extract", enabled="true")
+    etree.SubElement(ex, "connection", {"class": "hyper", "dbname": str(tmp / "missing.hyper")})
+    report = ops.preflight(_save(root, tmp / "broken.twb"))
+    problems = " | ".join(i["problem"] for i in report["issues"])
+    assert not report["ok"]
+    assert "comes after an element that must follow it" in problems
+    assert "keeps nothing" in problems
+    assert "missing.hyper" in problems
+
+
+def test_preflight_passes_a_sound_workbook(wb):
+    root, tmp = wb
+    report = ops.preflight(_save(root, tmp / "ok.twb"))
+    assert report["ok"], report["issues"]
+
+
+def test_extract_writes_beside_a_locked_hyper(wb, monkeypatch):
+    pytest.importorskip("tableauhyperapi")
+    from tableu_mcp import extracts  # noqa: PLC0415
+
+    root, tmp = wb
+    locked = tmp / "v.hyper"
+    locked.write_bytes(b"in use")
+    monkeypatch.setattr(extracts, "_locked", lambda p: Path(p) == locked)
+    r = extracts.create_extract(root, "Ventas", str(locked))
+    assert Path(r["hyper"]).name == "v-2.hyper" and r["notes"]
+    assert locked.read_bytes() == b"in use"  # the locked file is left alone
+
+
+def test_preflight_explains_the_internal_error_of_a_sheetless_workbook(tmp_path):
+    root = twb.new_workbook()
+    p = tmp_path / "empty.twb"
+    p.write_text(twb.serialize(root), encoding="utf-8")
+    report = ops.preflight(str(p))
+    assert not report["ok"] and "501CF476" in report["issues"][0]["problem"]
+
+
+def test_launch_refuses_a_workbook_that_would_not_load(tmp_path):
+    p = tmp_path / "empty.twb"
+    p.write_text(twb.serialize(twb.new_workbook()), encoding="utf-8")
+    r = registry._desktop_launch(workbook=str(p))
+    assert "refused" in r and r["issues"]

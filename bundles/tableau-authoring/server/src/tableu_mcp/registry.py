@@ -129,11 +129,20 @@ def _desktop_status():
     return {**desktop_setup.status().as_dict(), "instances": [i.public() for i in list_instances()]}
 
 
-def _desktop_launch(workbook: str | None = None, wait: int = 120, allow_second_instance: bool = False):
+def _desktop_launch(workbook: str | None = None, wait: int = 120, allow_second_instance: bool = False,
+                   force: bool = False):
     """Start Desktop (optionally opening a .twb/.twbx) and wait for its API. Refuses while another Desktop is
-    running (several instances compete for memory and the API) unless allow_second_instance=True."""
+    running (several instances compete for memory and the API) unless allow_second_instance=True. A workbook
+    goes through workbook Preflight first and is not opened when it would fail to load (force=True to try
+    anyway): Desktop's own load errors are modal and often say no more than 'Internal Error'."""
     import time  # noqa: PLC0415
 
+    if workbook and not force:
+        check = ops.preflight(workbook)
+        if not check["ok"]:
+            return {"refused": "workbook Preflight found what would stop Desktop loading it",
+                    "issues": [i for i in check["issues"] if i["severity"] == "error"],
+                    "hint": "fix those (or pass force=True to open it anyway)"}
     running = desktop_setup.tableau_running()
     if running and not allow_second_instance:
         return {"refused": "Tableau Desktop is already running", "runningPids": running,
@@ -240,6 +249,7 @@ REGISTRY: dict[str, dict[str, Op]] = {
         "GetXml": Op(_workbook_xml, "read"),
         "ApplyXml": Op(_apply_xml, "target"),
         "Validate": Op(_validate_xml, "target"),
+        "Preflight": Op(lambda target: ops.preflight(target), "target"),
         "New": Op(lambda path: ops.new_file(path), "plain"),
         "SaveAs": Op(_save_as, "target"),
         "Lint": Op(_lint, "target"),
