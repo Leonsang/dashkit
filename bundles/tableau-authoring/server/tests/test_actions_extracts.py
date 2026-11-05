@@ -134,3 +134,13 @@ def test_shared_filter_ties_sheets_with_one_group(wb):
     assert sorted(per_sheet) == ["Por mes", "Por region"]
     r2 = A.add_shared_filter(root, ["Por mes"], "Region")
     assert r2["group"] == r["group"] + 1  # a new group never reuses one in use
+
+
+def test_calculations_land_after_aliases_on_a_file_source(wb):
+    root, _ = wb
+    registry._calc_create(root, "Ventas", "Doble", "SUM([Importe]) * 2")
+    ds = twb.find_datasource(root, "Ventas")
+    tags = [c.tag.split("...")[-1] for c in ds]
+    assert tags.index("aliases") < max(i for i, t in enumerate(tags) if t == "column"), tags
+    first_calc = next(i for i, c in enumerate(ds) if c.find("calculation") is not None)
+    assert first_calc > tags.index("aliases"), tags

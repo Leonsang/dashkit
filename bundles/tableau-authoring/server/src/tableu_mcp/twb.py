@@ -278,12 +278,14 @@ def add_calculated_field(
     if default_format:
         col.set("default-format", default_format)
     etree.SubElement(col, "calculation", {"class": "tableau", "formula": formula})
-    anchors = ds.findall("column")
+    # After the last sibling the schema allows before a column, feature-prefixed ones included
+    # (a file data source's only column is `_.fcp...column`, and its <aliases> must still come first).
+    before = ("connection", "utility-dimensions", "dimension", "overridable-settings", "aliases", "column")
+    anchors = [c for c in ds if isinstance(c.tag, str) and c.tag.split("...")[-1] in before]
     if anchors:
         anchors[-1].addnext(col)
     else:
-        conn = ds.find("connection")
-        (conn.addnext(col) if conn is not None else ds.append(col))
+        ds.insert(0, col)
     return internal
 
 
