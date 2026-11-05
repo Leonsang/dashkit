@@ -38,13 +38,13 @@ def _install_dirs() -> list[Path]:
     return out
 
 
-def find_rcc(install: str | Path | None = None) -> Path:
+def find_rcc(install: str | Path | None = None) -> Path | None:
     cands = [Path(install)] if install else _install_dirs()
     for d in cands:
         for p in (d / "bin" / "res" / "tablangres.rcc", d / "Contents" / "Resources" / "tablangres.rcc"):
             if p.exists():
                 return p
-    raise FileNotFoundError("Tableau Desktop's tablangres.rcc not found (is Tableau Desktop installed?)")
+    return None
 
 
 def _read_rcc(path: Path, wanted: set[str]) -> dict[str, bytes]:
@@ -83,6 +83,8 @@ def _read_rcc(path: Path, wanted: set[str]) -> dict[str, bytes]:
 @lru_cache(maxsize=1)
 def schema_dir(install: str | None = None) -> Path:
     rcc = find_rcc(install)
+    if rcc is None:
+        raise FileNotFoundError("Tableau Desktop's tablangres.rcc not found (is Tableau Desktop installed?)")
     build = rcc.parents[2].name.replace(" ", "_")
     d = CACHE / build
     if not all((d / f).exists() for f in WANTED.values()):
