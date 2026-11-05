@@ -3,6 +3,8 @@ package cli
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"text/tabwriter"
 
@@ -97,15 +99,21 @@ func doctorCmd() *cobra.Command {
 	return cmd
 }
 
-// installedBundles lists the bundle ids recorded in state.json, once each, in
-// catalog order, skipping any this build no longer knows.
+// installedBundles lists the bundles that apply where doctor runs: global
+// installs, and project installs of the current directory. Other projects'
+// bundles have their own prerequisites and are not this folder's problem.
+// Once each, in catalog order, skipping any this build no longer knows.
 func installedBundles() []string {
 	st, err := state.Load()
 	if err != nil {
 		return nil
 	}
+	cwd, _ := os.Getwd()
 	have := map[string]bool{}
 	for _, in := range st.Installs {
+		if in.Scope == "project" && !samePath(in.ProjectAt, cwd) {
+			continue
+		}
 		have[in.Bundle] = true
 	}
 	var out []string
@@ -291,4 +299,19 @@ func printReport(r *install.Report, dryRun bool) {
 			fmt.Printf("  - %s\n", h)
 		}
 	}
+}
+
+func samePath(a, b string) bool {
+	if a == "" || b == "" {
+		return false
+	}
+	ca, errA := filepath.Abs(a)
+	cb, errB := filepath.Abs(b)
+	if errA != nil || errB != nil {
+		return false
+	}
+	if runtime.GOOS == "windows" { // case-insensitive paths
+		return strings.EqualFold(filepath.Clean(ca), filepath.Clean(cb))
+	}
+	return filepath.Clean(ca) == filepath.Clean(cb)
 }
