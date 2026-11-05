@@ -316,11 +316,24 @@ def _measure_one(client, probe, sheet, i, prev, dirty, results, run, args, data,
     return dirty
 
 # Context menus: never run what leaves the workbook (SKIP) nor what opens an editor in place (Rename, Edit in
-# Shelf), which keeps the keyboard focus and swallows the next commands.
-CTX_SKIP = re.compile(r"^(Rename|Edit in Shelf|View Data|Describe|Find in Data pane|Used In|Select All|Select Marks)", re.I)
+# Shelf), which keeps the keyboard focus and swallows the next commands, nor Change Data Type: on a date it leaves
+# Desktop unable to apply documents (its effect, column@datatype, is measured on the first types).
+CTX_SKIP = re.compile(r"^(Change Data Type|Rename|Edit in Shelf|View Data|Describe|Find in Data pane|Used In"
+                      r"|Select All|Select Marks)", re.I)
 # Targets whose menu is the same on every sheet: measured on the first one only.
 CTX_ONCE = re.compile(r"^(field:|title$|view:empty$|tab:)")
 CTX_FIELDS = ("field:Region", "field:Importe", "field:Fecha")  # a dimension, a measure, a date
+
+
+def prune(results: dict, menu: list[dict]) -> dict:
+    """Drop results that no longer describe this menu: paths it does not list (an earlier pass opened the menu
+    of another object) and errors of items that are skipped now."""
+    paths = {i["path"] for i in menu}
+    for path in list(results):
+        if path not in paths or (results[path].get("error") and not results[path].get("slow")
+                                 and any(CTX_SKIP.match(seg) for seg in path.split(" > "))):
+            del results[path]
+    return results
 
 
 def _no_trace(r: dict) -> bool:
@@ -357,7 +370,7 @@ def context_pass(client, probe, sheets, data, tail, args) -> None:
                 continue
             trec = rec.setdefault(key, {})
             trec["menu"] = [{k: i[k] for k in ("path", "enabled", "checked", "submenu")} for i in items]
-            results = trec.setdefault("commands", {})
+            results = prune(trec.setdefault("commands", {}), trec["menu"])
             todo = [i for i in items if i["enabled"] and not i["submenu"]
                     and not any(SKIP.match(seg) or CTX_SKIP.match(seg) for seg in i["path"].split(" > "))
                     and (not args.only or i["path"] in args.only)
@@ -498,6 +511,8 @@ def report(data: dict) -> Path:
     for sheet, rec in data.get("context", {}).items():
         for tname, t in rec.items():
             what = targets.get(tname) or targets.get(tname.split(":")[0], tname)
+            if any(m["path"] == "Reset Cards" for m in t.get("menu", [])):  # the point fell outside the view
+                what = "zona sin objeto: menú de tarjetas"
             if t.get("error"):
                 lines += [f"## `{sheet}` · {tname} ({what})", "", f"No se abrió: {t['error']}", ""]
                 continue

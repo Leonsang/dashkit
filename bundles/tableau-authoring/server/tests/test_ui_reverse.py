@@ -74,3 +74,12 @@ def test_report_lists_context_menus(tmp_path, monkeypatch):
     md = ui_reverse.report(data).read_text(encoding="utf-8")
     assert "Menús contextuales" in md and "cabecera / eje" in md and "tabdoc:toggle-header" in md
     assert "Desactivados: Split" in md and "No se abrió" in md
+
+
+def test_prune_drops_results_of_another_menu_and_skipped_errors():
+    import ui_reverse as u
+
+    results = {"Sort Ascending": {"changed": True}, "Keep Only": {"error": "no item 'Keep Only'"},
+               "Change Data Type > Date": {"error": "timeout"}, "Format...": {"slow": True, "error": "x"}}
+    menu = [{"path": p} for p in ("Sort Ascending", "Change Data Type > Date", "Format...")]
+    assert sorted(u.prune(results, menu)) == ["Format...", "Sort Ascending"]
