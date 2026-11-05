@@ -612,11 +612,20 @@ def add_dashboard(
     y = top
     for ri, count in enumerate(shape):
         row_h = row_hs[ri]
-        row = etree.SubElement(body, "zone", {"h": str(row_h), "id": str(next(ids)), "param": "horz", "type-v2": "layout-flow", "w": str(full), "x": "0", "y": str(y)})
+        row_attrs = {"h": str(row_h), "id": str(next(ids)), "param": "horz", "type-v2": "layout-flow", "w": str(full), "x": "0", "y": str(y)}
+        if rows:
+            # Desktop sizes flow containers by content unless told otherwise: pin the row's height in pixels
+            # and share its width evenly, as Tableau's own dashboards do (Superstore: is-fixed/fixed-size,
+            # layout-strategy-id="distribute-evenly").
+            row_attrs.update({"is-fixed": "true", "fixed-size": str(max(1, round(height * row_h / full)))})
+        if count > 1:
+            row_attrs["layout-strategy-id"] = "distribute-evenly"
+        row = etree.SubElement(body, "zone", row_attrs)
         col_w = full // count
         for ci in range(count):
             sheet = next(it)
-            etree.SubElement(row, "zone", {"h": str(row_h), "id": str(next(ids)), "name": sheet, "w": str(col_w), "x": str(ci * col_w), "y": str(y)})
+            z = etree.SubElement(row, "zone", {"h": str(row_h), "id": str(next(ids)), "name": sheet, "w": str(col_w), "x": str(ci * col_w), "y": str(y)})
+            etree.SubElement(z, "layout-cache", {"type-h": "scalable", "type-w": "scalable"})
         y += row_h
     etree.SubElement(db, "simple-id", uuid=_uuid())
 
