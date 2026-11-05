@@ -94,10 +94,11 @@ def _ws_rename(root, name: str, new_name: str):
     return {"renamed": name, "to": new_name}
 
 
-def _db_create(root, name: str, sheets: list, layout: str = "grid", width: int = 1200, height: int = 800,
-               title: bool = True):
-    """Tiled, fixed-size dashboard with the given worksheets. layout: grid | vertical | horizontal."""
-    return twb.add_dashboard(root, name, sheets, layout, width, height, title)
+def _db_create(root, name: str, sheets: list | None = None, layout: str = "grid", width: int = 1200, height: int = 800,
+               title: bool = True, rows: list | None = None, heights: list | None = None):
+    """Tiled, fixed-size dashboard with the given worksheets. layout: grid | vertical | horizontal; or rows=[[KPI
+    sheets...], [chart, chart], [chart]] to lay it out row by row, heights=[15, 45, 40] their share in percent."""
+    return twb.add_dashboard(root, name, sheets or [], layout, width, height, title, rows, heights)
 
 
 def _db_size(root, name: str, width: int | None = None, height: int | None = None, mode: str = "fixed"):

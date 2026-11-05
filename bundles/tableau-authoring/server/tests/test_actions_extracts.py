@@ -152,3 +152,14 @@ def test_a_filter_without_values_keeps_every_member(wb):
     gf = next(f for f in root.iter("filter") if f.get("column", "").endswith(":Region:nk]")).find("groupfilter")
     assert gf.get("function") == "level-members"
     assert gf.get("{http://www.tableausoftware.com/xml/user}ui-enumeration") == "all"
+
+
+def test_dashboard_rows_lay_out_a_kpi_row_on_top(wb):
+    root, _ = wb
+    A.create_worksheet(root, "K1", "Ventas", mark="text", label="SUM(Importe)")
+    A.create_worksheet(root, "K2", "Ventas", mark="text", label="SUM(Importe)")
+    registry._db_create(root, "D", rows=[["K1", "K2"], ["Por region", "Por mes"]], heights=[20, 80])
+    db = next(d for d in root.iter("dashboard") if d.get("name") == "D")
+    flow = [z for z in db.iter("zone") if z.get("param") == "horz"]
+    assert [[c.get("name") for c in r] for r in flow] == [["K1", "K2"], ["Por region", "Por mes"]]
+    assert int(flow[0].get("h")) < int(flow[1].get("h")) and int(flow[1].get("y")) > int(flow[0].get("y"))

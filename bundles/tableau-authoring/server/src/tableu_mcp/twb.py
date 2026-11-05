@@ -561,8 +561,14 @@ def add_dashboard(
     width: int = 1200,
     height: int = 800,
     title: bool = True,
+    rows: list[list[str]] | None = None,
+    heights: list[float] | None = None,
 ) -> str:
-    """Tiled dashboard with the given worksheets. layout: grid | vertical | horizontal. Fixed size."""
+    """Tiled dashboard with the given worksheets. layout: grid | vertical | horizontal. Fixed size.
+    rows gives the layout explicitly, one list of sheets per row (e.g. a KPI row on top), and heights
+    their share of the height in percent; sheets may then be empty."""
+    if rows:
+        sheets = [s for r in rows for s in r]
     existing = sheet_names(root)
     if name in existing["worksheets"] + existing["dashboards"]:
         raise ValueError(f"Sheet {name!r} already exists")
@@ -596,17 +602,22 @@ def add_dashboard(
             left -= per_row
         return rows_
 
-    shape = grid_shape(len(sheets))
+    shape = [len(r) for r in rows] if rows else grid_shape(len(sheets))
     avail_h = full - top
-    row_h = avail_h // len(shape)
+    if heights and len(heights) != len(shape):
+        raise ValueError(f"heights has {len(heights)} values for {len(shape)} rows")
+    total = sum(heights) if heights else len(shape)
+    row_hs = [int(avail_h * (heights[i] if heights else 1) / total) for i in range(len(shape))]
     it = iter(sheets)
+    y = top
     for ri, count in enumerate(shape):
-        y = top + ri * row_h
+        row_h = row_hs[ri]
         row = etree.SubElement(body, "zone", {"h": str(row_h), "id": str(next(ids)), "param": "horz", "type-v2": "layout-flow", "w": str(full), "x": "0", "y": str(y)})
         col_w = full // count
         for ci in range(count):
             sheet = next(it)
             etree.SubElement(row, "zone", {"h": str(row_h), "id": str(next(ids)), "name": sheet, "w": str(col_w), "x": str(ci * col_w), "y": str(y)})
+        y += row_h
     etree.SubElement(db, "simple-id", uuid=_uuid())
 
     dbs = _ensure(root, "dashboards", before=("windows",))
