@@ -1,0 +1,17 @@
+{
+  "name": "tableau-sdd",
+  "version": "0.1.0",
+  "description": "Spec-driven workflow for Tableau Desktop: survey an existing workbook (Info + Lint evidence) or start a new one, then spec, tasks, build inside transactions and verify with images and Desktop warnings. Uses the tableau-authoring MCP server.",
+  "author": {
+    "name": "Erick Sang C",
+    "url": "https://github.com/leonsang"
+  },
+  "homepage": "https://github.com/leonsang/dashkit/tree/main/bundles/tableau-sdd",
+  "repository": "https://github.com/leonsang/dashkit",
+  "license": "MIT",
+  "keywords": [
+    "tableau",
+    "sdd",
+    "spec-driven"
+  ]
+}

@@ -1,0 +1,104 @@
+{
+  "name": "dashkit",
+  "owner": {
+    "name": "Erick Sang C",
+    "url": "https://github.com/leonsang"
+  },
+  "metadata": {
+    "description": "dashkit's own plugins for dashboard work in Power BI, Tableau Desktop and Looker Studio / Data Studio.",
+    "version": "0.4.0"
+  },
+  "plugins": [
+    {
+      "name": "pbi-sdd",
+      "source": "./bundles/pbi-sdd",
+      "description": "Spec-driven workflow for Power BI reports (survey, new, spec, tasks, build, verify).",
+      "version": "0.3.0",
+      "author": {
+        "name": "Erick Sang C",
+        "url": "https://github.com/leonsang"
+      },
+      "license": "MIT",
+      "category": "power-bi",
+      "homepage": "https://github.com/leonsang/dashkit/tree/main/bundles/pbi-sdd"
+    },
+    {
+      "name": "tableau-authoring",
+      "source": "./bundles/tableau-authoring",
+      "description": "Tableau Desktop 2026.3 through its External Client API: the tableu MCP server (21 tools), an authoring skill, a tableau-author subagent and /setup.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Erick Sang C",
+        "url": "https://github.com/leonsang"
+      },
+      "license": "MIT",
+      "category": "tableau",
+      "homepage": "https://github.com/leonsang/dashkit/tree/main/bundles/tableau-authoring"
+    },
+    {
+      "name": "tableau-sdd",
+      "source": "./bundles/tableau-sdd",
+      "description": "Spec-driven workflow for Tableau: Info+Lint survey, transactional build, image and Desktop-warnings verification.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Erick Sang C",
+        "url": "https://github.com/leonsang"
+      },
+      "license": "MIT",
+      "category": "tableau",
+      "homepage": "https://github.com/leonsang/dashkit/tree/main/bundles/tableau-sdd"
+    },
+    {
+      "name": "tableau-guardrails",
+      "source": "./bundles/tableau-guardrails",
+      "description": "Lints every .twb/.twbx Claude edits and blocks on errors.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Erick Sang C",
+        "url": "https://github.com/leonsang"
+      },
+      "license": "MIT",
+      "category": "tableau",
+      "homepage": "https://github.com/leonsang/dashkit/tree/main/bundles/tableau-guardrails"
+    },
+    {
+      "name": "looker-studio-authoring",
+      "source": "./bundles/looker-studio-authoring",
+      "description": "Looker Studio / Data Studio over CDP: the looker-studio MCP server, six best-practice skills, a looker-studio-author subagent and /setup.",
+      "version": "0.2.0",
+      "author": {
+        "name": "Erick Sang C",
+        "url": "https://github.com/leonsang"
+      },
+      "license": "MIT",
+      "category": "looker-studio",
+      "homepage": "https://github.com/leonsang/dashkit/tree/main/bundles/looker-studio-authoring"
+    },
+    {
+      "name": "ls-sdd",
+      "source": "./bundles/ls-sdd",
+      "description": "Spec-driven workflow for Looker Studio: diagnose survey, declarative report spec, dry-run before every apply, view-mode verification.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Erick Sang C",
+        "url": "https://github.com/leonsang"
+      },
+      "license": "MIT",
+      "category": "looker-studio",
+      "homepage": "https://github.com/leonsang/dashkit/tree/main/bundles/ls-sdd"
+    },
+    {
+      "name": "looker-studio-guardrails",
+      "source": "./bundles/looker-studio-guardrails",
+      "description": "Lints every *.spec.json Claude edits, blocks on errors, and shows the dry-run plan when a browser is on the CDP port.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Erick Sang C",
+        "url": "https://github.com/leonsang"
+      },
+      "license": "MIT",
+      "category": "looker-studio",
+      "homepage": "https://github.com/leonsang/dashkit/tree/main/bundles/looker-studio-guardrails"
+    }
+  ]
+}

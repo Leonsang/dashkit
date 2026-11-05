@@ -1,0 +1,18 @@
+{
+  "name": "ls-sdd",
+  "version": "0.1.0",
+  "description": "Spec-driven workflow for Looker Studio / Data Studio: survey a report with diagnose evidence or start a new one, then spec (as a declarative report spec), tasks, build with a dry run before every apply, and verify in view mode. Uses the looker-studio-authoring MCP server.",
+  "author": {
+    "name": "Erick Sang C",
+    "url": "https://github.com/leonsang"
+  },
+  "homepage": "https://github.com/leonsang/dashkit/tree/main/bundles/ls-sdd",
+  "repository": "https://github.com/leonsang/dashkit",
+  "license": "MIT",
+  "keywords": [
+    "looker-studio",
+    "data-studio",
+    "sdd",
+    "spec-driven"
+  ]
+}

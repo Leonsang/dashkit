@@ -1,0 +1,11 @@
+{
+  "name": "tableau-authoring",
+  "version": "0.1.0",
+  "description": "Drive Tableau Desktop 2026.3 through its External Client API: data sources, fields, calculations, sheets, filters, formatting, dashboards, actions and stories, validated by Tableau itself and linted against Tableau's best practices.",
+  "author": { "name": "Erick Sang C", "url": "https://github.com/leonsang" },
+  "homepage": "https://github.com/leonsang/dashkit/tree/main/bundles/tableau-authoring",
+  "repository": "https://github.com/leonsang/dashkit",
+  "license": "MIT",
+  "keywords": ["tableau", "tableau-desktop", "mcp", "dashboards"],
+  "mcpServers": "./.mcp.json"
+}

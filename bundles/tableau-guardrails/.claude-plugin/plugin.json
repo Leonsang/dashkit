@@ -1,0 +1,19 @@
+{
+  "name": "tableau-guardrails",
+  "version": "0.1.0",
+  "description": "Lints every .twb/.twbx Claude edits against Tableau's best practices (tableu lint) and blocks on errors so they are fixed before moving on. Needs uv.",
+  "author": {
+    "name": "Erick Sang C",
+    "url": "https://github.com/leonsang"
+  },
+  "homepage": "https://github.com/leonsang/dashkit/tree/main/bundles/tableau-guardrails",
+  "repository": "https://github.com/leonsang/dashkit",
+  "license": "MIT",
+  "keywords": [
+    "tableau",
+    "guardrails",
+    "lint",
+    "hooks"
+  ],
+  "hooks": "./hooks/hooks.json"
+}
