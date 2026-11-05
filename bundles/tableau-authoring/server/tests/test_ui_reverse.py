@@ -83,3 +83,27 @@ def test_prune_drops_results_of_another_menu_and_skipped_errors():
                "Change Data Type > Date": {"error": "timeout"}, "Format...": {"slow": True, "error": "x"}}
     menu = [{"path": p} for p in ("Sort Ascending", "Change Data Type > Date", "Format...")]
     assert sorted(u.prune(results, menu)) == ["Format...", "Sort Ascending"]
+
+
+def test_dialog_sweep_picks_editor_dialogs_and_changeable_controls():
+    import ui_reverse as u
+
+    data = {"sheets": {"Barras": {"commands": {"Worksheet > Tooltip...": {"dialogs": [{"title": "Edit Tooltip"}]},
+                                               "Format > Import Custom Theme...": {"dialogs": [
+                                                   {"title": "Import Custom Theme"}]}}}},
+            "context": {"Linea": {"axis:bottom": {"commands": {"Edit Axis...": {"dialogs": [
+                {"title": "Edit Axis [Importe]"}]}}}}}}
+    assert u.dialog_sources(data) == {"Edit Tooltip": ("menu", "Barras", "Worksheet > Tooltip..."),
+                                      "Edit Axis": ("context", "Linea", "axis:bottom", "Edit Axis...")}
+    controls = [
+        {"type": "RadioButton", "name": "Automatic", "index": 0, "enabled": True, "visible": True, "state": "True"},
+        {"type": "RadioButton", "name": "Custom", "index": 0, "enabled": True, "visible": True, "state": "False"},
+        {"type": "Edit", "name": "", "index": 0, "enabled": False, "visible": True, "value": "0"},
+        {"type": "CheckBox", "name": "Reversed", "index": 0, "enabled": True, "visible": True, "state": "Off"},
+        {"type": "ComboBox", "name": "Title", "index": 0, "enabled": True, "visible": True},
+    ]
+    assert [c["name"] for c in u._candidates(controls)] == ["Custom", "Reversed"]
+    enabled = [dict(c, enabled=True) if c["type"] == "Edit" else c for c in controls]
+    new = u._candidates(enabled, before=controls)
+    assert [(c["type"], c["index"]) for c in new] == [("Edit", 0)]
+    assert u._label([controls[1], new[0]]) == "Custom > #0=1000"

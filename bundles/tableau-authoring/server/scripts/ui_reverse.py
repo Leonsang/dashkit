@@ -388,6 +388,165 @@ def context_pass(client, probe, sheets, data, tail, args) -> None:
             uia.context_close()
 
 
+# Dialog sweep (--dialogs): open each editor dialog once per control, change only that control the way a user
+# would (uia.dialog_act: a click, or a value typed in a field), press OK if the dialog has one, close it and
+# diff the document. Controls that a radio button enables (Custom range > the two fields) are measured after it.
+def dialog_title(title: str) -> str:
+    return re.sub(r"\s*\[.*\]$", "", title or "").strip()
+
+
+def dialog_sources(data: dict) -> dict:
+    """The first command that opened each editor dialog: ('menu', sheet, path) or ('context', sheet, target, path)."""
+    out = {}
+    for sheet, rec in data.get("sheets", {}).items():
+        for path, r in rec.get("commands", {}).items():
+            for d in r.get("dialogs") or []:
+                out.setdefault(dialog_title(d.get("title")), ("menu", sheet, path))
+    for sheet, rec in data.get("context", {}).items():
+        for target, t in rec.items():
+            for path, r in (t.get("commands") or {}).items():
+                for d in r.get("dialogs") or []:
+                    out.setdefault(dialog_title(d.get("title")), ("context", sheet, target, path))
+    return {k: v for k, v in out.items()
+            if k and re.match(uia.ACCEPT_OK, k) and not re.search(uia._DENY_OK, k)}
+
+
+def _value_for(c: dict) -> str:
+    v = (c.get("value") or "").replace(",", "")
+    try:
+        float(v)
+        return "1000"
+    except ValueError:
+        return "Texto de prueba"
+
+
+def _candidates(controls: list[dict], before: list[dict] | None = None) -> list[dict]:
+    """Controls worth changing: enabled and visible; a radio button or tab not selected yet; any check box;
+    a text field. With `before`, only the ones that were not enabled then (enabled by the last step)."""
+    was = {(c["type"], c["name"], c["index"]) for c in before or [] if c.get("enabled")}
+    out = []
+    for c in controls:
+        if not c.get("enabled") or not c.get("visible") or c["type"] in ("Button", "ComboBox", "TabItem"):
+            continue
+        if c["type"] == "RadioButton" and c.get("state") == "True":
+            continue
+        if before is not None and (c["type"], c["name"], c["index"]) in was:
+            continue
+        out.append(c)
+    return out
+
+
+def _label(steps: list[dict]) -> str:
+    def one(c):
+        name = c["name"] or f"#{c['index']}"
+        return f"{name}={_value_for(c)}" if c["type"] == "Edit" else name
+    return " > ".join(one(c) for c in steps)
+
+
+def dialog_pass(client, probe, data, tail, args) -> None:
+    store = data.setdefault("dialogs", {})
+    sources = dialog_sources(data)
+    if args.only:
+        sources = {k: v for k, v in sources.items() if k in args.only}
+    for title, src in sources.items():
+        rec = store.setdefault(title, {"source": " · ".join(src[1:])})
+        effects = rec.setdefault("effects", {})
+        sheet = src[1]
+
+        def open_dialog(src=src, sheet=sheet):
+            reset(client, probe, sheet)
+            if src[0] == "menu":
+                r = uia.invoke(src[2])
+            else:
+                pt = uia.context_targets().get(src[2])
+                if not pt and src[2].startswith("view"):
+                    targets = uia.context_targets()
+                    pt = uia.find_marks(targets["view:rect"]).get(src[2]) if "view:rect" in targets else None
+                r = uia.context_invoke(pt, src[3]) if pt else {"error": f"no target {src[2]}"}
+            time.sleep(1.5)
+            return r
+
+        def run_steps(steps, title=title):
+            if free_mb() < MIN_FREE_MB:
+                raise SystemExit(f"stopped in {title!r}: only {free_mb()} MB free; run --dialogs again")
+            r = open_dialog()
+            if not r.get("invoked"):
+                return {"error": f"dialog did not open: {r.get('error')}"}
+            before = client.get_document()
+            tail.read()
+            acts = []
+            for k, c in enumerate(steps):
+                acts.append(uia.dialog_act(title, c, _value_for(c), press_ok=k == len(steps) - 1))
+                time.sleep(0.8)
+            time.sleep(1.0)
+            commands = tail.read()
+            left = [m.get("title") for m in desktop_setup.modals(pids=Watch.pids) if m.get("title")]
+            closed = uia.close_windows() if left else []
+            time.sleep(0.5)
+            d = diff(before, client.get_document())
+            errs = [a["error"] for a in acts if a.get("error")]
+            return {"acts": acts, "commands": commands, "closed": closed, **d, **({"error": errs[0]} if errs else {})}
+
+        print(f"== dialog {title} ({rec['source']})", flush=True)
+        try:
+            if not open_dialog().get("invoked"):
+                rec["error"] = "did not open"
+                continue
+            first = uia.dialog_controls(title)
+            uia.close_windows()
+            if first.get("error"):
+                rec["error"] = first["error"]
+                continue
+            rec["controls"] = first["controls"]
+            pages = [[]] + [[t] for t in first["controls"] if t["type"] == "TabItem" and t.get("state") != "True"]
+            for page in pages:
+                if page:  # the controls of another tab only exist once it is open
+                    open_dialog()
+                    uia.dialog_act(title, page[0], press_ok=False)
+                    time.sleep(0.8)
+                    listed = uia.dialog_controls(title)
+                    uia.close_windows()
+                    controls = listed.get("controls", [])
+                    rec.setdefault("tabs", {})[page[0]["name"]] = controls
+                else:
+                    controls = first["controls"]
+                for c in _candidates(controls, before=first["controls"] if page else None):
+                    steps = page + [c]
+                    label = _label(steps)
+                    if label in effects and not args.redo:
+                        continue
+                    try:
+                        res = run_steps(steps)
+                    except httpx.TransportError as e:
+                        res = {"error": f"Desktop did not answer: {e}"[:300], "slow": True}
+                        settle(client)
+                    effects[label] = res
+                    print(f"  {label}: {_effect(res)[:140]}", flush=True)
+                    OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+                    if c["type"] == "RadioButton" and not res.get("error"):
+                        # what this radio enables (e.g. Custom > Start/End): measure each after it
+                        open_dialog()
+                        uia.dialog_act(title, c, press_ok=False)
+                        time.sleep(0.8)
+                        after = uia.dialog_controls(title).get("controls", [])
+                        uia.close_windows()
+                        for c2 in _candidates(after, before=controls):
+                            if c2["type"] != "Edit" or (page and any(
+                                    (f["type"], f["name"], f["index"]) == (c2["type"], c2["name"], c2["index"])
+                                    for f in first["controls"])):  # a field of the first tab, not of this one
+                                continue
+                            label2 = _label(steps + [c2])
+                            if label2 in effects and not args.redo:
+                                continue
+                            effects[label2] = res2 = run_steps(steps + [c2])
+                            print(f"  {label2}: {_effect(res2)[:140]}", flush=True)
+                            OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+        except ApplyFailed as e:
+            rec["error"] = str(e)
+            OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+            raise SystemExit(f"stopped in dialog {title!r}: {e}") from e
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("probe")
@@ -401,6 +560,8 @@ def main() -> None:
     ap.add_argument("--context", action="store_true", help="also the context (right-click) menus")
     ap.add_argument("--no-menus", action="store_true", help="skip the menu bar (with --context)")
     ap.add_argument("--redo", action="store_true", help="re-run only items that left no trace or failed")
+    ap.add_argument("--dialogs", action="store_true",
+                    help="change each control of the editor dialogs one at a time (test workbook only)")
     args = ap.parse_args()
     if args.build:
         build_probe(Path(args.probe).resolve())
@@ -457,6 +618,8 @@ def main() -> None:
         measure(client, probe, sheet, todo, results, uia.invoke, args, data, tail)
     if args.context:
         context_pass(client, probe, sheets, data, tail, args)
+    if args.dialogs:
+        dialog_pass(client, probe, data, tail, args)
     reset(client, probe, sheets[0])
     OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
     report(data)
@@ -481,6 +644,22 @@ def _effect(r: dict) -> str:
     if r.get("error"):
         parts.append(f"error: {r['error'][:80]}")
     return "; ".join(parts)
+
+
+def _short(sig: str) -> str:
+    return re.sub(r"\[federated\.[a-z0-9]+\]\.", "", sig)
+
+
+def _dialog_effect(r: dict, common: set) -> str:
+    if r.get("error") and not r.get("changed"):
+        return f"error: {r['error'][:80]}"
+    if not r.get("changed"):
+        return "sin cambio en el documento"
+    own = [s for s in r.get("added", []) if "@" in s and s not in common] or \
+          [s for s in r.get("added", []) if "@" in s][:3]
+    rem = [s for s in r.get("removed", []) if "@" in s and s not in common][:3]
+    return (", ".join(f"`{_short(s)}`" for s in own[:6])
+            + (" − " + ", ".join(f"`{_short(s)}`" for s in rem) if rem else ""))
 
 
 def report(data: dict) -> Path:
@@ -524,6 +703,27 @@ def report(data: dict) -> Path:
             if off:
                 lines += ["", f"Desactivados: {', '.join(off[:30])}"]
             lines.append("")
+    if data.get("dialogs"):
+        lines += ["# Diálogos: qué escribe cada control", "",
+                  "Cada fila abre el diálogo sobre el libro de prueba, cambia solo ese control (un clic, o un valor "
+                  "escrito en el campo), pulsa OK si el diálogo lo tiene y compara el documento.", ""]
+    for title, rec in data.get("dialogs", {}).items():
+        lines += [f"## {title}", "", f"Se abre con: {rec.get('source')}", ""]
+        if rec.get("error"):
+            lines += [f"No se midió: {rec['error']}", ""]
+            continue
+        lines += ["| control | qué escribe | comando interno |", "|---|---|---|"]
+        effects = rec.get("effects", {})
+        # what nearly every control of this dialog writes (the style-rule it lives in) says nothing about one
+        counts = collections.Counter(a for r in effects.values() for a in set(r.get("added", [])))
+        common = {a for a, n in counts.items() if n > max(2, len(effects) / 2)}
+        for label, r in effects.items():
+            lines.append(f"| {label} | {_dialog_effect(r, common)} | "
+                         + ("<br>".join(f"`{c[:80]}`" for c in r.get("commands", [])[:2]) or "—") + " |")
+        combos = [c["name"] for c in rec.get("controls", []) if c["type"] == "ComboBox" and c["name"]]
+        if combos:
+            lines += ["", "Listas desplegables sin medir: " + ", ".join(sorted(set(combos)))]
+        lines.append("")
     md = OUT.with_suffix(".md")
     md.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return md

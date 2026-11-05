@@ -9,6 +9,7 @@ so a command can be reverse-engineered: run it on a probe workbook and diff the 
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 
@@ -194,6 +195,149 @@ def close_windows() -> list[str]:
     return _run(_CLOSE, timeout=60)
 
 
+# Dialogs whose controls the harness may change (and whose OK it may press) on its test workbook: editors that
+# only change the open workbook. Never one that deletes, replaces, opens, saves, exports, publishes or connects.
+ACCEPT_OK = (r"^(Edit Axis|Add Reference Line|Edit Reference Line|Edit Annotation|Edit Title|Edit Caption"
+             r"|Edit Alias|Edit Aliases|Edit Drop Lines|Trend Lines Options|Edit Colors|Edit Shape|Edit Size"
+             r"|Edit Tooltip|Edit Label|Sort|Create Group|Edit Group|Create Set|Edit Set|Create Bins|Edit Bins"
+             r"|Create Parameter|Edit Parameter|Custom Date|Create Custom Date|Filter|Edit Filter|Forecast Options"
+             r"|Default Number Format|Default Date Format|Date Properties|Table Options|Accessibility|Edit Comment"
+             r"|Custom Split|Create Hierarchy|Apply Filter to Worksheets)")
+_DENY_OK = r"(Delete|Remove|Replace|Open|Save|Export|Publish|Connect|Refresh|Extract|Close)"
+
+# Controls inside a dialog. Desktop's dialogs are mostly web pages (QtWebEngine): UI Automation lists their
+# controls, but Toggle/Select/Invoke do nothing there. A click posted to the window under the control, with
+# the cursor held on it, works (same as the context menus).
+_DLG_COMMON = r"""
+Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes
+Add-Type @"
+using System; using System.Runtime.InteropServices;
+public static class DlgClick {
+  [StructLayout(LayoutKind.Sequential)] public struct POINT { public int X; public int Y; }
+  [DllImport("user32.dll")] public static extern bool ScreenToClient(IntPtr h, ref POINT p);
+  [DllImport("user32.dll")] public static extern IntPtr PostMessage(IntPtr h, uint m, IntPtr w, IntPtr l);
+  [DllImport("user32.dll")] public static extern bool GetCursorPos(out POINT p);
+  [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
+  [DllImport("user32.dll")] public static extern IntPtr WindowFromPoint(POINT p);
+}
+"@
+$A=[System.Windows.Automation.AutomationElement]; $T=[System.Windows.Automation.TreeScope]
+$PC=[System.Windows.Automation.PropertyCondition]; $CT=[System.Windows.Automation.ControlType]
+$prefix = '__TITLE__'
+function FindDialog {
+  foreach ($top in $A::RootElement.FindAll($T::Children, (New-Object $PC($A::ProcessIdProperty, __PID__)))) {
+    foreach ($x in $top.FindAll($T::Subtree, (New-Object $PC($A::ControlTypeProperty, $CT::Window)))) {
+      if ($x.Current.Name -and $x.Current.Name.StartsWith($prefix) -and $x.Current.AutomationId -notlike '*TMainWindow') { return $x }
+    }
+  }
+  return $null
+}
+function Controls($w) {
+  $out = @(); $seen = @{}
+  foreach ($e in $w.FindAll($T::Descendants, [System.Windows.Automation.Condition]::TrueCondition)) {
+    $t = $e.Current.ControlType.ProgrammaticName -replace 'ControlType\.', ''
+    if ($t -notin 'CheckBox', 'RadioButton', 'Edit', 'ComboBox', 'Button', 'TabItem') { continue }
+    $name = ($e.Current.Name -replace "[​]", '').Trim()
+    if ($t -eq 'Button' -and $name -ne 'OK') { continue }
+    $k = "$t|$name"; $seen[$k] = 1 + [int]$seen[$k]
+    $state = $null
+    try { $state = "$($e.GetCurrentPattern([System.Windows.Automation.TogglePattern]::Pattern).Current.ToggleState)" } catch { }
+    if ($t -in 'RadioButton', 'TabItem') { try { $state = "$($e.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Current.IsSelected)" } catch { } }
+    $val = $null; try { $val = $e.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).Current.Value } catch { }
+    $r = $e.Current.BoundingRectangle
+    $out += [ordered]@{ type = $t; name = $name; index = $seen[$k] - 1; enabled = $e.Current.IsEnabled; state = $state
+                        value = $val; visible = (-not $e.Current.IsOffscreen) -and $r.Width -gt 0; el = $e }
+  }
+  return $out
+}
+function ClickAt($sx, $sy) {
+  $old = New-Object DlgClick+POINT; [DlgClick]::GetCursorPos([ref]$old) | Out-Null
+  $p = New-Object DlgClick+POINT; $p.X = $sx; $p.Y = $sy
+  try {
+    [DlgClick]::SetCursorPos($sx, $sy) | Out-Null; Start-Sleep -Milliseconds 80
+    $h = [DlgClick]::WindowFromPoint($p)
+    $c = New-Object DlgClick+POINT; $c.X = $sx; $c.Y = $sy; [DlgClick]::ScreenToClient($h, [ref]$c) | Out-Null
+    $lp = [IntPtr](($c.Y -shl 16) -bor ($c.X -band 0xFFFF))
+    [DlgClick]::PostMessage($h, 0x0200, [IntPtr]0, $lp) | Out-Null; Start-Sleep -Milliseconds 80
+    [DlgClick]::PostMessage($h, 0x0201, [IntPtr]1, $lp) | Out-Null; Start-Sleep -Milliseconds 80
+    [DlgClick]::SetCursorPos($sx, $sy) | Out-Null
+    [DlgClick]::PostMessage($h, 0x0202, [IntPtr]0, $lp) | Out-Null; Start-Sleep -Milliseconds 600
+    return $h
+  } finally { [DlgClick]::SetCursorPos($old.X, $old.Y) | Out-Null }
+}
+function ClickEl($e, $left) {
+  $r = $e.Current.BoundingRectangle
+  $x = if ($left) { [int]($r.X + [Math]::Min(10, $r.Width / 2)) } else { [int]($r.X + $r.Width / 2) }
+  return ClickAt $x ([int]($r.Y + $r.Height / 2))
+}
+"""
+
+_DLG_LIST = _DLG_COMMON + r"""
+$w = FindDialog
+if (-not $w) { ConvertTo-Json -InputObject @{ error = "no dialog '$prefix'" } -Compress; exit }
+$res = @(Controls $w | ForEach-Object { $_.Remove('el'); $_ })
+ConvertTo-Json -InputObject @{ title = $w.Current.Name; controls = $res } -Compress -Depth 4
+"""
+
+_DLG_ACT = _DLG_COMMON + r"""
+$type = '__TYPE__'; $name = '__NAME__'; $index = __INDEX__; $value = '__VALUE__'
+$res = [ordered]@{ acted = $false }
+$w = FindDialog
+if (-not $w) { $res.error = "no dialog '$prefix'"; ConvertTo-Json -InputObject $res -Compress; exit }
+$c = @(Controls $w | Where-Object { $_.type -eq $type -and $_.name -eq $name -and $_.index -eq $index }) | Select-Object -First 1
+if (-not $c) { $res.error = "no control $type '$name' #$index"; ConvertTo-Json -InputObject $res -Compress; exit }
+if (-not $c.enabled) { $res.error = 'disabled'; ConvertTo-Json -InputObject $res -Compress; exit }
+$e = $c.el
+function Key($h, $vk) {
+  [DlgClick]::PostMessage($h, 0x0100, [IntPtr]$vk, [IntPtr]0) | Out-Null; Start-Sleep -Milliseconds 25
+  [DlgClick]::PostMessage($h, 0x0101, [IntPtr]$vk, [IntPtr]0) | Out-Null; Start-Sleep -Milliseconds 25
+}
+if ($type -eq 'Edit') {
+  # A web field ignores ValuePattern.SetValue: type like a user (End, Backspace over the old text, the
+  # characters, Tab to commit).
+  $h = ClickEl $e $false
+  Key $h 0x23
+  for ($k = 0; $k -lt ([string]$c.value).Length + 2; $k++) { Key $h 0x08 }
+  foreach ($ch in $value.ToCharArray()) {
+    [DlgClick]::PostMessage($h, 0x0102, [IntPtr][int]$ch, [IntPtr]0) | Out-Null; Start-Sleep -Milliseconds 25
+  }
+  Start-Sleep -Milliseconds 200
+  Key $h 0x09; Start-Sleep -Milliseconds 500
+} else { ClickEl $e ($type -in 'CheckBox', 'RadioButton') | Out-Null }
+$after = @(Controls $w | Where-Object { $_.type -eq $type -and $_.name -eq $name -and $_.index -eq $index }) | Select-Object -First 1
+$res.acted = $true
+$res.before = if ($type -eq 'Edit') { $c.value } else { $c.state }
+$res.after = if ($after) { if ($type -eq 'Edit') { $after.value } else { $after.state } } else { $null }
+if ('__OK__' -eq '1') {
+  $ok = @(Controls $w | Where-Object { $_.type -eq 'Button' -and $_.name -eq 'OK' -and $_.enabled }) | Select-Object -First 1
+  if ($ok) { ClickEl $ok.el $false | Out-Null; Start-Sleep -Milliseconds 800; $res.pressed = 'OK' }
+}
+ConvertTo-Json -InputObject $res -Compress
+"""
+
+
+def _dlg(script: str, title: str) -> str:
+    return script.replace("__TITLE__", title.replace("'", "''"))
+
+
+def dialog_controls(title: str) -> dict:
+    """The controls of the open dialog whose title starts with `title`: check boxes, radio buttons, text
+    fields, lists and its OK button, with their state."""
+    return _run(_dlg(_DLG_LIST, title), timeout=90)
+
+
+def dialog_act(title: str, control: dict, value: str = "1000", press_ok: bool = True) -> dict:
+    """Change one control of the open dialog `title` the way a user would: click a check box or radio
+    button, or type `value` into a text field and Tab out. With press_ok, press the dialog's OK afterwards
+    if it has one (web dialogs apply at once and have none). Only on the harness's test workbook."""
+    if not re.match(ACCEPT_OK, title) or re.search(_DENY_OK, title):
+        raise ValueError(f"not an editor dialog the harness may change: {title!r}")
+    script = (_dlg(_DLG_ACT, title).replace("__TYPE__", control["type"])
+              .replace("__NAME__", control["name"].replace("'", "''")).replace("__INDEX__", str(control["index"]))
+              .replace("__VALUE__", value.replace("'", "''")).replace("__OK__", "1" if press_ok else "0"))
+    return _run(script, timeout=90)
+
+
 _GOTO = _COMMON + r"""
 Add-Type @"
 using System; using System.Runtime.InteropServices;
@@ -291,12 +435,20 @@ function ClickItem($it) {
   }
   if ($hm -eq [IntPtr]0) { throw 'no window for the menu item' }
   $r = $it.Current.BoundingRectangle
-  $pt = New-Object CtxClick+POINT; $pt.X = [int]($r.X + $r.Width / 2); $pt.Y = [int]($r.Y + $r.Height / 2)
+  $sx = [int]($r.X + $r.Width / 2); $sy = [int]($r.Y + $r.Height / 2)
+  $pt = New-Object CtxClick+POINT; $pt.X = $sx; $pt.Y = $sy
   [CtxClick]::ScreenToClient($hm, [ref]$pt) | Out-Null
   $lp = [IntPtr](($pt.Y -shl 16) -bor ($pt.X -band 0xFFFF))
-  [CtxClick]::PostMessage($hm, 0x0200, [IntPtr]0, $lp) | Out-Null; Start-Sleep -Milliseconds 100
-  [CtxClick]::PostMessage($hm, 0x0201, [IntPtr]1, $lp) | Out-Null; Start-Sleep -Milliseconds 80
-  [CtxClick]::PostMessage($hm, 0x0202, [IntPtr]0, $lp) | Out-Null
+  # Qt checks the real cursor when the button goes up: if the user's mouse is elsewhere the click is
+  # dropped. Hold the cursor on the item while the click is posted, then put it back.
+  $old = New-Object CtxClick+POINT; [CtxClick]::GetCursorPos([ref]$old) | Out-Null
+  try {
+    [CtxClick]::SetCursorPos($sx, $sy) | Out-Null; Start-Sleep -Milliseconds 60
+    [CtxClick]::PostMessage($hm, 0x0200, [IntPtr]0, $lp) | Out-Null; Start-Sleep -Milliseconds 100
+    [CtxClick]::PostMessage($hm, 0x0201, [IntPtr]1, $lp) | Out-Null; Start-Sleep -Milliseconds 80
+    [CtxClick]::SetCursorPos($sx, $sy) | Out-Null
+    [CtxClick]::PostMessage($hm, 0x0202, [IntPtr]0, $lp) | Out-Null; Start-Sleep -Milliseconds 150
+  } finally { [CtxClick]::SetCursorPos($old.X, $old.Y) | Out-Null }
 }
 function SubMenu($it) {
   try { $it.GetCurrentPattern($EC::Pattern).Expand() } catch { return $null }
