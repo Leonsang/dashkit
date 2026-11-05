@@ -2461,19 +2461,37 @@ function sanitizeLearning(text) {
 }
 
 // src/knowledge.ts
-import { appendFileSync, existsSync as existsSync2, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync as existsSync3, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
+import { join as join3 } from "node:path";
+
+// src/paths.ts
+import { existsSync as existsSync2 } from "node:fs";
 import { dirname, join as join2 } from "node:path";
 import { fileURLToPath } from "node:url";
-var PACKAGE_KNOWLEDGE = join2(dirname(fileURLToPath(import.meta.url)), "..", "knowledge");
-var KNOWLEDGE_DIR = process.env.LS_KNOWLEDGE_DIR ?? (existsSync2(PACKAGE_KNOWLEDGE) ? PACKAGE_KNOWLEDGE : join2(homedir(), ".looker-studio-mcp", "knowledge"));
-var LOG = join2(KNOWLEDGE_DIR, "learnings.jsonl");
-var TPL = join2(KNOWLEDGE_DIR, "templates");
+var cached = null;
+function packageRoot() {
+  if (cached) return cached;
+  let dir = dirname(fileURLToPath(import.meta.url));
+  for (let i = 0; i < 5; i++) {
+    if (existsSync2(join2(dir, "themes", "base-theme.json"))) return cached = dir;
+    const up = dirname(dir);
+    if (up === dir) break;
+    dir = up;
+  }
+  return cached = join2(dirname(fileURLToPath(import.meta.url)), "..");
+}
+
+// src/knowledge.ts
+var PACKAGE_KNOWLEDGE = join3(packageRoot(), "knowledge");
+var KNOWLEDGE_DIR = process.env.LS_KNOWLEDGE_DIR ?? (existsSync3(PACKAGE_KNOWLEDGE) ? PACKAGE_KNOWLEDGE : join3(homedir(), ".looker-studio-mcp", "knowledge"));
+var LOG = join3(KNOWLEDGE_DIR, "learnings.jsonl");
+var TPL = join3(KNOWLEDGE_DIR, "templates");
 function ensure() {
-  if (!existsSync2(TPL)) mkdirSync(TPL, { recursive: true });
+  if (!existsSync3(TPL)) mkdirSync(TPL, { recursive: true });
 }
 function readLearnings() {
-  if (!existsSync2(LOG)) return [];
+  if (!existsSync3(LOG)) return [];
   return readFileSync(LOG, "utf8").split("\n").filter(Boolean).map((l) => {
     try {
       return JSON.parse(l);
@@ -2494,21 +2512,21 @@ function learn(kind, key, data) {
 var safe = (t) => t.replace(/[^a-z0-9_-]/gi, "_");
 function saveTemplate(type, config, origin) {
   ensure();
-  const file = join2(TPL, `${safe(type)}.json`);
-  if (existsSync2(file)) return false;
+  const file = join3(TPL, `${safe(type)}.json`);
+  if (existsSync3(file)) return false;
   writeFileSync(file, JSON.stringify({ type, capturedAt: (/* @__PURE__ */ new Date()).toISOString(), origin, config }, null, 2));
   learn("template", type, origin);
   return true;
 }
 function getTemplate(type) {
-  const file = join2(TPL, `${safe(type)}.json`);
-  if (!existsSync2(file)) return void 0;
+  const file = join3(TPL, `${safe(type)}.json`);
+  if (!existsSync3(file)) return void 0;
   return JSON.parse(readFileSync(file, "utf8")).config;
 }
 function listTemplates() {
-  if (!existsSync2(TPL)) return [];
+  if (!existsSync3(TPL)) return [];
   return readdirSync(TPL).filter((f) => f.endsWith(".json")).map((f) => {
-    const j = JSON.parse(readFileSync(join2(TPL, f), "utf8"));
+    const j = JSON.parse(readFileSync(join3(TPL, f), "utf8"));
     return { type: j.type, capturedAt: j.capturedAt, origin: j.origin };
   });
 }
@@ -3403,8 +3421,8 @@ function reportSettingsScript(patch) {
 }
 
 // src/ops.ts
-import { existsSync as existsSync3, mkdirSync as mkdirSync2, readFileSync as readFileSync3, writeFileSync as writeFileSync2 } from "node:fs";
-import { join as join3 } from "node:path";
+import { existsSync as existsSync4, mkdirSync as mkdirSync2, readFileSync as readFileSync3, writeFileSync as writeFileSync2 } from "node:fs";
+import { join as join4 } from "node:path";
 var T = Number(process.env.LS_EVAL_TIMEOUT_MS ?? 15e3);
 var sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 seedKnowledge();
@@ -3637,7 +3655,7 @@ async function applySpec(specOrFile, opts = {}) {
     result.actions = components.map((c) => ({ key: c.key, action: "skip", error: "lint con errores" }));
     return result;
   }
-  const state = statePath && existsSync3(statePath) ? JSON.parse(readFileSync3(statePath, "utf8")) : { reportId: null, keys: {} };
+  const state = statePath && existsSync4(statePath) ? JSON.parse(readFileSync3(statePath, "utf8")) : { reportId: null, keys: {} };
   const page = opts.dryRun ? await getReportPage() : await editPage();
   const info = await evaluateOn(page, T, pageInfoScript);
   if (state.reportId && state.reportId !== info.internalReportId) {
@@ -3646,9 +3664,9 @@ async function applySpec(specOrFile, opts = {}) {
   }
   state.reportId = info.internalReportId;
   if (!opts.dryRun) {
-    const dir = join3(process.env.LS_BACKUP_DIR ?? join3(process.cwd(), "backups"));
+    const dir = join4(process.env.LS_BACKUP_DIR ?? join4(process.cwd(), "backups"));
     mkdirSync2(dir, { recursive: true });
-    const file = join3(dir, `${info.internalReportId}-${(/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-")}.json`);
+    const file = join4(dir, `${info.internalReportId}-${(/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-")}.json`);
     writeFileSync2(file, JSON.stringify(await evaluateOn(page, T, exportReportScript), null, 2));
     result.backup = file;
   }
@@ -3775,15 +3793,13 @@ async function updateExisting(page, id, c) {
 }
 
 // src/ops3.ts
-import { existsSync as existsSync4, readFileSync as readFileSync5, readdirSync as readdirSync2, writeFileSync as writeFileSync3 } from "node:fs";
-import { dirname as dirname3, join as join5 } from "node:path";
-import { fileURLToPath as fileURLToPath3 } from "node:url";
+import { existsSync as existsSync5, readFileSync as readFileSync5, readdirSync as readdirSync2, writeFileSync as writeFileSync3 } from "node:fs";
+import { join as join6 } from "node:path";
 
 // src/theme.ts
 import { readFileSync as readFileSync4 } from "node:fs";
-import { dirname as dirname2, join as join4 } from "node:path";
-import { fileURLToPath as fileURLToPath2 } from "node:url";
-var BASE = join4(dirname2(fileURLToPath2(import.meta.url)), "..", "themes", "base-theme.json");
+import { join as join5 } from "node:path";
+var BASE = join5(packageRoot(), "themes", "base-theme.json");
 function baseTheme() {
   return JSON.parse(readFileSync4(BASE, "utf8"));
 }
@@ -3982,9 +3998,9 @@ var THEME_PRESETS = {
   "t-quartz": "Cuarzo",
   "t-onyx": "Onix"
 };
-var LIBRARY = join5(dirname3(fileURLToPath3(import.meta.url)), "..", "themes", "library");
+var LIBRARY = join6(packageRoot(), "themes", "library");
 function themeLibrary() {
-  const own = existsSync4(LIBRARY) ? readdirSync2(LIBRARY).filter((f) => f.endsWith(".json")).map((f) => ({ name: f.replace(/\.json$/, ""), file: join5(LIBRARY, f) })) : [];
+  const own = existsSync5(LIBRARY) ? readdirSync2(LIBRARY).filter((f) => f.endsWith(".json")).map((f) => ({ name: f.replace(/\.json$/, ""), file: join6(LIBRARY, f) })) : [];
   return { presets: Object.entries(THEME_PRESETS).map(([id, name]) => ({ id, name })), library: own };
 }
 async function useThemePreset(idOrName) {
@@ -4472,6 +4488,7 @@ export {
   inspectDataSources,
   bindFieldsToComponent,
   getComponentConfig,
+  packageRoot,
   writesAllowed,
   assertWrite,
   assertReportUrl,

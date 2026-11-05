@@ -27,6 +27,7 @@ import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { auditUx, fromThemeContent, toThemeContent, type FriendlyTheme, type UxFacts } from './theme.js';
+import { packageRoot } from './paths.js';
 
 const T = Number(process.env.LS_EVAL_TIMEOUT_MS ?? 15_000);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -76,7 +77,7 @@ export const THEME_PRESETS: Record<string, string> = {
   't-material': 'Material', 't-muted': 'Apagado', 't-primary': 'Primario', 't-cut-out': 'Recorte', 't-shift': 'Shift',
   't-energetic': 'Energetico', 't-forest': 'Selva', 't-magazine': 'Revista', 't-tunnel': 'Tunel', 't-quartz': 'Cuarzo', 't-onyx': 'Onix',
 };
-const LIBRARY = join(dirname(fileURLToPath(import.meta.url)), '..', 'themes', 'library');
+const LIBRARY = join(packageRoot(), 'themes', 'library');
 
 export function themeLibrary() {
   const own = existsSync(LIBRARY)

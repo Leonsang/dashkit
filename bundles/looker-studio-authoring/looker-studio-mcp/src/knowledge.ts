@@ -25,8 +25,9 @@ import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, write
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { packageRoot } from './paths.js';
 
-const PACKAGE_KNOWLEDGE = join(dirname(fileURLToPath(import.meta.url)), '..', 'knowledge');
+const PACKAGE_KNOWLEDGE = join(packageRoot(), 'knowledge');
 export const KNOWLEDGE_DIR =
   process.env.LS_KNOWLEDGE_DIR ??
   (existsSync(PACKAGE_KNOWLEDGE) ? PACKAGE_KNOWLEDGE : join(homedir(), '.looker-studio-mcp', 'knowledge'));

@@ -28,6 +28,7 @@ import {
   loadSpec,
   log,
   openReport,
+  packageRoot,
   patchComponent,
   readLearnings,
   readTheme,
@@ -43,7 +44,7 @@ import {
   useThemePreset,
   uxAudit,
   writesAllowed
-} from "./chunks/chunk-PRQUMBNX.js";
+} from "./chunks/chunk-XLUGDFEW.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
 import "./chunks/chunk-FAVAKK4W.js";
@@ -36680,9 +36681,8 @@ var StdioServerTransport = class {
 
 // src/skills.ts
 import { readFileSync, existsSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-var SKILLS_DIR = process.env.LS_SKILLS_DIR ?? join(dirname(fileURLToPath(import.meta.url)), "..", "..", "skills");
+import { join } from "node:path";
+var SKILLS_DIR = process.env.LS_SKILLS_DIR ?? join(packageRoot(), "..", "skills");
 function loadSkill(category) {
   const p = join(SKILLS_DIR, category, "SKILL.md");
   if (!existsSync(p)) return `(No se encontro ${p}. Define LS_SKILLS_DIR.)`;

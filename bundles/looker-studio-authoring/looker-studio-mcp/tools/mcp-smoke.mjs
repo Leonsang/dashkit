@@ -19,12 +19,16 @@ const { prompts } = await client.listPrompts();
 const { resources } = await client.listResources();
 const skill = resources.find((r) => r.uri === 'skill://ls-kpi-scorecards');
 const text = skill ? (await client.readResource({ uri: skill.uri })).contents[0].text : '';
+// Assets found from wherever the code landed (dist/, dist/chunks/, the .mcpb's server/).
+const themes = await client.callTool({ name: 'list_theme_presets', arguments: {} });
+const themeText = themes.content.map((c) => c.text ?? '').join('');
 await client.close();
 
 const problems = [];
 if (tools.length === 0) problems.push('no tools');
 if (prompts.length === 0) problems.push('no prompts');
 if (!text.startsWith('# Skill:')) problems.push(`skill resource unreadable: ${String(text).slice(0, 80)}`);
+if (!/alto-contraste/.test(themeText)) problems.push('theme library not found (themes/library)');
 console.log(`${entry}: ${tools.length} tools, ${prompts.length} prompts, ${resources.length} resources`);
 if (problems.length) {
   console.error('FAIL: ' + problems.join('; '));

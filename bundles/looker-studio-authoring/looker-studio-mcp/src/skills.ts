@@ -8,10 +8,11 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import { packageRoot } from './paths.js';
 
 // Each guide is a Claude Code skill: <plugin>/skills/<category>/SKILL.md, one
 // level above this package (dist/ -> ../../skills).
-const SKILLS_DIR = process.env.LS_SKILLS_DIR ?? join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'skills');
+const SKILLS_DIR = process.env.LS_SKILLS_DIR ?? join(packageRoot(), '..', 'skills');
 
 /** The guide body, without the YAML front matter that is only for the skill loader. */
 function loadSkill(category: string): string {
