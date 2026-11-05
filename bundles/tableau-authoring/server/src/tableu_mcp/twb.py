@@ -635,7 +635,10 @@ def add_dashboard(
     win = etree.SubElement(windows, "window", {"class": "dashboard", "maximized": "true", "name": name})
     vps = etree.SubElement(win, "viewpoints")
     for s in sheets:
-        etree.SubElement(vps, "viewpoint", name=s)
+        # "Fit: Entire View", as in Tableau's own dashboards: without it text tables and discrete axes keep
+        # their standard width, so KPI titles wrap letter by letter and bar charts use a third of the cell.
+        vp = etree.SubElement(vps, "viewpoint", name=s)
+        etree.SubElement(vp, "zoom", type="entire-view")
     etree.SubElement(win, "active", id="-1")
     etree.SubElement(win, "simple-id", uuid=_uuid())
     # Dashboards are normally the active/first window; keep worksheets hidden-able but present.
