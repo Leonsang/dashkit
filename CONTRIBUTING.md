@@ -53,3 +53,35 @@ go test ./...
 ```
 
 CI runs the same on Ubuntu, macOS and Windows, plus a real install/uninstall against the upstream tree.
+
+## Searching the repo and the upstream trees
+
+The repo is small enough that `grep -r` is fine. [tgrep](https://github.com/microsoft/tgrep)
+(MIT, Microsoft) earns its place on the trees this project *reads*: the pinned
+skills-for-fabric checkout in `~/.dashkit/cache/<ref>/` and the plugin caches under
+`~/.claude/plugins/`, which you grep repeatedly when moving a pin.
+
+```bash
+tgrep serve .          # once per session: builds the index if absent, then watches for edits
+tgrep -F -- "OwnsMarketplace" .          # literal; -- before the pattern, path after it
+tgrep -t go -l -- "MarketplacePlanner" . # scope by type, file names only
+tgrep --json -F -- ErrDeclined internal/ # ripgrep's --json format
+```
+
+Flags follow ripgrep. `.claude/hooks/tgrep.sh` starts the server at session start for
+agents working in a checkout, and does nothing when tgrep is not installed. `.tgrep/` is
+the index; it is git-ignored, never committed.
+
+Two things to know before trusting a result:
+
+- **Freshness.** A search answers from the index. The watcher applies edits within a
+  second or two, but a search issued immediately after a write can still miss it — pass
+  `--no-index` when a search has to see the edit you just made.
+- **`--index-path` is broken in v1.0.8 on Windows.** `index` writes the index where you
+  point it, but a search with the same value errors (`IO error for operation on
+  --index-path`) and silently scans every file instead. Keep the index at its default
+  location, `<root>/.tgrep`, where it works.
+
+Measured here on a 16.9k-file tree (the Go module cache), warm, median of three:
+ripgrep 15.2 ~270 ms per query, tgrep 1.0.8 with a server 49–65 ms. On this repo's own
+79 files both answer in well under a tenth of a second and the index buys nothing.

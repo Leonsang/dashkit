@@ -287,7 +287,7 @@ func collapse(s string) string { return strings.Join(strings.Fields(s), " ") }
 // without its credentials and fail on every call, so it is written down for the
 // person to set up instead — never registered half-working.
 func mcpActions(b catalog.Bundle, opts Options, path string, key []string, what string, headersHelper bool) plan.Plan {
-	var p plan.Plan
+	p := bundleFiles(b, opts)
 	names := make([]string, 0, len(b.MCPServers))
 	for name := range b.MCPServers {
 		names = append(names, name)
@@ -303,7 +303,7 @@ func mcpActions(b catalog.Bundle, opts Options, path string, key []string, what 
 		p = append(p, plan.MergeJSON{
 			Path:  path,
 			Key:   append(append([]string{}, key...), name),
-			Value: s,
+			Value: expandServer(s, b, opts),
 			What:  what,
 		})
 	}
@@ -315,6 +315,51 @@ func mcpActions(b catalog.Bundle, opts Options, path string, key []string, what 
 		})
 	}
 	return p
+}
+
+// bundleFiles copies a builtin bundle's extra directories (an MCP server's
+// code) into its vendor root, where its MCP entries expect them.
+func bundleFiles(b catalog.Bundle, opts Options) plan.Plan {
+	if len(b.Files) == 0 || opts.Tree == nil {
+		return nil
+	}
+	src := filepath.Join(opts.Tree.Root, filepath.FromSlash(b.Dir))
+	var p plan.Plan
+	for _, f := range b.Files {
+		p = append(p, plan.CopyTree{
+			Src:  filepath.Join(src, filepath.FromSlash(f)),
+			Dst:  filepath.Join(vendorRoot(b, opts), filepath.FromSlash(f)),
+			What: b.ID + " " + f,
+		})
+	}
+	return p
+}
+
+// expandServer replaces the bundle placeholder with where the bundle's files
+// landed. Always an absolute path: a host resolves relative ones against its
+// own working directory, which is not the project's.
+func expandServer(s catalog.MCPServer, b catalog.Bundle, opts Options) catalog.MCPServer {
+	dir := filepath.ToSlash(vendorRoot(b, opts))
+	if abs, err := filepath.Abs(vendorRoot(b, opts)); err == nil {
+		dir = filepath.ToSlash(abs)
+	}
+	x := func(v string) string { return strings.ReplaceAll(v, catalog.BundlePlaceholder, dir) }
+	s.Command = x(s.Command)
+	if len(s.Args) > 0 {
+		args := make([]string, len(s.Args))
+		for i, a := range s.Args {
+			args[i] = x(a)
+		}
+		s.Args = args
+	}
+	if len(s.Env) > 0 {
+		env := make(map[string]string, len(s.Env))
+		for k, v := range s.Env {
+			env[k] = x(v)
+		}
+		s.Env = env
+	}
+	return s
 }
 
 // binaryOnPath reports the resolved location of a command, or "".

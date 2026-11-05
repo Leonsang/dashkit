@@ -1,0 +1,18 @@
+{
+  "name": "pbi-sdd",
+  "version": "0.3.0",
+  "description": "A thin spec-driven workflow for Power BI: survey an existing or published report, or start a new one, then spec, tasks, build and verify with written, approved steps.",
+  "author": {
+    "name": "Erick Sang C",
+    "url": "https://github.com/leonsang"
+  },
+  "homepage": "https://github.com/leonsang/dashkit/tree/main/bundles/pbi-sdd",
+  "repository": "https://github.com/leonsang/dashkit",
+  "license": "MIT",
+  "keywords": [
+    "power-bi",
+    "pbip",
+    "sdd",
+    "spec-driven"
+  ]
+}

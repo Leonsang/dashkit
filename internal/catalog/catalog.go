@@ -72,16 +72,20 @@ type Credit struct {
 
 // Bundle is one installable set of skills, matching an upstream plugin.
 type Bundle struct {
-	ID          string               `json:"id"`
-	Kind        Kind                 `json:"kind"`
-	Title       string               `json:"title"`
-	Description string               `json:"description"`
-	Dir         string               `json:"dir,omitempty"` // path inside the upstream tree, e.g. plugins/powerbi-authoring
-	Skills      []string             `json:"skills"`
-	Agents      []string             `json:"agents,omitempty"`
-	Common      []string             `json:"common,omitempty"`
-	MCPServers  map[string]MCPServer `json:"mcpServers,omitempty"`
-	Prereqs     Prereqs              `json:"prereqs"`
+	ID          string   `json:"id"`
+	Kind        Kind     `json:"kind"`
+	Title       string   `json:"title"`
+	Description string   `json:"description"`
+	Dir         string   `json:"dir,omitempty"` // path inside the upstream tree, e.g. plugins/powerbi-authoring
+	Skills      []string `json:"skills"`
+	Agents      []string `json:"agents,omitempty"`
+	Common      []string `json:"common,omitempty"`
+	// Files are extra directories of a builtin bundle (an MCP server's code)
+	// copied next to its skills; MCP server entries refer to them through the
+	// ${DASHKIT_BUNDLE} placeholder.
+	Files      []string             `json:"files,omitempty"`
+	MCPServers map[string]MCPServer `json:"mcpServers,omitempty"`
+	Prereqs    Prereqs              `json:"prereqs"`
 	// Hooks lists what a marketplace bundle enforces automatically, for display.
 	Hooks       []string        `json:"hooks,omitempty"`
 	Marketplace *MarketplaceRef `json:"marketplace,omitempty"`
@@ -90,6 +94,21 @@ type Bundle struct {
 
 // IsMarketplace reports whether the bundle is installed by a host plugin manager.
 func (b Bundle) IsMarketplace() bool { return b.Kind == Marketplace }
+
+// HasPlugin reports whether a builtin bundle is also published as a plugin in
+// dashkit's own marketplace, so hosts with a plugin manager can install it
+// with its commands, subagents and hooks rather than as copied files.
+func (b Bundle) HasPlugin() bool { return b.Kind == Builtin && b.Marketplace != nil }
+
+// HooksOnly reports whether a bundle is nothing but hooks: there is nothing to
+// copy into a host that cannot install it as a plugin.
+func (b Bundle) HooksOnly() bool {
+	return len(b.Skills) == 0 && len(b.MCPServers) == 0 && len(b.Hooks) > 0
+}
+
+// BundlePlaceholder in an MCP server's command, args or env stands for the
+// directory dashkit copied the bundle's files into.
+const BundlePlaceholder = "${DASHKIT_BUNDLE}"
 
 // Source pins which upstream revision this dashkit build installs.
 type Source struct {

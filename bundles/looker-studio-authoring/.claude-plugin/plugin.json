@@ -1,0 +1,11 @@
+{
+  "name": "looker-studio-authoring",
+  "version": "0.2.0",
+  "description": "Edit a Looker Studio / Data Studio report open in Edge or Chrome over CDP: copy, layout, fields, source calculated fields, components, controls, themes, pages, declarative specs and diagnosis, with best-practice skills.",
+  "author": { "name": "Erick Sang C", "url": "https://github.com/leonsang" },
+  "homepage": "https://github.com/leonsang/dashkit/tree/main/bundles/looker-studio-authoring",
+  "repository": "https://github.com/leonsang/dashkit",
+  "license": "MIT",
+  "keywords": ["looker-studio", "data-studio", "mcp", "dashboards", "cdp"],
+  "mcpServers": "./.mcp.json"
+}

@@ -168,6 +168,210 @@
       }
     },
     {
+      "id": "tableau-authoring",
+      "kind": "builtin",
+      "title": "Tableau authoring",
+      "description": "Drives Tableau Desktop 2026.3 through its External Client API with the tableu MCP server: data sources and .hyper extracts, fields, calculations, parameters, sets, sheets, filters, formatting, dashboards, navigation buttons, filter/parameter/set actions and stories, each validated by Tableau and linted against its best practices. Includes a tableau-author subagent and /setup.",
+      "dir": "tableau-authoring",
+      "skills": [
+        "tableau-authoring",
+        "tableau-design"
+      ],
+      "agents": [
+        "tableau-author.md"
+      ],
+      "files": [
+        "server"
+      ],
+      "mcpServers": {
+        "tableu": {
+          "command": "uv",
+          "args": [
+            "--directory",
+            "${DASHKIT_BUNDLE}/server",
+            "run",
+            "--quiet",
+            "tableu-mcp"
+          ]
+        }
+      },
+      "prereqs": {
+        "required": [
+          "uv",
+          "tableau-desktop"
+        ],
+        "optional": [
+          "tableau-api-flag"
+        ]
+      },
+      "marketplace": {
+        "repo": "leonsang/dashkit",
+        "name": "dashkit",
+        "plugin": "tableau-authoring"
+      },
+      "credit": {
+        "author": "dashkit",
+        "license": "MIT",
+        "homepage": "https://github.com/leonsang/dashkit"
+      }
+    },
+    {
+      "id": "tableau-sdd",
+      "kind": "builtin",
+      "title": "Tableau spec-driven workflow",
+      "description": "Survey a Tableau workbook with Info and Lint evidence or start a new one, then spec, tasks, a build where every task runs inside a transaction, and verification with exported images and Desktop's warnings.",
+      "dir": "tableau-sdd",
+      "skills": [
+        "tableau-sdd"
+      ],
+      "prereqs": {
+        "required": [],
+        "optional": []
+      },
+      "marketplace": {
+        "repo": "leonsang/dashkit",
+        "name": "dashkit",
+        "plugin": "tableau-sdd"
+      },
+      "credit": {
+        "author": "dashkit",
+        "license": "MIT",
+        "homepage": "https://github.com/leonsang/dashkit"
+      }
+    },
+    {
+      "id": "tableau-guardrails",
+      "kind": "builtin",
+      "title": "Tableau guardrails",
+      "description": "Lints every .twb/.twbx the agent edits against Tableau's best practices and blocks on errors, so they are fixed before moving on. Runs as a Claude Code or Copilot CLI plugin hook; needs uv.",
+      "dir": "tableau-guardrails",
+      "skills": [],
+      "prereqs": {
+        "required": [
+          "uv"
+        ],
+        "optional": []
+      },
+      "hooks": [
+        "tableu lint after any .twb or .twbx edit; errors block, warnings come back as context"
+      ],
+      "marketplace": {
+        "repo": "leonsang/dashkit",
+        "name": "dashkit",
+        "plugin": "tableau-guardrails"
+      },
+      "credit": {
+        "author": "dashkit",
+        "license": "MIT",
+        "homepage": "https://github.com/leonsang/dashkit"
+      }
+    },
+    {
+      "id": "looker-studio-authoring",
+      "kind": "builtin",
+      "title": "Looker Studio authoring",
+      "description": "Edits a Looker Studio / Data Studio report open in Edge or Chrome over CDP with the looker-studio MCP server: safe copies, layout, fields, source calculated fields, components, controls, filters, themes, pages and declarative report specs, with diagnosis and a UX audit. Six best-practice skills, a looker-studio-author subagent and /setup.",
+      "dir": "looker-studio-authoring",
+      "skills": [
+        "ls-depuracion-errores",
+        "ls-diseno-layout",
+        "ls-kpi-scorecards",
+        "ls-migracion",
+        "ls-modelo-datos",
+        "ls-rendimiento"
+      ],
+      "agents": [
+        "looker-studio-author.md"
+      ],
+      "files": [
+        "looker-studio-mcp"
+      ],
+      "mcpServers": {
+        "looker-studio": {
+          "command": "node",
+          "args": [
+            "${DASHKIT_BUNDLE}/looker-studio-mcp/dist/index.js"
+          ],
+          "env": {
+            "LS_ALLOW_WRITE": "1",
+            "LS_SKILLS_DIR": "${DASHKIT_BUNDLE}/skills"
+          }
+        }
+      },
+      "prereqs": {
+        "required": [
+          "node20"
+        ],
+        "optional": [
+          "cdp-9222"
+        ]
+      },
+      "marketplace": {
+        "repo": "leonsang/dashkit",
+        "name": "dashkit",
+        "plugin": "looker-studio-authoring"
+      },
+      "credit": {
+        "author": "dashkit",
+        "license": "MIT",
+        "homepage": "https://github.com/leonsang/dashkit"
+      }
+    },
+    {
+      "id": "ls-sdd",
+      "kind": "builtin",
+      "title": "Looker Studio spec-driven workflow",
+      "description": "Survey a Looker Studio report with diagnose evidence or start a new one, then a spec materialised as a declarative report spec, tasks, a build that dry-runs every apply first, and verification in view mode.",
+      "dir": "ls-sdd",
+      "skills": [
+        "ls-sdd"
+      ],
+      "prereqs": {
+        "required": [],
+        "optional": []
+      },
+      "marketplace": {
+        "repo": "leonsang/dashkit",
+        "name": "dashkit",
+        "plugin": "ls-sdd"
+      },
+      "credit": {
+        "author": "dashkit",
+        "license": "MIT",
+        "homepage": "https://github.com/leonsang/dashkit"
+      }
+    },
+    {
+      "id": "looker-studio-guardrails",
+      "kind": "builtin",
+      "title": "Looker Studio guardrails",
+      "description": "Lints every *.spec.json the agent edits and blocks on errors; when a browser answers on the CDP port it also shows the apply --dry-run plan. Runs as a Claude Code or Copilot CLI plugin hook; needs Node 20+.",
+      "dir": "looker-studio-guardrails",
+      "skills": [],
+      "prereqs": {
+        "required": [
+          "node20"
+        ],
+        "optional": [
+          "cdp-9222"
+        ]
+      },
+      "hooks": [
+        "report-spec lint after any *.spec.json edit; errors block",
+        "apply --dry-run plan when a browser is on the CDP port"
+      ],
+      "marketplace": {
+        "repo": "leonsang/dashkit",
+        "name": "dashkit",
+        "plugin": "looker-studio-guardrails"
+      },
+      "credit": {
+        "author": "dashkit",
+        "license": "MIT",
+        "homepage": "https://github.com/leonsang/dashkit"
+      }
+    },
+    {
       "id": "goblin-pbip",
       "kind": "marketplace",
       "title": "PBIP guardrails",

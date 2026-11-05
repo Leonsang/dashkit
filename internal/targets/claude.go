@@ -110,6 +110,16 @@ func (claudeCode) Plan(b catalog.Bundle, opts Options) (plan.Plan, error) {
 	if err != nil {
 		return nil, err
 	}
+	// A bundle that ships its own MCP server reads its guides from beside the
+	// server (${DASHKIT_BUNDLE}/skills): Claude Code's copy lives in .claude/,
+	// so the server gets one of its own.
+	if len(b.Files) > 0 && opts.MCP {
+		beside, err := skillsIntoDir(b, opts, filepath.Join(vendorRoot(b, opts), "skills"))
+		if err != nil {
+			return nil, err
+		}
+		p = append(p, beside...)
+	}
 
 	// Upstream agent files already carry the name/description front matter a
 	// Claude Code subagent needs, so they copy across unchanged.

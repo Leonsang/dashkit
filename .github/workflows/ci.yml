@@ -74,6 +74,51 @@ jobs:
         shell: bash
         run: go run ./cmd/dashkit doctor --home "$RUNNER_TEMP/dashkit-home" || true
 
+      # The Tableau and Looker Studio bundles install their MCP server as files
+      # where there is no plugin manager; prove the copy and the config wiring.
+      - name: end-to-end install of the Tableau and Looker Studio bundles
+        shell: bash
+        run: |
+          set -euo pipefail
+          home="$RUNNER_TEMP/dashkit-home-2"
+          proj="$RUNNER_TEMP/project-2"
+          mkdir -p "$proj"
+          go run ./cmd/dashkit install             --bundle tableau-authoring,looker-studio-authoring,tableau-guardrails             --agents cursor,codex             --scope project --project "$proj"             --home "$home"             --skip-prereq-check
+          test -f "$proj/.dashkit/tableau-authoring/server/pyproject.toml"
+          test -f "$proj/.dashkit/looker-studio-authoring/looker-studio-mcp/dist/index.js"
+          grep -q 'tableau-authoring/server' "$proj/.cursor/mcp.json"
+          grep -q 'looker-studio-mcp/dist/index.js' "$proj/.codex/config.toml"
+          ! grep -rq 'DASHKIT_BUNDLE' "$proj/.cursor" "$proj/.codex"
+          test ! -d "$proj/.dashkit/tableau-guardrails"   # hooks only run as a plugin
+
+  # The servers dashkit ships: Tableau's Python tests, and Looker Studio's
+  # committed bundle rebuilt from source to prove it matches.
+  servers:
+    name: bundled MCP servers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: tableu tests
+        working-directory: bundles/tableau-authoring/server
+        run: uv run --quiet pytest -q
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: looker-studio-mcp builds, its page scripts survive bundling, and dist/ is current
+        working-directory: bundles/looker-studio-authoring/looker-studio-mcp
+        run: |
+          npm ci --ignore-scripts
+          npm rebuild esbuild
+          npm run build
+          node tools/check-page-scripts.mjs --minify --obfuscate
+          node tools/mcp-smoke.mjs
+          git diff --exit-code -- dist ../../looker-studio-guardrails/hooks
+
   installers:
     name: installer scripts
     runs-on: ${{ matrix.os }}

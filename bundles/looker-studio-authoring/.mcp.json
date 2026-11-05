@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "looker-studio": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/looker-studio-mcp/dist/index.js"],
+      "env": {
+        "LS_ALLOW_WRITE": "1"
+      }
+    }
+  }
+}

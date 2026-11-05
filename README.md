@@ -5,8 +5,8 @@
 <h1 align="center">dashkit</h1>
 
 <p align="center">
-  One command that sets up an agentic Power BI stack in the AI tools you already use.<br>
-  <i>Microsoft's skills and data-goblin's guardrails, wired into Claude Code, Copilot, Cursor, Codex and Gemini — on Windows, macOS and Linux.</i>
+  One command that sets up an agentic dashboard stack — Power BI, Tableau and Looker Studio — in the AI tools you already use.<br>
+  <i>Microsoft's skills, data-goblin's guardrails and dashkit's own Tableau and Looker Studio plugins, wired into Claude Code, Copilot, Cursor, Codex and Gemini — on Windows, macOS and Linux.</i>
 </p>
 
 <p align="center">
@@ -14,19 +14,27 @@
   <a href="https://github.com/leonsang/dashkit/actions/workflows/ci.yml"><img src="https://github.com/leonsang/dashkit/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <img src="https://img.shields.io/badge/Power_BI-F2C811?logo=powerbi&logoColor=000" alt="Power BI">
   <img src="https://img.shields.io/badge/Microsoft_Fabric-008272" alt="Microsoft Fabric">
+  <img src="https://img.shields.io/badge/Tableau-E97627?logo=tableau&logoColor=fff" alt="Tableau">
+  <img src="https://img.shields.io/badge/Looker_Studio-4285F4?logo=looker&logoColor=fff" alt="Looker Studio">
   <img src="https://img.shields.io/badge/macOS_·_Linux_·_Windows-3E9C94" alt="macOS, Linux and Windows">
   <img src="https://img.shields.io/badge/license-MIT-3A444F" alt="MIT licence">
 </p>
 
 ---
 
-dashkit doesn't write skills. It carries the good ones to wherever you work. The Power BI skills
+For Power BI, dashkit doesn't write skills: it carries the good ones to wherever you work. The Power BI skills
 worth having already exist — Microsoft's [skills-for-fabric](https://github.com/microsoft/skills-for-fabric)
 for planning, designing and authoring reports and semantic models, and data-goblin's
 [power-bi-agentic-development](https://github.com/data-goblin/power-bi-agentic-development) for the
 hooks that stop an agent from writing a broken TMDL file or an unbindable report. What doesn't exist
 is a way to get them into *your* tools, in *each tool's* format, with the prerequisites they
-quietly depend on. That is all dashkit does.
+quietly depend on.
+
+For Tableau and Looker Studio, where nothing like that existed, dashkit ships its own: an MCP server
+that drives Tableau Desktop 2026.3 through its External Client API, one that edits a Looker Studio /
+Data Studio report through the browser, best-practice skills, a subagent per platform, spec-driven
+workflows and guardrail hooks. They live in [`bundles/`](bundles/) and install the same way as
+everything else.
 
 > [!IMPORTANT]
 > **Install per project, and install less.** Every skill you install competes for the agent's
@@ -55,6 +63,20 @@ go install github.com/leonsang/dashkit/cmd/dashkit@latest
 ```
 
 The installers verify the release checksum before installing. See [Is it safe?](#is-it-safe)
+
+### As a Claude Code marketplace
+
+Everything dashkit authors is also a plugin marketplace, if you would rather install from Claude Code
+directly:
+
+```bash
+claude plugin marketplace add leonsang/dashkit
+claude plugin install tableau-authoring@dashkit          # or looker-studio-authoring, pbi-sdd, …
+```
+
+Claude Code then gets each plugin's slash commands (`/setup`, `/tableau-sdd`, `/ls-sdd`), subagents
+and hooks; `dashkit` does the same for you when Claude Code or Copilot CLI is a target, and writes the
+skills and MCP servers as files for the tools without a plugin manager.
 
 ## Quick start
 
@@ -107,7 +129,7 @@ Artifacts are written in the language you use with the agent.
 **From Microsoft** — copied at the pinned tag `v0.3.16` into tools without a plugin manager; installed at the marketplace's current version by Claude Code and Copilot CLI.
 
 <details>
-<summary><strong>Power BI authoring</strong> &ensp;<code>powerbi-authoring</code> &ensp;Microsoft · 5 skills</summary>
+<summary><strong>Power BI authoring</strong> &ensp;<code>powerbi-authoring</code> &ensp;Microsoft · 5 skills · 1 MCP server</summary>
 
 Developer skills for authoring Microsoft Power BI solutions.
 
@@ -116,7 +138,7 @@ Developer skills for authoring Microsoft Power BI solutions.
 </details>
 
 <details>
-<summary><strong>Fabric — everything</strong> &ensp;<code>fabric-skills</code> &ensp;Microsoft · 23 skills</summary>
+<summary><strong>Fabric — everything</strong> &ensp;<code>fabric-skills</code> &ensp;Microsoft · 23 skills · 3 MCP servers</summary>
 
 Complete bundle: all Microsoft Skills for Fabric for developers and consumers
 
@@ -132,6 +154,69 @@ Complete bundle: all Microsoft Skills for Fabric for developers and consumers
 A thin spec-driven workflow for Power BI: survey an existing or published report (levantamiento), or start a new one, then spec, tasks, build and verify with written, approved steps. Leans on the Microsoft and data-goblin skills rather than repeating them.
 
 `pbi-sdd`
+
+</details>
+
+<details>
+<summary><strong>Tableau authoring</strong> &ensp;<code>tableau-authoring</code> &ensp;dashkit · 2 skills · 1 MCP server</summary>
+
+Drives Tableau Desktop 2026.3 through its External Client API with the tableu MCP server: data sources and .hyper extracts, fields, calculations, parameters, sets, sheets, filters, formatting, dashboards, navigation buttons, filter/parameter/set actions and stories, each validated by Tableau and linted against its best practices. Includes a tableau-author subagent and /setup.
+
+`tableau-authoring`
+
+</details>
+
+<details>
+<summary><strong>Tableau spec-driven workflow</strong> &ensp;<code>tableau-sdd</code> &ensp;dashkit · 1 skill</summary>
+
+Survey a Tableau workbook with Info and Lint evidence or start a new one, then spec, tasks, a build where every task runs inside a transaction, and verification with exported images and Desktop's warnings.
+
+`tableau-sdd`
+
+</details>
+
+<details>
+<summary><strong>Tableau guardrails</strong> &ensp;<code>tableau-guardrails</code> &ensp;dashkit · 1 guardrail hook</summary>
+
+Lints every .twb/.twbx the agent edits against Tableau's best practices and blocks on errors, so they are fixed before moving on. Runs as a Claude Code or Copilot CLI plugin hook; needs uv.
+
+Checks that run automatically, without being asked:
+
+- tableu lint after any .twb or .twbx edit; errors block, warnings come back as context
+
+
+
+</details>
+
+<details>
+<summary><strong>Looker Studio authoring</strong> &ensp;<code>looker-studio-authoring</code> &ensp;dashkit · 6 skills · 1 MCP server</summary>
+
+Edits a Looker Studio / Data Studio report open in Edge or Chrome over CDP with the looker-studio MCP server: safe copies, layout, fields, source calculated fields, components, controls, filters, themes, pages and declarative report specs, with diagnosis and a UX audit. Six best-practice skills, a looker-studio-author subagent and /setup.
+
+`ls-depuracion-errores` · `ls-diseno-layout` · `ls-kpi-scorecards` · `ls-migracion` · `ls-modelo-datos` · `ls-rendimiento`
+
+</details>
+
+<details>
+<summary><strong>Looker Studio spec-driven workflow</strong> &ensp;<code>ls-sdd</code> &ensp;dashkit · 1 skill</summary>
+
+Survey a Looker Studio report with diagnose evidence or start a new one, then a spec materialised as a declarative report spec, tasks, a build that dry-runs every apply first, and verification in view mode.
+
+`ls-sdd`
+
+</details>
+
+<details>
+<summary><strong>Looker Studio guardrails</strong> &ensp;<code>looker-studio-guardrails</code> &ensp;dashkit · 2 guardrail hooks</summary>
+
+Lints every *.spec.json the agent edits and blocks on errors; when a browser answers on the CDP port it also shows the apply --dry-run plan. Runs as a Claude Code or Copilot CLI plugin hook; needs Node 20+.
+
+Checks that run automatically, without being asked:
+
+- report-spec lint after any *.spec.json edit; errors block
+- apply --dry-run plan when a browser is on the CDP port
+
+
 
 </details>
 

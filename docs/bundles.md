@@ -16,7 +16,7 @@ Every bundle dashkit can install, and where its version comes from:
 Copied at `v0.3.16` into tools without a plugin manager; Claude Code and Copilot CLI install the marketplace's current version instead.
 
 <details>
-<summary><strong>Power BI authoring</strong> &ensp;<code>powerbi-authoring</code> &ensp;Microsoft · 5 skills</summary>
+<summary><strong>Power BI authoring</strong> &ensp;<code>powerbi-authoring</code> &ensp;Microsoft · 5 skills · 1 MCP server</summary>
 
 Developer skills for authoring Microsoft Power BI solutions.
 
@@ -31,7 +31,7 @@ Developer skills for authoring Microsoft Power BI solutions.
 </details>
 
 <details>
-<summary><strong>Fabric — everything</strong> &ensp;<code>fabric-skills</code> &ensp;Microsoft · 23 skills</summary>
+<summary><strong>Fabric — everything</strong> &ensp;<code>fabric-skills</code> &ensp;Microsoft · 23 skills · 3 MCP servers</summary>
 
 Complete bundle: all Microsoft Skills for Fabric for developers and consumers
 
@@ -75,6 +75,85 @@ A thin spec-driven workflow for Power BI: survey an existing or published report
 | Skill | What it does |
 |---|---|
 | [`pbi-sdd`](../bundles/pbi-sdd/skills/pbi-sdd/SKILL.md) | A thin spec-driven workflow for Power BI: survey an existing or published report (levantamiento), or start a new one, then spec, tasks, build and verify with written, approved steps. Leans on the Microsoft and data-goblin skills rather than repeating them. |
+
+</details>
+
+<details>
+<summary><strong>Tableau authoring</strong> &ensp;<code>tableau-authoring</code> &ensp;dashkit · 2 skills · 1 MCP server</summary>
+
+Drives Tableau Desktop 2026.3 through its External Client API with the tableu MCP server: data sources and .hyper extracts, fields, calculations, parameters, sets, sheets, filters, formatting, dashboards, navigation buttons, filter/parameter/set actions and stories, each validated by Tableau and linted against its best practices. Includes a tableau-author subagent and /setup.
+
+| Skill | What it does |
+|---|---|
+| [`tableau-authoring`](../bundles/tableau-authoring/skills/tableau-authoring/SKILL.md) | Drives Tableau Desktop 2026.3 through its External Client API with the tableu MCP server: data sources and .hyper extracts, fields, calculations, parameters, sets, sheets, filters, formatting, dashboards, navigation buttons, filter/parameter/set actions and stories, each validated by Tableau and linted against its best practices. Includes a tableau-author subagent and /setup. |
+| [`tableau-design`](../bundles/tableau-authoring/skills/tableau-design/SKILL.md) | How Tableau work is structured per Tableau's official guidance: site, project, collection, workbook, worksheets, dashboards and stories; which chart answers which question; tiled fixed-size dashboard layout with 2-3 views and KPIs first; a pre-delivery checklist mapped to tableu operations. |
+
+</details>
+
+<details>
+<summary><strong>Tableau spec-driven workflow</strong> &ensp;<code>tableau-sdd</code> &ensp;dashkit · 1 skill</summary>
+
+Survey a Tableau workbook with Info and Lint evidence or start a new one, then spec, tasks, a build where every task runs inside a transaction, and verification with exported images and Desktop's warnings.
+
+| Skill | What it does |
+|---|---|
+| [`tableau-sdd`](../bundles/tableau-sdd/skills/tableau-sdd/SKILL.md) | Survey a Tableau workbook with Info and Lint evidence or start a new one, then spec, tasks, a build where every task runs inside a transaction, and verification with exported images and Desktop's warnings. |
+
+</details>
+
+<details>
+<summary><strong>Tableau guardrails</strong> &ensp;<code>tableau-guardrails</code> &ensp;dashkit · 1 guardrail hook</summary>
+
+Lints every .twb/.twbx the agent edits against Tableau's best practices and blocks on errors, so they are fixed before moving on. Runs as a Claude Code or Copilot CLI plugin hook; needs uv.
+
+Checks that run automatically, without being asked:
+
+- tableu lint after any .twb or .twbx edit; errors block, warnings come back as context
+
+| Skill | What it does |
+|---|---|
+
+</details>
+
+<details>
+<summary><strong>Looker Studio authoring</strong> &ensp;<code>looker-studio-authoring</code> &ensp;dashkit · 6 skills · 1 MCP server</summary>
+
+Edits a Looker Studio / Data Studio report open in Edge or Chrome over CDP with the looker-studio MCP server: safe copies, layout, fields, source calculated fields, components, controls, filters, themes, pages and declarative report specs, with diagnosis and a UX audit. Six best-practice skills, a looker-studio-author subagent and /setup.
+
+| Skill | What it does |
+|---|---|
+| [`ls-depuracion-errores`](../bundles/looker-studio-authoring/skills/ls-depuracion-errores/SKILL.md) | Edits a Looker Studio / Data Studio report open in Edge or Chrome over CDP with the looker-studio MCP server: safe copies, layout, fields, source calculated fields, components, controls, filters, themes, pages and declarative report specs, with diagnosis and a UX audit. Six best-practice skills, a looker-studio-author subagent and /setup. |
+| [`ls-diseno-layout`](../bundles/looker-studio-authoring/skills/ls-diseno-layout/SKILL.md) | Edits a Looker Studio / Data Studio report open in Edge or Chrome over CDP with the looker-studio MCP server: safe copies, layout, fields, source calculated fields, components, controls, filters, themes, pages and declarative report specs, with diagnosis and a UX audit. Six best-practice skills, a looker-studio-author subagent and /setup. |
+| [`ls-kpi-scorecards`](../bundles/looker-studio-authoring/skills/ls-kpi-scorecards/SKILL.md) | Edits a Looker Studio / Data Studio report open in Edge or Chrome over CDP with the looker-studio MCP server: safe copies, layout, fields, source calculated fields, components, controls, filters, themes, pages and declarative report specs, with diagnosis and a UX audit. Six best-practice skills, a looker-studio-author subagent and /setup. |
+| [`ls-migracion`](../bundles/looker-studio-authoring/skills/ls-migracion/SKILL.md) | Edits a Looker Studio / Data Studio report open in Edge or Chrome over CDP with the looker-studio MCP server: safe copies, layout, fields, source calculated fields, components, controls, filters, themes, pages and declarative report specs, with diagnosis and a UX audit. Six best-practice skills, a looker-studio-author subagent and /setup. |
+| [`ls-modelo-datos`](../bundles/looker-studio-authoring/skills/ls-modelo-datos/SKILL.md) | Edits a Looker Studio / Data Studio report open in Edge or Chrome over CDP with the looker-studio MCP server: safe copies, layout, fields, source calculated fields, components, controls, filters, themes, pages and declarative report specs, with diagnosis and a UX audit. Six best-practice skills, a looker-studio-author subagent and /setup. |
+| [`ls-rendimiento`](../bundles/looker-studio-authoring/skills/ls-rendimiento/SKILL.md) | Edits a Looker Studio / Data Studio report open in Edge or Chrome over CDP with the looker-studio MCP server: safe copies, layout, fields, source calculated fields, components, controls, filters, themes, pages and declarative report specs, with diagnosis and a UX audit. Six best-practice skills, a looker-studio-author subagent and /setup. |
+
+</details>
+
+<details>
+<summary><strong>Looker Studio spec-driven workflow</strong> &ensp;<code>ls-sdd</code> &ensp;dashkit · 1 skill</summary>
+
+Survey a Looker Studio report with diagnose evidence or start a new one, then a spec materialised as a declarative report spec, tasks, a build that dry-runs every apply first, and verification in view mode.
+
+| Skill | What it does |
+|---|---|
+| [`ls-sdd`](../bundles/ls-sdd/skills/ls-sdd/SKILL.md) | Survey a Looker Studio report with diagnose evidence or start a new one, then a spec materialised as a declarative report spec, tasks, a build that dry-runs every apply first, and verification in view mode. |
+
+</details>
+
+<details>
+<summary><strong>Looker Studio guardrails</strong> &ensp;<code>looker-studio-guardrails</code> &ensp;dashkit · 2 guardrail hooks</summary>
+
+Lints every *.spec.json the agent edits and blocks on errors; when a browser answers on the CDP port it also shows the apply --dry-run plan. Runs as a Claude Code or Copilot CLI plugin hook; needs Node 20+.
+
+Checks that run automatically, without being asked:
+
+- report-spec lint after any *.spec.json edit; errors block
+- apply --dry-run plan when a browser is on the CDP port
+
+| Skill | What it does |
+|---|---|
 
 </details>
 

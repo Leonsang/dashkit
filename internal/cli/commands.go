@@ -3,6 +3,8 @@ package cli
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"text/tabwriter"
 
@@ -21,6 +23,12 @@ func doctorCmd() *cobra.Command {
 		Use:   "doctor",
 		Short: "Check prerequisites and detect installed AI tools (read-only)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			// Without -b, check what is installed: that is what has to work here.
+			if !cmd.Flags().Changed("bundle") {
+				if installed := installedBundles(); len(installed) > 0 {
+					bundles = installed
+				}
+			}
 			resolved, err := catalog.Resolve(bundles)
 			if err != nil {
 				return err
@@ -86,8 +94,35 @@ func doctorCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringSliceVarP(&bundles, "bundle", "b", []string{"powerbi-authoring"}, "which bundles' prerequisites to check")
+	cmd.Flags().StringSliceVarP(&bundles, "bundle", "b", []string{"powerbi-authoring"},
+		"which bundles' prerequisites to check (default: the installed ones, else powerbi-authoring)")
 	return cmd
+}
+
+// installedBundles lists the bundles that apply where doctor runs: global
+// installs, and project installs of the current directory. Other projects'
+// bundles have their own prerequisites and are not this folder's problem.
+// Once each, in catalog order, skipping any this build no longer knows.
+func installedBundles() []string {
+	st, err := state.Load()
+	if err != nil {
+		return nil
+	}
+	cwd, _ := os.Getwd()
+	have := map[string]bool{}
+	for _, in := range st.Installs {
+		if in.Scope == "project" && !samePath(in.ProjectAt, cwd) {
+			continue
+		}
+		have[in.Bundle] = true
+	}
+	var out []string
+	for _, b := range catalog.Bundles() {
+		if have[b.ID] {
+			out = append(out, b.ID)
+		}
+	}
+	return out
 }
 
 func listCmd() *cobra.Command {
@@ -264,4 +299,19 @@ func printReport(r *install.Report, dryRun bool) {
 			fmt.Printf("  - %s\n", h)
 		}
 	}
+}
+
+func samePath(a, b string) bool {
+	if a == "" || b == "" {
+		return false
+	}
+	ca, errA := filepath.Abs(a)
+	cb, errB := filepath.Abs(b)
+	if errA != nil || errB != nil {
+		return false
+	}
+	if runtime.GOOS == "windows" { // case-insensitive paths
+		return strings.EqualFold(filepath.Clean(ca), filepath.Clean(cb))
+	}
+	return filepath.Clean(ca) == filepath.Clean(cb)
 }

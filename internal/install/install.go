@@ -105,6 +105,12 @@ func Build(ctx context.Context, req Request) (*Built, error) {
 				built.Steps = append(built.Steps, planMarketplace(b, t, opts))
 				continue
 			}
+			if b.HasPlugin() {
+				if step, done := planBuiltinPlugin(b, t, opts); done {
+					built.Steps = append(built.Steps, step)
+					continue
+				}
+			}
 			if !t.SupportsScope(req.Scope) {
 				built.Steps = append(built.Steps, Step{
 					Bundle: b, Target: t,
@@ -138,6 +144,32 @@ func planMarketplace(b catalog.Bundle, t targets.Target, opts targets.Options) S
 		return Step{Bundle: b, Target: t, Skipped: err.Error()}
 	}
 	return Step{Bundle: b, Target: t, Plan: p}
+}
+
+// planBuiltinPlugin routes one of dashkit's own bundles that is also a plugin
+// in dashkit's marketplace. Where the host has a plugin manager it installs
+// the plugin, which carries what files cannot: slash commands, subagents and
+// hooks. Elsewhere — or when the plugin manager cannot take it, e.g. Copilot
+// CLI at project scope — skills and MCP servers are written as files, and a
+// bundle of nothing but hooks is skipped with the reason. done is false when
+// the ordinary file install should go ahead.
+func planBuiltinPlugin(b catalog.Bundle, t targets.Target, opts targets.Options) (Step, bool) {
+	var why string
+	if mp, ok := t.(targets.MarketplacePlanner); ok && opts.PreferHostPlugin {
+		p, err := mp.PlanMarketplace(b, opts)
+		if err == nil {
+			return Step{Bundle: b, Target: t, Plan: p}, true
+		}
+		why = err.Error()
+	}
+	if !b.HooksOnly() {
+		return Step{}, false
+	}
+	if why == "" {
+		why = fmt.Sprintf("%s is guardrail hooks, which only run inside a Claude Code or Copilot CLI plugin; %s has no plugin manager",
+			b.Title, t.Title())
+	}
+	return Step{Bundle: b, Target: t, Skipped: why}, true
 }
 
 // needsTree reports whether any bundle comes from the upstream Microsoft tree.

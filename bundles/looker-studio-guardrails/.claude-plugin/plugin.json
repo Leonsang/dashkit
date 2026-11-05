@@ -1,0 +1,20 @@
+{
+  "name": "looker-studio-guardrails",
+  "version": "0.1.0",
+  "description": "Lints every *.spec.json Claude edits (grid, canvas, KPIs, density) and blocks on errors; when Edge/Chrome answers on the CDP port it also shows the apply --dry-run plan. Needs Node 20+.",
+  "author": {
+    "name": "Erick Sang C",
+    "url": "https://github.com/leonsang"
+  },
+  "homepage": "https://github.com/leonsang/dashkit/tree/main/bundles/looker-studio-guardrails",
+  "repository": "https://github.com/leonsang/dashkit",
+  "license": "MIT",
+  "keywords": [
+    "looker-studio",
+    "data-studio",
+    "guardrails",
+    "lint",
+    "hooks"
+  ],
+  "hooks": "./hooks/hooks.json"
+}

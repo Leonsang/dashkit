@@ -6,6 +6,7 @@ package prereq
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,6 +14,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/leonsang/dashkit/internal/catalog"
 )
@@ -141,6 +143,30 @@ func Registry() map[string]Check {
 				"development, needs the authors' permission. If your use qualifies: `uv tool install pbir-cli` " +
 				"(see https://github.com/data-goblin/pbir-cli)",
 		},
+	}
+
+	checks["uv"] = Check{
+		ID: "uv", Title: "uv (runs the tableu MCP server)",
+		Probe:   versionProbe("uv", "--version"),
+		Install: pkg("astral-sh.uv", "uv", ""),
+		Manual:  "install from https://docs.astral.sh/uv/getting-started/installation/",
+	}
+	checks["tableau-desktop"] = Check{
+		ID: "tableau-desktop", Title: "Tableau Desktop 2026.3+ (Windows)",
+		Probe:  tableauDesktopProbe,
+		Manual: "the External Client API tableu drives ships with Tableau Desktop 2026.3 on Windows: https://www.tableau.com/products/desktop/download",
+	}
+	checks["tableau-api-flag"] = Check{
+		ID: "tableau-api-flag", Title: "Tableau External Client API enabled (ProjectAthena flag)",
+		Probe:   tableauFlagProbe,
+		Install: tableauFlagInstall,
+		Manual:  "run /setup in Claude Code (tableau-authoring), or `tableu enable`, then restart Tableau Desktop",
+	}
+	checks["cdp-9222"] = Check{
+		ID: "cdp-9222", Title: "Browser on CDP port 9222 (Looker Studio)",
+		Probe: cdpProbe,
+		Manual: "start Edge with a dedicated profile: msedge --remote-debugging-port=9222 " +
+			"--user-data-dir=%LOCALAPPDATA%\\EdgeCDP (or run /setup in Claude Code), then sign in to Google once",
 	}
 
 	for _, p := range []string{
@@ -307,6 +333,113 @@ func powerBIInstall() []string {
 		return nil
 	}
 	return []string{"winget", "install", "--id", "9NTXR16HNW1T", "--source", "msstore", "--accept-package-agreements", "--accept-source-agreements"}
+}
+
+// tableauMinVersion is the first Tableau Desktop release with the External
+// Client API the tableu server drives.
+var tableauMinVersion = [2]int{2026, 3}
+
+// tableauVersions lists the Tableau Desktop installs under Program Files, newest
+// first, as "2026.3" strings.
+func tableauVersions() []string {
+	base := filepath.Join(os.Getenv("ProgramFiles"), "Tableau")
+	entries, err := os.ReadDir(base)
+	if err != nil {
+		return nil
+	}
+	var out []string
+	for _, e := range entries {
+		v, ok := strings.CutPrefix(e.Name(), "Tableau ")
+		if !ok {
+			continue
+		}
+		if _, err := os.Stat(filepath.Join(base, e.Name(), "bin", "tableau.exe")); err == nil {
+			out = append(out, v)
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return versionLess(out[j], out[i]) })
+	return out
+}
+
+func versionLess(a, b string) bool {
+	pa, pb := parseVersion(a), parseVersion(b)
+	if pa[0] != pb[0] {
+		return pa[0] < pb[0]
+	}
+	return pa[1] < pb[1]
+}
+
+func parseVersion(v string) [2]int {
+	parts := strings.SplitN(v, ".", 3)
+	var out [2]int
+	for i := 0; i < 2 && i < len(parts); i++ {
+		out[i], _ = strconv.Atoi(parts[i])
+	}
+	return out
+}
+
+func tableauDesktopProbe() (Status, string) {
+	if runtime.GOOS != "windows" {
+		return Missing, "the External Client API is Windows-only; not available on " + runtime.GOOS
+	}
+	versions := tableauVersions()
+	if len(versions) == 0 {
+		return Missing, "not installed"
+	}
+	newest := versions[0]
+	if versionLess(newest, fmt.Sprintf("%d.%d", tableauMinVersion[0], tableauMinVersion[1])) {
+		return Outdated, fmt.Sprintf("Tableau %s (need %d.%d+)", newest, tableauMinVersion[0], tableauMinVersion[1])
+	}
+	return OK, "Tableau " + newest
+}
+
+// tableauFlagProbe reads HKCU\Software\Tableau\Tableau <ver>\Debug\FeatureOverrideOn
+// with reg.exe, so this file still builds everywhere.
+func tableauFlagProbe() (Status, string) {
+	if runtime.GOOS != "windows" {
+		return Missing, "Windows only"
+	}
+	versions := tableauVersions()
+	if len(versions) == 0 {
+		return Missing, "Tableau Desktop not installed"
+	}
+	key := `HKCU\Software\Tableau\Tableau ` + versions[0] + `\Debug`
+	out, err := run("reg", "query", key, "/v", "FeatureOverrideOn")
+	if err != nil || !strings.Contains(out, "ProjectAthena") {
+		return Missing, "ProjectAthena not set for Tableau " + versions[0]
+	}
+	return OK, "ProjectAthena set for Tableau " + versions[0] + " (restart Desktop after enabling)"
+}
+
+// tableauFlagInstall enables the flag with the tableu CLI itself, fetched by uvx,
+// so dashkit never writes the registry on its own.
+func tableauFlagInstall() []string {
+	if runtime.GOOS != "windows" || len(tableauVersions()) == 0 {
+		return nil
+	}
+	if _, err := exec.LookPath("uvx"); err != nil {
+		return nil
+	}
+	return []string{"uvx", "--from", "git+https://github.com/leonsang/dashkit#subdirectory=bundles/tableau-authoring/server", "tableu", "enable"}
+}
+
+// cdpURL is where a Chrome DevTools Protocol browser answers; overridable for tests.
+var cdpURL = "http://127.0.0.1:9222/json/version"
+
+func cdpProbe() (Status, string) {
+	client := http.Client{Timeout: 1500 * time.Millisecond}
+	resp, err := client.Get(cdpURL)
+	if err != nil {
+		return Missing, "no browser listening on 127.0.0.1:9222"
+	}
+	defer resp.Body.Close()
+	var v struct {
+		Browser string `json:"Browser"`
+	}
+	if json.NewDecoder(resp.Body).Decode(&v) != nil || v.Browser == "" {
+		return Unknown, "something answers on 9222, but not a DevTools browser"
+	}
+	return OK, v.Browser
 }
 
 // pythonProbe accepts the first interpreter that actually answers as Python 3.
