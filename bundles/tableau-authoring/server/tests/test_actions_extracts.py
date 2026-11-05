@@ -123,3 +123,14 @@ def test_drop_detection_names_what_live_apply_lost(wb):
     assert dropped["parameters"] == ["[Nuevo]"]
     assert len(dropped["actions"]) == 1
     assert ops._dropped(before, before) == {}
+
+
+def test_shared_filter_ties_sheets_with_one_group(wb):
+    root, _ = wb
+    r = A.add_shared_filter(root, ["Por region", "Por mes"], "Region", card_mode="dropdown")
+    groups = {f.get("filter-group") for f in root.iter("filter") if f.get("column", "").endswith(":Region:nk]")}
+    assert groups == {str(r["group"])}, groups
+    per_sheet = [ws.get("name") for ws in root.iter("worksheet") for f in ws.iter("filter") if f.get("filter-group")]
+    assert sorted(per_sheet) == ["Por mes", "Por region"]
+    r2 = A.add_shared_filter(root, ["Por mes"], "Region")
+    assert r2["group"] == r["group"] + 1  # a new group never reuses one in use

@@ -761,7 +761,7 @@ def _build_filter(column: str, level: str, datatype: str, values=None, exclude=F
 def add_filter(root, worksheet: str, field: str, values: list[str] | None = None, exclude: bool = False,
                min=None, max=None, relative: dict | None = None, top: dict | None = None,  # noqa: A002
                condition: str | None = None, wildcard: str | None = None, context: bool = False,
-               show_card: bool = False, card_mode: str | None = None) -> dict:
+               show_card: bool = False, card_mode: str | None = None, group: int | None = None) -> dict:
     """Filter a worksheet. One of: values (+exclude) · min/max (measures 'SUM(Sales)' or dates) ·
     relative={'period': 'month', 'from': -11, 'to': 0} · top={'n': 10, 'by': 'SUM([Sales])', 'direction': 'top'} ·
     condition='SUM([Sales]) > 1000' · wildcard='abc'. context=True makes it a context filter.
@@ -784,6 +784,8 @@ def add_filter(root, worksheet: str, field: str, values: list[str] | None = None
                         relative=relative, top=top, condition=condition, wildcard=wildcard)
     if context:
         flt.set("context", "true")
+    if group is not None:  # shared with every sheet whose filter carries the same group (see add_shared_filter)
+        flt.set("filter-group", str(group))
     for old in sh.view.findall("filter"):
         if old.get("column") == col:
             sh.view.remove(old)
@@ -797,6 +799,21 @@ def add_filter(root, worksheet: str, field: str, values: list[str] | None = None
     if show_card:
         add_card(root, worksheet, "filter", field_qname=col, mode=card_mode)
     return {"worksheet": worksheet, "filter": col, "class": flt.get("class")}
+
+
+def add_shared_filter(root, worksheets: list[str], field: str, card_on: str | None = None, **kwargs) -> dict:
+    """One filter shared by several worksheets ("Apply to worksheets > selected"): the same filter on each,
+    tied together by a filter-group number, as Tableau writes it. Changing it on one sheet, or through its
+    card on a dashboard, changes it on all. card_on names the sheet that gets the filter card (default the
+    first); other arguments as for Add (values, exclude, min/max, relative, ...)."""
+    if not worksheets:
+        raise ValueError("worksheets must name at least one sheet")
+    used = [int(g) for g in root.xpath("//filter/@filter-group") if str(g).isdigit()]
+    group = max([1, *used]) + 1
+    card_on = card_on or worksheets[0]
+    want_card = kwargs.pop("show_card", True)
+    out = [add_filter(root, ws, field, group=group, show_card=want_card and ws == card_on, **kwargs) for ws in worksheets]
+    return {"group": group, "field": field, "worksheets": worksheets, "card": card_on, "filters": out}
 
 
 def remove_filter(root, worksheet: str, field: str) -> dict:

@@ -313,6 +313,7 @@ REGISTRY: dict[str, dict[str, Op]] = {
     "filter": {
         "List": Op(A.list_filters, "read"),
         "Add": Op(A.add_filter, "edit"),
+        "AddShared": Op(A.add_shared_filter, "edit"),
         "Remove": Op(A.remove_filter, "edit"),
     },
     "analytics": {
