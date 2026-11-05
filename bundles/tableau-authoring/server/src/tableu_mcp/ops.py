@@ -255,6 +255,17 @@ def preflight(target: str) -> dict:
         if f["level"] in ("error", "warning"):
             add(f["level"], f["path"], f"{f['rule']}: {f['message']}", f["fix"])
 
+    packaged: set[str] = set()
+    if str(target).lower().endswith(".twbx") and Path(target).exists():
+        import zipfile  # noqa: PLC0415
+
+        with zipfile.ZipFile(target) as z:
+            packaged = {n.replace("\\", "/").lower() for n in z.namelist()}
+
+    def _in_package(f: Path) -> bool:
+        rel = str(f).replace("\\", "/").lower().lstrip("./")
+        return any(n == rel or n.endswith("/" + rel) for n in packaged)
+
     order = authoring.DATASOURCE_ORDER
     for ds in root.iter("datasource"):
         name = ds.get("caption") or ds.get("name") or "?"
@@ -281,7 +292,7 @@ def preflight(target: str) -> dict:
             elif cls == "hyper" and conn.get("dbname"):
                 files.append(Path(conn.get("dbname")))
             for f in files:
-                if not f.exists():
+                if not f.exists() and not _in_package(f):
                     add("error", f"datasource {name}", f"{cls} file not found: {f}",
                         "point the connection at the file, or recreate the data source / extract")
                 elif cls == "hyper":

@@ -110,3 +110,35 @@ def test_structure_check_accepts_tableu_output_and_flags_breakage(root):
     assert rules == {"STRUCT-REJECTED", "STRUCT-ORDER", "STRUCT-VALUE"}
     etree.SubElement(view, "inventado")
     assert any(f["rule"] == "STRUCT-UNKNOWN-ELEMENT" for f in structure.check(root))
+
+
+def test_sorts_follow_the_workbook_format(root):
+    """A workbook that declares SortTagCleanup (Tableau's modern samples) takes <computed-sort>; others <sort>."""
+    from lxml import etree
+
+    A.create_worksheet(root, "Orden", "Ventas", rows=["Canal"], cols=["SUM(Importe)"], mark="bar",
+                       sort={"field": "Canal", "by": "SUM(Importe)"})
+    old = twb.parse(twb.serialize(root))
+    assert old.find(".//worksheet[@name='Orden']/table/view/sort[@class='computed']") is not None
+    etree.SubElement(root.find("document-format-change-manifest"), "SortTagCleanup")
+    new = twb.parse(twb.serialize(root))
+    v = new.find(".//worksheet[@name='Orden']/table/view")
+    assert v.find("sort") is None and v.find("computed-sort").get("using")
+
+
+def test_fixed_item_in_an_evenly_shared_row_keeps_its_width(root):
+    """Desktop ignores fixed sizes inside a distribute-evenly flow: the sheets move to an inner even flow."""
+    A.create_worksheet(root, "Total", "Ventas", mark="text", label="SUM(Importe)")
+    A.create_worksheet(root, "Otra", "Ventas", rows=["Canal"], cols=["SUM(Importe)"], mark="bar")
+    twb.add_dashboard(root, "D", [], rows=[["Total"], ["Por canal", "Otra"]], heights=[30, 70])
+    A.add_zone(root, "D", "filter", sheet="Por canal", field="Canal", container="title", fixed_width=200)
+    out = A.add_zone(root, "D", "parameter", parameter="P", container="row:2", fixed_width=180) \
+        if root.find(".//column[@name='[P]']") is not None else \
+        A.add_zone(root, "D", "text", text="nota", container="row:2", fixed_width=180)
+    db = root.find("dashboards/dashboard[@name='D']")
+    z = next(x for x in db.iter("zone") if x.get("id") == out["zone"])
+    row = z.getparent()
+    assert row.get("layout-strategy-id") is None and z.get("fixed-size") == "180"
+    inner = row.find("zone")
+    assert inner.get("layout-strategy-id") == "distribute-evenly"
+    assert {x.get("name") for x in inner.findall("zone")} == {"Por canal", "Otra"}

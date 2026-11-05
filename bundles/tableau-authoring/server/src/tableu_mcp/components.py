@@ -34,7 +34,9 @@ COMPONENTS: list[dict] = [
     dict(id="datasource-filter", area="Datos", name="Filtro de fuente de datos",
          definition="Filtro que se aplica a toda consulta de la fuente, antes que cualquier hoja.",
          use="Excluir datos que ninguna hoja necesita (seguridad ligera, rendimiento).",
-         recommendation="Prefiérelo a repetir el mismo filtro en cada hoja.", source=H + "filtering_datasource.htm",
+         recommendation="Prefiérelo a repetir el mismo filtro en cada hoja. tableu lo escribe solo en fuentes de una "
+                        "tabla; en fuentes con relaciones usa un filtro compartido o del extract.",
+         source=H + "filtering_datasource.htm",
          xml=["datasource/filter"], op="datasource AddFilter",
          example=[("datasource", "AddFilter", {"datasource": "Ventas", "field": "Canal", "values": ["Online"]})]),
     dict(id="join", area="Datos", name="Join (capa física)",

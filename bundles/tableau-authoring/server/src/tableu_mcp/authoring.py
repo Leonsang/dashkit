@@ -680,6 +680,13 @@ def add_datasource_filter(root, datasource: str, field: str, values: list[str] |
     """Data-source filter (applies to every sheet using it): categorical values, or a min/max range."""
     ds = find_datasource(root, datasource)
     f = resolve_field(ds, field)
+    objects = [o for o in ds.iter() if isinstance(o.tag, str) and o.tag.split("...")[-1] == "object"]
+    if len(objects) > 1:
+        # Verified only on single-table sources: on Tableau's multi-table Superstore Desktop reports "Field
+        # 'Region' which is included for filtering does not exist" (2026-11-05). Refuse rather than break it.
+        raise NotImplementedError(
+            f"Data-source filters on multi-table sources ({len(objects)} logical tables) are not supported yet. "
+            "Use filter AddShared on the sheets, or filter the extract instead.")
     flt = _build_filter(f.name, f.name, f.datatype, values=values, exclude=exclude, min=min, max=max)
     _ds_insert(ds, flt)
     return {"datasource": ds.get("caption"), "filter": f.name}
@@ -939,7 +946,7 @@ def add_measure_values(root, worksheet: str, measures: list[str], labels: dict |
     refs = [sh.ref(m) for m in measures]
     members = [f'"{sh.qname(r)}"' for r in refs]
     for el in list(sh.view):
-        if el.get("column") == mn and el.tag in ("filter", "sort"):
+        if el.get("column") == mn and el.tag in ("filter", "sort", "manual-sort"):
             sh.view.remove(el)
     flt = etree.Element("filter", {"class": "categorical", "column": mn})
     union = etree.SubElement(flt, "groupfilter", {"function": "union", f"{{{USER_NS}}}op": "manual"})
@@ -1041,7 +1048,7 @@ def describe_worksheet(root, worksheet: str) -> dict:
             "rows": table.findtext("rows"), "cols": table.findtext("cols"), "pages": table.findtext("pages"),
             "title": "".join(title.itertext()).strip() if title is not None else None,
             "panes": panes, "filters": [f.get("column") for f in sh.view.findall("filter")],
-            "sorts": [dict(s.attrib) for s in sh.view if s.tag in ("sort", "computed-sort", "manual-sort")],
+            "sorts": [dict(s.attrib) for s in sh.view if s.tag in ("sort", "computed-sort", "manual-sort", "alphabetic-sort", "natural-sort")],
             "totals": {"rows": table.find("rows").get("total") == "true", "cols": table.find("cols").get("total") == "true"}}
 
 
@@ -1127,7 +1134,7 @@ def set_sort(root, worksheet: str, field: str, by: str | None = None, direction:
     dim = sh.ref(field)
     col = sh.qname(dim)
     for s in list(sh.view):
-        if s.tag in ("sort", "computed-sort", "manual-sort") and s.get("column") == col:
+        if s.tag in ("sort", "computed-sort", "manual-sort", "alphabetic-sort", "natural-sort") and s.get("column") == col:
             sh.view.remove(s)
     if order:
         s = etree.Element("sort", {"class": "manual", "column": col, "direction": "ASC"})
@@ -1712,6 +1719,16 @@ def add_zone(root, dashboard: str, kind: str, sheet: str | None = None, text: st
         if (fixed_width and parent.get("param") != "horz") or (fixed_height and parent.get("param") != "vert"):
             raise ValueError("fixed_width needs a horizontal container and fixed_height a vertical one; "
                              f"container {container!r} is {parent.get('param')!r}")
+        if (fixed_width or fixed_height) and parent.get("layout-strategy-id") == "distribute-evenly":
+            # Desktop shares a distribute-evenly flow equally and ignores fixed sizes inside it (seen on
+            # Superstore, 2026-11-05): keep the even split in an inner flow and put the fixed item beside it.
+            inner = etree.Element("zone", {"id": str(_next_zone_id(db)), "param": parent.get("param"),
+                                           "type-v2": "layout-flow", "layout-strategy-id": "distribute-evenly",
+                                           "x": "0", "y": "0", "w": "0", "h": "0"})
+            for child in _kids(parent):
+                inner.append(child)
+            del parent.attrib["layout-strategy-id"]
+            _append_zone(parent, inner)
         _append_zone(parent, z)
         if position is not None:
             kids = _kids(parent)
@@ -1786,7 +1803,9 @@ def _resolve_container(db, container: str):
         return row
     if container.startswith("row:"):
         main, _ = _main_parts(db)
-        rows = [c for c in _kids(main) if c.get("type-v2") == "layout-flow"]
+        # content rows only: the title row created by container='title' is not counted
+        rows = [c for c in _kids(main) if c.get("type-v2") == "layout-flow"
+                and not any(k.get("type-v2") == "title" for k in _kids(c))]
         n = int(container.split(":", 1)[1])
         if not 1 <= n <= len(rows):
             raise KeyError(f"{container!r}: the dashboard has {len(rows)} rows")
@@ -2062,6 +2081,38 @@ def _actions(root):
     return _wb_child(root, "actions")
 
 
+def _xq(v: str) -> str:
+    """XPath string literal."""
+    return f"'{v}'" if "'" not in v else '"' + v + '"'
+
+
+def _field_in_source(root, source: str, field: str, src_sheet=None):
+    """(datasource, field) for an action's field: the source sheet's datasource, or, for a dashboard source,
+    the first datasource used by its sheets that has the field (a dashboard can mix several sources)."""
+    if src_sheet is not None:
+        return src_sheet.ds, resolve_field(src_sheet.ds, field)
+    names = []
+    db = root.find(f"dashboards/dashboard[@name={_xq(source)}]")
+    for z in (db.iter("zone") if db is not None else []):
+        if z.get("name") and z.get("name") not in names and z.get("type-v2") is None:
+            names.append(z.get("name"))
+    tried = []
+    for sheet in names:
+        try:
+            ds = Sheet(root, sheet).ds
+        except (KeyError, AttributeError):
+            continue
+        if ds.get("name") in tried:
+            continue
+        tried.append(ds.get("name"))
+        try:
+            return ds, resolve_field(ds, field)
+        except KeyError:
+            continue
+    ds = twb.datasources(root)[0]
+    return ds, resolve_field(ds, field)
+
+
 def create_action(root, kind: str, name: str, source: str, target: str | None = None,
                   fields: list[str] | None = None, activation: str = "on-select", clear: str = "show-all",
                   url: str | None = None, parameter: str | None = None, source_field: str | None = None,
@@ -2103,8 +2154,7 @@ def create_action(root, kind: str, name: str, source: str, target: str | None = 
             src_sheet = Sheet(root, source) if source in ws_names else None
             clauses = []
             for i, fl in enumerate(fields):
-                ds = src_sheet.ds if src_sheet else twb.datasources(root)[0]
-                f = resolve_field(ds, fl)
+                ds, f = _field_in_source(root, source, fl, src_sheet)
                 clauses.append(f"%5B{ds.get('name')}%5D.%5B{_urlq(f.name.strip('[]'))}%5D~s0=<{f.name}~na>")
             expr = f"tsl:{_urlq(tgt)}?" + "&".join(clauses)
             etree.SubElement(a, "link", caption=name, delimiter=",", escape="\\", expression=expr,

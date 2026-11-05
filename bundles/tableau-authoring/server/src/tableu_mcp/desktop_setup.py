@@ -206,7 +206,9 @@ foreach ($procId in @(__PIDS__)) {
       $get = { param($id) $e = $f.FindFirst($T::Descendants, (New-Object $P($A::AutomationIdProperty, "QApplication.UnifiedDetailedErrorDialog.mainFrame.$id"))); if ($e) { $e.Current.Name } else { '' } }
       $item = [ordered]@{ pid = [int]$procId; title = (& $get 'titleBar.titleContainer.defaultTitle');
         message = (& $get 'contentContainer.DetailedErrorContents.shortErrorMessage');
-        code = ((& $get 'contentContainer.DetailedErrorContents.errorCode') -replace '^Error Code:\s*', ''); dismissed = $false }
+        code = ((& $get 'contentContainer.DetailedErrorContents.errorCode') -replace '^Error Code:\s*', ''); details = ''; dismissed = $false }
+      $det = $f.FindFirst($T::Descendants, (New-Object $P($A::AutomationIdProperty, 'QApplication.UnifiedDetailedErrorDialog.mainFrame.contentContainer.DetailedErrorContents.detailsContainer.errorDetails')))
+      if ($det) { try { $item.details = $det.GetCurrentPattern([System.Windows.Automation.TextPattern]::Pattern).DocumentRange.GetText(4000).Trim() } catch { } }
       if (__DISMISS__) {
         $b = $f.FindFirst($T::Descendants, (New-Object $P($A::AutomationIdProperty, 'QApplication.UnifiedDetailedErrorDialog.mainFrame.titleBar.closeButton')))
         if ($b) { $b.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke(); $item.dismissed = $true }
@@ -310,8 +312,23 @@ foreach ($procId in @(__PIDS__)) {
     foreach ($d in $cands) {
       $buttons = @($d.FindAll($T::Descendants, (New-Object $PC($A::ControlTypeProperty, $CT::Button))) | ForEach-Object { $_.Current.Name } | Where-Object { $_ } | Select-Object -Unique)
       if ($buttons.Count -eq 0) { continue }
-      $texts = @($d.FindAll($T::Descendants, (New-Object $PC($A::ControlTypeProperty, $CT::Text))) | ForEach-Object { $_.Current.Name } | Where-Object { $_ } | Select-Object -Unique)
+      # Text controls; rich-text ones (the error details box) have no Name and expose their text via TextPattern.
+      $texts = @()
+      foreach ($t in $d.FindAll($T::Descendants, (New-Object $PC($A::ControlTypeProperty, $CT::Text)))) {
+        $val = $t.Current.Name
+        if (-not $val) { try { $val = $t.GetCurrentPattern([System.Windows.Automation.TextPattern]::Pattern).DocumentRange.GetText(4000) } catch { } }
+        if ($val -and $texts -notcontains $val.Trim()) { $texts += $val.Trim() }
+      }
       $items = @($d.FindAll($T::Descendants, (New-Object $PC($A::ControlTypeProperty, $CT::DataItem))) | ForEach-Object { $_.Current.Name } | Where-Object { $_ } | Select-Object -Unique)
+      foreach ($ct in @($CT::Edit, $CT::Document)) {
+        foreach ($e in $d.FindAll($T::Descendants, (New-Object $PC($A::ControlTypeProperty, $ct)))) {
+          $val = ''
+          try { $val = $e.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).Current.Value } catch { }
+          if (-not $val) { try { $val = $e.GetCurrentPattern([System.Windows.Automation.TextPattern]::Pattern).DocumentRange.GetText(2000) } catch { } }
+          if (-not $val) { $val = $e.Current.Name }
+          if ($val) { $texts += $val.Trim() }
+        }
+      }
       $out += [pscustomobject]([ordered]@{ pid = [int]$procId; title = $d.Current.Name; automationId = $d.Current.AutomationId; texts = $texts; items = $items; buttons = $buttons; closed = $false })
     }
   }

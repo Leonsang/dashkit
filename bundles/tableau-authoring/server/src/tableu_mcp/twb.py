@@ -46,7 +46,36 @@ def parse(xml: str | bytes) -> etree._Element:
     return etree.fromstring(xml, PARSER)
 
 
+def _declares(root: etree._Element, feature: str) -> bool:
+    m = root.find("document-format-change-manifest")
+    return m is not None and any(isinstance(c.tag, str) and c.tag.split("...")[-1] == feature for c in m)
+
+
+_NEW_SORT = {"computed": "computed-sort", "manual": "manual-sort", "alphabetic": "alphabetic-sort",
+             "natural": "natural-sort"}
+
+
+def normalize_format(root: etree._Element) -> etree._Element:
+    """Write what this workbook's format declares. Tableau's schema switches markup on manifest features
+    (found in its XSD): with SortTagCleanup, sorts are <computed-sort>/<manual-sort>/<alphabetic-sort>;
+    without it, <sort class=...>. tableu builds the old form and converts here, so every operation works on
+    both new workbooks and modern ones such as Tableau's own samples."""
+    new = _declares(root, "SortTagCleanup")
+    for view in root.iter("view"):
+        for el in list(view):
+            if not isinstance(el.tag, str):
+                continue
+            if new and el.tag == "sort" and el.get("class") in _NEW_SORT:
+                el.tag = _NEW_SORT[el.attrib.pop("class")]
+            elif not new and el.tag in _NEW_SORT.values():
+                cls = next(k for k, v in _NEW_SORT.items() if v == el.tag)
+                el.tag = "sort"
+                el.set("class", cls)
+    return root
+
+
 def serialize(root: etree._Element) -> str:
+    normalize_format(root)
     body = etree.tostring(root, encoding="unicode")
     return "<?xml version='1.0' encoding='utf-8' ?>\n\n" + body + "\n"
 
@@ -553,6 +582,13 @@ def set_dashboard_size(root: etree._Element, dashboard: str, width: int | None, 
     (style.addnext(size) if style is not None else db.insert(0, size))
 
 
+def _is_kpi_strip(root: etree._Element, sheet: str) -> bool:
+    ws = next((w for w in root.iter("worksheet") if w.get("name") == sheet), None)
+    t = ws.find("table") if ws is not None else None
+    shelves = (t.findtext("rows") or "") + (t.findtext("cols") or "") if t is not None else ""
+    return shelves.strip().endswith("[:Measure Names]") and "/" not in shelves and "*" not in shelves
+
+
 def add_dashboard(
     root: etree._Element,
     name: str,
@@ -625,6 +661,8 @@ def add_dashboard(
         for ci in range(count):
             sheet = next(it)
             z = etree.SubElement(row, "zone", {"h": str(row_h), "id": str(next(ids)), "name": sheet, "w": str(col_w), "x": str(ci * col_w), "y": str(y)})
+            if _is_kpi_strip(root, sheet):
+                z.set("show-title", "false")  # each KPI already carries its label
             etree.SubElement(z, "layout-cache", {"type-h": "scalable", "type-w": "scalable"})
         y += row_h
     etree.SubElement(db, "simple-id", uuid=_uuid())

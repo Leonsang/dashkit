@@ -19,6 +19,14 @@ SUPERSTORE = r"C:\Program Files\Tableau\Tableau 2026.3\defaults\Datasources\Samp
 DS = "Sample - Superstore"
 LOGO = Path(r"C:\Program Files\Tableau\Tableau 2026.3\bin").glob("*.png")
 
+def _refused(fn):
+    try:
+        fn()
+    except NotImplementedError:
+        return
+    raise AssertionError("expected NotImplementedError")
+
+
 STEPS = [
     # ---- data model
     ("datasource.tds", lambda r: twb.add_datasource_from_tds(r, SUPERSTORE)),
@@ -42,7 +50,8 @@ STEPS = [
     ("bin.create", lambda r: A.create_bin(r, DS, "Profit", size=500, name="Profit bins 500")),
     ("hierarchy.create", lambda r: A.create_hierarchy(r, DS, "Product", ["Category", "Sub-Category", "Product Name"])),
     ("folder.create", lambda r: A.create_folder(r, DS, "KPIs", ["Margin", "Customer Sales"])),
-    ("datasource.filter", lambda r: A.add_datasource_filter(r, DS, "Segment", values=["Consumer", "Corporate", "Home Office"])),
+    # Multi-table Superstore: data-source filters are refused on purpose (Desktop's loader rejects them there).
+    ("datasource.filter", lambda r: _refused(lambda: A.add_datasource_filter(r, DS, "Segment", values=["Consumer"]))),
     ("datasource.rename", lambda r: A.rename_datasource(r, DS, DS)),
     ("datasource.database(postgres)", lambda r: A.create_database_datasource(r, "postgres", "localhost", "analytics", table="orders", schema="public", username="tableau", caption="PG Orders", columns={"id": "integer", "amount": "real"})),
     ("datasource.database(sqlserver custom sql)", lambda r: A.create_database_datasource(r, "sqlserver", "sql01", "dw", custom_sql="SELECT 1 AS x", caption="MSSQL Query")),

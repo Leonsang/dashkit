@@ -70,6 +70,9 @@ def _path(el) -> str:
 def check(root: etree._Element) -> list[dict]:
     cat = catalog()
     good = _known_good()
+    # With SortTagCleanup declared, the schema takes the newer sort elements (manual-sort, computed-sort...).
+    man = root.find("document-format-change-manifest")
+    feats = {FCP.sub("", c.tag) for c in (man if man is not None else []) if isinstance(c.tag, str)}
     out: list[dict] = []
 
     def add(level, rule, el, msg, fix=""):
@@ -81,7 +84,7 @@ def check(root: etree._Element) -> list[dict]:
         parent = el.getparent()
         tag = _norm(el.tag)
         sig = f"{_norm(parent.tag) if parent is not None else ''}/{tag}"
-        if sig in KNOWN_REJECTED:
+        if sig in KNOWN_REJECTED and "SortTagCleanup" not in feats:
             add("error", "STRUCT-REJECTED", el, f"<{tag}> under <{sig.split('/')[0]}> is rejected by Desktop 2026.3",
                 KNOWN_REJECTED[sig])
             continue
