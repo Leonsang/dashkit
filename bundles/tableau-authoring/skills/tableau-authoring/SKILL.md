@@ -17,7 +17,8 @@ El servidor MCP `tableu` tiene una herramienta por tipo de objeto
 (`<objeto>_operations`). Cada herramienta recibe `operation`, `params` (una
 llamada) o `definitions` (en bloque), `target`, `dry_run` y `out`. Con
 `operation="Help"` lista sus operaciones y parámetros. Lee
-`tableu://best-practices` y `tableu://coverage` antes de diseñar.
+`tableu://best-practices` y `tableu://coverage` antes de diseñar. Para la estructura (libro, hojas,
+dashboards, historias, proyecto y colección donde publicar) sigue la skill `tableau-design`.
 
 ## Antes de empezar
 

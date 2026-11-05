@@ -79,13 +79,14 @@ A thin spec-driven workflow for Power BI: survey an existing or published report
 </details>
 
 <details>
-<summary><strong>Tableau authoring</strong> &ensp;<code>tableau-authoring</code> &ensp;dashkit · 1 skill · 1 MCP server</summary>
+<summary><strong>Tableau authoring</strong> &ensp;<code>tableau-authoring</code> &ensp;dashkit · 2 skills · 1 MCP server</summary>
 
 Drives Tableau Desktop 2026.3 through its External Client API with the tableu MCP server: data sources and .hyper extracts, fields, calculations, parameters, sets, sheets, filters, formatting, dashboards, navigation buttons, filter/parameter/set actions and stories, each validated by Tableau and linted against its best practices. Includes a tableau-author subagent and /setup.
 
 | Skill | What it does |
 |---|---|
 | [`tableau-authoring`](../bundles/tableau-authoring/skills/tableau-authoring/SKILL.md) | Drives Tableau Desktop 2026.3 through its External Client API with the tableu MCP server: data sources and .hyper extracts, fields, calculations, parameters, sets, sheets, filters, formatting, dashboards, navigation buttons, filter/parameter/set actions and stories, each validated by Tableau and linted against its best practices. Includes a tableau-author subagent and /setup. |
+| [`tableau-design`](../bundles/tableau-authoring/skills/tableau-design/SKILL.md) | How Tableau work is structured per Tableau's official guidance: site, project, collection, workbook, worksheets, dashboards and stories; which chart answers which question; tiled fixed-size dashboard layout with 2-3 views and KPIs first; a pre-delivery checklist mapped to tableu operations. |
 
 </details>
 

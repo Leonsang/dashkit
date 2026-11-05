@@ -174,7 +174,8 @@
       "description": "Drives Tableau Desktop 2026.3 through its External Client API with the tableu MCP server: data sources and .hyper extracts, fields, calculations, parameters, sets, sheets, filters, formatting, dashboards, navigation buttons, filter/parameter/set actions and stories, each validated by Tableau and linted against its best practices. Includes a tableau-author subagent and /setup.",
       "dir": "tableau-authoring",
       "skills": [
-        "tableau-authoring"
+        "tableau-authoring",
+        "tableau-design"
       ],
       "agents": [
         "tableau-author.md"
