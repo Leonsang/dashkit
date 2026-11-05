@@ -19,7 +19,7 @@ from dataclasses import dataclass
 
 from . import authoring as A
 from . import extracts
-from . import connectors, desktop_setup, ops, settings, twb
+from . import connectors, desktop_setup, layouts, ops, settings, twb
 from .client import DesktopClient, list_instances
 
 
@@ -67,10 +67,13 @@ def _ds_get(root, datasource: str):
             "relationships": A.list_relationships(root, datasource), "fields": len(twb.fields(d))}
 
 
-def _from_files(root, sources: list, relationships: list | None = None, caption: str | None = None):
+def _from_files(root, sources: list, relationships: list | None = None, caption: str | None = None,
+                joins: list | None = None):
     """CSV/TXT/Excel sources ("Caption=path.csv", "path.xlsx#Sheet"); first = root table; relationships
-    "Fact.Col = Dim.Col"."""
-    return connectors.add_file_datasource(root, sources, relationships, caption)
+    "Fact.Col = Dim.Col" relate logical tables (Tableau's default, each table keeps its level of detail);
+    joins "[inner|left|right|full:] Fact.Col = Dim.Col" merge the right table into the left one's logical
+    table (one flat table: use them for lookups at the same grain)."""
+    return connectors.add_file_datasource(root, sources, relationships, caption, joins)
 
 
 def _from_tds(root, path: str, caption: str | None = None):
@@ -345,6 +348,7 @@ REGISTRY: dict[str, dict[str, Op]] = {
         "SetSort": Op(A.set_sort, "edit"),
         "SetTotals": Op(A.set_totals, "edit"),
         "SetDualAxis": Op(A.set_dual_axis, "edit"),
+        "ViewOptions": Op(A.set_view_options, "edit"),
         "SetSharedAxis": Op(A.set_shared_axis, "edit"),
         "MakeMap": Op(A.make_map, "edit"),
         "OrientTableCalcs": Op(A.orient_table_calcs, "edit"),
@@ -392,6 +396,8 @@ REGISTRY: dict[str, dict[str, Op]] = {
         "List": Op(lambda root: twb.sheet_names(root)["dashboards"], "read"),
         "ListZones": Op(A.list_zones, "read"),
         "Create": Op(_db_create, "edit"),
+        "CreateFromLayout": Op(layouts.create, "edit"),
+        "Layouts": Op(lambda root: layouts.describe(), "read"),
         "Delete": Op(_ws_delete, "edit"),
         "Rename": Op(_ws_rename, "edit"),
         "SetSize": Op(_db_size, "edit"),

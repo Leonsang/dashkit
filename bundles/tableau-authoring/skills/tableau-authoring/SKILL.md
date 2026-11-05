@@ -97,9 +97,24 @@ dirección orientada automáticamente.
 - **Etiqueta y tooltip:** `format Label text="<SUM(Ventas)> €"`; `format Tooltip viz_sheet=Detalle` (viz in
   tooltip).
 - **Formato local:** `workbook Format locale=es_ES` (separadores, moneda y meses). Solo entra por archivo.
-- **Maquetación:**
-  - `dashboard AddZone container=title|row:N|<id>`, `position`, `fixed_width`/`fixed_height`;
-  - `title="Elige un canal"` en tarjetas de filtro y parámetro.
+- **Maquetación desde cero:** empieza por `dashboard CreateFromLayout layout=overview|sidebar|filterbar|header`
+  (`tableu://layouts`), con `kpis`, `main`, `details`, `filters` y `legends`. Las proporciones están medidas en
+  los dashboards de Tableau: tira de KPIs de 117 px (Superstore Overview), panel lateral de 160 a 192 px,
+  barra de filtros de 62 px (Order Details), cabecera de 71 px (World Indicators Business).
+  - Elige `overview` para un resumen, `sidebar` si hay muchos filtros a la vista, `filterbar` para una tabla o
+    un mapa grande, y `header` para una vista protagonista.
+  - Para ajustar a mano: `dashboard AddZone container=title|row:N|<id>`, `position`, `fixed_width`/`fixed_height`,
+    y `title="Elige un canal"` en tarjetas de filtro y parámetro.
+  - `workbook Lint` revisa el espacio: `DASH-SMALL-VIEW` (vista de menos de 220x140 px o tira de KPIs de menos
+    de 50 px), `DASH-FIXED-OVERFLOW` (los tamaños fijos no caben) y `DASH-NARROW-TABLE`. Corrígelos antes de
+    exportar la imagen.
+- **Joins:** `datasource CreateFromFiles joins=["left: Ventas.Region = Regiones.Region"]` une tablas físicas en una
+  sola tabla lógica, para búsquedas al mismo nivel de detalle. Las relaciones (`relationships`) son lo
+  recomendado cuando las tablas tienen distinto nivel de detalle. Se pueden combinar.
+- **Doble eje:** `worksheet SetDualAxis` da a cada eje su color (azul y naranja de Tableau 10, o `colors=[...]`).
+- **Comandos de la interfaz:** `tableu://ui-commands` dice qué escribe en el XML cada comando de menú de Desktop
+  (Show Mark Labels, Show Caption, Totals...) y qué comando interno ejecuta. Para replicar un comando, escribe
+  ese XML con la operación de `tableu` correspondiente.
 - **Modales:** cada respuesta puede traer `desktopModals`. Si alguno no se cerró solo (File Recovery, Save
   changes?…), dile al usuario qué pregunta y espera. No pulses sus botones.
 - **Qué falta todavía:** `tableu://coverage-gaps`. El comportamiento real de Desktop está en

@@ -17,6 +17,7 @@ Fechas de verificación: 2026-11-04 y 2026-11-05.
 | La API no aplica `<workbook locale>` (los atributos de la raíz) | El idioma se fija en el archivo y se carga con `launch`/`Reopen` |
 | El validador de la API es más estricto que el cargador de archivos: rechaza `<manual-sort>`, que los libros de muestra todavía usan, y pide `<sort class="manual">` | `structure.KNOWN_REJECTED`; tableu escribe la forma nueva |
 | Las funciones nuevas necesitan su marca en `<document-format-change-manifest>` (ParameterAction, GroupAction, BasicButtonObject…); sin ella el esquema rechaza el elemento | `_ensure_features` |
+| Desktop recuerda durante la sesión el nombre interno de las fuentes de datos que dejó de usar (p. ej. tras *Data > Duplicate*, que pasa las hojas a la copia). Un documento que vuelve a traer una fuente con ese nombre falla al aplicarse (`operation-failed`, modal 7195FDCA u 8EAB519C), y cada intento repite el modal. Con un nombre interno nuevo se aplica | `tableu` crea siempre fuentes con nombre aleatorio. Si un apply falla así, no lo reintentes: carga el libro desde archivo con `workbook Reopen` |
 
 ## El esquema de Tableau (obtenido por ingeniería inversa)
 
@@ -54,6 +55,25 @@ Fechas de verificación: 2026-11-04 y 2026-11-05.
 | Sin `distribute-evenly`, las hojas de una fila no se reparten el ancho | `dashboard Create rows` |
 | Sin "Fit: Entire View" (`<zoom type='entire-view'/>`), las tablas de texto y las barras usan un tercio de su celda | Se escribe en cada viewpoint |
 | Las tarjetas de filtro conservan `custom-title` + `formatted-text`, pero siguen mostrando el nombre del campo; `show-title='false'` sí oculta el título | `AddZone title=` oculta el título de la tarjeta y pone un texto encima dentro de un contenedor vertical |
+| Si los tamaños fijos de un flujo suman más que el flujo, Desktop recorta la última fila | Al meter un elemento fijo (fila del título, barra de filtros), `tableu` recorta la fila fija más alta; `Lint` avisa con `DASH-FIXED-OVERFLOW` |
+| Los dashboards de Tableau repiten cuatro distribuciones: KPIs de 117 px + vista + detalle (Superstore Overview), panel derecho de 160 a 192 px (Customers, Shipping, Tourism), barra de filtros de 62 px (Order Details) y cabecera de 71 px con filtros y leyenda (World Indicators Business) | `dashboard CreateFromLayout` (`tableu://layouts`) |
+
+## Joins
+
+| Comportamiento | Qué hace tableu |
+|---|---|
+| Tableau escribe un join como `<relation type='join' join='left'>` con `<clause type='join'><expression op='='>[A].[col] [B].[col]`, seguido de las dos relaciones; varios joins se anidan por la izquierda (`Local/data/*.tds`) | `datasource CreateFromFiles joins=[...]`; las tablas unidas forman una sola tabla lógica (un `object`) y las columnas repetidas se renombran `Col (Tabla)` |
+
+## La interfaz de Desktop (ingeniería inversa dinámica)
+
+| Comportamiento | Qué hace tableu |
+|---|---|
+| Los menús de Desktop son accesibles por UI Automation (`MenuBar` > `MenuItem`, Expand/Invoke); un menú abierto y sus submenús cuelgan de la barra de menús en el árbol, no de la raíz del escritorio | `uia.menu_items` / `uia.invoke` |
+| Los diálogos de Qt cuelgan de la ventana principal; si no se cierran, los comandos siguientes caen dentro del diálogo | `uia.close_windows` los busca bajo cada ventana y los cierra con la X (cancela) |
+| Las pestañas de hoja no tienen nombre para UI Automation y no responden a Invoke ni a Select; un clic enviado como mensaje a la ventana sí las selecciona, sin mover el ratón | `uia.goto_sheet(nombre, índice)`, con el índice en el orden de `<windows>` |
+| En la página de fuente de datos el menú Window no lista las hojas | `goto_sheet` vuelve por la pestaña |
+| Desktop anota en su log cada comando que ejecuta (`commands-controller.invoke-command`, `args: "tabdoc:…"` / `"tabui:…"`): es el comando interno detrás de cada menú | `scripts/ui_reverse.py` lo registra junto al diff del XML (`tableu://ui-commands`) |
+| Tras ciertos fallos (un diálogo de error durante un apply), la instancia deja de aplicar cualquier documento (`operation-failed`, 7195FDCA / E71AE512) hasta reiniciarla | El arnés trabaja en una instancia propia (`--launch`) y se detiene si Desktop deja de aplicar o se cierra |
 
 ## Formato
 
@@ -68,4 +88,6 @@ Fechas de verificación: 2026-11-04 y 2026-11-05.
 - `scripts/catalog_samples.py` regenera `xml-catalog.json` con los documentos que instala Desktop y con los
   libros que tableu escribió y Desktop validó y abrió.
 - `scripts/coverage_gaps.py` regenera `coverage-gaps.md`, el pool de funciones que faltan.
+- `scripts/ui_reverse.py <probe.twb> --build --launch` vuelve a medir los comandos de menú en una instancia
+  propia de Desktop y regenera `ui-commands.json` / `ui-commands.md`.
 - Cada comportamiento nuevo que se observe se añade aquí, con su protocolo en tableu y su test.

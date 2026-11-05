@@ -161,6 +161,23 @@ def components_reference() -> str:
     return md
 
 
+@mcp.resource("tableu://layouts")
+def layouts_reference() -> str:
+    """Dashboard layouts measured on Tableau's own dashboards (overview, sidebar, filterbar, header): where each
+    comes from, when to use it, the sizes it pins. Build one with dashboard_operations CreateFromLayout."""
+    from . import layouts  # noqa: PLC0415
+
+    return json.dumps({"doc": layouts.__doc__, "layouts": layouts.describe()}, ensure_ascii=False, indent=1)
+
+
+@mcp.resource("tableu://ui-commands")
+def ui_commands() -> str:
+    """Desktop's menu commands reverse-engineered: for each sheet kind, every menu item, the internal command
+    Desktop logs for it (tabdoc:/tabui:), the dialog it opens, and what it changes in the workbook XML."""
+    p = DOCS / "ui-commands.md"
+    return p.read_text(encoding="utf-8") if p.exists() else "Not measured yet: run scripts/ui_reverse.py."
+
+
 @mcp.resource("tableu://operations")
 def operations() -> str:
     """Every object type and operation with its parameters."""
@@ -176,9 +193,11 @@ def build_dashboard(goal: str, datasource: str = "Sample - Superstore") -> str:
         "3. Propose 2-3 views (bar for comparison, line for trends, map only for geographic questions), "
         "descriptive titles, no ALL CAPS, number formats on measures. "
         "4. transaction_operations Begin; worksheet_operations Create (filters/sort/labels in the same call); "
-        "format_operations as needed; dashboard_operations Create (fixed size, key view top-left) and AddZone for "
-        "legends/filter cards; transaction_operations Commit. "
-        "5. export_image the dashboard and inspect it. 6. workbook_operations Lint and fix warnings. "
+        "format_operations as needed; dashboard_operations CreateFromLayout with one of tableu://layouts "
+        "(overview, sidebar, filterbar, header: measured on Tableau's own dashboards), or Create + AddZone for a "
+        "custom layout; transaction_operations Commit. "
+        "5. workbook_operations Lint: fix DASH-SMALL-VIEW / DASH-FIXED-OVERFLOW first (space), then the rest. "
+        "6. export_image the dashboard and inspect it. "
         "Report the final score."
     )
 

@@ -98,6 +98,49 @@ def _title_text(el: etree._Element) -> str | None:
     return "".join(r.text or "" for r in runs).strip()
 
 
+MIN_VIEW_PX = (220, 140)  # below this a chart has no room for axes, labels and marks
+MIN_KPI_HEIGHT_PX = 50
+MIN_TABLE_WIDTH_PX = 300
+
+
+def _dashboard_geometry(root: etree._Element, db: etree._Element, loc: str, add) -> None:
+    """Space checks on the zones' own geometry (x/y/w/h in 1/100000 of the dashboard, as Desktop writes them):
+    views too small to read, and fixed sizes that do not fit in their container."""
+    size = db.find("size")
+    if size is None or not size.get("maxwidth") or not size.get("maxheight"):
+        return  # automatic size: no pixel size to check against
+    dw, dh = int(size.get("maxwidth")), int(size.get("maxheight"))
+    full = 100000
+    marks = {w.get("name"): (w.xpath("./table/panes/pane/mark/@class") or ["Automatic"])[0]
+             for w in root.iter("worksheet")}
+    for z in db.iter("zone"):
+        if z.get("floating") == "true" or not all(z.get(a) for a in ("w", "h")):
+            continue
+        w_px, h_px = int(z.get("w")) * dw // full, int(z.get("h")) * dh // full
+        name = z.get("name")
+        if name in marks and not (z.get("type-v2") or z.get("type")):
+            if twb._is_kpi_strip(root, name):
+                if h_px < MIN_KPI_HEIGHT_PX:
+                    add("DASH-SMALL-VIEW", "warning", f"KPI strip '{name}' is {h_px} px tall.", loc, SOURCES["DASH"],
+                        f"Give KPI strips at least {MIN_KPI_HEIGHT_PX} px (Tableau's Superstore uses 117 px).")
+            elif w_px < MIN_VIEW_PX[0] or h_px < MIN_VIEW_PX[1]:
+                add("DASH-SMALL-VIEW", "warning", f"View '{name}' gets {w_px}x{h_px} px.", loc, SOURCES["DASH"],
+                    f"Views need about {MIN_VIEW_PX[0]}x{MIN_VIEW_PX[1]} px to stay readable: fewer views per row, "
+                    "a taller row, or move it to another dashboard.")
+            elif marks[name] == "Text" and w_px < MIN_TABLE_WIDTH_PX:
+                add("DASH-NARROW-TABLE", "info", f"Text table '{name}' is {w_px} px wide.", loc, SOURCES["DASH"],
+                    "Tables need width for their headers; give it a full row.")
+        if (z.get("type-v2") or z.get("type")) == "layout-flow":
+            horizontal = z.get("param") == "horz"
+            avail = w_px if horizontal else h_px
+            fixed = sum(int(k.get("fixed-size")) for k in z.findall("zone")
+                        if k.get("is-fixed") == "true" and (k.get("fixed-size") or "").isdigit())
+            if avail and fixed > avail:
+                add("DASH-FIXED-OVERFLOW", "error",
+                    f"Fixed sizes in a {'row' if horizontal else 'column'} add up to {fixed} px of {avail} px.",
+                    loc, SOURCES["DASH"], "Reduce the fixed widths/heights or let one item take the remaining space.")
+
+
 def lint(xml: str | etree._Element, th: Thresholds | None = None) -> Report:
     th = th or Thresholds()
     root = twb.parse(xml) if not isinstance(xml, etree._Element) else xml
@@ -233,6 +276,7 @@ def lint(xml: str | etree._Element, th: Thresholds | None = None) -> Report:
         if len(containers) > th.layout_containers:
             add("WBO-LAYOUT-CONTAINERS", "warning", f"Dashboard has {len(containers)} layout containers.", loc, SOURCES["WBO"],
                 "Layout containers complicate rendering; flatten the layout.")
+        _dashboard_geometry(root, db, loc, add)
         rel_filters = [z for z in db.iter("zone") if (z.get("type-v2") or z.get("type")) == "filter" and z.get("values") == "relevant"]
         if rel_filters:
             add("WBO-RELEVANT-VALUES", "warning", f"{len(rel_filters)} dashboard filter(s) use 'Only Relevant Values'.", loc, SOURCES["WBO"],

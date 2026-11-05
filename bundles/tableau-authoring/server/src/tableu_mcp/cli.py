@@ -94,6 +94,7 @@ def main(argv: list[str] | None = None) -> int:
     sp = cmd("add-files", "Datasource from CSV/Excel files (first = fact table)", target=True, write=True)
     sp.add_argument("sources", nargs="+", help='"Caption=path.csv" or "path.xlsx#Sheet"')
     sp.add_argument("--rel", action="append", default=[], help='"Fact.Col = Dim.Col" (repeat)')
+    sp.add_argument("--join", action="append", default=[], help='"[inner|left|right|full:] Fact.Col = Dim.Col" (repeat)')
     sp.add_argument("--caption")
     sp = cmd("preview-file", "Inferred schema of a CSV/Excel source")
     sp.add_argument("source")
@@ -236,7 +237,7 @@ def _run(a) -> int:
     elif c == "new":
         _out(ops.new_file(a.path))
     elif c == "add-files":
-        _out(_edit(a, lambda r: connectors.add_file_datasource(r, a.sources, a.rel, a.caption)))
+        _out(_edit(a, lambda r: connectors.add_file_datasource(r, a.sources, a.rel, a.caption, a.join)))
     elif c == "preview-file":
         _out(connectors.read_source(a.source).as_dict())
     elif c == "dialogs":

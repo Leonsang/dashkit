@@ -271,24 +271,91 @@ def _relationship_el(rel: str, by_caption: dict[str, Table]) -> etree._Element:
     return r
 
 
-def build_datasource(tables: list[Table], relationships: list[str] | None = None) -> etree._Element:
-    """A ``<datasource>`` element (tds-shaped) for one or more logical tables."""
+JOIN_TYPES = ("inner", "left", "right", "full")
+_JOIN_RE = re.compile(r"^\s*(?:(inner|left|right|full)\s*:\s*)?(.+?)\.(.+?)\s*=\s*(.+?)\.(.+?)\s*$", re.I)
+
+
+@dataclass
+class _Join:
+    kind: str
+    left: Table
+    lcol: Column
+    right: Table
+    rcol: Column
+
+
+def _parse_joins(joins: list[str], by_caption: dict[str, Table]) -> list[_Join]:
+    """'left: Ventas.Region = Regiones.Region' (default inner). The right table joins the left one's logical
+    table: joined tables merge into one logical table (Tableau's physical layer)."""
+    out = []
+    for j in joins:
+        m = _JOIN_RE.match(j)
+        if not m:
+            raise ValueError(f"Bad join {j!r}; expected '[inner|left|right|full:] TableA.Col = TableB.Col'")
+        kind, ta, ca, tb, cb = m.groups()
+        ends = []
+        for tcap, cname in ((ta, ca), (tb, cb)):
+            t = by_caption.get(tcap)
+            if t is None:
+                raise KeyError(f"Join table {tcap!r} not among {list(by_caption)}")
+            col = next((c for c in t.columns if c.name == cname), None)
+            if col is None:
+                raise KeyError(f"Column {cname!r} not in table {tcap!r}")
+            ends.append((t, col))
+        out.append(_Join((kind or "inner").lower(), ends[0][0], ends[0][1], ends[1][0], ends[1][1]))
+    return out
+
+
+def _join_relation(root_t: Table, joins: list[_Join], cname_of, tag: str = "relation") -> etree._Element:
+    """Left-deep join tree, as Tableau writes it: <relation type='join' join='inner'><clause type='join'>
+    <expression op='='>[A].[col] [B].[col]</expression></clause> left right</relation>."""
+    rel = _relation(root_t, cname_of(root_t))
+    for j in joins:
+        jr = etree.Element("relation", join=j.kind, type="join")
+        clause = etree.SubElement(jr, "clause", type="join")
+        eq = etree.SubElement(clause, "expression", op="=")
+        etree.SubElement(eq, "expression", op=f"[{j.left.caption}].[{j.lcol.name}]")
+        etree.SubElement(eq, "expression", op=f"[{j.right.caption}].[{j.rcol.name}]")
+        jr.append(rel)
+        jr.append(_relation(j.right, cname_of(j.right)))
+        rel = jr
+    rel.tag = tag
+    return rel
+
+
+def build_datasource(tables: list[Table], relationships: list[str] | None = None,
+                     joins: list[str] | None = None) -> etree._Element:
+    """A ``<datasource>`` element (tds-shaped) for one or more logical tables. `joins` merge physical tables
+    into the logical table of their left side; `relationships` relate logical tables."""
     if not tables:
         raise ValueError("At least one source table is required")
     relationships = relationships or []
-    if len(tables) > 1 and len(relationships) < len(tables) - 1:
-        raise ValueError(f"{len(tables)} tables need at least {len(tables) - 1} relationships ('A.col = B.col')")
     captions = [t.caption for t in tables]
     if len(set(captions)) != len(captions):
         raise ValueError(f"Table captions must be unique: {captions}")
+    parsed = _parse_joins(joins or [], {t.caption: t for t in tables})
+    group: dict[str, Table] = {t.caption: t for t in tables}  # the logical table each table belongs to
+    members: dict[str, list[_Join]] = {}
+    for j in parsed:
+        if group[j.right.caption] is not j.right or j.right is tables[0] or j.right.caption in members:
+            raise ValueError(f"Table {j.right.caption!r} is already joined or is a join root: join each table once")
+        g = group[j.left.caption]
+        group[j.right.caption] = g
+        members.setdefault(g.caption, []).append(j)
+    logical = [t for t in tables if group[t.caption] is t]
+    if len(logical) > 1 and len(relationships) < len(logical) - 1:
+        raise ValueError(f"{len(logical)} logical tables need at least {len(logical) - 1} relationships ('A.col = B.col')")
     # Tableau re-pairs logical tables with their objects in its own order: the root (first) table,
     # then the rest alphabetically by caption, as in the documents it writes. Building in any other
     # order makes it bind columns to the wrong table ("Logical Query missing field ... from relationOp").
-    tables = [tables[0], *sorted(tables[1:], key=lambda t: t.caption.casefold())]
+    logical = [logical[0], *sorted(logical[1:], key=lambda t: t.caption.casefold())]
+    tables = [t for lt in logical for t in [lt, *(j.right for j in members.get(lt.caption, []))]]
 
     used: set[str] = set()
-    for t in tables:
+    for t in logical:
         t.object_id = f"{re.sub(r'[^A-Za-z0-9]', '_', t.caption)}_{uuid.uuid4().hex.upper()}"
+    for t in tables:
+        t.object_id = group[t.caption].object_id
         for c in t.columns:
             local = f"[{c.name}]"
             if local.lower() in used:
@@ -317,14 +384,17 @@ def build_datasource(tables: list[Table], relationships: list[str] | None = None
     def cname_of(t: Table) -> str:
         return conn_names[(t.kind, str(t.path))]
 
-    # Legacy (pre-object-model) view of the first table, and the object-model collection.
-    fed.append(_relation(tables[0], cname_of(tables[0]), "_.fcp.ObjectModelEncapsulateLegacy.false...relation"))
-    if len(tables) == 1:
-        fed.append(_relation(tables[0], cname_of(tables[0]), "_.fcp.ObjectModelEncapsulateLegacy.true...relation"))
+    def physical(lt: Table, tag: str = "relation") -> etree._Element:
+        return _join_relation(lt, members.get(lt.caption, []), cname_of, tag)
+
+    # Legacy (pre-object-model) view of the first logical table, and the object-model collection.
+    fed.append(physical(logical[0], "_.fcp.ObjectModelEncapsulateLegacy.false...relation"))
+    if len(logical) == 1:
+        fed.append(physical(logical[0], "_.fcp.ObjectModelEncapsulateLegacy.true...relation"))
     else:
         coll = etree.SubElement(fed, "_.fcp.ObjectModelEncapsulateLegacy.true...relation", type="collection")
-        for t in tables:
-            coll.append(_relation(t, cname_of(t)))
+        for lt in logical:
+            coll.append(physical(lt))
     cols = etree.SubElement(fed, "cols")
     for t in tables:
         for c in t.columns:
@@ -341,17 +411,17 @@ def build_datasource(tables: list[Table], relationships: list[str] | None = None
         for c in t.columns:
             if c.datatype == "integer" and ID_RE.search(c.name):
                 etree.SubElement(ds, "column", datatype="integer", name=c.local, role="dimension", type="ordinal")
-    for t in tables:
+    for t in logical:
         etree.SubElement(ds, "_.fcp.ObjectModelTableType.true...column", caption=t.caption, datatype="table",
                          name=f"[__tableau_internal_object_id__].[{t.object_id}]", role="measure", type="quantitative")
     etree.SubElement(ds, "layout", {"dim-ordering": "alphabetic", "measure-ordering": "alphabetic", "show-structure": "true"})
 
     graph = etree.SubElement(ds, "_.fcp.ObjectModelEncapsulateLegacy.true...object-graph")
     objs = etree.SubElement(graph, "objects")
-    for t in tables:
+    for t in logical:
         o = etree.SubElement(objs, "object", caption=t.caption, id=t.object_id)
         props = etree.SubElement(o, "properties", context="")
-        props.append(_relation(t, cname_of(t)))
+        props.append(physical(t))
     if relationships:
         rels = etree.SubElement(graph, "relationships")
         by_caption = {t.caption: t for t in tables}
@@ -361,11 +431,12 @@ def build_datasource(tables: list[Table], relationships: list[str] | None = None
 
 
 def add_file_datasource(
-    root: etree._Element, sources: list[str], relationships: list[str] | None = None, caption: str | None = None
+    root: etree._Element, sources: list[str], relationships: list[str] | None = None, caption: str | None = None,
+    joins: list[str] | None = None,
 ) -> dict:
     """Read the sources, build the datasource and embed it. Returns its name, caption and tables."""
     tables = [read_source(s) for s in sources]
-    ds = build_datasource(tables, relationships)
+    ds = build_datasource(tables, relationships, joins)
     cap = caption or (tables[0].caption if len(tables) == 1 else " + ".join(t.caption for t in tables))
     name = twb.embed_datasource(root, ds, cap)
     return {"name": name, "caption": cap, "tables": [t.as_dict() for t in tables],

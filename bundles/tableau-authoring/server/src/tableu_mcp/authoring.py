@@ -1172,9 +1172,13 @@ def set_totals(root, worksheet: str, rows: bool | None = None, cols: bool | None
     return describe_worksheet(root, worksheet)["totals"]
 
 
+DUAL_AXIS_COLORS = ("#4e79a7", "#f28e2b")  # Tableau 10's first two: the bars and the line are told apart
+
+
 def set_dual_axis(root, worksheet: str, measures: list[str], shelf: str = "rows", marks: list[str] | None = None,
-                  synchronize: bool = True) -> dict:
-    """Dual axis: two measures overlaid on one shelf, each with its own mark type (e.g. bar + line)."""
+                  synchronize: bool = True, colors: list[str] | None = None) -> dict:
+    """Dual axis: two measures overlaid on one shelf, each with its own mark type (e.g. bar + line) and its own
+    mark color (colors=['#hex', '#hex'], default Tableau 10 blue and orange; colors=[] keeps Desktop's)."""
     if len(measures) != 2:
         raise ValueError("A dual axis needs exactly two measures")
     sh = Sheet(root, worksheet)
@@ -1188,11 +1192,23 @@ def set_dual_axis(root, worksheet: str, measures: list[str], shelf: str = "rows"
         panes.remove(p)
     marks = marks or ["bar", "line"]
     axis_attr = "y-axis-name" if shelf == "rows" else "x-axis-name"
+    colors = list(DUAL_AXIS_COLORS) if colors is None else colors
+    if colors and len(colors) != 2:
+        raise ValueError("colors needs two hex colors, one per axis")
     for i, (qn, mk) in enumerate(zip(q, marks, strict=True), 1):
         p = copy.deepcopy(base)
         p.set("id", str(i))
         p.set(axis_attr, qn)
         p.find("mark").set("class", twb.MARKS.get(mk.lower(), mk))
+        has_color = any(e.tag == "color" for e in p.iterfind("encodings/*"))
+        if colors and not has_color:  # a Color encoding already tells the marks apart
+            style = p.find("style")
+            if style is None:
+                style = _insert_ordered(p, etree.Element("style"), PANE_ORDER)
+            rule = style.find("style-rule[@element='mark']")
+            if rule is None:
+                rule = etree.SubElement(style, "style-rule", element="mark")
+            _set_format(rule, "mark-color", colors[i - 1])
         panes.append(p)
     rule = sh.style("axis")
     for e in list(rule.findall("encoding")):
@@ -1236,11 +1252,16 @@ TREND_FITS = {"linear": "linear", "log": "log", "logarithmic": "log", "exp": "ex
               "poly": "polynomial", "polynomial": "polynomial", "power": "power"}
 
 
+REFLINE_SCOPES = ("per-table", "per-pane", "per-cell")  # entire table / each pane / each cell, as Desktop writes them
+
+
 def add_reference_line(root, worksheet: str, measure: str, formula: str = "average", scope: str = "per-table",
                        value: float | None = None, label: str | None = None, color: str | None = None,
                        band_to: str | None = None) -> dict:
     """Reference line on a measure's axis. formula: average|median|sum|min|max|constant (value=...).
     scope: per-table|per-pane|per-cell. label: text with <Value>, '' to hide. band_to: a second formula for a band."""
+    if scope not in REFLINE_SCOPES:
+        raise ValueError(f"scope must be one of {REFLINE_SCOPES}")
     sh = Sheet(root, worksheet)
     r = sh.ref(measure)
     pane = sh.pane()
@@ -1340,9 +1361,13 @@ def format_marks(root, worksheet: str, color: str | None = None, size: float | N
 
 
 def set_color_palette(root, worksheet: str, field: str, colors: dict[str, str] | None = None,
-                      palette: str | None = None) -> dict:
+                      palette: str | None = None, gradient: list[str] | None = None, center: float | None = None,
+                      min: float | None = None, max: float | None = None, steps: int | None = None) -> dict:  # noqa: A002
     """Assign colors on the Color card: explicit {member: '#hex'} for a dimension, or a named palette
-    (e.g. 'tableau10', 'color_blind_10', 'tableau-blue-green' for measures)."""
+    (e.g. 'tableau10', 'color_blind_10', 'tableau-blue-green' for measures).
+    For a measure, gradient=['#low', '#high'] (sequential) or ['#neg', '#mid', '#pos'] (diverging) is a custom
+    continuous palette, as Tableau writes 'Edit Colors' (type='custom-interpolated' + color-palette); center
+    (diverging midpoint), min/max (fixed range) and steps (stepped color) are optional."""
     sh = Sheet(root, worksheet)
     r = sh.ref(field)
     # Tableau keeps colour assignments with the data source (datasource/style/style-rule[@element='mark'],
@@ -1363,6 +1388,24 @@ def set_color_palette(root, worksheet: str, field: str, colors: dict[str, str] |
         for member, hexcolor in colors.items():
             m = etree.SubElement(enc, "map", to=hexcolor)
             etree.SubElement(m, "bucket").text = _literal(member, r.field.datatype)
+    elif gradient:
+        if r.ci_type != "quantitative":
+            raise ValueError("gradient is for measures (continuous color); use colors={member: hex} for a dimension")
+        if len(gradient) not in (2, 3):
+            raise ValueError("gradient takes 2 colors (sequential) or 3 (diverging: negative, middle, positive)")
+        attrs = {"attr": "color", "field": r.instance_name, "type": "custom-interpolated"}
+        for k, v in (("center", center), ("min", min), ("max", max)):
+            if v is not None:
+                attrs[k] = repr(float(v))
+        if len(gradient) == 3 and center is None:
+            attrs["center"] = "0.0"
+        if steps:
+            attrs["num-steps"] = str(int(steps))
+        enc = etree.SubElement(rule, "encoding", attrs)
+        cp = etree.SubElement(enc, "color-palette", custom="true", name="",
+                              type="ordered-diverging" if len(gradient) == 3 else "ordered-sequential")
+        for c in gradient:
+            etree.SubElement(cp, "color").text = c
     elif palette:
         etree.SubElement(rule, "encoding", attr="color", field=r.instance_name, palette=palette,
                          type="interpolated" if r.ci_type == "quantitative" else "palette")
@@ -1434,13 +1477,135 @@ def format_field(root, worksheet: str, field: str, number_format: str | None = N
     return {"worksheet": worksheet, "field": q}
 
 
+def _title_card(root, sheet: str, show: bool) -> None:
+    """Show or hide a worksheet's title card in its window (<cards><edge name='top'><strip><card type='title'/>)."""
+    win = root.find(f"windows/window[@name={_xq(sheet)}]")
+    cards = win.find("cards") if win is not None else None
+    if cards is None:
+        return
+    found = [c for c in cards.iter("card") if c.get("type") == "title"]
+    if not show:
+        for c in found:
+            strip = c.getparent()
+            strip.remove(c)
+            if not len(strip):
+                strip.getparent().remove(strip)
+    elif not found:
+        top = next((e for e in cards.findall("edge") if e.get("name") == "top"), None)
+        if top is None:
+            top = etree.SubElement(cards, "edge", name="top")
+        etree.SubElement(etree.SubElement(top, "strip", size="2147483647"), "card", type="title")
+
+
+SUMMARY_STATS = ("AVG", "KURTOSIS", "MAX", "MEDIAN", "MIN", "QUART1", "QUART3", "SKEWNESS", "STDEV", "SUM")
+
+
+def _edge_card(cards, edge: str, size: str, card: etree._Element | None, kind: str) -> None:
+    """Put (or remove, card=None) a card of type `kind` alone in its strip on a window edge."""
+    for c in [c for c in cards.iter("card") if c.get("type") == kind]:
+        strip = c.getparent()
+        strip.remove(c)
+        if not len(strip):
+            e = strip.getparent()
+            e.remove(strip)
+            if not len(e):
+                cards.remove(e)
+    if card is not None:
+        e = next((x for x in cards.findall("edge") if x.get("name") == edge), None)
+        if e is None:
+            e = etree.SubElement(cards, "edge", name=edge)
+        etree.SubElement(e, "strip", size=size).append(card)
+
+
+def set_view_options(root, worksheet: str, title: bool | None = None, caption: bool | None = None,
+                     summary: bool | None = None, sort_controls: bool | None = None, toolbar: str | None = None,
+                     empty_rows: bool | None = None, empty_cols: bool | None = None,
+                     row_totals_left: bool | None = None, col_totals_top: bool | None = None,
+                     aggregate: bool | None = None, special_values: str | None = None) -> dict:
+    """The worksheet toggles of Desktop's Worksheet and Analysis menus, written as Desktop writes them (measured
+    with scripts/ui_reverse.py, tableu://ui-commands):
+    title/caption/summary: Worksheet > Show Title / Show Caption / Show Summary (cards of the sheet's window) ·
+    sort_controls=False: Worksheet > Show Sort Controls off (view/hide-sort-controls + HideSortControls) ·
+    toolbar='hide'|'auto': Worksheet > Show View Toolbar · empty_rows/empty_cols: Analysis > Table Layout > Show
+    Empty Rows/Columns · row_totals_left / col_totals_top: Analysis > Totals > Row Totals to Left / Column Totals
+    to Top · aggregate=False: Analysis > Aggregate Measures off (disaggregated marks) · special_values='hide'|
+    'show': Analysis > Special Values (null and non-plottable values: hide them, or show a warning)."""
+    sh = Sheet(root, worksheet)
+    table = sh.ws.find("table")
+    win = _window(root, worksheet)
+    cards = win.find("cards")
+    done = {}
+    if title is not None:
+        _title_card(root, worksheet, show=title)
+        done["title"] = title
+    if caption is not None and cards is not None:
+        _edge_card(cards, "bottom", "96", etree.Element("card", type="caption") if caption else None, "caption")
+        done["caption"] = caption
+    if summary is not None and cards is not None:
+        card = etree.Element("card", {s: str(s in ("AVG", "MAX", "MEDIAN", "MIN", "SUM")).lower() for s in SUMMARY_STATS})
+        card.set("type", "summary")
+        _edge_card(cards, "right", "160", card if summary else None, "summary")
+        done["summary"] = summary
+    if sort_controls is not None:
+        for e in sh.view.findall("hide-sort-controls"):
+            sh.view.remove(e)
+        if not sort_controls:
+            agg = sh.view.find("aggregation")
+            (agg.addprevious if agg is not None else sh.view.append)(etree.Element("hide-sort-controls"))
+            _ensure_features(root, "HideSortControls")
+        done["sort_controls"] = sort_controls
+    if toolbar is not None:
+        if toolbar not in ("hide", "auto"):
+            raise ValueError("toolbar: 'hide' or 'auto'")
+        vp = win.find("viewpoint")
+        if vp is not None:
+            for e in vp.findall("floating-toolbar-visibility"):
+                vp.remove(e)
+        if toolbar == "hide":
+            if vp is None:
+                vp = etree.Element("viewpoint")
+                sid = win.find("simple-id")
+                (sid.addprevious if sid is not None else win.append)(vp)
+            etree.SubElement(vp, "floating-toolbar-visibility", value="2")
+        elif vp is not None and not len(vp):
+            win.remove(vp)
+        done["toolbar"] = toolbar
+    for shelf, attr, val in (("rows", "include-empty", empty_rows), ("cols", "include-empty", empty_cols),
+                             ("cols", "onLeft", row_totals_left), ("rows", "onTop", col_totals_top)):
+        if val is not None:
+            el = table.find(shelf)
+            if val:
+                el.set(attr, "true")
+            else:
+                el.attrib.pop(attr, None)
+            done[f"{shelf}@{attr}"] = val
+    if aggregate is not None:
+        agg = sh.view.find("aggregation")
+        if agg is None:
+            agg = etree.SubElement(sh.view, "aggregation")
+        agg.set("value", str(aggregate).lower())
+        done["aggregate"] = aggregate
+    if special_values is not None:
+        if special_values not in ("hide", "show"):
+            raise ValueError("special_values: 'hide' or 'show'")
+        rule = sh.style("table")
+        _set_format(rule, "omit-on-special", "true")
+        _set_format(rule, "break-on-special", "true")
+        _set_format(rule, "show-null-value-warning", str(special_values == "show").lower())
+        done["special_values"] = special_values
+    return {"worksheet": worksheet, **done}
+
+
 def set_title(root, sheet: str, text: str | None, font_size: int | None = None, bold: bool = False,
               color: str | None = None) -> dict:
-    """Worksheet title (text=None hides the title card). Use <Sheet Name> / <Parameters.X> tokens if desired."""
+    """Worksheet title (text=None hides the title card). Use <Sheet Name> / <Parameters.X> tokens if desired.
+    Hiding is what Desktop's Worksheet > Show Title does (tabui:view-title-card, measured with
+    scripts/ui_reverse.py): it removes the window's <card type='title'/> strip; the title text alone does not."""
     ws = _worksheet(root, sheet)
     lo = ws.find("layout-options")
     if lo is not None:
         ws.remove(lo)
+    _title_card(root, sheet, show=bool(text))
     if text:
         lo = etree.Element("layout-options")
         run = etree.SubElement(etree.SubElement(etree.SubElement(lo, "title"), "formatted-text"), "run")
@@ -1740,6 +1905,7 @@ def add_zone(root, dashboard: str, kind: str, sheet: str | None = None, text: st
     if not floating and (fixed_width or fixed_height):
         z.set("is-fixed", "true")
         z.set("fixed-size", str(fixed_width or fixed_height))
+        _fit_fixed(db, z.getparent(), z)
     if not floating:
         _relayout(db)
     if k in ("sheet",) or (sheet and k in ("filter", "highlighter") or k.startswith("legend")):
@@ -1800,6 +1966,7 @@ def _resolve_container(db, container: str):
                                      "is-fixed": "true", "fixed-size": str(FIXED_PX["title"] + 12)})
         t.addprevious(row)
         row.append(t)
+        _fit_fixed(db, row.getparent(), row)
         return row
     if container.startswith("row:"):
         main, _ = _main_parts(db)
@@ -1814,6 +1981,26 @@ def _resolve_container(db, container: str):
     if parent is None:
         raise KeyError(f"Container zone {container!r} not found")
     return parent
+
+
+def _flow_px(db, flow) -> int:
+    """Pixel length of a flow along its own axis, from its x/y/w/h (1/100000 of the dashboard)."""
+    dw, dh = _dash_size(db)
+    horizontal = flow.get("param") == "horz"
+    units = int(flow.get("w" if horizontal else "h") or FULL)
+    return units * (dw if horizontal else dh) // FULL
+
+
+def _fit_fixed(db, flow, keep) -> None:
+    """When a fixed item enters a flow whose items are all pinned (tableu's rows are), the pinned sizes can add
+    up to more than the flow: Desktop then clips the last row. Take the excess from the largest other item."""
+    if flow is None or flow.get("type-v2") != "layout-flow":
+        return
+    fixed = [k for k in _kids(flow) if k.get("is-fixed") == "true" and (k.get("fixed-size") or "").isdigit()]
+    over = sum(int(k.get("fixed-size")) for k in fixed) - _flow_px(db, flow)
+    others = sorted((k for k in fixed if k is not keep), key=lambda k: int(k.get("fixed-size")), reverse=True)
+    if over > 0 and others and int(others[0].get("fixed-size")) - over >= 40:
+        others[0].set("fixed-size", str(int(others[0].get("fixed-size")) - over))
 
 
 def _window_uuid(root, sheet):
@@ -2117,8 +2304,11 @@ def create_action(root, kind: str, name: str, source: str, target: str | None = 
                   fields: list[str] | None = None, activation: str = "on-select", clear: str = "show-all",
                   url: str | None = None, parameter: str | None = None, source_field: str | None = None,
                   set_name: str | None = None, set_mode: str = "assign", source_dashboard: str | None = None,
-                  aggregation: str = "attr", set_clear: str = "exclude-all") -> dict:
+                  aggregation: str = "attr", set_clear: str = "exclude-all",
+                  exclude_sheets: list[str] | None = None) -> dict:
     """Dashboard/worksheet actions.
+    source='*' with source_dashboard runs the action from every sheet of that dashboard, except
+    exclude_sheets=[...] (Tableau's <source dashboard=...><exclude-sheet name=.../>, as in Superstore Overview).
     kind: filter (source sheet -> target sheet/dashboard; fields=[...] or all) · highlight · url (url with
     <Field> tokens) · parameter (parameter + source_field; aggregation attr|sum|avg|...; clearing keeps the
     current value) · set (set_name; set_mode assign|add|remove; set_clear exclude-all) · goto (navigate to
@@ -2136,10 +2326,19 @@ def create_action(root, kind: str, name: str, source: str, target: str | None = 
             a.set("type", activation)
         return a
 
+    if (source == "*" or exclude_sheets) and not source_dashboard:
+        raise ValueError("source='*' and exclude_sheets need source_dashboard")
+    if source == "*" and not target and kind.lower() in ("filter", "goto"):
+        raise ValueError("source='*' needs target")
+
     def source_el():
-        s = etree.Element("source", type="sheet", worksheet=source)
+        s = etree.Element("source", type="sheet")
         if source_dashboard:
             s.set("dashboard", source_dashboard)
+        if source != "*":
+            s.set("worksheet", source)
+        for ex in exclude_sheets or []:
+            etree.SubElement(s, "exclude-sheet", name=ex)
         return s
 
     k = kind.lower()
@@ -2154,7 +2353,7 @@ def create_action(root, kind: str, name: str, source: str, target: str | None = 
             src_sheet = Sheet(root, source) if source in ws_names else None
             clauses = []
             for i, fl in enumerate(fields):
-                ds, f = _field_in_source(root, source, fl, src_sheet)
+                ds, f = _field_in_source(root, source if source != "*" else source_dashboard, fl, src_sheet)
                 clauses.append(f"%5B{ds.get('name')}%5D.%5B{_urlq(f.name.strip('[]'))}%5D~s0=<{f.name}~na>")
             expr = f"tsl:{_urlq(tgt)}?" + "&".join(clauses)
             etree.SubElement(a, "link", caption=name, delimiter=",", escape="\\", expression=expr,
