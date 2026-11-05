@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+import ctypes
 import difflib
 import json
 import re
@@ -27,6 +28,7 @@ import threading
 import time
 from pathlib import Path
 
+import httpx
 from lxml import etree
 
 from tableu_mcp import desktop_setup, twb, uia
@@ -210,60 +212,108 @@ def commands_for(sheet: str) -> list[dict]:
     return items
 
 
+MIN_FREE_MB = 1500  # below this the pass stops (resume with --redo) before Windows starts killing processes
+
+
+def free_mb() -> int:
+    class MemoryStatus(ctypes.Structure):
+        _fields_ = [("dwLength", ctypes.c_ulong), ("dwMemoryLoad", ctypes.c_ulong),
+                    ("ullTotalPhys", ctypes.c_ulonglong), ("ullAvailPhys", ctypes.c_ulonglong),
+                    ("ullTotalPageFile", ctypes.c_ulonglong), ("ullAvailPageFile", ctypes.c_ulonglong),
+                    ("ullTotalVirtual", ctypes.c_ulonglong), ("ullAvailVirtual", ctypes.c_ulonglong),
+                    ("ullAvailExtendedVirtual", ctypes.c_ulonglong)]
+    m = MemoryStatus()
+    m.dwLength = ctypes.sizeof(m)
+    if not ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(m)):
+        return 1 << 20
+    return int(m.ullAvailPhys // (1 << 20))
+
+
+def settle(client, wait: float = 180) -> bool:
+    """Wait until Desktop answers the API again (a command such as Change Data Type on a date can keep it
+    recomputing for longer than the client's timeout)."""
+    end = time.time() + wait
+    while time.time() < end:
+        try:
+            client.workbook()
+            return True
+        except httpx.TransportError:
+            time.sleep(5)
+    return False
+
+
 def measure(client, probe, sheet, todo, results, run, args, data, tail) -> None:
     """Run each command of `todo` with `run(path)` on a freshly applied probe and record what it did:
-    internal command (log), dialogs (closed with the X), XML diff."""
+    internal command (log), dialogs (closed with the X), XML diff. A command after which Desktop stops
+    answering in time is recorded as `slow` and the pass goes on once Desktop answers again."""
     prev, dirty = None, True
     for i in todo:
         if args.resume and results.get(i["path"], {}).get("invoked"):
             continue
-        if dirty:  # only re-apply the probe when the last command changed something
-            try:
-                reset(client, probe, sheet)
-            except ApplyFailed as e:
-                if prev:  # the previous command left Desktop unable to apply documents
-                    results[prev]["breaksDesktop"] = str(e)
-                OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
-                raise SystemExit(f"stopped after {prev!r}: {e}") from e
+        if free_mb() < MIN_FREE_MB:
+            OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+            raise SystemExit(f"stopped before {i['path']!r}: only {free_mb()} MB free; resume with --redo")
+        try:
+            dirty = _measure_one(client, probe, sheet, i, prev, dirty, results, run, args, data, tail)
+        except httpx.TransportError as e:
+            results[i["path"]] = {**results.get(i["path"], {}), "error": f"Desktop did not answer: {e}"[:300],
+                                  "slow": True}
+            OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+            print(f"  {i['path']}: Desktop did not answer, waiting", flush=True)
+            if not settle(client):
+                raise SystemExit(f"Desktop stopped answering after {i['path']!r}") from e
+            dirty = True
         prev = i["path"]
+
+
+def _measure_one(client, probe, sheet, i, prev, dirty, results, run, args, data, tail) -> bool:
+    if dirty:  # only re-apply the probe when the last command changed something
+        try:
+            reset(client, probe, sheet)
+        except ApplyFailed as e:
+            if prev:  # the previous command left Desktop unable to apply documents
+                results[prev]["breaksDesktop"] = str(e)
+            OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+            raise SystemExit(f"stopped after {prev!r}: {e}") from e
+    before = client.get_document()
+    tail.read()
+    r = run(i["path"])
+    if not r.get("invoked") and "disabled" not in str(r.get("error")):
+        # a side pane left open by the previous command can keep a menu from opening: start clean, retry
+        reset(client, probe, sheet)
         before = client.get_document()
         tail.read()
         r = run(i["path"])
-        if not r.get("invoked") and "disabled" not in str(r.get("error")):
-            # a side pane left open by the previous command can keep a menu from opening: start clean, retry
-            reset(client, probe, sheet)
-            before = client.get_document()
-            tail.read()
-            r = run(i["path"])
-        time.sleep(1.5)
-        commands = tail.read()
-        if args.pid and args.pid not in desktop_setup.tableau_running():
-            results[i["path"]] = {"commands": commands, "crashesDesktop": True}
-            OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
-            raise SystemExit(f"Desktop exited after {i['path']!r}")
-        seen = [{k: m.get(k) for k in ("title", "texts", "buttons")}
-                for m in desktop_setup.modals(pids=Watch.pids) if m.get("title")]
-        closed = []
-        if seen:
-            closed = uia.close_windows()
-            time.sleep(0.5)
-            left = [m.get("title") for m in desktop_setup.modals(pids=Watch.pids)]
-            if left:  # a window that stays open would swallow the next commands
-                results[i["path"]] = {"dialogs": seen, "commands": commands, "error": f"could not close {left}"}
-                OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
-                raise SystemExit(f"stopped: {i['path']!r} left {left} open")
-        try:
-            after = client.get_document()
-            d = diff(before, after)
-        except Exception as e:  # noqa: BLE001
-            d = {"changed": None, "error": str(e)[:300]}
-        dirty = bool(seen) or d.get("changed") is not False or not r.get("invoked")
-        res = {"checkedBefore": i["checked"], "invoked": r.get("invoked"), "error": r.get("error"),
-               "commands": commands, "dialogs": seen, "closed": closed, **d}
-        results[i["path"]] = res
-        tag = "dialog" if seen else ("changed" if d.get("changed") else "no change")
-        print(f"  {i['path']}: {tag} {res.get('added', [])[:4]}", flush=True)
+    time.sleep(1.5)
+    commands = tail.read()
+    if args.pid and args.pid not in desktop_setup.tableau_running():
+        results[i["path"]] = {"commands": commands, "crashesDesktop": True}
         OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+        raise SystemExit(f"Desktop exited after {i['path']!r}")
+    seen = [{k: m.get(k) for k in ("title", "texts", "buttons")}
+            for m in desktop_setup.modals(pids=Watch.pids) if m.get("title")]
+    closed = []
+    if seen:
+        closed = uia.close_windows()
+        time.sleep(0.5)
+        left = [m.get("title") for m in desktop_setup.modals(pids=Watch.pids)]
+        if left:  # a window that stays open would swallow the next commands
+            results[i["path"]] = {"dialogs": seen, "commands": commands, "error": f"could not close {left}"}
+            OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+            raise SystemExit(f"stopped: {i['path']!r} left {left} open")
+    try:
+        after = client.get_document()
+        d = diff(before, after)
+    except Exception as e:  # noqa: BLE001
+        d = {"changed": None, "error": str(e)[:300]}
+    dirty = bool(seen) or d.get("changed") is not False or not r.get("invoked")
+    res = {"checkedBefore": i["checked"], "invoked": r.get("invoked"), "error": r.get("error"),
+           "commands": commands, "dialogs": seen, "closed": closed, **d}
+    results[i["path"]] = res
+    tag = "dialog" if seen else ("changed" if d.get("changed") else "no change")
+    print(f"  {i['path']}: {tag} {res.get('added', [])[:4]}", flush=True)
+    OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+    return dirty
 
 # Context menus: never run what leaves the workbook (SKIP) nor what opens an editor in place (Rename, Edit in
 # Shelf), which keeps the keyboard focus and swallows the next commands.
@@ -271,6 +321,13 @@ CTX_SKIP = re.compile(r"^(Rename|Edit in Shelf|View Data|Describe|Find in Data p
 # Targets whose menu is the same on every sheet: measured on the first one only.
 CTX_ONCE = re.compile(r"^(field:|title$|view:empty$|tab:)")
 CTX_FIELDS = ("field:Region", "field:Importe", "field:Fecha")  # a dimension, a measure, a date
+
+
+def _no_trace(r: dict) -> bool:
+    """A result that says nothing: an error, or 'invoked' with no command, dialog or change."""
+    if r.get("slow"):  # Desktop took too long: running it again would only time out again
+        return False
+    return bool(r.get("error")) or not (r.get("commands") or r.get("dialogs") or r.get("changed"))
 
 
 def context_pass(client, probe, sheets, data, tail, args) -> None:
@@ -292,7 +349,7 @@ def context_pass(client, probe, sheets, data, tail, args) -> None:
         print(f"== context {sheet}: {sorted(wanted)}", flush=True)
         for tname, point in wanted.items():
             key = "tab" if tname.startswith("tab:") else tname
-            if CTX_ONCE.match(tname) and not args.all and any(key in r for s, r in ctx.items() if s != sheet):
+            if CTX_ONCE.match(tname) and not args.all and any(key in r for s, r in ctx.items() if s != sheet)                     and key not in rec:
                 continue
             items = uia.context_items(point, depth=2)
             if not items or any("error" in i for i in items):
@@ -303,10 +360,18 @@ def context_pass(client, probe, sheets, data, tail, args) -> None:
             results = trec.setdefault("commands", {})
             todo = [i for i in items if i["enabled"] and not i["submenu"]
                     and not any(SKIP.match(seg) or CTX_SKIP.match(seg) for seg in i["path"].split(" > "))
-                    and (not args.only or i["path"] in args.only)]
+                    and (not args.only or i["path"] in args.only)
+                    and (not args.redo or i["path"] not in results
+                         or (results[i["path"]].get("error") and not results[i["path"]].get("slow"))
+                         or (" > " in i["path"] and _no_trace(results[i["path"]])))]
             print(f"-- {sheet} {key}: {len(items)} items, {len(todo)} to run", flush=True)
-            measure(client, probe, sheet, todo, results, lambda path, pt=point: uia.context_invoke(pt, path),
-                    args, data, tail)
+
+            def run(path, pt=point, name=tname):
+                if name.startswith("field:"):  # the Data pane can scroll or expand: find the field again
+                    pt = uia.context_targets().get(name, pt)
+                return uia.context_invoke(pt, path)
+
+            measure(client, probe, sheet, todo, results, run, args, data, tail)
             uia.context_close()
 
 
@@ -322,6 +387,7 @@ def main() -> None:
     ap.add_argument("--all", action="store_true", help="measure every command on every sheet")
     ap.add_argument("--context", action="store_true", help="also the context (right-click) menus")
     ap.add_argument("--no-menus", action="store_true", help="skip the menu bar (with --context)")
+    ap.add_argument("--redo", action="store_true", help="re-run only items that left no trace or failed")
     args = ap.parse_args()
     if args.build:
         build_probe(Path(args.probe).resolve())

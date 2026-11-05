@@ -245,6 +245,7 @@ public static class CtxClick {
   [DllImport("user32.dll")] public static extern bool ScreenToClient(IntPtr h, ref POINT p);
   [DllImport("user32.dll")] public static extern bool GetCursorPos(out POINT p);
   [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
+
   [DllImport("user32.dll")] public static extern IntPtr PostMessage(IntPtr h, uint m, IntPtr w, IntPtr l);
 }
 "@
@@ -279,8 +280,9 @@ function CtxOpenRetry([int]$sx, [int]$sy) {
   # right after an apply the canvas may still be rebuilding: one more try
   $m = CtxOpen $sx $sy; if (-not $m) { Start-Sleep -Milliseconds 800; $m = CtxOpen $sx $sy }; return $m
 }
-# Invoke on an item of a context menu returns but runs nothing (measured: no command in Desktop's log); a click
-# posted to the window of the (sub)menu at the item runs it.
+# Invoke on a first-level item of a context menu returns but runs nothing (measured: no command in Desktop's log);
+# a click posted to the menu's window at the item runs it. In a submenu it is the other way round: the click is
+# ignored and Invoke runs the item (measured: Measure > Average -> tabui:change-aggregation-ui).
 function ClickItem($it) {
   $e = $it; $hm = [IntPtr]0
   while ($e -and $hm -eq [IntPtr]0) {
@@ -342,7 +344,7 @@ try {
   $it = Items $p | Where-Object { $_.Current.Name -eq $parts[-1] } | Select-Object -First 1
   if (-not $it) { throw "no item '$($parts[-1])'" }
   if (-not $it.Current.IsEnabled) { throw "item '$($parts[-1])' is disabled" }
-  ClickItem $it
+  if ($parts.Count -gt 1) { $it.GetCurrentPattern($IP::Pattern).Invoke() } else { ClickItem $it }
   Start-Sleep -Milliseconds 600
   $res.invoked = $true
   if ((CtxMenus).Count) { $res.menuLeftOpen = $true; CtxClose }
