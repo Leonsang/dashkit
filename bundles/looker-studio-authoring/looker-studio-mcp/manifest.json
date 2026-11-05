@@ -1,0 +1,40 @@
+{
+  "$schema": "./node_modules/@anthropic-ai/mcpb/dist/mcpb-manifest-v0.4.schema.json",
+  "manifest_version": "0.4",
+  "name": "looker-studio-mcp",
+  "display_name": "Looker Studio (Data Studio)",
+  "version": "0.0.0",
+  "description": "Edita un informe de Looker Studio / Data Studio abierto en Edge o Chrome: layout, campos, diagnóstico, spec declarativo y temas, por CDP.",
+  "long_description": "Controla el editor real de Looker Studio / Data Studio por el Chrome DevTools Protocol, sin capturas ni clics. Necesita Edge o Chrome abierto con --remote-debugging-port (por defecto 9222) y una sesión iniciada en Google. Trabaja siempre sobre copias de los informes: usa APIs internas del editor, no una API oficial.",
+  "author": { "name": "Erick Sang C", "url": "https://github.com/leonsang" },
+  "repository": { "type": "git", "url": "https://github.com/leonsang/dashkit" },
+  "homepage": "https://github.com/leonsang/dashkit/tree/main/bundles/looker-studio-authoring",
+  "license": "MIT",
+  "keywords": ["looker-studio", "data-studio", "dashboards", "cdp"],
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"],
+      "env": {
+        "LS_SKILLS_DIR": "${__dirname}/skills",
+        "LS_CDP_URL": "${user_config.cdp_url}"
+      }
+    }
+  },
+  "user_config": {
+    "cdp_url": {
+      "type": "string",
+      "title": "URL de CDP del navegador",
+      "description": "Dónde escucha Edge/Chrome lanzado con --remote-debugging-port.",
+      "default": "http://127.0.0.1:9222",
+      "required": false
+    }
+  },
+  "tools": [],
+  "compatibility": {
+    "platforms": ["win32", "darwin", "linux"],
+    "runtimes": { "node": ">=20.0.0" }
+  }
+}

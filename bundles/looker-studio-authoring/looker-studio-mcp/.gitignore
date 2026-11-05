@@ -1,0 +1,8 @@
+node_modules/
+# dist/ is committed: the plugin runs from it without npm install.
+build/
+*.mcpb
+knowledge/
+*.state.json
+backups/
+dist/mcp-bundle.js

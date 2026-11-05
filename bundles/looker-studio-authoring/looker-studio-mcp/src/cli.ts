@@ -1,0 +1,291 @@
+#!/usr/bin/env node
+/**
+ * ls-studio: CLI for Looker Studio / Data Studio over CDP (no screenshots, no clicks).
+ * Same engine as the MCP server. JSON on stdout, logs on stderr.
+ */
+import { disconnectIfConnected } from './browser.js';
+import { assertReportUrl, sanitizeLearning } from './security.js';
+import { learn, listTemplates, readLearnings, summary } from './knowledge.js';
+import { attachToReport } from './looker/report.js';
+import { getReportLayout } from './looker/layout.js';
+import { setComponentBoxModel } from './looker/boxModel.js';
+import { bindFieldsToComponent, inspectDataSources } from './looker/data.js';
+import { getComponentConfig } from './looker/diagnose.js';
+import {
+  applySpec,
+  captureTemplates,
+  createComponent,
+  deleteComponent,
+  diagnoseWithKnowledge,
+  exportReport,
+  lintSpec,
+  loadSpec,
+  copyReport,
+  openReport,
+  patchComponent,
+  reloadReport,
+} from './ops.js';
+import { reportSettings } from './ops3.js';
+import { addFilter, addPage, addSourceField, applyTheme, detachFilter, exportTheme, importTheme, listFilters, listPages, readTheme, renamePage, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
+import { readFileSync, existsSync } from 'node:fs';
+
+const HELP = `ls-studio <comando> [opciones]
+
+Conexion (navegador con --remote-debugging-port; LS_CDP_URL, por defecto http://127.0.0.1:9222)
+  open <url>                       Abre el informe (usa /edit para modificar) y espera al editor
+  attach                           Informe activo: id, pagina, modo, lienzo
+  reload                           Recarga (pinta componentes creados por API)
+  copy <url|id> [--name N]         Copia el informe (Linking API) y abre la copia en /edit
+
+Lectura
+  layout [--page <id>]             Componentes de la pagina con caja, estilo y campos
+  sources                          Origenes de datos y campos
+  fields add --name N --formula F [--source texto] [--allow-shared]
+                                   Campo calculado en el ORIGEN (lo que filtran casillas y botones)
+  config <componentId>             JSON interno de un componente
+  diagnose                         Problemas + soluciones conocidas (aprende reason codes)
+  export [-o informe.json]         Informe completo a JSON (aprende tipos y plantillas)
+
+Escritura (modo /edit)
+  box <id> [--x N --y N] [--w N --h N] [--padding N]
+  bind <id> [--dims a,b] [--metrics "SUM(x),AVG(y)"] [--append]
+  create --type <tipo[@variante]> --box x,y,w,h [--page <id>] [--dataset <id|@campo>]
+         [--dims a,b] [--metrics m1,m2] [--padding N]
+  delete <id>
+  patch <id> [--date-days N] [--strip-styles]   Periodo por defecto de un control / quitar estilos de tema
+
+Paginas y tema
+  pages [list] | pages add <nombre> | pages rename <id> <nombre>
+  theme presets | theme use <preset|nombre|biblioteca> | theme export <f.json> | theme import <f.json>
+  report settings [--viewer-filter-bar on|off] [--cross-filter on|off] [--set clave=valor,...]
+  filters [list] | filters add --name N --field F [--op EQ] [--values a,b] [--exclude] [--to <pageId|cd-..>]
+  filters detach <filterId> <pageId|cd-..>
+  theme [get] | theme set <json|archivo.json>    Tema: font,text,fill,accent,accentText,background,grid,
+                                                 increase,decrease,border,borderWeight,borderRadius,series[]
+  ux                               Auditoria UX: contraste WCAG, tema, paleta, tipografia, layout (0-100)
+
+Informe como codigo
+  orphans <spec.json...>           Componentes que ningun spec referencia (restos, anadidos a mano)
+  lint <spec.json>                 Valida contra las skills (reticula, lienzo, KPIs, densidad)
+  apply <spec.json> [--dry-run]    Crea/actualiza (idempotente via <spec>.state.json)
+
+Aprendizaje (knowledge/)
+  templates capture                Guarda una plantilla por tipo del informe abierto
+  templates list
+  templates synth <tipo...>        Genera plantillas de tipos nuevos sin informe de referencia
+  templates seed-ui "<opcion>"...   Inserta opciones del menu 'Anadir un grafico' y las guarda como plantilla
+  learnings [--raw]                Resumen (o eventos) de lo aprendido
+  learn <clave> <texto...>         Anade una nota o solucion (clave reason:93, CODIGO o tema)
+`;
+
+function parse(argv: string[]): { cmd: string; pos: string[]; flags: Record<string, string | true> } {
+  const [cmd = 'help', ...rest] = argv;
+  const pos: string[] = [];
+  const flags: Record<string, string | true> = {};
+  for (let i = 0; i < rest.length; i++) {
+    const a = rest[i]!;
+    if (a.startsWith('--') || (a.startsWith('-') && a.length === 2)) {
+      const k = a.replace(/^-+/, '');
+      const v = rest[i + 1];
+      if (v !== undefined && !v.startsWith('-')) {
+        flags[k] = v;
+        i++;
+      } else flags[k] = true;
+    } else pos.push(a);
+  }
+  return { cmd, pos, flags };
+}
+
+const list = (v: string | true | undefined): string[] =>
+  typeof v === 'string' ? v.split(/,(?![^(]*\))/).map((s) => s.trim()).filter(Boolean) : [];
+const num = (v: string | true | undefined): number | undefined => (typeof v === 'string' && v !== '' ? Number(v) : undefined);
+const need = (v: string | undefined, what: string): string => {
+  if (!v) throw new Error(`Falta ${what}.\n\n${HELP}`);
+  return v;
+};
+
+async function main(): Promise<unknown> {
+  const { cmd, pos, flags } = parse(process.argv.slice(2));
+  switch (cmd) {
+    case 'help':
+    case '--help':
+    case '-h':
+      process.stdout.write(HELP);
+      return undefined;
+    case 'open': {
+      const url = need(pos[0], 'la URL del informe');
+      assertReportUrl(url);
+      return openReport(url);
+    }
+    case 'copy':
+      return copyReport(need(pos[0], 'la URL o el id del informe'), typeof flags.name === 'string' ? flags.name : undefined);
+    case 'attach':
+      return attachToReport();
+    case 'reload':
+      return reloadReport();
+    case 'layout':
+      return getReportLayout(typeof flags.page === 'string' ? flags.page : undefined);
+    case 'sources':
+      return inspectDataSources();
+    case 'config':
+      return getComponentConfig(need(pos[0], 'componentId'));
+    case 'diagnose':
+      return diagnoseWithKnowledge();
+    case 'export': {
+      const file = typeof flags.o === 'string' ? flags.o : typeof flags.out === 'string' ? flags.out : undefined;
+      const r = await exportReport(file);
+      return file ? { file, pages: r.pages.length, types: r.types, learnedTemplates: r.learnedTemplates } : r;
+    }
+    case 'box': {
+      const id = need(pos[0], 'componentId');
+      const x = num(flags.x), y = num(flags.y), w = num(flags.w), h = num(flags.h), p = num(flags.padding);
+      return setComponentBoxModel({
+        componentId: id,
+        ...(x !== undefined && y !== undefined ? { position: { x, y } } : {}),
+        ...(w !== undefined && h !== undefined ? { dimensions: { width: w, height: h } } : {}),
+        ...(p !== undefined ? { padding: p } : {}),
+      });
+    }
+    case 'bind':
+      return bindFieldsToComponent({
+        componentId: need(pos[0], 'componentId'),
+        dimensions: list(flags.dims),
+        metrics: list(flags.metrics),
+        mode: flags.append ? 'append' : 'replace',
+      });
+    case 'create': {
+      const box = list(flags.box).map(Number);
+      if (box.length !== 4 || box.some((v) => Number.isNaN(v))) throw new Error('--box x,y,w,h');
+      const padding = num(flags.padding);
+      // "<type>@<variant>" picks a learned variant template, e.g. dimension-filter@casilla.
+      const [type, variant] = need(typeof flags.type === 'string' ? flags.type : undefined, '--type').split('@');
+      return createComponent({
+        type: type!,
+        ...(variant ? { variant } : {}),
+        box: { x: box[0]!, y: box[1]!, width: box[2]!, height: box[3]! },
+        ...(typeof flags.page === 'string' ? { pageId: flags.page } : {}),
+        ...(typeof flags.dataset === 'string' ? { dataset: flags.dataset } : {}),
+        dimensions: list(flags.dims),
+        metrics: list(flags.metrics),
+        ...(padding !== undefined ? { padding } : {}),
+      });
+    }
+    case 'patch': {
+      const days = num(flags['date-days']);
+      return patchComponent({
+        componentId: need(pos[0], 'componentId'),
+        ...(days !== undefined ? { dateRangeDays: days } : {}),
+        ...(flags['strip-styles'] ? { stripThemeStyles: true } : {}),
+      });
+    }
+    case 'delete':
+      return deleteComponent(need(pos[0], 'componentId'));
+    case 'lint':
+      return lintSpec(loadSpec(need(pos[0], 'spec.json')));
+    case 'apply':
+      return applySpec(need(pos[0], 'spec.json'), { dryRun: !!flags['dry-run'] });
+    case 'pages':
+      if (pos[0] === 'add') return addPage(need(pos[1], 'el nombre de la pagina'));
+      if (pos[0] === 'rename') return renamePage(need(pos[1], 'pageId'), need(pos.slice(2).join(' '), 'el nombre'));
+      return listPages();
+    case 'orphans': {
+      // components on the report that no spec state file references (leftovers, manual additions)
+      const known = new Set<string>();
+      for (const f of pos) {
+        const st = f.replace(/\.json$/i, '') + '.state.json';
+        if (existsSync(st)) for (const id of Object.values((JSON.parse(readFileSync(st, 'utf8')) as { keys: Record<string, string> }).keys)) known.add(id);
+      }
+      const ex = await exportReport();
+      return ex.pages.flatMap((p) =>
+        (p.components as Array<{ id: string; attribute: { left: number; top: number; width: number; height: number }; config: { display: { type: string } } }>)
+          .filter((c) => !known.has(c.id))
+          .map((c) => ({ page: p.name || p.id, id: c.id, type: c.config.display.type, box: [c.attribute.left, c.attribute.top, c.attribute.width, c.attribute.height] })),
+      );
+    }
+    case 'report': {
+      // report settings [--viewer-filter-bar on|off] [--nav left|top|...] [--cross-filter on|off] [--key value]
+      if (pos[0] !== 'settings') throw new Error('Uso: report settings [--viewer-filter-bar on|off] [--cross-filter on|off] [--set clave=valor ...]');
+      const patch: Record<string, unknown> = {};
+      const bool = (v: string | true) => v === true || /^(on|true|1|si|yes)$/i.test(String(v));
+      if (flags['viewer-filter-bar'] !== undefined) patch.viewerFilterBar = bool(flags['viewer-filter-bar']);
+      if (flags['cross-filter'] !== undefined) patch.crossFilterByDefault = bool(flags['cross-filter']);
+      if (typeof flags.set === 'string') for (const kv of flags.set.split(',')) { const [k, v] = kv.split('='); if (k) patch[k] = v === undefined ? true : /^-?\d+(\.\d+)?$/.test(v) ? Number(v) : /^(true|false)$/.test(v) ? v === 'true' : v; }
+      return reportSettings(patch);
+    }
+    case 'fields': {
+      if (pos[0] !== 'add') throw new Error('Uso: fields add --name N --formula F [--source texto] [--allow-shared]');
+      return addSourceField({
+        name: need(typeof flags.name === 'string' ? flags.name : undefined, '--name'),
+        formula: need(typeof flags.formula === 'string' ? flags.formula : undefined, '--formula'),
+        ...(typeof flags.source === 'string' ? { source: flags.source } : {}),
+        ...(flags['allow-shared'] ? { allowShared: true } : {}),
+      });
+    }
+    case 'filters': {
+      if (pos[0] === 'add') {
+        const vals = list(flags.values).map((v) => (v !== '' && !Number.isNaN(Number(v)) && typeof flags.numeric !== 'undefined' ? Number(v) : v));
+        return addFilter(
+          {
+            name: need(typeof flags.name === 'string' ? flags.name : undefined, '--name'),
+            field: need(typeof flags.field === 'string' ? flags.field : undefined, '--field'),
+            ...(typeof flags.op === 'string' ? { op: flags.op } : {}),
+            values: vals,
+            include: !flags.exclude,
+            ...(typeof flags.dataset === 'string' ? { dataset: flags.dataset } : {}),
+          },
+          typeof flags.to === 'string' ? flags.to : undefined,
+        );
+      }
+      if (pos[0] === 'detach') return detachFilter(need(pos[1], 'filterId'), need(pos[2], 'destino'));
+      return listFilters();
+    }
+    case 'theme': {
+      if (pos[0] === 'presets') return themeLibrary();
+      if (pos[0] === 'use') return useThemePreset(need(pos.slice(1).join(' '), 'el preset'));
+      if (pos[0] === 'export') return exportTheme(need(pos[1], 'el archivo'));
+      if (pos[0] === 'import') return importTheme(need(pos[1], 'el archivo'));
+      if (pos[0] !== 'set') return readTheme();
+      const arg = need(pos[1], 'el tema (JSON o archivo)');
+      return applyTheme(JSON.parse(existsSync(arg) ? readFileSync(arg, 'utf8') : arg));
+    }
+    case 'ux':
+      return uxAudit();
+    case 'templates':
+      if (pos[0] === 'capture') return captureTemplates();
+      if (pos[0] === 'synth') return synthesizeTemplates(pos.slice(1));
+      if (pos[0] === 'seed-ui') return seedTemplatesFromUi(pos.slice(1));
+      return listTemplates();
+    case 'learnings':
+      return flags.raw ? readLearnings() : summary();
+    case 'learn': {
+      const key = need(pos[0], 'la clave');
+      const text = pos.slice(1).join(' ');
+      const kind = /^reason:\d+$/.test(key) || /^[A-Z_]+$/.test(key) ? 'fix' : 'note';
+      const clean = sanitizeLearning(text);
+      learn(kind, key, kind === 'fix' ? { fix: clean, source: 'user' } : { text: clean });
+      return { recorded: kind, key };
+    }
+    default:
+      throw new Error(`Comando desconocido "${cmd}".\n\n${HELP}`);
+  }
+}
+
+main()
+  .then(async (out) => {
+    if (out !== undefined) process.stdout.write(JSON.stringify(out, null, 2) + '\n');
+    await closeQuietly();
+  })
+  .catch(async (err) => {
+    process.stderr.write(`Error: ${err instanceof Error ? err.message : String(err)}\n`);
+    await closeQuietly();
+    process.exit(1);
+  });
+
+/** Detach from the browser without closing it (it is the user's browser). */
+async function closeQuietly(): Promise<void> {
+  try {
+    await disconnectIfConnected();
+  } catch {
+    /* ignore */
+  }
+}

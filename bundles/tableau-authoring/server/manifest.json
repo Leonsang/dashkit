@@ -1,0 +1,25 @@
+{
+  "manifest_version": "0.4",
+  "name": "tableu-mcp",
+  "display_name": "Tableau Desktop (tableu)",
+  "version": "0.0.0",
+  "description": "Gestiona Tableau Desktop 2026.3 de punta a punta por su External Client API: conexiones, modelo de datos, hojas, filtros, formato, dashboards, acciones e historias, con validación y lint de buenas prácticas.",
+  "long_description": "Servidor MCP compilado (Nuitka) que maneja el Tableau Desktop abierto en esta máquina por su External Client API local, detrás del flag ProjectAthena. Antes de usarlo, activa la API con desktop_operations Enable (o `tableu enable`) y reinicia Tableau. Cada cambio en vivo se valida con el propio Tableau y se respalda en ~/.tableu/backups. Solo Windows.",
+  "author": { "name": "Erick Sang C", "url": "https://github.com/leonsang" },
+  "repository": { "type": "git", "url": "https://github.com/leonsang/dashkit" },
+  "homepage": "https://github.com/leonsang/dashkit/tree/main/bundles/tableau-authoring",
+  "license": "MIT",
+  "keywords": ["tableau", "tableau-desktop", "dashboards", "twb"],
+  "server": {
+    "type": "binary",
+    "entry_point": "server/tableu-mcp.exe",
+    "mcp_config": {
+      "command": "${__dirname}/server/tableu-mcp.exe",
+      "args": []
+    }
+  },
+  "tools": [],
+  "compatibility": {
+    "platforms": ["win32"]
+  }
+}
