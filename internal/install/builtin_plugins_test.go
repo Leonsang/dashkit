@@ -158,3 +158,31 @@ func TestBuiltinPluginsGoThroughTheHostPluginManager(t *testing.T) {
 		t.Error("pbi-sdd keeps its file install: it is in the marketplace for manual installs only")
 	}
 }
+
+// Claude Code without its plugin manager: skills in .claude/skills for the
+// agent, and a copy beside the server, which reads its guides from there.
+func TestClaudeFileInstallGivesTheServerItsSkills(t *testing.T) {
+	home.SetRoot(t.TempDir())
+	t.Cleanup(func() { home.SetRoot("") })
+	b, err := catalog.Find("looker-studio-authoring")
+	if err != nil {
+		t.Fatal(err)
+	}
+	project := t.TempDir()
+	req := request(t, b, "", project, "claude")
+	req.PreferHostPlugin = false
+	apply(t, req)
+	for _, rel := range []string{
+		".claude/skills/ls-kpi-scorecards/SKILL.md",
+		".claude/agents/looker-studio-author.md",
+		".dashkit/looker-studio-authoring/skills/ls-kpi-scorecards/SKILL.md",
+		".dashkit/looker-studio-authoring/looker-studio-mcp/dist/index.js",
+	} {
+		if _, err := os.Stat(filepath.Join(project, filepath.FromSlash(rel))); err != nil {
+			t.Errorf("missing %s: %v", rel, err)
+		}
+	}
+	if mcp := read(t, filepath.Join(project, ".mcp.json")); !strings.Contains(mcp, "looker-studio-authoring/skills") {
+		t.Errorf("LS_SKILLS_DIR should point beside the server:\n%s", mcp)
+	}
+}
