@@ -196,9 +196,11 @@ func TestAMarketplaceTheUserDeclaredIsNeverRemoved(t *testing.T) {
 
 // data-goblin's hooks exit 0 when jq is missing, so a bundle that ships hooks
 // without requiring jq would install guardrails that silently never run.
-func TestEveryBundleWithHooksRequiresJq(t *testing.T) {
+// data-goblin's hooks parse their input with jq and exit quietly without it.
+// dashkit's own guardrails are Python (via uv) and Node, required instead.
+func TestEveryGoblinBundleWithHooksRequiresJq(t *testing.T) {
 	for _, b := range catalog.Bundles() {
-		if len(b.Hooks) == 0 {
+		if len(b.Hooks) == 0 || !b.IsMarketplace() {
 			continue
 		}
 		found := false

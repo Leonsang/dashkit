@@ -60,10 +60,16 @@ function table(b) {
 
 function details(b, full) {
   const by = { marketplace: "data-goblin", builtin: "dashkit" }[b.kind] ?? "Microsoft";
-  const hooks = b.hooks?.length ? ` · ${b.hooks.length} guardrail hooks` : "";
+  const n = (k, one, many) => `${k} ${k === 1 ? one : many}`;
+  const parts = [
+    b.skills.length ? n(b.skills.length, "skill", "skills") : "",
+    Object.keys(b.mcpServers ?? {}).length ? n(Object.keys(b.mcpServers).length, "MCP server", "MCP servers") : "",
+    b.hooks?.length ? n(b.hooks.length, "guardrail hook", "guardrail hooks") : "",
+  ].filter(Boolean);
+  const hooks = "";
   const out = [
     "<details>",
-    `<summary><strong>${b.title}</strong> &ensp;<code>${b.id}</code> &ensp;${by} · ${b.skills.length} skill${b.skills.length === 1 ? "" : "s"}${hooks}</summary>`,
+    `<summary><strong>${b.title}</strong> &ensp;<code>${b.id}</code> &ensp;${by} · ${parts.join(" · ")}${hooks}</summary>`,
     "",
     b.description,
     "",

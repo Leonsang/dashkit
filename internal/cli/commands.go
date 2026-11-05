@@ -21,6 +21,12 @@ func doctorCmd() *cobra.Command {
 		Use:   "doctor",
 		Short: "Check prerequisites and detect installed AI tools (read-only)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			// Without -b, check what is installed: that is what has to work here.
+			if !cmd.Flags().Changed("bundle") {
+				if installed := installedBundles(); len(installed) > 0 {
+					bundles = installed
+				}
+			}
 			resolved, err := catalog.Resolve(bundles)
 			if err != nil {
 				return err
@@ -86,8 +92,29 @@ func doctorCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringSliceVarP(&bundles, "bundle", "b", []string{"powerbi-authoring"}, "which bundles' prerequisites to check")
+	cmd.Flags().StringSliceVarP(&bundles, "bundle", "b", []string{"powerbi-authoring"},
+		"which bundles' prerequisites to check (default: the installed ones, else powerbi-authoring)")
 	return cmd
+}
+
+// installedBundles lists the bundle ids recorded in state.json, once each, in
+// catalog order, skipping any this build no longer knows.
+func installedBundles() []string {
+	st, err := state.Load()
+	if err != nil {
+		return nil
+	}
+	have := map[string]bool{}
+	for _, in := range st.Installs {
+		have[in.Bundle] = true
+	}
+	var out []string
+	for _, b := range catalog.Bundles() {
+		if have[b.ID] {
+			out = append(out, b.ID)
+		}
+	}
+	return out
 }
 
 func listCmd() *cobra.Command {

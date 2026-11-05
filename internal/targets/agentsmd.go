@@ -84,13 +84,14 @@ func (codex) Plan(b catalog.Bundle, opts Options) (plan.Plan, error) {
 	})
 
 	if opts.MCP {
+		p = append(p, bundleFiles(b, opts)...)
 		names := make([]string, 0, len(b.MCPServers))
 		for name := range b.MCPServers {
 			names = append(names, name)
 		}
 		sort.Strings(names)
 		for _, name := range names {
-			server := b.MCPServers[name]
+			server := expandServer(b.MCPServers[name], b, opts)
 			// Codex launches stdio servers; a remote one is written down for the
 			// user rather than expressed in a shape Codex cannot start.
 			if server.Command == "" {

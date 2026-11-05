@@ -15,6 +15,7 @@ recorded in `~/.dashkit/state.json` and reversed by `dashkit uninstall`.
 | Subagents | `.claude/agents/<name>.md` | `~/.claude/agents/` |
 | MCP servers | `.mcp.json` → `mcpServers` | `~/.claude.json` → `mcpServers` |
 | data-goblin | `claude plugin install <plugin>@power-bi-agentic-development --scope project` | `--scope user` |
+| dashkit's Tableau and Looker Studio bundles | `claude plugin install <bundle>@dashkit --scope project` (commands, subagents, hooks and MCP server come with it) | `--scope user` |
 
 When skills are copied rather than installed as a plugin, the upstream links to `../../common/*.md`
 are rewritten to a sibling `_dashkit-common/` directory so every reference still resolves.
@@ -22,6 +23,12 @@ are rewritten to a sibling `_dashkit-common/` directory so every reference still
 **Which version you get depends on the route.** Through the plugin manager (the default), Claude Code
 installs whatever the marketplace publishes at that moment, and later updates arrive through
 `claude plugin update`. Copied with `--host-plugin=false`, you get the tag this dashkit release pins.
+
+**dashkit's own MCP servers** (`tableu` for Tableau, `looker-studio` for Looker Studio). Where a tool
+has no plugin manager, the server's code is copied to `.dashkit/<bundle>/` (`server/` or
+`looker-studio-mcp/`) and registered by absolute path: `uv --directory …/server run tableu-mcp` and
+`node …/looker-studio-mcp/dist/index.js`. The guardrail bundles are hooks only. They need a plugin
+manager, so other tools skip them and say why.
 
 MCP servers that authenticate with a `headersHelper` command (the remote Fabric servers in
 `fabric-skills` run `az account get-access-token`) are only registered in Claude Code, which runs

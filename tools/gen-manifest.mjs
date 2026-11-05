@@ -168,7 +168,12 @@ for (const p of marketplace.plugins) {
 const order = ["powerbi-authoring", "fabric-skills", "fabric-authoring", "fabric-consumption", "fabric-operations"];
 bundles.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
 
-// dashkit's own bundles, embedded in the binary (see bundles/embed.go).
+// dashkit's own bundles, embedded in the binary (see bundles/embed.go). Each is
+// also a plugin in dashkit's marketplace (.claude-plugin/marketplace.json);
+// those with `plugin: true` are installed through it by hosts with a plugin
+// manager, so their slash commands, subagents and hooks come along. MCP server
+// entries use ${DASHKIT_BUNDLE} for where the bundle's `files` get copied.
+const DASHKIT_MARKET = { repo: "leonsang/dashkit", name: "dashkit" };
 const BUILTIN = {
   "pbi-sdd": {
     title: "Spec-driven workflow",
@@ -176,11 +181,70 @@ const BUILTIN = {
       "A thin spec-driven workflow for Power BI: survey an existing or published report (levantamiento), or start a new one, then spec, tasks, build and verify with written, approved steps. Leans on the Microsoft and data-goblin skills rather than repeating them.",
     prereqs: { required: ["node20"], optional: [] },
   },
+  "tableau-authoring": {
+    title: "Tableau authoring",
+    description:
+      "Drives Tableau Desktop 2026.3 through its External Client API with the tableu MCP server: data sources and .hyper extracts, fields, calculations, parameters, sets, sheets, filters, formatting, dashboards, navigation buttons, filter/parameter/set actions and stories, each validated by Tableau and linted against its best practices. Includes a tableau-author subagent and /setup.",
+    prereqs: { required: ["uv", "tableau-desktop"], optional: ["tableau-api-flag"] },
+    plugin: true,
+    files: ["server"],
+    mcpServers: {
+      tableu: { command: "uv", args: ["--directory", "${DASHKIT_BUNDLE}/server", "run", "--quiet", "tableu-mcp"] },
+    },
+  },
+  "tableau-sdd": {
+    title: "Tableau spec-driven workflow",
+    description:
+      "Survey a Tableau workbook with Info and Lint evidence or start a new one, then spec, tasks, a build where every task runs inside a transaction, and verification with exported images and Desktop's warnings.",
+    prereqs: { required: [], optional: [] },
+    plugin: true,
+  },
+  "tableau-guardrails": {
+    title: "Tableau guardrails",
+    description:
+      "Lints every .twb/.twbx the agent edits against Tableau's best practices and blocks on errors, so they are fixed before moving on. Runs as a Claude Code or Copilot CLI plugin hook; needs uv.",
+    prereqs: { required: ["uv"], optional: [] },
+    plugin: true,
+    hooks: ["tableu lint after any .twb or .twbx edit; errors block, warnings come back as context"],
+  },
+  "looker-studio-authoring": {
+    title: "Looker Studio authoring",
+    description:
+      "Edits a Looker Studio / Data Studio report open in Edge or Chrome over CDP with the looker-studio MCP server: safe copies, layout, fields, source calculated fields, components, controls, filters, themes, pages and declarative report specs, with diagnosis and a UX audit. Six best-practice skills, a looker-studio-author subagent and /setup.",
+    prereqs: { required: ["node20"], optional: ["cdp-9222"] },
+    plugin: true,
+    files: ["looker-studio-mcp"],
+    mcpServers: {
+      "looker-studio": {
+        command: "node",
+        args: ["${DASHKIT_BUNDLE}/looker-studio-mcp/dist/index.js"],
+        env: { LS_ALLOW_WRITE: "1", LS_SKILLS_DIR: "${DASHKIT_BUNDLE}/skills" },
+      },
+    },
+  },
+  "ls-sdd": {
+    title: "Looker Studio spec-driven workflow",
+    description:
+      "Survey a Looker Studio report with diagnose evidence or start a new one, then a spec materialised as a declarative report spec, tasks, a build that dry-runs every apply first, and verification in view mode.",
+    prereqs: { required: [], optional: [] },
+    plugin: true,
+  },
+  "looker-studio-guardrails": {
+    title: "Looker Studio guardrails",
+    description:
+      "Lints every *.spec.json the agent edits and blocks on errors; when a browser answers on the CDP port it also shows the apply --dry-run plan. Runs as a Claude Code or Copilot CLI plugin hook; needs Node 20+.",
+    prereqs: { required: ["node20"], optional: ["cdp-9222"] },
+    plugin: true,
+    hooks: ["report-spec lint after any *.spec.json edit; errors block", "apply --dry-run plan when a browser is on the CDP port"],
+  },
 };
+const list = (dir, keep) => (existsSync(dir) ? readdirSync(dir).filter(keep).sort() : []);
 for (const [id, meta] of Object.entries(BUILTIN)) {
-  const skillsDir = join(process.cwd(), "bundles", id, "skills");
-  if (!existsSync(skillsDir)) throw new Error(`builtin bundle ${id} has no skills/ directory`);
-  const skills = readdirSync(skillsDir).filter((s) => existsSync(join(skillsDir, s, "SKILL.md"))).sort();
+  const base = join(process.cwd(), "bundles", id);
+  if (!existsSync(join(base, ".claude-plugin", "plugin.json"))) throw new Error(`builtin bundle ${id} has no .claude-plugin/plugin.json`);
+  const skills = list(join(base, "skills"), (s) => existsSync(join(base, "skills", s, "SKILL.md")));
+  if (!skills.length && !meta.hooks) throw new Error(`builtin bundle ${id} has neither skills nor hooks`);
+  for (const f of meta.files ?? []) if (!existsSync(join(base, f))) throw new Error(`builtin bundle ${id}: missing ${f}/`);
   bundles.push({
     id,
     kind: "builtin",
@@ -188,7 +252,14 @@ for (const [id, meta] of Object.entries(BUILTIN)) {
     description: meta.description,
     dir: id,
     skills,
+    agents: list(join(base, "agents"), (f) => f.endsWith(".md")).length
+      ? list(join(base, "agents"), (f) => f.endsWith(".md"))
+      : undefined,
+    files: meta.files,
+    mcpServers: meta.mcpServers,
     prereqs: meta.prereqs,
+    hooks: meta.hooks,
+    marketplace: meta.plugin ? { ...DASHKIT_MARKET, plugin: id } : undefined,
     credit: { author: "dashkit", license: "MIT", homepage: "https://github.com/leonsang/dashkit" },
   });
 }
