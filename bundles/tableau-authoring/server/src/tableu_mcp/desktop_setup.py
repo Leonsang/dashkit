@@ -290,3 +290,63 @@ def desktop_warnings(pid: int | None = None, since: str | None = None, limit: in
             msg = v if isinstance(v, str) else (v.get("error-messages") or v.get("shortMessage") or json.dumps(v)[:300])
             out.append({"ts": rec.get("ts"), "severity": rec.get("sev"), "message": str(msg).strip()[:500]})
     return out[-limit:]
+
+
+
+# --------------------------------------------------------------------------------------------
+# any modal window (not only errors): File Recovery, Save changes?, connection prompts...
+# --------------------------------------------------------------------------------------------
+_MODALS_PS = r"""
+Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes
+$A=[System.Windows.Automation.AutomationElement]; $T=[System.Windows.Automation.TreeScope]
+$PC=[System.Windows.Automation.PropertyCondition]; $CT=[System.Windows.Automation.ControlType]
+$out = @()
+foreach ($procId in @(__PIDS__)) {
+  $tops = $A::RootElement.FindAll($T::Children, (New-Object $PC($A::ProcessIdProperty, [int]$procId)))
+  foreach ($top in $tops) {
+    $cands = @()
+    if ($top.Current.ClassName -ne 'TMainWindow' -and $top.Current.ClassName -ne 'SysShadow' -and $top.Current.Name) { $cands += $top }
+    $cands += @($top.FindAll($T::Descendants, (New-Object $PC($A::ControlTypeProperty, $CT::Window))) | Where-Object { $_.Current.Name -and $_.Current.AutomationId -notmatch "WebEngineView" })
+    foreach ($d in $cands) {
+      $buttons = @($d.FindAll($T::Descendants, (New-Object $PC($A::ControlTypeProperty, $CT::Button))) | ForEach-Object { $_.Current.Name } | Where-Object { $_ } | Select-Object -Unique)
+      if ($buttons.Count -eq 0) { continue }
+      $texts = @($d.FindAll($T::Descendants, (New-Object $PC($A::ControlTypeProperty, $CT::Text))) | ForEach-Object { $_.Current.Name } | Where-Object { $_ } | Select-Object -Unique)
+      $items = @($d.FindAll($T::Descendants, (New-Object $PC($A::ControlTypeProperty, $CT::DataItem))) | ForEach-Object { $_.Current.Name } | Where-Object { $_ } | Select-Object -Unique)
+      $out += [pscustomobject]([ordered]@{ pid = [int]$procId; title = $d.Current.Name; automationId = $d.Current.AutomationId; texts = $texts; items = $items; buttons = $buttons; closed = $false })
+    }
+  }
+}
+ConvertTo-Json -InputObject @($out) -Compress -Depth 4
+"""
+
+# Modals that are safe to close with their title-bar X: closing only dismisses the message.
+SAFE_TO_CLOSE = ("Unable to complete action", "Errors occurred while reloading the data source.", "Warning", "Error")
+
+
+def modals(close_safe: bool = False, pids: list[int] | None = None) -> list[dict]:
+    """Every modal window Tableau Desktop shows (title, texts, list items, buttons), not only errors:
+    'File Recovery', 'Save changes?', connection prompts... With close_safe, error/warning messages are
+    closed (as ErrorDialogs does); anything else is only reported: buttons such as Delete or Open are the
+    user's decision."""
+    import json  # noqa: PLC0415
+
+    pids = pids or tableau_running()
+    if sys.platform != "win32" or not pids:
+        return []
+    script = _MODALS_PS.replace("__PIDS__", ",".join(map(str, pids)))
+    res = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
+                         capture_output=True, text=True, encoding="utf-8", check=False, timeout=60)
+    try:
+        data = json.loads(res.stdout.strip() or "[]")
+    except ValueError:
+        return [{"error": (res.stderr or res.stdout).strip()[:500]}]
+    data = data if isinstance(data, list) else [data]
+    if close_safe and any(d.get("title") in SAFE_TO_CLOSE for d in data):
+        error_dialogs(dismiss=True, pids=pids)
+        for d in data:
+            if d.get("title") in SAFE_TO_CLOSE:
+                d["closed"] = True
+    for d in data:
+        d["action"] = ("closed (error/warning message)" if d.get("closed") else
+                       "needs the user: tell them what it asks and wait")
+    return data

@@ -1,0 +1,10390 @@
+{
+"generatedFrom": {
+"tableau": "74 documents shipped with Tableau 2026.3",
+"validated": 3
+},
+"elements": {
+"/datasource": {
+"count": 42,
+"files": 42,
+"sources": [
+"tableau"
+],
+"attrs": {
+"formatted-name": {
+"count": 42,
+"kinds": [
+"text"
+],
+"values": null
+},
+"inline": {
+"count": 42,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"source-platform": {
+"count": 32,
+"kinds": [
+"text"
+],
+"values": [
+"win"
+]
+},
+"version": {
+"count": 42,
+"kinds": [
+"number"
+],
+"values": []
+}
+},
+"children": {
+"document-format-change-manifest": 16,
+"connection": 42,
+"aliases": 26,
+"column": 455,
+"group": 16,
+"drill-paths": 16,
+"layout": 42,
+"semantic-values": 32,
+"datasource-dependencies": 16,
+"object-graph": 16,
+"folder": 66,
+"column-instance": 1,
+"folders-common": 1,
+"default-sorts": 1
+},
+"order": [
+"document-format-change-manifest",
+"connection",
+"aliases",
+"column",
+"column-instance",
+"group",
+"drill-paths",
+"folder",
+"folders-common",
+"layout",
+"semantic-values",
+"default-sorts",
+"datasource-dependencies",
+"object-graph"
+],
+"strictly_after": {
+"connection": [
+"document-format-change-manifest"
+],
+"aliases": [
+"connection",
+"document-format-change-manifest"
+],
+"column": [
+"aliases",
+"connection",
+"document-format-change-manifest"
+],
+"group": [
+"aliases",
+"column",
+"column-instance",
+"connection",
+"document-format-change-manifest"
+],
+"drill-paths": [
+"aliases",
+"column",
+"column-instance",
+"connection",
+"document-format-change-manifest",
+"group"
+],
+"layout": [
+"aliases",
+"column",
+"column-instance",
+"connection",
+"document-format-change-manifest",
+"drill-paths",
+"folder",
+"folders-common",
+"group"
+],
+"semantic-values": [
+"aliases",
+"column",
+"column-instance",
+"connection",
+"document-format-change-manifest",
+"drill-paths",
+"folder",
+"folders-common",
+"group",
+"layout"
+],
+"datasource-dependencies": [
+"aliases",
+"column",
+"column-instance",
+"connection",
+"default-sorts",
+"document-format-change-manifest",
+"drill-paths",
+"folder",
+"folders-common",
+"group",
+"layout",
+"semantic-values"
+],
+"object-graph": [
+"aliases",
+"column",
+"column-instance",
+"connection",
+"datasource-dependencies",
+"default-sorts",
+"document-format-change-manifest",
+"drill-paths",
+"folder",
+"folders-common",
+"group",
+"layout",
+"semantic-values"
+],
+"folder": [
+"aliases",
+"column",
+"column-instance",
+"connection",
+"document-format-change-manifest",
+"drill-paths",
+"group"
+],
+"column-instance": [
+"aliases",
+"column",
+"connection",
+"document-format-change-manifest"
+],
+"folders-common": [
+"aliases",
+"column",
+"column-instance",
+"connection",
+"document-format-change-manifest",
+"drill-paths",
+"folder",
+"group"
+],
+"default-sorts": [
+"aliases",
+"column",
+"column-instance",
+"connection",
+"document-format-change-manifest",
+"drill-paths",
+"folder",
+"folders-common",
+"group",
+"layout",
+"semantic-values"
+]
+}
+},
+"/workbook": {
+"count": 35,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"locale": {
+"count": 17,
+"kinds": [
+"text"
+],
+"values": [
+"de_DE",
+"en_GB",
+"en_US",
+"es_ES",
+"es_MX",
+"fr_CA",
+"fr_FR",
+"it_IT",
+"ja_JP",
+"ko_KR",
+"nl_NL",
+"pt_BR",
+"sv_SE",
+"th_TH",
+"zh_CN",
+"zh_TW"
+]
+},
+"source-build": {
+"count": 35,
+"kinds": [
+"text"
+],
+"values": []
+},
+"source-platform": {
+"count": 35,
+"kinds": [
+"text"
+],
+"values": [
+"mac",
+"win"
+]
+},
+"version": {
+"count": 35,
+"kinds": [
+"number"
+],
+"values": []
+},
+"upgrade-extracts": {
+"count": 1,
+"kinds": [
+"bool"
+],
+"values": [
+"false"
+]
+},
+"original-version": {
+"count": 3,
+"kinds": [
+"number"
+],
+"values": []
+}
+},
+"children": {
+"document-format-change-manifest": 34,
+"repository-location": 15,
+"preferences": 35,
+"style": 31,
+"datasources": 35,
+"datasource-relationships": 15,
+"mapsources": 30,
+"actions": 34,
+"worksheets": 35,
+"dashboards": 35,
+"windows": 35,
+"thumbnails": 31,
+"explain-data": 30,
+"style-theme": 2
+},
+"order": [
+"document-format-change-manifest",
+"repository-location",
+"preferences",
+"style-theme",
+"style",
+"datasources",
+"datasource-relationships",
+"mapsources",
+"actions",
+"worksheets",
+"dashboards",
+"windows",
+"thumbnails",
+"explain-data"
+],
+"strictly_after": {
+"repository-location": [
+"document-format-change-manifest"
+],
+"preferences": [
+"document-format-change-manifest",
+"repository-location"
+],
+"style": [
+"document-format-change-manifest",
+"preferences",
+"repository-location",
+"style-theme"
+],
+"datasources": [
+"document-format-change-manifest",
+"preferences",
+"repository-location",
+"style",
+"style-theme"
+],
+"datasource-relationships": [
+"datasources",
+"document-format-change-manifest",
+"preferences",
+"repository-location",
+"style"
+],
+"mapsources": [
+"datasource-relationships",
+"datasources",
+"document-format-change-manifest",
+"preferences",
+"repository-location",
+"style"
+],
+"actions": [
+"datasource-relationships",
+"datasources",
+"document-format-change-manifest",
+"mapsources",
+"preferences",
+"repository-location",
+"style",
+"style-theme"
+],
+"worksheets": [
+"actions",
+"datasource-relationships",
+"datasources",
+"document-format-change-manifest",
+"mapsources",
+"preferences",
+"repository-location",
+"style",
+"style-theme"
+],
+"dashboards": [
+"actions",
+"datasource-relationships",
+"datasources",
+"document-format-change-manifest",
+"mapsources",
+"preferences",
+"repository-location",
+"style",
+"style-theme",
+"worksheets"
+],
+"windows": [
+"actions",
+"dashboards",
+"datasource-relationships",
+"datasources",
+"document-format-change-manifest",
+"mapsources",
+"preferences",
+"repository-location",
+"style",
+"style-theme",
+"worksheets"
+],
+"thumbnails": [
+"actions",
+"dashboards",
+"datasource-relationships",
+"datasources",
+"document-format-change-manifest",
+"mapsources",
+"preferences",
+"repository-location",
+"style",
+"style-theme",
+"windows",
+"worksheets"
+],
+"explain-data": [
+"actions",
+"dashboards",
+"datasource-relationships",
+"datasources",
+"document-format-change-manifest",
+"mapsources",
+"preferences",
+"repository-location",
+"style",
+"thumbnails",
+"windows",
+"worksheets"
+],
+"style-theme": [
+"document-format-change-manifest",
+"preferences"
+]
+}
+},
+"action/activation": {
+"count": 204,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"auto-clear": {
+"count": 203,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"type": {
+"count": 204,
+"kinds": [
+"text"
+],
+"values": [
+"on-hover",
+"on-select"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"action/command": {
+"count": 203,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"command": {
+"count": 203,
+"kinds": [
+"text"
+],
+"values": [
+"tsc:brush",
+"tsc:tsl-filter"
+]
+}
+},
+"children": {
+"param": 483
+},
+"order": [
+"param"
+],
+"strictly_after": {}
+},
+"action/link": {
+"count": 50,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"caption": {
+"count": 50,
+"kinds": [
+"text"
+],
+"values": []
+},
+"delimiter": {
+"count": 49,
+"kinds": [
+"text"
+],
+"values": [
+","
+]
+},
+"escape": {
+"count": 49,
+"kinds": [
+"text"
+],
+"values": [
+"\\"
+]
+},
+"expression": {
+"count": 50,
+"kinds": [
+"text"
+],
+"values": null
+},
+"include-null": {
+"count": 49,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"multi-select": {
+"count": 49,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"url-escape": {
+"count": 50,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"action/source": {
+"count": 204,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"dashboard": {
+"count": 200,
+"kinds": [
+"text"
+],
+"values": null
+},
+"type": {
+"count": 204,
+"kinds": [
+"text"
+],
+"values": [
+"sheet"
+]
+},
+"worksheet": {
+"count": 109,
+"kinds": [
+"text"
+],
+"values": null
+}
+},
+"children": {
+"exclude-sheet": 79
+},
+"order": [
+"exclude-sheet"
+],
+"strictly_after": {}
+},
+"actions/action": {
+"count": 204,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"caption": {
+"count": 204,
+"kinds": [
+"text"
+],
+"values": []
+},
+"name": {
+"count": 204,
+"kinds": [
+"ref"
+],
+"values": []
+}
+},
+"children": {
+"activation": 204,
+"source": 204,
+"link": 50,
+"command": 203
+},
+"order": [
+"activation",
+"source",
+"link",
+"command"
+],
+"strictly_after": {
+"source": [
+"activation"
+],
+"link": [
+"activation",
+"source"
+],
+"command": [
+"activation",
+"link",
+"source"
+]
+}
+},
+"actions/datasource-dependencies": {
+"count": 32,
+"files": 32,
+"sources": [
+"tableau"
+],
+"attrs": {
+"datasource": {
+"count": 32,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {
+"column": 47
+},
+"order": [
+"column"
+],
+"strictly_after": {}
+},
+"actions/datasources": {
+"count": 32,
+"files": 32,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"datasource": 32
+},
+"order": [
+"datasource"
+],
+"strictly_after": {}
+},
+"actions/edit-group-action": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {
+"caption": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": []
+},
+"name": {
+"count": 1,
+"kinds": [
+"ref"
+],
+"values": []
+}
+},
+"children": {
+"activation": 1,
+"source": 1,
+"add-or-remove-marks": 1,
+"params": 1
+},
+"order": [
+"activation",
+"source",
+"add-or-remove-marks",
+"params"
+],
+"strictly_after": {
+"source": [
+"activation"
+],
+"add-or-remove-marks": [
+"activation",
+"source"
+],
+"params": [
+"activation",
+"add-or-remove-marks",
+"source"
+]
+}
+},
+"actions/edit-parameter-action": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {
+"caption": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": []
+},
+"name": {
+"count": 1,
+"kinds": [
+"ref"
+],
+"values": []
+}
+},
+"children": {
+"activation": 1,
+"source": 1,
+"agg-type": 1,
+"clear-option": 1,
+"params": 1
+},
+"order": [
+"activation",
+"source",
+"agg-type",
+"clear-option",
+"params"
+],
+"strictly_after": {
+"source": [
+"activation"
+],
+"agg-type": [
+"activation",
+"source"
+],
+"clear-option": [
+"activation",
+"agg-type",
+"source"
+],
+"params": [
+"activation",
+"agg-type",
+"clear-option",
+"source"
+]
+}
+},
+"address/value": {
+"count": 75,
+"files": 15,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"aliases/alias": {
+"count": 493,
+"files": 33,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"key": {
+"count": 493,
+"kinds": [
+"text",
+"ref",
+"bool"
+],
+"values": []
+},
+"value": {
+"count": 493,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"attributes/attribute": {
+"count": 1422,
+"files": 36,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"datatype": {
+"count": 1422,
+"kinds": [
+"text"
+],
+"values": [
+"boolean",
+"integer",
+"string"
+]
+},
+"name": {
+"count": 1422,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"bin/value": {
+"count": 47019,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"button-visual-state/button-caption-font-style": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {
+"fontcolor": {
+"count": 1,
+"kinds": [
+"color"
+],
+"values": []
+},
+"fontname": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": []
+},
+"fontsize": {
+"count": 1,
+"kinds": [
+"number"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"button-visual-state/caption": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"button-visual-state/format": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {
+"attr": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": [
+"background-color"
+]
+},
+"value": {
+"count": 1,
+"kinds": [
+"color"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"button/button-visual-state": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {},
+"children": {
+"caption": 1,
+"button-caption-font-style": 1,
+"format": 1
+},
+"order": [
+"caption",
+"button-caption-font-style",
+"format"
+],
+"strictly_after": {
+"button-caption-font-style": [
+"caption"
+],
+"format": [
+"button-caption-font-style",
+"caption"
+]
+}
+},
+"calculation/bin": {
+"count": 3177,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"default-name": {
+"count": 3176,
+"kinds": [
+"bool"
+],
+"values": [
+"false"
+]
+},
+"value": {
+"count": 3177,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {
+"value": 47019
+},
+"order": [
+"value"
+],
+"strictly_after": {}
+},
+"calculation/table-calc": {
+"count": 60,
+"files": 15,
+"sources": [
+"tableau"
+],
+"attrs": {
+"ordering-type": {
+"count": 60,
+"kinds": [
+"text"
+],
+"values": [
+"Rows"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"calculations/calculation": {
+"count": 10,
+"files": 2,
+"sources": [
+"tableau"
+],
+"attrs": {
+"column": {
+"count": 10,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"formula": {
+"count": 10,
+"kinds": [
+"text",
+"ref",
+"number"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"caption/formatted-text": {
+"count": 31,
+"files": 31,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"run": 46
+},
+"order": [
+"run"
+],
+"strictly_after": {}
+},
+"capturedDeltas/worksheet": {
+"count": 30,
+"files": 15,
+"sources": [
+"tableau"
+],
+"attrs": {
+"name": {
+"count": 30,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {
+"filter": 30
+},
+"order": [
+"filter"
+],
+"strictly_after": {}
+},
+"cards/edge": {
+"count": 1241,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"name": {
+"count": 1241,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {
+"strip": 2064
+},
+"order": [
+"strip"
+],
+"strictly_after": {}
+},
+"clause/expression": {
+"count": 17,
+"files": 9,
+"sources": [
+"tableau"
+],
+"attrs": {
+"op": {
+"count": 17,
+"kinds": [
+"text"
+],
+"values": [
+"AND"
+]
+}
+},
+"children": {
+"expression": 34
+},
+"order": [
+"expression"
+],
+"strictly_after": {}
+},
+"color-one-way/field": {
+"count": 2792,
+"files": 32,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"color-palette/color": {
+"count": 1260,
+"files": 30,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"cols/map": {
+"count": 958,
+"files": 44,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"key": {
+"count": 958,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"value": {
+"count": 958,
+"kinds": [
+"ref"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"column-instance/table-calc": {
+"count": 166,
+"files": 31,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"ordering-type": {
+"count": 166,
+"kinds": [
+"text"
+],
+"values": [
+"Columns",
+"Field",
+"Rows"
+]
+},
+"rank-options": {
+"count": 30,
+"kinds": [
+"text"
+],
+"values": [
+"Competition,Descending"
+]
+},
+"type": {
+"count": 121,
+"kinds": [
+"text"
+],
+"values": [
+"CumTotal",
+"PctDiff",
+"PctTotal",
+"Rank"
+]
+},
+"ordering-field": {
+"count": 45,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"diff-options": {
+"count": 75,
+"kinds": [
+"text"
+],
+"values": [
+"Relative"
+]
+},
+"aggregation": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": [
+"Sum"
+]
+}
+},
+"children": {
+"address": 75
+},
+"order": [
+"address"
+],
+"strictly_after": {}
+},
+"column-mapping/map": {
+"count": 90,
+"files": 15,
+"sources": [
+"tableau"
+],
+"attrs": {
+"key": {
+"count": 90,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"value": {
+"count": 90,
+"kinds": [
+"ref"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"column/aliases": {
+"count": 179,
+"files": 33,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"alias": 493
+},
+"order": [
+"alias"
+],
+"strictly_after": {}
+},
+"column/calculation": {
+"count": 2127,
+"files": 76,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"class": {
+"count": 2127,
+"kinds": [
+"text"
+],
+"values": [
+"bin",
+"categorical-bin",
+"tableau"
+]
+},
+"formula": {
+"count": 2012,
+"kinds": [
+"text",
+"ref",
+"number"
+],
+"values": []
+},
+"column": {
+"count": 115,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"new-bin": {
+"count": 115,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"decimals": {
+"count": 32,
+"kinds": [
+"number"
+],
+"values": [
+"0",
+"3"
+]
+},
+"peg": {
+"count": 32,
+"kinds": [
+"number"
+],
+"values": [
+"0"
+]
+},
+"size-parameter": {
+"count": 16,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"scope-isolation": {
+"count": 196,
+"kinds": [
+"bool"
+],
+"values": [
+"false"
+]
+},
+"size": {
+"count": 16,
+"kinds": [
+"number"
+],
+"values": []
+},
+"default": {
+"count": 98,
+"kinds": [
+"text"
+],
+"values": [
+"\"Ej samlad\"",
+"\"Nicht geclustert\"",
+"\"Niet geclusterd\"",
+"\"Non in cluster\"",
+"\"Not Clustered\"",
+"\"Other\"",
+"\"Sans cluster\"",
+"\"Sans regroupement\"",
+"\"Sem cluster\"",
+"\"Sin clústeres\"",
+"\"ไม่เป็นกลุ่ม\"",
+"\"クラスター化されていません\"",
+"\"未叢集處理\"",
+"\"未聚集\"",
+"\"클러스터링 안 됨\""
+]
+}
+},
+"children": {
+"bin": 3177,
+"table-calc": 60
+},
+"order": [
+"bin",
+"table-calc"
+],
+"strictly_after": {}
+},
+"column/desc": {
+"count": 180,
+"files": 15,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"formatted-text": 180
+},
+"order": [
+"formatted-text"
+],
+"strictly_after": {}
+},
+"column/members": {
+"count": 32,
+"files": 16,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"member": 96
+},
+"order": [
+"member"
+],
+"strictly_after": {}
+},
+"column/range": {
+"count": 483,
+"files": 47,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"granularity": {
+"count": 483,
+"kinds": [
+"number"
+],
+"values": [
+"0.001",
+"0.01",
+"0.10000000000000001",
+"1",
+"1000",
+"25000",
+"5",
+"50"
+]
+},
+"max": {
+"count": 288,
+"kinds": [
+"number"
+],
+"values": []
+},
+"min": {
+"count": 483,
+"kinds": [
+"number"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"column/semantic-values": {
+"count": 120,
+"files": 10,
+"sources": [
+"tableau"
+],
+"attrs": {
+"semantic-role": {
+"count": 120,
+"kinds": [
+"ref"
+],
+"values": []
+}
+},
+"children": {
+"semantic-value": 1467
+},
+"order": [
+"semantic-value"
+],
+"strictly_after": {}
+},
+"column/server-captions": {
+"count": 31,
+"files": 10,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"caption": 31
+},
+"order": [
+"caption"
+],
+"strictly_after": {}
+},
+"columns/column": {
+"count": 2858,
+"files": 36,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"datatype": {
+"count": 2858,
+"kinds": [
+"text"
+],
+"values": [
+"boolean",
+"date",
+"datetime",
+"integer",
+"real",
+"string"
+]
+},
+"name": {
+"count": 2858,
+"kinds": [
+"text"
+],
+"values": []
+},
+"ordinal": {
+"count": 2858,
+"kinds": [
+"number"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"command/param": {
+"count": 483,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"name": {
+"count": 483,
+"kinds": [
+"text"
+],
+"values": []
+},
+"value": {
+"count": 483,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"connection/calculations": {
+"count": 2,
+"files": 2,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"calculation": 10
+},
+"order": [
+"calculation"
+],
+"strictly_after": {}
+},
+"connection/cols": {
+"count": 44,
+"files": 44,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"map": 958
+},
+"order": [
+"map"
+],
+"strictly_after": {}
+},
+"connection/metadata-records": {
+"count": 98,
+"files": 67,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"metadata-record": 1980
+},
+"order": [
+"metadata-record"
+],
+"strictly_after": {}
+},
+"connection/named-connections": {
+"count": 97,
+"files": 67,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"named-connection": 97
+},
+"order": [
+"named-connection"
+],
+"strictly_after": {}
+},
+"connection/refresh": {
+"count": 3,
+"files": 2,
+"sources": [
+"tableau"
+],
+"attrs": {
+"increment-key": {
+"count": 2,
+"kinds": [
+"text"
+],
+"values": [
+""
+]
+},
+"incremental-updates": {
+"count": 2,
+"kinds": [
+"bool"
+],
+"values": [
+"false"
+]
+}
+},
+"children": {
+"refresh-event": 2
+},
+"order": [
+"refresh-event"
+],
+"strictly_after": {}
+},
+"connection/relation": {
+"count": 189,
+"files": 77,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"connection": {
+"count": 145,
+"kinds": [
+"text"
+],
+"values": [
+"PerfDataleaf",
+"Sample - APAC Storeleaf",
+"excel-direct.0lad5au144tqkt16qnaz70tec6fn",
+"excel-direct.0ozsbj20cdelf51evvdk71kugqg0",
+"excel-direct.1sj83no0zjgqcn11x69nn1f7rbzm",
+"excel-direct.5r83l70kg86s2ogk3vdoxno35zcw",
+"excel-direct.qh288l2jmtmbrqh8fqkqwa9slcoh",
+"hyper.02tkzk21390wwr18vjk7f1tnp84z",
+"hyper.0o92d8802zffo515xhl160aulmpt",
+"textscan.0bdqfzt0f0ynar1egmoso1fglwo7",
+"textscan.7ssvsq956e7paikmuopn3yd7uq0z"
+]
+},
+"name": {
+"count": 149,
+"kinds": [
+"text"
+],
+"values": []
+},
+"table": {
+"count": 149,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"type": {
+"count": 189,
+"kinds": [
+"text"
+],
+"values": [
+"collection",
+"join",
+"table"
+]
+},
+"join": {
+"count": 9,
+"kinds": [
+"text"
+],
+"values": [
+"left"
+]
+}
+},
+"children": {
+"columns": 99,
+"relation": 111,
+"clause": 9
+},
+"order": [
+"columns",
+"clause",
+"relation"
+],
+"strictly_after": {
+"relation": [
+"clause"
+]
+}
+},
+"customized-label/formatted-text": {
+"count": 77,
+"files": 31,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"run": 373
+},
+"order": [
+"run"
+],
+"strictly_after": {}
+},
+"customized-tooltip/formatted-text": {
+"count": 507,
+"files": 33,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"run": 5231
+},
+"order": [
+"run"
+],
+"strictly_after": {}
+},
+"dashboard/datasource-dependencies": {
+"count": 124,
+"files": 32,
+"sources": [
+"tableau"
+],
+"attrs": {
+"datasource": {
+"count": 124,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {
+"column": 351,
+"column-instance": 305
+},
+"order": [
+"column",
+"column-instance"
+],
+"strictly_after": {}
+},
+"dashboard/datasources": {
+"count": 123,
+"files": 32,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"datasource": 124
+},
+"order": [
+"datasource"
+],
+"strictly_after": {}
+},
+"dashboard/devicelayouts": {
+"count": 122,
+"files": 32,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"devicelayout": 242
+},
+"order": [
+"devicelayout"
+],
+"strictly_after": {}
+},
+"dashboard/layout-options": {
+"count": 137,
+"files": 32,
+"sources": [
+"tableau"
+],
+"attrs": {
+"export-center-horz": {
+"count": 15,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"export-center-vert": {
+"count": 15,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"export-orientation": {
+"count": 15,
+"kinds": [
+"text"
+],
+"values": [
+"landscape"
+]
+}
+},
+"children": {
+"title": 137
+},
+"order": [
+"title"
+],
+"strictly_after": {}
+},
+"dashboard/simple-id": {
+"count": 143,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"uuid": {
+"count": 143,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"dashboard/size": {
+"count": 144,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"minheight": {
+"count": 144,
+"kinds": [
+"number"
+],
+"values": []
+},
+"minwidth": {
+"count": 144,
+"kinds": [
+"number"
+],
+"values": []
+},
+"sizing-mode": {
+"count": 45,
+"kinds": [
+"text"
+],
+"values": [
+"range"
+]
+},
+"maxheight": {
+"count": 9,
+"kinds": [
+"number"
+],
+"values": []
+},
+"maxwidth": {
+"count": 9,
+"kinds": [
+"number"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"dashboard/style": {
+"count": 144,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"style-rule": 167
+},
+"order": [
+"style-rule"
+],
+"strictly_after": {}
+},
+"dashboard/zones": {
+"count": 144,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"zone": 146
+},
+"order": [
+"zone"
+],
+"strictly_after": {}
+},
+"dashboards/dashboard": {
+"count": 144,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"enable-sort-zone-taborder": {
+"count": 120,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"name": {
+"count": 144,
+"kinds": [
+"text"
+],
+"values": []
+},
+"type": {
+"count": 16,
+"kinds": [
+"text"
+],
+"values": [
+"storyboard"
+]
+}
+},
+"children": {
+"layout-options": 137,
+"style": 144,
+"size": 144,
+"datasources": 123,
+"datasource-dependencies": 124,
+"zones": 144,
+"devicelayouts": 122,
+"simple-id": 143
+},
+"order": [
+"layout-options",
+"style",
+"size",
+"datasources",
+"datasource-dependencies",
+"zones",
+"devicelayouts",
+"simple-id"
+],
+"strictly_after": {
+"style": [
+"layout-options"
+],
+"size": [
+"layout-options",
+"style"
+],
+"datasources": [
+"layout-options",
+"size",
+"style"
+],
+"datasource-dependencies": [
+"datasources",
+"layout-options",
+"size",
+"style"
+],
+"zones": [
+"datasource-dependencies",
+"datasources",
+"layout-options",
+"size",
+"style"
+],
+"devicelayouts": [
+"datasource-dependencies",
+"datasources",
+"layout-options",
+"size",
+"style",
+"zones"
+],
+"simple-id": [
+"datasource-dependencies",
+"datasources",
+"devicelayouts",
+"layout-options",
+"size",
+"style",
+"zones"
+]
+}
+},
+"datasource-dependencies/column": {
+"count": 4914,
+"files": 51,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"caption": {
+"count": 1454,
+"kinds": [
+"text"
+],
+"values": []
+},
+"datatype": {
+"count": 4914,
+"kinds": [
+"text"
+],
+"values": [
+"boolean",
+"date",
+"integer",
+"real",
+"string",
+"table"
+]
+},
+"name": {
+"count": 4914,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"param-domain-type": {
+"count": 457,
+"kinds": [
+"text"
+],
+"values": [
+"list",
+"range"
+]
+},
+"role": {
+"count": 4914,
+"kinds": [
+"text"
+],
+"values": [
+"dimension",
+"measure"
+]
+},
+"type": {
+"count": 4914,
+"kinds": [
+"text"
+],
+"values": [
+"nominal",
+"ordinal",
+"quantitative"
+]
+},
+"value": {
+"count": 457,
+"kinds": [
+"number",
+"text"
+],
+"values": []
+},
+"default-format": {
+"count": 1739,
+"kinds": [
+"text"
+],
+"values": []
+},
+"aggregate-role-from": {
+"count": 315,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"semantic-role": {
+"count": 480,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"user:unnamed": {
+"count": 30,
+"kinds": [
+"text"
+],
+"values": [
+"Performance",
+"WhatIfForecast"
+]
+},
+"hidden": {
+"count": 18,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"aggregation": {
+"count": 348,
+"kinds": [
+"text"
+],
+"values": [
+"Avg",
+"Count",
+"Sum"
+]
+},
+"datatype-customized": {
+"count": 90,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"user:auto-column": {
+"count": 3,
+"kinds": [
+"text"
+],
+"values": [
+"numrec"
+]
+}
+},
+"children": {
+"calculation": 1504,
+"range": 392,
+"desc": 135,
+"aliases": 96,
+"members": 16,
+"semantic-values": 109
+},
+"order": [
+"calculation",
+"range",
+"semantic-values",
+"aliases",
+"desc",
+"members"
+],
+"strictly_after": {
+"range": [
+"calculation"
+],
+"desc": [
+"aliases",
+"calculation"
+],
+"aliases": [
+"calculation"
+],
+"members": [
+"calculation"
+]
+}
+},
+"datasource-dependencies/column-instance": {
+"count": 4319,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"column": {
+"count": 4319,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"derivation": {
+"count": 4319,
+"kinds": [
+"text"
+],
+"values": [
+"Attribute",
+"Avg",
+"Count",
+"CountD",
+"Day-Trunc",
+"Max",
+"Min",
+"Month",
+"Month-Trunc",
+"None",
+"Quarter",
+"Sum",
+"User",
+"Week-Trunc",
+"Year",
+"Year-Trunc"
+]
+},
+"name": {
+"count": 4319,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"pivot": {
+"count": 4319,
+"kinds": [
+"text"
+],
+"values": [
+"key"
+]
+},
+"type": {
+"count": 4319,
+"kinds": [
+"text"
+],
+"values": [
+"nominal",
+"ordinal",
+"quantitative"
+]
+},
+"forecast-column-base": {
+"count": 30,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"forecast-column-type": {
+"count": 30,
+"kinds": [
+"text"
+],
+"values": [
+"forecast-indicator",
+"forecast-value"
+]
+}
+},
+"children": {
+"table-calc": 106
+},
+"order": [
+"table-calc"
+],
+"strictly_after": {}
+},
+"datasource-relationship/column-mapping": {
+"count": 15,
+"files": 15,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"map": 90
+},
+"order": [
+"map"
+],
+"strictly_after": {}
+},
+"datasource-relationships/datasource-dependencies": {
+"count": 30,
+"files": 15,
+"sources": [
+"tableau"
+],
+"attrs": {
+"datasource": {
+"count": 30,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {
+"column": 90,
+"column-instance": 180
+},
+"order": [
+"column",
+"column-instance"
+],
+"strictly_after": {
+"column-instance": [
+"column"
+]
+}
+},
+"datasource-relationships/datasource-relationship": {
+"count": 15,
+"files": 15,
+"sources": [
+"tableau"
+],
+"attrs": {
+"source": {
+"count": 15,
+"kinds": [
+"text"
+],
+"values": []
+},
+"target": {
+"count": 15,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {
+"column-mapping": 15
+},
+"order": [
+"column-mapping"
+],
+"strictly_after": {}
+},
+"datasource/aliases": {
+"count": 123,
+"files": 61,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"enabled": {
+"count": 123,
+"kinds": [
+"text"
+],
+"values": [
+"yes"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"datasource/column": {
+"count": 1805,
+"files": 77,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"caption": {
+"count": 665,
+"kinds": [
+"text"
+],
+"values": []
+},
+"datatype": {
+"count": 1805,
+"kinds": [
+"text"
+],
+"values": [
+"boolean",
+"date",
+"datetime",
+"integer",
+"real",
+"string",
+"table"
+]
+},
+"name": {
+"count": 1805,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"role": {
+"count": 1805,
+"kinds": [
+"text"
+],
+"values": [
+"dimension",
+"measure"
+]
+},
+"type": {
+"count": 1805,
+"kinds": [
+"text"
+],
+"values": [
+"nominal",
+"ordinal",
+"quantitative"
+]
+},
+"semantic-role": {
+"count": 195,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"hidden": {
+"count": 235,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"aggregation": {
+"count": 312,
+"kinds": [
+"text"
+],
+"values": [
+"Avg",
+"Count",
+"None",
+"Sum"
+]
+},
+"default-format": {
+"count": 596,
+"kinds": [
+"text"
+],
+"values": []
+},
+"aggregate-role-from": {
+"count": 31,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"user:auto-column": {
+"count": 43,
+"kinds": [
+"text"
+],
+"values": [
+"numrec"
+]
+},
+"param-domain-type": {
+"count": 109,
+"kinds": [
+"text"
+],
+"values": [
+"any",
+"list",
+"range"
+]
+},
+"value": {
+"count": 109,
+"kinds": [
+"number",
+"text"
+],
+"values": []
+},
+"datatype-customized": {
+"count": 45,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+}
+},
+"children": {
+"calculation": 623,
+"range": 91,
+"members": 16,
+"aliases": 83,
+"desc": 45,
+"semantic-values": 11,
+"server-captions": 31
+},
+"order": [
+"calculation",
+"range",
+"aliases",
+"desc",
+"server-captions",
+"members",
+"semantic-values"
+],
+"strictly_after": {
+"range": [
+"calculation"
+],
+"members": [
+"calculation"
+],
+"aliases": [
+"calculation"
+],
+"desc": [
+"aliases",
+"calculation"
+]
+}
+},
+"datasource/column-instance": {
+"count": 573,
+"files": 33,
+"sources": [
+"tableau"
+],
+"attrs": {
+"column": {
+"count": 573,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"derivation": {
+"count": 573,
+"kinds": [
+"text"
+],
+"values": [
+"Avg",
+"CountD",
+"Min",
+"Month",
+"Month-Trunc",
+"None",
+"Quarter",
+"Sum",
+"User",
+"Week-Trunc",
+"Year"
+]
+},
+"forecast-column-base": {
+"count": 16,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"forecast-column-type": {
+"count": 16,
+"kinds": [
+"text"
+],
+"values": [
+"forecast-indicator"
+]
+},
+"name": {
+"count": 573,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"pivot": {
+"count": 573,
+"kinds": [
+"text"
+],
+"values": [
+"key"
+]
+},
+"type": {
+"count": 573,
+"kinds": [
+"text"
+],
+"values": [
+"nominal",
+"ordinal",
+"quantitative"
+]
+}
+},
+"children": {
+"table-calc": 60
+},
+"order": [
+"table-calc"
+],
+"strictly_after": {}
+},
+"datasource/connection": {
+"count": 107,
+"files": 77,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"class": {
+"count": 107,
+"kinds": [
+"text"
+],
+"values": [
+"federated",
+"hyper"
+]
+},
+"access_mode": {
+"count": 10,
+"kinds": [
+"text"
+],
+"values": [
+"readonly"
+]
+},
+"dbname": {
+"count": 10,
+"kinds": [
+"text"
+],
+"values": []
+},
+"default-settings": {
+"count": 10,
+"kinds": [
+"text"
+],
+"values": [
+"yes"
+]
+},
+"local-data": {
+"count": 10,
+"kinds": [
+"text"
+],
+"values": [
+"standard"
+]
+},
+"schema": {
+"count": 10,
+"kinds": [
+"text"
+],
+"values": [
+"public"
+]
+},
+"username": {
+"count": 10,
+"kinds": [
+"text"
+],
+"values": [
+"tableau_internal_user"
+]
+}
+},
+"children": {
+"named-connections": 97,
+"relation": 186,
+"cols": 44,
+"metadata-records": 97,
+"refresh": 1
+},
+"order": [
+"named-connections",
+"relation",
+"cols",
+"refresh",
+"metadata-records"
+],
+"strictly_after": {
+"relation": [
+"named-connections"
+],
+"cols": [
+"named-connections",
+"relation"
+],
+"metadata-records": [
+"cols",
+"named-connections",
+"refresh",
+"relation"
+],
+"refresh": [
+"named-connections",
+"relation"
+]
+}
+},
+"datasource/datasource-dependencies": {
+"count": 77,
+"files": 47,
+"sources": [
+"tableau"
+],
+"attrs": {
+"datasource": {
+"count": 77,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {
+"column": 153
+},
+"order": [
+"column"
+],
+"strictly_after": {}
+},
+"datasource/default-sorts": {
+"count": 16,
+"files": 16,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"manual-sort": 16
+},
+"order": [
+"manual-sort"
+],
+"strictly_after": {}
+},
+"datasource/document-format-change-manifest": {
+"count": 16,
+"files": 16,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"ObjectModelEncapsulateLegacy": 16,
+"ObjectModelTableType": 16,
+"SchemaViewerObjectModel": 16,
+"SortTagCleanup": 1
+},
+"order": [
+"ObjectModelEncapsulateLegacy",
+"ObjectModelTableType",
+"SchemaViewerObjectModel",
+"SortTagCleanup"
+],
+"strictly_after": {
+"ObjectModelTableType": [
+"ObjectModelEncapsulateLegacy"
+],
+"SchemaViewerObjectModel": [
+"ObjectModelEncapsulateLegacy",
+"ObjectModelTableType"
+],
+"SortTagCleanup": [
+"ObjectModelEncapsulateLegacy",
+"ObjectModelTableType",
+"SchemaViewerObjectModel"
+]
+}
+},
+"datasource/drill-paths": {
+"count": 34,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"drill-path": 65
+},
+"order": [
+"drill-path"
+],
+"strictly_after": {}
+},
+"datasource/extract": {
+"count": 3,
+"files": 3,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"count": {
+"count": 3,
+"kinds": [
+"number"
+],
+"values": [
+"-1"
+]
+},
+"enabled": {
+"count": 3,
+"kinds": [
+"bool"
+],
+"values": [
+"false",
+"true"
+]
+},
+"units": {
+"count": 3,
+"kinds": [
+"text"
+],
+"values": [
+"records"
+]
+},
+"user-specific": {
+"count": 1,
+"kinds": [
+"bool"
+],
+"values": [
+"false"
+]
+},
+"object-id": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {
+"connection": 3
+},
+"order": [
+"connection"
+],
+"strictly_after": {}
+},
+"datasource/filter": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {
+"class": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": [
+"categorical"
+]
+},
+"column": {
+"count": 1,
+"kinds": [
+"ref"
+],
+"values": []
+}
+},
+"children": {
+"groupfilter": 1
+},
+"order": [
+"groupfilter"
+],
+"strictly_after": {}
+},
+"datasource/folder": {
+"count": 126,
+"files": 32,
+"sources": [
+"tableau"
+],
+"attrs": {
+"name": {
+"count": 126,
+"kinds": [
+"text"
+],
+"values": []
+},
+"role": {
+"count": 126,
+"kinds": [
+"text"
+],
+"values": [
+"dimensions",
+"measures"
+]
+}
+},
+"children": {
+"folder-item": 730
+},
+"order": [
+"folder-item"
+],
+"strictly_after": {}
+},
+"datasource/folders-common": {
+"count": 18,
+"files": 18,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"folder": 64
+},
+"order": [
+"folder"
+],
+"strictly_after": {}
+},
+"datasource/group": {
+"count": 546,
+"files": 49,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"name": {
+"count": 546,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"name-style": {
+"count": 546,
+"kinds": [
+"text"
+],
+"values": [
+"unqualified"
+]
+},
+"user:ui-builder": {
+"count": 18,
+"kinds": [
+"text"
+],
+"values": []
+},
+"hidden": {
+"count": 526,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"user:auto-column": {
+"count": 528,
+"kinds": [
+"text"
+],
+"values": [
+"sheet_link"
+]
+},
+"caption": {
+"count": 498,
+"kinds": [
+"text"
+],
+"values": []
+},
+"user:ui-vit-column": {
+"count": 30,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+}
+},
+"children": {
+"groupfilter": 546
+},
+"order": [
+"groupfilter"
+],
+"strictly_after": {}
+},
+"datasource/layout": {
+"count": 107,
+"files": 77,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"dim-percentage": {
+"count": 103,
+"kinds": [
+"number"
+],
+"values": [
+"0.311912",
+"0.313235",
+"0.5"
+]
+},
+"measure-percentage": {
+"count": 103,
+"kinds": [
+"number"
+],
+"values": [
+"0.4",
+"0.435294",
+"0.443574"
+]
+},
+"dim-ordering": {
+"count": 107,
+"kinds": [
+"text"
+],
+"values": [
+"alphabetic"
+]
+},
+"measure-ordering": {
+"count": 107,
+"kinds": [
+"text"
+],
+"values": [
+"alphabetic"
+]
+},
+"show-structure": {
+"count": 107,
+"kinds": [
+"bool"
+],
+"values": [
+"false",
+"true"
+]
+},
+"parameter-percentage": {
+"count": 47,
+"kinds": [
+"number"
+],
+"values": [
+"0.047817",
+"0.172549",
+"0.244514",
+"0.251471",
+"0.309192"
+]
+},
+"common-percentage": {
+"count": 31,
+"kinds": [
+"number"
+],
+"values": [
+"0.690808",
+"0.827451",
+"0.952183"
+]
+},
+"user-set-layout-v2": {
+"count": 31,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"show-hidden-fields": {
+"count": 1,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"datasource/object-graph": {
+"count": 80,
+"files": 50,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"objects": 80,
+"relationships": 31
+},
+"order": [
+"objects",
+"relationships"
+],
+"strictly_after": {
+"relationships": [
+"objects"
+]
+}
+},
+"datasource/semantic-values": {
+"count": 94,
+"files": 64,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"semantic-value": 124
+},
+"order": [
+"semantic-value"
+],
+"strictly_after": {}
+},
+"datasource/style": {
+"count": 48,
+"files": 33,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"style-rule": 48
+},
+"order": [
+"style-rule"
+],
+"strictly_after": {}
+},
+"datasources/datasource": {
+"count": 871,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"hasconnection": {
+"count": 32,
+"kinds": [
+"bool"
+],
+"values": [
+"false"
+]
+},
+"inline": {
+"count": 97,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"name": {
+"count": 871,
+"kinds": [
+"text"
+],
+"values": []
+},
+"version": {
+"count": 97,
+"kinds": [
+"number"
+],
+"values": []
+},
+"caption": {
+"count": 731,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {
+"aliases": 97,
+"column": 1350,
+"connection": 65,
+"layout": 65,
+"semantic-values": 62,
+"object-graph": 64,
+"column-instance": 572,
+"style": 48,
+"datasource-dependencies": 61,
+"group": 530,
+"drill-paths": 18,
+"default-sorts": 15,
+"folder": 60,
+"folders-common": 17,
+"extract": 3,
+"filter": 1
+},
+"order": [
+"connection",
+"aliases",
+"column",
+"column-instance",
+"group",
+"folder",
+"drill-paths",
+"folders-common",
+"extract",
+"layout",
+"style",
+"semantic-values",
+"default-sorts",
+"datasource-dependencies",
+"filter",
+"object-graph"
+],
+"strictly_after": {
+"aliases": [
+"connection"
+],
+"column": [
+"aliases",
+"connection"
+],
+"layout": [
+"aliases",
+"column",
+"column-instance",
+"connection",
+"drill-paths",
+"extract",
+"folder",
+"folders-common",
+"group"
+],
+"semantic-values": [
+"aliases",
+"column",
+"column-instance",
+"connection",
+"drill-paths",
+"extract",
+"folder",
+"folders-common",
+"group",
+"layout",
+"style"
+],
+"object-graph": [
+"aliases",
+"column",
+"column-instance",
+"connection",
+"datasource-dependencies",
+"default-sorts",
+"drill-paths",
+"extract",
+"filter",
+"folder",
+"folders-common",
+"group",
+"layout",
+"semantic-values",
+"style"
+],
+"column-instance": [
+"aliases",
+"column",
+"connection"
+],
+"style": [
+"aliases",
+"column",
+"column-instance",
+"connection",
+"drill-paths",
+"extract",
+"folder",
+"folders-common",
+"group",
+"layout"
+],
+"datasource-dependencies": [
+"aliases",
+"column",
+"column-instance",
+"connection",
+"default-sorts",
+"drill-paths",
+"extract",
+"folder",
+"folders-common",
+"group",
+"layout",
+"semantic-values",
+"style"
+],
+"group": [
+"aliases",
+"column",
+"column-instance",
+"connection"
+],
+"drill-paths": [
+"aliases",
+"column",
+"column-instance",
+"connection",
+"group"
+],
+"default-sorts": [
+"aliases",
+"column",
+"column-instance",
+"connection",
+"drill-paths",
+"group",
+"layout",
+"semantic-values",
+"style"
+],
+"folder": [
+"aliases",
+"column",
+"column-instance",
+"connection",
+"group"
+],
+"folders-common": [
+"aliases",
+"column",
+"column-instance",
+"connection",
+"drill-paths",
+"folder",
+"group"
+],
+"extract": [
+"aliases",
+"column",
+"column-instance",
+"connection",
+"drill-paths",
+"folders-common",
+"group"
+],
+"filter": [
+"aliases",
+"column",
+"connection",
+"drill-paths",
+"folders-common",
+"group",
+"layout",
+"style"
+]
+}
+},
+"default-sorts/manual-sort": {
+"count": 16,
+"files": 16,
+"sources": [
+"tableau"
+],
+"attrs": {
+"column": {
+"count": 16,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"direction": {
+"count": 16,
+"kinds": [
+"text"
+],
+"values": [
+"ASC"
+]
+}
+},
+"children": {
+"dictionary": 16
+},
+"order": [
+"dictionary"
+],
+"strictly_after": {}
+},
+"desc/formatted-text": {
+"count": 180,
+"files": 15,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"run": 180
+},
+"order": [
+"run"
+],
+"strictly_after": {}
+},
+"device-preview/device": {
+"count": 150,
+"files": 30,
+"sources": [
+"tableau"
+],
+"attrs": {
+"is-portrait": {
+"count": 105,
+"kinds": [
+"bool"
+],
+"values": [
+"false",
+"true"
+]
+},
+"name": {
+"count": 120,
+"kinds": [
+"text"
+],
+"values": []
+},
+"type": {
+"count": 150,
+"kinds": [
+"text"
+],
+"values": [
+"Phone",
+"Tablet"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"devicelayout/layout-options": {
+"count": 150,
+"files": 30,
+"sources": [
+"tableau"
+],
+"attrs": {
+"export-center-horz": {
+"count": 15,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"export-center-vert": {
+"count": 15,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"export-orientation": {
+"count": 15,
+"kinds": [
+"text"
+],
+"values": [
+"landscape"
+]
+}
+},
+"children": {
+"title": 150
+},
+"order": [
+"title"
+],
+"strictly_after": {}
+},
+"devicelayout/size": {
+"count": 212,
+"files": 32,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"sizing-mode": {
+"count": 212,
+"kinds": [
+"text"
+],
+"values": [
+"automatic",
+"vscroll"
+]
+},
+"maxheight": {
+"count": 107,
+"kinds": [
+"number"
+],
+"values": []
+},
+"minheight": {
+"count": 107,
+"kinds": [
+"number"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"devicelayout/zones": {
+"count": 152,
+"files": 32,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"zone": 152
+},
+"order": [
+"zone"
+],
+"strictly_after": {}
+},
+"devicelayouts/devicelayout": {
+"count": 242,
+"files": 32,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"name": {
+"count": 242,
+"kinds": [
+"text"
+],
+"values": []
+},
+"auto-generated": {
+"count": 30,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+}
+},
+"children": {
+"size": 212,
+"layout-options": 150,
+"zones": 152
+},
+"order": [
+"layout-options",
+"size",
+"zones"
+],
+"strictly_after": {
+"size": [
+"layout-options"
+],
+"zones": [
+"layout-options",
+"size"
+]
+}
+},
+"dictionary/bucket": {
+"count": 1190,
+"files": 33,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/AccessibleZoneTabOrder": {
+"count": 30,
+"files": 30,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/AnimationOnByDefault": {
+"count": 34,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/AutoCreateAndUpdateDSDPhoneLayouts": {
+"count": 30,
+"files": 30,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/BasicButtonObject": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/BasicButtonObjectTextSupport": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/ExplainData_AuthorControls": {
+"count": 30,
+"files": 30,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/ExplainData_NullValueExplanation": {
+"count": 30,
+"files": 30,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/GroupAction": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/GroupActionAddRemove": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/MapboxVectorStylesAndLayers": {
+"count": 30,
+"files": 30,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/MarkAnimation": {
+"count": 34,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/NavigationAction": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/ObjectModelEncapsulateLegacy": {
+"count": 50,
+"files": 50,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/ObjectModelExtractV2": {
+"count": 1,
+"files": 1,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/ObjectModelTableType": {
+"count": 50,
+"files": 50,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/ParameterAction": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/ParameterActionClearSelection": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/SchemaViewerObjectModel": {
+"count": 50,
+"files": 50,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/SetMembershipControl": {
+"count": 31,
+"files": 31,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/SheetIdentifierTracking": {
+"count": 34,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/SortTagCleanup": {
+"count": 32,
+"files": 32,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/VConnDownstreamExtractsWithWarnings": {
+"count": 1,
+"files": 1,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/VizInTooltipHideWorksheet": {
+"count": 15,
+"files": 15,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/WindowsPersistSimpleIdentifiers": {
+"count": 34,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/WorksheetBackgroundTransparency": {
+"count": 15,
+"files": 15,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"document-format-change-manifest/ZoneFriendlyName": {
+"count": 15,
+"files": 15,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"drill-path/field": {
+"count": 265,
+"files": 32,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"drill-paths/drill-path": {
+"count": 65,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"name": {
+"count": 65,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {
+"field": 265
+},
+"order": [
+"field"
+],
+"strictly_after": {}
+},
+"edge/strip": {
+"count": 2064,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"size": {
+"count": 2064,
+"kinds": [
+"number"
+],
+"values": []
+}
+},
+"children": {
+"card": 3510
+},
+"order": [
+"card"
+],
+"strictly_after": {}
+},
+"edit-group-action/activation": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {
+"type": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": [
+"on-select"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"edit-group-action/add-or-remove-marks": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {
+"value": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"edit-group-action/params": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {},
+"children": {
+"param": 2
+},
+"order": [
+"param"
+],
+"strictly_after": {}
+},
+"edit-group-action/source": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {
+"type": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": [
+"sheet"
+]
+},
+"worksheet": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": [
+"Barras"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"edit-parameter-action/activation": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {
+"type": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": [
+"on-select"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"edit-parameter-action/agg-type": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {
+"type": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": [
+"attr"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"edit-parameter-action/clear-option": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {
+"type": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": [
+"do-nothing"
+]
+},
+"value": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"edit-parameter-action/params": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {},
+"children": {
+"param": 2
+},
+"order": [
+"param"
+],
+"strictly_after": {}
+},
+"edit-parameter-action/source": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {
+"type": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": [
+"sheet"
+]
+},
+"worksheet": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": [
+"Barras"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"encoding/color-palette": {
+"count": 90,
+"files": 30,
+"sources": [
+"tableau"
+],
+"attrs": {
+"custom": {
+"count": 90,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"name": {
+"count": 90,
+"kinds": [
+"text"
+],
+"values": []
+},
+"type": {
+"count": 90,
+"kinds": [
+"text"
+],
+"values": [
+"ordered-diverging"
+]
+}
+},
+"children": {
+"color": 1260
+},
+"order": [
+"color"
+],
+"strictly_after": {}
+},
+"encoding/map": {
+"count": 1668,
+"files": 33,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"to": {
+"count": 1668,
+"kinds": [
+"color"
+],
+"values": []
+}
+},
+"children": {
+"bucket": 1668
+},
+"order": [
+"bucket"
+],
+"strictly_after": {}
+},
+"encodings/color": {
+"count": 507,
+"files": 33,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"column": {
+"count": 507,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"separate-domains": {
+"count": 15,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"encodings/geometry": {
+"count": 15,
+"files": 15,
+"sources": [
+"tableau"
+],
+"attrs": {
+"column": {
+"count": 15,
+"kinds": [
+"ref"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"encodings/lod": {
+"count": 773,
+"files": 33,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"column": {
+"count": 773,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"separate-domains": {
+"count": 35,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"encodings/size": {
+"count": 50,
+"files": 32,
+"sources": [
+"tableau"
+],
+"attrs": {
+"column": {
+"count": 50,
+"kinds": [
+"ref"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"encodings/text": {
+"count": 226,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"column": {
+"count": 226,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"separate-domains": {
+"count": 7,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"encodings/tooltip": {
+"count": 254,
+"files": 32,
+"sources": [
+"tableau"
+],
+"attrs": {
+"column": {
+"count": 254,
+"kinds": [
+"ref"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"explain-data/explanation-types": {
+"count": 30,
+"files": 30,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"explanation-type": 270
+},
+"order": [
+"explanation-type"
+],
+"strictly_after": {}
+},
+"explanation-types/explanation-type": {
+"count": 270,
+"files": 30,
+"sources": [
+"tableau"
+],
+"attrs": {
+"enabled": {
+"count": 270,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"type": {
+"count": 270,
+"kinds": [
+"text"
+],
+"values": [
+"ad-single-value",
+"aggregated-dimensions",
+"average-of-records",
+"distribution-of-records",
+"extreme-values",
+"null-value",
+"number-of-records",
+"tvd-single-value",
+"unvisualized-measures"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"expression/expression": {
+"count": 226,
+"files": 40,
+"sources": [
+"tableau"
+],
+"attrs": {
+"op": {
+"count": 226,
+"kinds": [
+"ref",
+"text"
+],
+"values": [
+"="
+]
+}
+},
+"children": {
+"expression": 68
+},
+"order": [
+"expression"
+],
+"strictly_after": {}
+},
+"extract/connection": {
+"count": 3,
+"files": 3,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"authentication": {
+"count": 2,
+"kinds": [
+"text"
+],
+"values": [
+"auth-none"
+]
+},
+"class": {
+"count": 3,
+"kinds": [
+"text"
+],
+"values": [
+"hyper"
+]
+},
+"db-format": {
+"count": 2,
+"kinds": [
+"text"
+],
+"values": [
+"dataengine"
+]
+},
+"default-settings": {
+"count": 3,
+"kinds": [
+"text"
+],
+"values": [
+"hyper",
+"yes"
+]
+},
+"sslmode": {
+"count": 3,
+"kinds": [
+"text"
+],
+"values": [
+""
+]
+},
+"username": {
+"count": 3,
+"kinds": [
+"text"
+],
+"values": [
+"tableau_internal_user"
+]
+},
+"dbname": {
+"count": 3,
+"kinds": [
+"text"
+],
+"values": []
+},
+"schema": {
+"count": 3,
+"kinds": [
+"text"
+],
+"values": [
+"Extract"
+]
+},
+"tablename": {
+"count": 3,
+"kinds": [
+"text"
+],
+"values": [
+"Extract"
+]
+},
+"update-time": {
+"count": 3,
+"kinds": [
+"text"
+],
+"values": [
+"10/12/2012 6:13:07 PM",
+"11/05/2026 01:19:15 AM"
+]
+},
+"author-locale": {
+"count": 2,
+"kinds": [
+"text"
+],
+"values": [
+"en_US"
+]
+},
+"access_mode": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": [
+"readonly"
+]
+}
+},
+"children": {
+"relation": 3,
+"calculations": 2,
+"refresh": 2,
+"metadata-records": 1
+},
+"order": [
+"relation",
+"calculations",
+"refresh",
+"metadata-records"
+],
+"strictly_after": {
+"calculations": [
+"relation"
+],
+"refresh": [
+"calculations",
+"relation"
+],
+"metadata-records": [
+"relation"
+]
+}
+},
+"filter/groupfilter": {
+"count": 1525,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"function": {
+"count": 1525,
+"kinds": [
+"text"
+],
+"values": [
+"crossjoin",
+"empty-level",
+"end",
+"except",
+"level-members",
+"member",
+"range",
+"union"
+]
+},
+"user:op": {
+"count": 122,
+"kinds": [
+"text"
+],
+"values": [
+"manual"
+]
+},
+"level": {
+"count": 1056,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"user:ui-enumeration": {
+"count": 1353,
+"kinds": [
+"text"
+],
+"values": [
+"all",
+"exclusive",
+"inclusive"
+]
+},
+"user:ui-marker": {
+"count": 1388,
+"kinds": [
+"text"
+],
+"values": [
+"end",
+"enumerate"
+]
+},
+"from": {
+"count": 15,
+"kinds": [
+"number"
+],
+"values": []
+},
+"to": {
+"count": 15,
+"kinds": [
+"number"
+],
+"values": []
+},
+"user:ui-domain": {
+"count": 275,
+"kinds": [
+"text"
+],
+"values": [
+"database",
+"relevant"
+]
+},
+"user:ui-action-filter": {
+"count": 166,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"member": {
+"count": 156,
+"kinds": [
+"number",
+"text",
+"ref"
+],
+"values": []
+},
+"user:ui-manual-selection": {
+"count": 19,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"user:ui-manual-selection-is-empty": {
+"count": 19,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"count": {
+"count": 16,
+"kinds": [
+"number"
+],
+"values": [
+"2",
+"5"
+]
+},
+"end": {
+"count": 16,
+"kinds": [
+"text"
+],
+"values": [
+"top"
+]
+},
+"units": {
+"count": 16,
+"kinds": [
+"text"
+],
+"values": [
+"records"
+]
+},
+"user:ui-top-by-field": {
+"count": 16,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"user:ui-manual-selection-all-when-empty": {
+"count": 4,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+}
+},
+"children": {
+"groupfilter": 1248
+},
+"order": [
+"groupfilter"
+],
+"strictly_after": {}
+},
+"filter/max": {
+"count": 256,
+"files": 31,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"filter/min": {
+"count": 265,
+"files": 33,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"flipboard/story-points": {
+"count": 16,
+"files": 16,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"story-point": 92
+},
+"order": [
+"story-point"
+],
+"strictly_after": {}
+},
+"folder/folder-item": {
+"count": 1098,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"name": {
+"count": 1098,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"type": {
+"count": 1098,
+"kinds": [
+"text"
+],
+"values": [
+"field"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"folders-common/folder": {
+"count": 64,
+"files": 18,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"name": {
+"count": 64,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {
+"folder-item": 368
+},
+"order": [
+"folder-item"
+],
+"strictly_after": {}
+},
+"format/formatted-text": {
+"count": 76,
+"files": 31,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"run": 76
+},
+"order": [
+"run"
+],
+"strictly_after": {}
+},
+"formatted-text/run": {
+"count": 7386,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"fontsize": {
+"count": 2879,
+"kinds": [
+"number"
+],
+"values": []
+},
+"fontcolor": {
+"count": 3246,
+"kinds": [
+"color"
+],
+"values": []
+},
+"fontname": {
+"count": 3067,
+"kinds": [
+"text"
+],
+"values": []
+},
+"bold": {
+"count": 390,
+"kinds": [
+"bool"
+],
+"values": [
+"false",
+"true"
+]
+},
+"italic": {
+"count": 15,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"indent": {
+"count": 45,
+"kinds": [
+"number"
+],
+"values": [
+"1170"
+]
+},
+"fontalignment": {
+"count": 256,
+"kinds": [
+"number"
+],
+"values": [
+"0",
+"1"
+]
+},
+"auto-url": {
+"count": 15,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"hyperlink": {
+"count": 15,
+"kinds": [
+"text"
+],
+"values": [
+"tabdoc:load-url url=&quot;http://data.worldbank.org/data-catalog/world-development-indicators&quot;"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"group/groupfilter": {
+"count": 546,
+"files": 49,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"count": {
+"count": 17,
+"kinds": [
+"ref",
+"number"
+],
+"values": [
+"1"
+]
+},
+"end": {
+"count": 17,
+"kinds": [
+"text"
+],
+"values": [
+"top"
+]
+},
+"function": {
+"count": 546,
+"kinds": [
+"text"
+],
+"values": [
+"crossjoin",
+"end",
+"union"
+]
+},
+"units": {
+"count": 17,
+"kinds": [
+"text"
+],
+"values": [
+"records"
+]
+},
+"user:ui-marker": {
+"count": 17,
+"kinds": [
+"text"
+],
+"values": [
+"end"
+]
+},
+"user:ui-top-by-field": {
+"count": 16,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"user:ui-enumeration": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": [
+"inclusive"
+]
+}
+},
+"children": {
+"groupfilter": 1221
+},
+"order": [
+"groupfilter"
+],
+"strictly_after": {}
+},
+"groupfilter/groupfilter": {
+"count": 2682,
+"files": 50,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"direction": {
+"count": 33,
+"kinds": [
+"text"
+],
+"values": [
+"DESC"
+]
+},
+"expression": {
+"count": 33,
+"kinds": [
+"text"
+],
+"values": [
+"AVG([BBP])",
+"AVG([BIP])",
+"AVG([GDP])",
+"AVG([PIB])",
+"AVG([PIL])",
+"SUM(Importe)",
+"SUM([Ganancia])",
+"SUM([Gewinn])",
+"SUM([Lucro])",
+"SUM([Profit])",
+"SUM([Profitto])",
+"SUM([Vinst])",
+"SUM([Winst])",
+"SUM([กำไร])",
+"SUM([利润])",
+"SUM([利潤])",
+"SUM([利益])",
+"SUM([수익])"
+]
+},
+"function": {
+"count": 2682,
+"kinds": [
+"text"
+],
+"values": [
+"level-members",
+"member",
+"order",
+"union"
+]
+},
+"user:ui-marker": {
+"count": 64,
+"kinds": [
+"text"
+],
+"values": [
+"enumerate",
+"order"
+]
+},
+"level": {
+"count": 2625,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"user:ui-enumeration": {
+"count": 33,
+"kinds": [
+"text"
+],
+"values": [
+"all"
+]
+},
+"member": {
+"count": 792,
+"kinds": [
+"ref",
+"text",
+"bool"
+],
+"values": []
+}
+},
+"children": {
+"groupfilter": 213
+},
+"order": [
+"groupfilter"
+],
+"strictly_after": {}
+},
+"highlight/bucket-selection": {
+"count": 58,
+"files": 29,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"highlight/color-one-way": {
+"count": 582,
+"files": 32,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"field": 2792
+},
+"order": [
+"field"
+],
+"strictly_after": {}
+},
+"layout-options/caption": {
+"count": 31,
+"files": 31,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"formatted-text": 31
+},
+"order": [
+"formatted-text"
+],
+"strictly_after": {}
+},
+"layout-options/title": {
+"count": 724,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"formatted-text": 724
+},
+"order": [
+"formatted-text"
+],
+"strictly_after": {}
+},
+"manual-sort/dictionary": {
+"count": 256,
+"files": 31,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"bucket": 1186
+},
+"order": [
+"bucket"
+],
+"strictly_after": {}
+},
+"map/bucket": {
+"count": 1668,
+"files": 33,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"mapsources/mapsource": {
+"count": 60,
+"files": 30,
+"sources": [
+"tableau"
+],
+"attrs": {
+"name": {
+"count": 60,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"members/member": {
+"count": 96,
+"files": 16,
+"sources": [
+"tableau"
+],
+"attrs": {
+"value": {
+"count": 96,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"metadata-record/aggregation": {
+"count": 1980,
+"files": 67,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"metadata-record/approx-count": {
+"count": 814,
+"files": 32,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"metadata-record/attributes": {
+"count": 972,
+"files": 36,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"attribute": 1422
+},
+"order": [
+"attribute"
+],
+"strictly_after": {}
+},
+"metadata-record/collation": {
+"count": 707,
+"files": 64,
+"sources": [
+"tableau"
+],
+"attrs": {
+"flag": {
+"count": 707,
+"kinds": [
+"number"
+],
+"values": [
+"0",
+"1"
+]
+},
+"name": {
+"count": 707,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"metadata-record/contains-null": {
+"count": 1980,
+"files": 67,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"metadata-record/family": {
+"count": 419,
+"files": 16,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"metadata-record/local-name": {
+"count": 1852,
+"files": 67,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"metadata-record/local-type": {
+"count": 1852,
+"files": 67,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"metadata-record/object-id": {
+"count": 1426,
+"files": 50,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"metadata-record/ordinal": {
+"count": 1852,
+"files": 67,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"metadata-record/parent-name": {
+"count": 1980,
+"files": 67,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"metadata-record/precision": {
+"count": 93,
+"files": 31,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"metadata-record/remote-alias": {
+"count": 1980,
+"files": 67,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"metadata-record/remote-name": {
+"count": 1980,
+"files": 67,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"metadata-record/remote-type": {
+"count": 1980,
+"files": 67,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"metadata-record/scale": {
+"count": 73,
+"files": 17,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"metadata-record/width": {
+"count": 73,
+"files": 17,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"metadata-records/metadata-record": {
+"count": 1980,
+"files": 67,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"class": {
+"count": 1980,
+"kinds": [
+"text"
+],
+"values": [
+"capability",
+"column"
+]
+}
+},
+"children": {
+"remote-name": 1980,
+"remote-type": 1980,
+"parent-name": 1980,
+"remote-alias": 1980,
+"aggregation": 1980,
+"contains-null": 1980,
+"attributes": 972,
+"local-name": 1852,
+"ordinal": 1852,
+"local-type": 1852,
+"object-id": 1426,
+"collation": 707,
+"precision": 93,
+"approx-count": 814,
+"scale": 73,
+"width": 73,
+"family": 419
+},
+"order": [
+"remote-name",
+"remote-type",
+"local-name",
+"parent-name",
+"remote-alias",
+"ordinal",
+"family",
+"local-type",
+"aggregation",
+"approx-count",
+"precision",
+"scale",
+"width",
+"contains-null",
+"collation",
+"attributes",
+"object-id"
+],
+"strictly_after": {
+"remote-type": [
+"remote-name"
+],
+"parent-name": [
+"local-name",
+"remote-name",
+"remote-type"
+],
+"remote-alias": [
+"local-name",
+"parent-name",
+"remote-name",
+"remote-type"
+],
+"aggregation": [
+"family",
+"local-name",
+"local-type",
+"ordinal",
+"parent-name",
+"remote-alias",
+"remote-name",
+"remote-type"
+],
+"contains-null": [
+"aggregation",
+"approx-count",
+"family",
+"local-name",
+"local-type",
+"ordinal",
+"parent-name",
+"precision",
+"remote-alias",
+"remote-name",
+"remote-type",
+"scale",
+"width"
+],
+"attributes": [
+"aggregation",
+"collation",
+"contains-null",
+"local-name",
+"local-type",
+"ordinal",
+"parent-name",
+"precision",
+"remote-alias",
+"remote-name",
+"remote-type",
+"scale",
+"width"
+],
+"local-name": [
+"remote-name",
+"remote-type"
+],
+"ordinal": [
+"local-name",
+"parent-name",
+"remote-alias",
+"remote-name",
+"remote-type"
+],
+"local-type": [
+"family",
+"local-name",
+"ordinal",
+"parent-name",
+"remote-alias",
+"remote-name",
+"remote-type"
+],
+"object-id": [
+"aggregation",
+"approx-count",
+"attributes",
+"collation",
+"contains-null",
+"family",
+"local-name",
+"local-type",
+"ordinal",
+"parent-name",
+"precision",
+"remote-alias",
+"remote-name",
+"remote-type",
+"scale",
+"width"
+],
+"collation": [
+"aggregation",
+"approx-count",
+"contains-null",
+"family",
+"local-name",
+"local-type",
+"ordinal",
+"parent-name",
+"remote-alias",
+"remote-name",
+"remote-type",
+"scale",
+"width"
+],
+"precision": [
+"aggregation",
+"local-name",
+"local-type",
+"ordinal",
+"parent-name",
+"remote-alias",
+"remote-name",
+"remote-type"
+],
+"approx-count": [
+"aggregation",
+"family",
+"local-name",
+"local-type",
+"ordinal",
+"parent-name",
+"remote-alias",
+"remote-name",
+"remote-type"
+],
+"scale": [
+"aggregation",
+"approx-count",
+"local-name",
+"local-type",
+"ordinal",
+"parent-name",
+"remote-alias",
+"remote-name",
+"remote-type"
+],
+"width": [
+"aggregation",
+"approx-count",
+"local-name",
+"local-type",
+"ordinal",
+"parent-name",
+"remote-alias",
+"remote-name",
+"remote-type",
+"scale"
+],
+"family": [
+"local-name",
+"ordinal",
+"parent-name",
+"remote-alias",
+"remote-name",
+"remote-type"
+]
+}
+},
+"named-connection/connection": {
+"count": 97,
+"files": 67,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"class": {
+"count": 97,
+"kinds": [
+"text"
+],
+"values": [
+"excel-direct",
+"hyper",
+"textscan"
+]
+},
+"cleaning": {
+"count": 48,
+"kinds": [
+"text"
+],
+"values": [
+"no"
+]
+},
+"compat": {
+"count": 48,
+"kinds": [
+"text"
+],
+"values": [
+"no"
+]
+},
+"dataRefreshTime": {
+"count": 48,
+"kinds": [
+"text"
+],
+"values": [
+""
+]
+},
+"filename": {
+"count": 66,
+"kinds": [
+"text"
+],
+"values": []
+},
+"interpretationMode": {
+"count": 48,
+"kinds": [
+"number"
+],
+"values": [
+"0"
+]
+},
+"password": {
+"count": 64,
+"kinds": [
+"text"
+],
+"values": [
+""
+]
+},
+"server": {
+"count": 64,
+"kinds": [
+"text"
+],
+"values": []
+},
+"validate": {
+"count": 48,
+"kinds": [
+"text"
+],
+"values": [
+"no"
+]
+},
+"authentication": {
+"count": 31,
+"kinds": [
+"text"
+],
+"values": [
+"auth-none"
+]
+},
+"author-locale": {
+"count": 31,
+"kinds": [
+"text"
+],
+"values": [
+"de_DE",
+"en_GB",
+"en_US",
+"es_ES",
+"fr_FR",
+"it_IT",
+"ja_JP",
+"ko_KR",
+"nl_NL",
+"pt_BR",
+"zh_CN",
+"zh_TW"
+]
+},
+"dbname": {
+"count": 31,
+"kinds": [
+"text"
+],
+"values": []
+},
+"default-settings": {
+"count": 31,
+"kinds": [
+"text"
+],
+"values": [
+"yes"
+]
+},
+"sslmode": {
+"count": 31,
+"kinds": [
+"text"
+],
+"values": [
+""
+]
+},
+"username": {
+"count": 31,
+"kinds": [
+"text"
+],
+"values": [
+"tableau_internal_user"
+]
+},
+"directory": {
+"count": 18,
+"kinds": [
+"text"
+],
+"values": []
+},
+"port": {
+"count": 15,
+"kinds": [
+"text"
+],
+"values": [
+""
+]
+},
+"auto-extract": {
+"count": 2,
+"kinds": [
+"text"
+],
+"values": [
+"yes"
+]
+},
+"character-set": {
+"count": 2,
+"kinds": [
+"text"
+],
+"values": [
+"UTF-8"
+]
+},
+"driver": {
+"count": 2,
+"kinds": [
+"text"
+],
+"values": [
+""
+]
+},
+"force-character-set": {
+"count": 2,
+"kinds": [
+"text"
+],
+"values": [
+"no"
+]
+},
+"force-header": {
+"count": 2,
+"kinds": [
+"text"
+],
+"values": [
+"no"
+]
+},
+"force-separator": {
+"count": 2,
+"kinds": [
+"text"
+],
+"values": [
+"no"
+]
+},
+"header": {
+"count": 2,
+"kinds": [
+"text"
+],
+"values": [
+"yes"
+]
+},
+"separator": {
+"count": 2,
+"kinds": [
+"text"
+],
+"values": [
+"|"
+]
+},
+"text-qualifier": {
+"count": 2,
+"kinds": [
+"text"
+],
+"values": [
+"\""
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"named-connections/named-connection": {
+"count": 97,
+"files": 67,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"caption": {
+"count": 94,
+"kinds": [
+"text"
+],
+"values": []
+},
+"name": {
+"count": 97,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {
+"connection": 97
+},
+"order": [
+"connection"
+],
+"strictly_after": {}
+},
+"object-graph/objects": {
+"count": 80,
+"files": 50,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"object": 142
+},
+"order": [
+"object"
+],
+"strictly_after": {}
+},
+"object-graph/relationships": {
+"count": 31,
+"files": 31,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"relationship": 62
+},
+"order": [
+"relationship"
+],
+"strictly_after": {}
+},
+"object/properties": {
+"count": 144,
+"files": 50,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"context": {
+"count": 144,
+"kinds": [
+"text"
+],
+"values": [
+"",
+"extract"
+]
+}
+},
+"children": {
+"relation": 144
+},
+"order": [
+"relation"
+],
+"strictly_after": {}
+},
+"objects/object": {
+"count": 142,
+"files": 50,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"caption": {
+"count": 142,
+"kinds": [
+"text"
+],
+"values": []
+},
+"id": {
+"count": 142,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {
+"properties": 144
+},
+"order": [
+"properties"
+],
+"strictly_after": {}
+},
+"pages/column": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"pane/customized-label": {
+"count": 77,
+"files": 31,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"formatted-text": 77
+},
+"order": [
+"formatted-text"
+],
+"strictly_after": {}
+},
+"pane/customized-tooltip": {
+"count": 507,
+"files": 33,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"show-buttons": {
+"count": 2,
+"kinds": [
+"bool"
+],
+"values": [
+"false"
+]
+}
+},
+"children": {
+"formatted-text": 507
+},
+"order": [
+"formatted-text"
+],
+"strictly_after": {}
+},
+"pane/encodings": {
+"count": 592,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"color": 507,
+"lod": 773,
+"tooltip": 254,
+"size": 50,
+"text": 226,
+"geometry": 15
+},
+"order": [
+"lod",
+"color",
+"size",
+"tooltip",
+"text",
+"geometry"
+],
+"strictly_after": {
+"tooltip": [
+"size"
+],
+"size": [
+"color"
+],
+"text": [
+"size"
+],
+"geometry": [
+"color",
+"lod"
+]
+}
+},
+"pane/mark": {
+"count": 602,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"class": {
+"count": 602,
+"kinds": [
+"text"
+],
+"values": [
+"Area",
+"Automatic",
+"Bar",
+"Circle",
+"Line",
+"Multipolygon",
+"Square",
+"Text"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"pane/mark-sizing": {
+"count": 90,
+"files": 30,
+"sources": [
+"tableau"
+],
+"attrs": {
+"mark-sizing-setting": {
+"count": 90,
+"kinds": [
+"text"
+],
+"values": [
+"marks-scaling-off"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"pane/reference-line": {
+"count": 121,
+"files": 31,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"axis-column": {
+"count": 121,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"enable-instant-analytics": {
+"count": 121,
+"kinds": [
+"bool"
+],
+"values": [
+"false",
+"true"
+]
+},
+"formula": {
+"count": 121,
+"kinds": [
+"text"
+],
+"values": []
+},
+"id": {
+"count": 121,
+"kinds": [
+"text"
+],
+"values": []
+},
+"label": {
+"count": 30,
+"kinds": [
+"text"
+],
+"values": [
+"New quota <Value>",
+"OTE <Value>"
+]
+},
+"label-type": {
+"count": 121,
+"kinds": [
+"text"
+],
+"values": [
+"automatic",
+"custom",
+"none"
+]
+},
+"scope": {
+"count": 121,
+"kinds": [
+"text"
+],
+"values": [
+"per-cell",
+"per-pane",
+"per-table"
+]
+},
+"value-column": {
+"count": 121,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"z-order": {
+"count": 121,
+"kinds": [
+"number"
+],
+"values": [
+"1",
+"2"
+]
+},
+"probability": {
+"count": 90,
+"kinds": [
+"number"
+],
+"values": [
+"95"
+]
+},
+"fill-above": {
+"count": 45,
+"kinds": [
+"bool"
+],
+"values": [
+"false",
+"true"
+]
+},
+"fill-below": {
+"count": 45,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"percentage-bands": {
+"count": 30,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"symmetric": {
+"count": 45,
+"kinds": [
+"bool"
+],
+"values": [
+"false"
+]
+},
+"tile-count": {
+"count": 15,
+"kinds": [
+"number"
+],
+"values": [
+"4"
+]
+}
+},
+"children": {
+"reference-line-value": 60
+},
+"order": [
+"reference-line-value"
+],
+"strictly_after": {}
+},
+"pane/style": {
+"count": 506,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"style-rule": 634
+},
+"order": [
+"style-rule"
+],
+"strictly_after": {}
+},
+"pane/trendline": {
+"count": 18,
+"files": 16,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"enable-confidence-bands": {
+"count": 18,
+"kinds": [
+"bool"
+],
+"values": [
+"false"
+]
+},
+"enable-instant-analytics": {
+"count": 18,
+"kinds": [
+"bool"
+],
+"values": [
+"false"
+]
+},
+"enabled": {
+"count": 18,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"exclude-color": {
+"count": 18,
+"kinds": [
+"bool"
+],
+"values": [
+"false",
+"true"
+]
+},
+"exclude-intercept": {
+"count": 18,
+"kinds": [
+"bool"
+],
+"values": [
+"false"
+]
+},
+"fit": {
+"count": 18,
+"kinds": [
+"text"
+],
+"values": [
+"linear",
+"log"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"pane/view": {
+"count": 602,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"breakdown": 602
+},
+"order": [
+"breakdown"
+],
+"strictly_after": {}
+},
+"panes/pane": {
+"count": 602,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"selection-relaxation-option": {
+"count": 599,
+"kinds": [
+"text"
+],
+"values": []
+},
+"id": {
+"count": 214,
+"kinds": [
+"number"
+],
+"values": []
+},
+"x-axis-name": {
+"count": 30,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"y-axis-name": {
+"count": 62,
+"kinds": [
+"ref"
+],
+"values": []
+}
+},
+"children": {
+"view": 602,
+"mark": 602,
+"encodings": 592,
+"reference-line": 121,
+"customized-tooltip": 507,
+"style": 506,
+"mark-sizing": 90,
+"customized-label": 77,
+"trendline": 18
+},
+"order": [
+"view",
+"mark",
+"mark-sizing",
+"encodings",
+"trendline",
+"reference-line",
+"customized-tooltip",
+"customized-label",
+"style"
+],
+"strictly_after": {
+"mark": [
+"view"
+],
+"encodings": [
+"mark",
+"mark-sizing",
+"view"
+],
+"reference-line": [
+"encodings",
+"mark",
+"mark-sizing",
+"trendline",
+"view"
+],
+"customized-tooltip": [
+"encodings",
+"mark",
+"mark-sizing",
+"reference-line",
+"trendline",
+"view"
+],
+"style": [
+"customized-label",
+"customized-tooltip",
+"encodings",
+"mark",
+"mark-sizing",
+"reference-line",
+"trendline",
+"view"
+],
+"mark-sizing": [
+"mark",
+"view"
+],
+"customized-label": [
+"customized-tooltip",
+"encodings",
+"mark",
+"mark-sizing",
+"view"
+],
+"trendline": [
+"encodings",
+"mark",
+"mark-sizing",
+"view"
+]
+}
+},
+"params/param": {
+"count": 4,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {
+"name": {
+"count": 4,
+"kinds": [
+"text"
+],
+"values": []
+},
+"value": {
+"count": 4,
+"kinds": [
+"text",
+"ref"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"preferences/preference": {
+"count": 130,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"name": {
+"count": 130,
+"kinds": [
+"text"
+],
+"values": []
+},
+"value": {
+"count": 130,
+"kinds": [
+"number"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"properties/relation": {
+"count": 144,
+"files": 50,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"connection": {
+"count": 142,
+"kinds": [
+"text"
+],
+"values": [
+"PerfDataleaf",
+"Sample - APAC Storeleaf",
+"excel-direct.0lad5au144tqkt16qnaz70tec6fn",
+"excel-direct.0ozsbj20cdelf51evvdk71kugqg0",
+"excel-direct.1sj83no0zjgqcn11x69nn1f7rbzm",
+"excel-direct.5r83l70kg86s2ogk3vdoxno35zcw",
+"excel-direct.qh288l2jmtmbrqh8fqkqwa9slcoh",
+"hyper.0o92d8802zffo515xhl160aulmpt",
+"textscan.0bdqfzt0f0ynar1egmoso1fglwo7",
+"textscan.7ssvsq956e7paikmuopn3yd7uq0z"
+]
+},
+"name": {
+"count": 144,
+"kinds": [
+"text"
+],
+"values": []
+},
+"table": {
+"count": 144,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"type": {
+"count": 144,
+"kinds": [
+"text"
+],
+"values": [
+"table"
+]
+}
+},
+"children": {
+"columns": 127
+},
+"order": [
+"columns"
+],
+"strictly_after": {}
+},
+"reference-line/reference-line-value": {
+"count": 60,
+"files": 15,
+"sources": [
+"tableau"
+],
+"attrs": {
+"percentage": {
+"count": 60,
+"kinds": [
+"number"
+],
+"values": [
+"100",
+"50",
+"75",
+"80"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"refresh/refresh-event": {
+"count": 2,
+"files": 2,
+"sources": [
+"tableau"
+],
+"attrs": {
+"add-from-file-path": {
+"count": 2,
+"kinds": [
+"text"
+],
+"values": [
+""
+]
+},
+"increment-value": {
+"count": 2,
+"kinds": [
+"text"
+],
+"values": [
+"%null%"
+]
+},
+"refresh-type": {
+"count": 2,
+"kinds": [
+"text"
+],
+"values": [
+"create"
+]
+},
+"rows-inserted": {
+"count": 2,
+"kinds": [
+"number"
+],
+"values": [
+"2205"
+]
+},
+"timestamp-start": {
+"count": 2,
+"kinds": [
+"text"
+],
+"values": [
+"2012-10-12 18:13:07.504"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"relation/clause": {
+"count": 17,
+"files": 9,
+"sources": [
+"tableau"
+],
+"attrs": {
+"type": {
+"count": 17,
+"kinds": [
+"text"
+],
+"values": [
+"join"
+]
+}
+},
+"children": {
+"expression": 17
+},
+"order": [
+"expression"
+],
+"strictly_after": {}
+},
+"relation/columns": {
+"count": 319,
+"files": 36,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"gridOrigin": {
+"count": 268,
+"kinds": [
+"text"
+],
+"values": [
+"A1:AC901:no:A1:AC901:0",
+"A1:B5:no:A1:B5:0",
+"A1:B787:no:A1:B787:0",
+"A1:B801:no:A1:B801:0",
+"A1:D4604:no:A1:D4604:0",
+"A1:T10934:no:A1:T10934:0",
+"A1:U10195:no:A1:U10195:0",
+"A1:U9995:no:A1:U9995:0"
+]
+},
+"header": {
+"count": 319,
+"kinds": [
+"text"
+],
+"values": [
+"yes"
+]
+},
+"outcome": {
+"count": 268,
+"kinds": [
+"number"
+],
+"values": [
+"2",
+"6"
+]
+},
+"character-set": {
+"count": 51,
+"kinds": [
+"text"
+],
+"values": [
+"UTF-8"
+]
+},
+"locale": {
+"count": 51,
+"kinds": [
+"text"
+],
+"values": [
+"en_US"
+]
+},
+"separator": {
+"count": 51,
+"kinds": [
+"text"
+],
+"values": [
+",",
+"|"
+]
+},
+"text-qualifier": {
+"count": 3,
+"kinds": [
+"text"
+],
+"values": [
+"\""
+]
+}
+},
+"children": {
+"column": 2858
+},
+"order": [
+"column"
+],
+"strictly_after": {}
+},
+"relation/relation": {
+"count": 127,
+"files": 40,
+"sources": [
+"tableau"
+],
+"attrs": {
+"connection": {
+"count": 93,
+"kinds": [
+"text"
+],
+"values": [
+"Sample - APAC Storeleaf",
+"excel-direct.0lad5au144tqkt16qnaz70tec6fn",
+"excel-direct.0ozsbj20cdelf51evvdk71kugqg0"
+]
+},
+"name": {
+"count": 119,
+"kinds": [
+"text"
+],
+"values": []
+},
+"table": {
+"count": 119,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"type": {
+"count": 127,
+"kinds": [
+"text"
+],
+"values": [
+"join",
+"table"
+]
+},
+"join": {
+"count": 8,
+"kinds": [
+"text"
+],
+"values": [
+"inner"
+]
+}
+},
+"children": {
+"columns": 93,
+"clause": 8,
+"relation": 16
+},
+"order": [
+"columns",
+"clause",
+"relation"
+],
+"strictly_after": {
+"relation": [
+"clause"
+]
+}
+},
+"relationship/expression": {
+"count": 62,
+"files": 31,
+"sources": [
+"tableau"
+],
+"attrs": {
+"op": {
+"count": 62,
+"kinds": [
+"text"
+],
+"values": [
+"="
+]
+}
+},
+"children": {
+"expression": 124
+},
+"order": [
+"expression"
+],
+"strictly_after": {}
+},
+"relationship/first-end-point": {
+"count": 62,
+"files": 31,
+"sources": [
+"tableau"
+],
+"attrs": {
+"object-id": {
+"count": 62,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"relationship/second-end-point": {
+"count": 62,
+"files": 31,
+"sources": [
+"tableau"
+],
+"attrs": {
+"object-id": {
+"count": 62,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"relationships/relationship": {
+"count": 62,
+"files": 31,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"expression": 62,
+"first-end-point": 62,
+"second-end-point": 62
+},
+"order": [
+"expression",
+"first-end-point",
+"second-end-point"
+],
+"strictly_after": {
+"first-end-point": [
+"expression"
+],
+"second-end-point": [
+"expression",
+"first-end-point"
+]
+}
+},
+"semantic-values/semantic-value": {
+"count": 1591,
+"files": 64,
+"sources": [
+"tableau"
+],
+"attrs": {
+"key": {
+"count": 1591,
+"kinds": [
+"ref",
+"text"
+],
+"values": []
+},
+"value": {
+"count": 1591,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"server-captions/caption": {
+"count": 31,
+"files": 10,
+"sources": [
+"tableau"
+],
+"attrs": {
+"locale": {
+"count": 31,
+"kinds": [
+"text"
+],
+"values": [
+"en_US"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"slices/column": {
+"count": 1804,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"sort/dictionary": {
+"count": 2,
+"files": 2,
+"sources": [
+"validated"
+],
+"attrs": {},
+"children": {
+"bucket": 4
+},
+"order": [
+"bucket"
+],
+"strictly_after": {}
+},
+"source/exclude-sheet": {
+"count": 79,
+"files": 17,
+"sources": [
+"tableau"
+],
+"attrs": {
+"name": {
+"count": 79,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"story-point/capturedDeltas": {
+"count": 30,
+"files": 15,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"worksheet": 30
+},
+"order": [
+"worksheet"
+],
+"strictly_after": {}
+},
+"story-points/story-point": {
+"count": 92,
+"files": 16,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"caption": {
+"count": 92,
+"kinds": [
+"text"
+],
+"values": []
+},
+"captured-sheet": {
+"count": 92,
+"kinds": [
+"text"
+],
+"values": null
+},
+"id": {
+"count": 92,
+"kinds": [
+"number"
+],
+"values": []
+}
+},
+"children": {
+"capturedDeltas": 30
+},
+"order": [
+"capturedDeltas"
+],
+"strictly_after": {}
+},
+"strip/card": {
+"count": 3510,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"type": {
+"count": 3510,
+"kinds": [
+"text"
+],
+"values": [
+"caption",
+"color",
+"columns",
+"filter",
+"filters",
+"highlighter",
+"marks",
+"measures",
+"pages",
+"parameter",
+"rows",
+"size",
+"title"
+]
+},
+"param": {
+"count": 496,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"pane-specification-id": {
+"count": 339,
+"kinds": [
+"number"
+],
+"values": []
+},
+"mode": {
+"count": 107,
+"kinds": [
+"text"
+],
+"values": [
+"dropdown",
+"radiolist",
+"slider"
+]
+},
+"custom-title": {
+"count": 15,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"values": {
+"count": 17,
+"kinds": [
+"text"
+],
+"values": [
+"relevant"
+]
+},
+"show-domain": {
+"count": 16,
+"kinds": [
+"bool"
+],
+"values": [
+"false"
+]
+},
+"show-null-ctrls": {
+"count": 18,
+"kinds": [
+"bool"
+],
+"values": [
+"false"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"style-rule/encoding": {
+"count": 508,
+"files": 33,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"attr": {
+"count": 508,
+"kinds": [
+"text"
+],
+"values": [
+"color",
+"size-bar",
+"space"
+]
+},
+"field": {
+"count": 508,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"type": {
+"count": 508,
+"kinds": [
+"text"
+],
+"values": [
+"centersize",
+"custom-interpolated",
+"interpolated",
+"palette",
+"space"
+]
+},
+"max": {
+"count": 150,
+"kinds": [
+"number"
+],
+"values": []
+},
+"min": {
+"count": 150,
+"kinds": [
+"number"
+],
+"values": []
+},
+"palette": {
+"count": 150,
+"kinds": [
+"text"
+],
+"values": [
+"blue_10_0",
+"orange_blue_diverging_10_0",
+"red_black_10_0",
+"tableau-orange-blue"
+]
+},
+"center": {
+"count": 90,
+"kinds": [
+"number"
+],
+"values": [
+"0.0",
+"0.023",
+"0.029999999999999999",
+"0.059999999999999998",
+"68.0"
+]
+},
+"num-steps": {
+"count": 45,
+"kinds": [
+"number"
+],
+"values": [
+"2",
+"6"
+]
+},
+"class": {
+"count": 76,
+"kinds": [
+"number"
+],
+"values": [
+"0"
+]
+},
+"field-type": {
+"count": 91,
+"kinds": [
+"text"
+],
+"values": [
+"quantitative"
+]
+},
+"major-origin": {
+"count": 15,
+"kinds": [
+"text"
+],
+"values": [
+"#2014-09-28#"
+]
+},
+"major-spacing": {
+"count": 15,
+"kinds": [
+"number"
+],
+"values": [
+"1.0"
+]
+},
+"major-units": {
+"count": 15,
+"kinds": [
+"text"
+],
+"values": [
+"weeks"
+]
+},
+"scope": {
+"count": 76,
+"kinds": [
+"text"
+],
+"values": [
+"cols",
+"rows"
+]
+},
+"max-size": {
+"count": 15,
+"kinds": [
+"number"
+],
+"values": [
+"1"
+]
+},
+"min-size": {
+"count": 15,
+"kinds": [
+"number"
+],
+"values": [
+"0.005"
+]
+},
+"symmetric": {
+"count": 90,
+"kinds": [
+"bool"
+],
+"values": [
+"false"
+]
+},
+"reverse": {
+"count": 15,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"range-type": {
+"count": 45,
+"kinds": [
+"text"
+],
+"values": [
+"fixed",
+"uniform"
+]
+},
+"fold": {
+"count": 16,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"synchronized": {
+"count": 16,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+}
+},
+"children": {
+"map": 1668,
+"color-palette": 90
+},
+"order": [
+"map",
+"color-palette"
+],
+"strictly_after": {}
+},
+"style-rule/format": {
+"count": 9937,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"attr": {
+"count": 9937,
+"kinds": [
+"text"
+],
+"values": null
+},
+"value": {
+"count": 9937,
+"kinds": [
+"number",
+"text",
+"bool",
+"color"
+],
+"values": []
+},
+"class": {
+"count": 932,
+"kinds": [
+"number"
+],
+"values": [
+"0"
+]
+},
+"field": {
+"count": 3160,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"scope": {
+"count": 2593,
+"kinds": [
+"text"
+],
+"values": [
+"cols",
+"rows"
+]
+},
+"id": {
+"count": 1892,
+"kinds": [
+"text"
+],
+"values": []
+},
+"data-class": {
+"count": 210,
+"kinds": [
+"text"
+],
+"values": [
+"subtotal",
+"total"
+]
+}
+},
+"children": {
+"formatted-text": 76
+},
+"order": [
+"formatted-text"
+],
+"strictly_after": {}
+},
+"style/style-rule": {
+"count": 4193,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"element": {
+"count": 4193,
+"kinds": [
+"text"
+],
+"values": null
+}
+},
+"children": {
+"format": 9937,
+"encoding": 508
+},
+"order": [
+"format",
+"encoding"
+],
+"strictly_after": {}
+},
+"subtotals/column": {
+"count": 45,
+"files": 15,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"table-calc/address": {
+"count": 75,
+"files": 15,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"value": 75
+},
+"order": [
+"value"
+],
+"strictly_after": {}
+},
+"table/cols": {
+"count": 510,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"total": {
+"count": 15,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"table/forecast-specification": {
+"count": 15,
+"files": 15,
+"sources": [
+"tableau"
+],
+"attrs": {
+"auto-forecast-agg": {
+"count": 15,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"band-confidence-level": {
+"count": 15,
+"kinds": [
+"number"
+],
+"values": [
+"95.000000"
+]
+},
+"enabled": {
+"count": 15,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"fill-type": {
+"count": 15,
+"kinds": [
+"text"
+],
+"values": [
+"fill-zero"
+]
+},
+"ignore-last": {
+"count": 15,
+"kinds": [
+"number"
+],
+"values": [
+"1"
+]
+},
+"model-type": {
+"count": 15,
+"kinds": [
+"text"
+],
+"values": [
+"custom"
+]
+},
+"range-type": {
+"count": 15,
+"kinds": [
+"text"
+],
+"values": [
+"auto"
+]
+},
+"season-type": {
+"count": 15,
+"kinds": [
+"text"
+],
+"values": [
+"ets-additive"
+]
+},
+"show-prediction-bands": {
+"count": 15,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"trend-type": {
+"count": 15,
+"kinds": [
+"text"
+],
+"values": [
+"ets-additive"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"table/pages": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {},
+"children": {
+"column": 1
+},
+"order": [
+"column"
+],
+"strictly_after": {}
+},
+"table/panes": {
+"count": 510,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"pane": 602
+},
+"order": [
+"pane"
+],
+"strictly_after": {}
+},
+"table/rows": {
+"count": 510,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"total": {
+"count": 16,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"table/style": {
+"count": 510,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"style-rule": 3285
+},
+"order": [
+"style-rule"
+],
+"strictly_after": {}
+},
+"table/subtotals": {
+"count": 15,
+"files": 15,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"column": 45
+},
+"order": [
+"column"
+],
+"strictly_after": {}
+},
+"table/tooltip-style": {
+"count": 75,
+"files": 15,
+"sources": [
+"tableau"
+],
+"attrs": {
+"tooltip-mode": {
+"count": 75,
+"kinds": [
+"text"
+],
+"values": [
+"none"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"table/view": {
+"count": 510,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"datasources": 510,
+"datasource-dependencies": 633,
+"filter": 1805,
+"manual-sort": 240,
+"computed-sort": 189,
+"slices": 488,
+"aggregation": 510,
+"mapsources": 30,
+"sort": 11,
+"alphabetic-sort": 1
+},
+"order": [
+"datasources",
+"mapsources",
+"datasource-dependencies",
+"filter",
+"manual-sort",
+"computed-sort",
+"sort",
+"alphabetic-sort",
+"slices",
+"aggregation"
+],
+"strictly_after": {
+"datasource-dependencies": [
+"datasources",
+"mapsources"
+],
+"filter": [
+"datasource-dependencies",
+"datasources",
+"mapsources"
+],
+"manual-sort": [
+"datasource-dependencies",
+"datasources",
+"mapsources"
+],
+"computed-sort": [
+"datasource-dependencies",
+"datasources",
+"mapsources"
+],
+"slices": [
+"alphabetic-sort",
+"computed-sort",
+"datasource-dependencies",
+"datasources",
+"filter",
+"manual-sort",
+"mapsources",
+"sort"
+],
+"aggregation": [
+"alphabetic-sort",
+"computed-sort",
+"datasource-dependencies",
+"datasources",
+"filter",
+"manual-sort",
+"mapsources",
+"slices",
+"sort"
+],
+"mapsources": [
+"datasources"
+],
+"sort": [
+"datasource-dependencies",
+"datasources"
+],
+"alphabetic-sort": [
+"datasource-dependencies",
+"datasources",
+"filter"
+]
+}
+},
+"thumbnails/thumbnail": {
+"count": 255,
+"files": 31,
+"sources": [
+"tableau"
+],
+"attrs": {
+"height": {
+"count": 255,
+"kinds": [
+"number"
+],
+"values": []
+},
+"name": {
+"count": 255,
+"kinds": [
+"text"
+],
+"values": []
+},
+"width": {
+"count": 255,
+"kinds": [
+"number"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"title/formatted-text": {
+"count": 724,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"run": 1287
+},
+"order": [
+"run"
+],
+"strictly_after": {}
+},
+"view/aggregation": {
+"count": 510,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"value": {
+"count": 510,
+"kinds": [
+"bool"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"view/alphabetic-sort": {
+"count": 1,
+"files": 1,
+"sources": [
+"tableau"
+],
+"attrs": {
+"column": {
+"count": 1,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"direction": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": [
+"ASC"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"view/breakdown": {
+"count": 602,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"value": {
+"count": 602,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"view/computed-sort": {
+"count": 189,
+"files": 31,
+"sources": [
+"tableau"
+],
+"attrs": {
+"column": {
+"count": 189,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"direction": {
+"count": 189,
+"kinds": [
+"text"
+],
+"values": [
+"ASC",
+"DESC"
+]
+},
+"using": {
+"count": 189,
+"kinds": [
+"ref"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"view/datasource-dependencies": {
+"count": 633,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"datasource": {
+"count": 633,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {
+"column": 4273,
+"column-instance": 3834
+},
+"order": [
+"column",
+"column-instance"
+],
+"strictly_after": {}
+},
+"view/datasources": {
+"count": 510,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"datasource": 618
+},
+"order": [
+"datasource"
+],
+"strictly_after": {}
+},
+"view/filter": {
+"count": 1805,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"class": {
+"count": 1805,
+"kinds": [
+"text"
+],
+"values": [
+"categorical",
+"quantitative",
+"relative-date"
+]
+},
+"column": {
+"count": 1805,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"filter-group": {
+"count": 766,
+"kinds": [
+"number"
+],
+"values": [
+"10",
+"11",
+"12",
+"14",
+"18",
+"2",
+"3",
+"4",
+"5",
+"6",
+"7",
+"8",
+"9"
+]
+},
+"included-values": {
+"count": 310,
+"kinds": [
+"text"
+],
+"values": [
+"in-range",
+"in-range-or-null",
+"non-null"
+]
+},
+"context": {
+"count": 30,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"first-period": {
+"count": 1,
+"kinds": [
+"number"
+],
+"values": [
+"-1"
+]
+},
+"include-future": {
+"count": 1,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"include-null": {
+"count": 1,
+"kinds": [
+"bool"
+],
+"values": [
+"false"
+]
+},
+"last-period": {
+"count": 1,
+"kinds": [
+"number"
+],
+"values": [
+"0"
+]
+},
+"period-type": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": [
+"month"
+]
+}
+},
+"children": {
+"groupfilter": 1494,
+"min": 265,
+"max": 256
+},
+"order": [
+"groupfilter",
+"min",
+"max"
+],
+"strictly_after": {
+"max": [
+"min"
+]
+}
+},
+"view/manual-sort": {
+"count": 240,
+"files": 30,
+"sources": [
+"tableau"
+],
+"attrs": {
+"column": {
+"count": 240,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"direction": {
+"count": 240,
+"kinds": [
+"text"
+],
+"values": [
+"ASC"
+]
+}
+},
+"children": {
+"dictionary": 240
+},
+"order": [
+"dictionary"
+],
+"strictly_after": {}
+},
+"view/mapsources": {
+"count": 30,
+"files": 30,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"mapsource": 30
+},
+"order": [
+"mapsource"
+],
+"strictly_after": {}
+},
+"view/slices": {
+"count": 488,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"column": 1804
+},
+"order": [
+"column"
+],
+"strictly_after": {}
+},
+"view/sort": {
+"count": 11,
+"files": 4,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"class": {
+"count": 11,
+"kinds": [
+"text"
+],
+"values": [
+"alphabetic",
+"computed",
+"manual"
+]
+},
+"column": {
+"count": 11,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"direction": {
+"count": 11,
+"kinds": [
+"text"
+],
+"values": [
+"ASC",
+"DESC"
+]
+},
+"using": {
+"count": 8,
+"kinds": [
+"ref"
+],
+"values": []
+}
+},
+"children": {
+"dictionary": 2
+},
+"order": [
+"dictionary"
+],
+"strictly_after": {}
+},
+"viewpoint/default-map-tool-selection": {
+"count": 45,
+"files": 15,
+"sources": [
+"tableau"
+],
+"attrs": {
+"tool": {
+"count": 45,
+"kinds": [
+"number"
+],
+"values": [
+"2"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"viewpoint/floating-toolbar-visibility": {
+"count": 17,
+"files": 16,
+"sources": [
+"tableau"
+],
+"attrs": {
+"value": {
+"count": 17,
+"kinds": [
+"number"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"viewpoint/geo-search-visibility": {
+"count": 30,
+"files": 30,
+"sources": [
+"tableau"
+],
+"attrs": {
+"value": {
+"count": 30,
+"kinds": [
+"number"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"viewpoint/highlight": {
+"count": 640,
+"files": 32,
+"sources": [
+"tableau"
+],
+"attrs": {
+"field": {
+"count": 58,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"type": {
+"count": 14,
+"kinds": [
+"text"
+],
+"values": [
+"highlight"
+]
+}
+},
+"children": {
+"color-one-way": 582,
+"bucket-selection": 58
+},
+"order": [
+"color-one-way",
+"bucket-selection"
+],
+"strictly_after": {}
+},
+"viewpoint/map-navigation": {
+"count": 15,
+"files": 15,
+"sources": [
+"tableau"
+],
+"attrs": {
+"value": {
+"count": 15,
+"kinds": [
+"number"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"viewpoint/zoom": {
+"count": 406,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"type": {
+"count": 406,
+"kinds": [
+"text"
+],
+"values": [
+"entire-view",
+"fit-height",
+"fit-width"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"viewpoints/viewpoint": {
+"count": 369,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"name": {
+"count": 369,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {
+"zoom": 301,
+"highlight": 148,
+"geo-search-visibility": 15,
+"floating-toolbar-visibility": 1
+},
+"order": [
+"zoom",
+"highlight",
+"geo-search-visibility",
+"floating-toolbar-visibility"
+],
+"strictly_after": {
+"highlight": [
+"zoom"
+],
+"geo-search-visibility": [
+"zoom"
+]
+}
+},
+"window/active": {
+"count": 144,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"id": {
+"count": 144,
+"kinds": [
+"number"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"window/cards": {
+"count": 510,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"edge": 1241
+},
+"order": [
+"edge"
+],
+"strictly_after": {}
+},
+"window/device-preview": {
+"count": 120,
+"files": 30,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"device": 150
+},
+"order": [
+"device"
+],
+"strictly_after": {}
+},
+"window/simple-id": {
+"count": 650,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"uuid": {
+"count": 650,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"window/viewpoint": {
+"count": 492,
+"files": 32,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"highlight": 492,
+"zoom": 105,
+"default-map-tool-selection": 45,
+"floating-toolbar-visibility": 16,
+"geo-search-visibility": 15,
+"map-navigation": 15
+},
+"order": [
+"zoom",
+"highlight",
+"default-map-tool-selection",
+"floating-toolbar-visibility",
+"geo-search-visibility",
+"map-navigation"
+],
+"strictly_after": {
+"highlight": [
+"zoom"
+],
+"default-map-tool-selection": [
+"highlight"
+],
+"floating-toolbar-visibility": [
+"highlight"
+],
+"geo-search-visibility": [
+"floating-toolbar-visibility",
+"highlight"
+],
+"map-navigation": [
+"floating-toolbar-visibility",
+"geo-search-visibility",
+"highlight"
+]
+}
+},
+"window/viewpoints": {
+"count": 144,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"viewpoint": 369
+},
+"order": [
+"viewpoint"
+],
+"strictly_after": {}
+},
+"windows/window": {
+"count": 654,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"class": {
+"count": 654,
+"kinds": [
+"text"
+],
+"values": [
+"dashboard",
+"worksheet"
+]
+},
+"maximized": {
+"count": 37,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"name": {
+"count": 654,
+"kinds": [
+"text"
+],
+"values": []
+},
+"hidden": {
+"count": 371,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+}
+},
+"children": {
+"viewpoints": 144,
+"active": 144,
+"device-preview": 120,
+"simple-id": 650,
+"cards": 510,
+"viewpoint": 492
+},
+"order": [
+"cards",
+"viewpoint",
+"viewpoints",
+"active",
+"device-preview",
+"simple-id"
+],
+"strictly_after": {
+"active": [
+"viewpoints"
+],
+"device-preview": [
+"active",
+"viewpoints"
+],
+"simple-id": [
+"active",
+"cards",
+"device-preview",
+"viewpoint",
+"viewpoints"
+],
+"viewpoint": [
+"cards"
+]
+}
+},
+"workbook/actions": {
+"count": 34,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"action": 204,
+"datasources": 32,
+"datasource-dependencies": 32,
+"edit-group-action": 1,
+"edit-parameter-action": 1
+},
+"order": [
+"action",
+"datasources",
+"datasource-dependencies",
+"edit-group-action",
+"edit-parameter-action"
+],
+"strictly_after": {
+"datasources": [
+"action"
+],
+"datasource-dependencies": [
+"action",
+"datasources"
+],
+"edit-group-action": [
+"action"
+],
+"edit-parameter-action": [
+"action",
+"edit-group-action"
+]
+}
+},
+"workbook/dashboards": {
+"count": 35,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"dashboard": 144
+},
+"order": [
+"dashboard"
+],
+"strictly_after": {}
+},
+"workbook/datasource-relationships": {
+"count": 15,
+"files": 15,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"datasource-dependencies": 30,
+"datasource-relationship": 15
+},
+"order": [
+"datasource-dependencies",
+"datasource-relationship"
+],
+"strictly_after": {
+"datasource-relationship": [
+"datasource-dependencies"
+]
+}
+},
+"workbook/datasources": {
+"count": 35,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"datasource": 97
+},
+"order": [
+"datasource"
+],
+"strictly_after": {}
+},
+"workbook/document-format-change-manifest": {
+"count": 34,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"AccessibleZoneTabOrder": 30,
+"AnimationOnByDefault": 34,
+"AutoCreateAndUpdateDSDPhoneLayouts": 30,
+"ExplainData_AuthorControls": 30,
+"ExplainData_NullValueExplanation": 30,
+"MapboxVectorStylesAndLayers": 30,
+"MarkAnimation": 34,
+"ObjectModelEncapsulateLegacy": 34,
+"ObjectModelTableType": 34,
+"SchemaViewerObjectModel": 34,
+"SetMembershipControl": 31,
+"SheetIdentifierTracking": 34,
+"SortTagCleanup": 31,
+"VizInTooltipHideWorksheet": 15,
+"WindowsPersistSimpleIdentifiers": 34,
+"WorksheetBackgroundTransparency": 15,
+"ZoneFriendlyName": 15,
+"ObjectModelExtractV2": 1,
+"VConnDownstreamExtractsWithWarnings": 1,
+"ParameterAction": 1,
+"ParameterActionClearSelection": 1,
+"GroupAction": 1,
+"GroupActionAddRemove": 1,
+"BasicButtonObject": 1,
+"BasicButtonObjectTextSupport": 1,
+"NavigationAction": 1
+},
+"order": [
+"AccessibleZoneTabOrder",
+"AnimationOnByDefault",
+"AutoCreateAndUpdateDSDPhoneLayouts",
+"ExplainData_AuthorControls",
+"ExplainData_NullValueExplanation",
+"MapboxVectorStylesAndLayers",
+"MarkAnimation",
+"ObjectModelEncapsulateLegacy",
+"ObjectModelExtractV2",
+"ObjectModelTableType",
+"SchemaViewerObjectModel",
+"SetMembershipControl",
+"SheetIdentifierTracking",
+"SortTagCleanup",
+"VizInTooltipHideWorksheet",
+"VConnDownstreamExtractsWithWarnings",
+"WindowsPersistSimpleIdentifiers",
+"WorksheetBackgroundTransparency",
+"ZoneFriendlyName",
+"ParameterAction",
+"ParameterActionClearSelection",
+"GroupAction",
+"GroupActionAddRemove",
+"BasicButtonObject",
+"BasicButtonObjectTextSupport",
+"NavigationAction"
+],
+"strictly_after": {
+"AnimationOnByDefault": [
+"AccessibleZoneTabOrder"
+],
+"AutoCreateAndUpdateDSDPhoneLayouts": [
+"AccessibleZoneTabOrder",
+"AnimationOnByDefault"
+],
+"ExplainData_AuthorControls": [
+"AccessibleZoneTabOrder",
+"AnimationOnByDefault",
+"AutoCreateAndUpdateDSDPhoneLayouts"
+],
+"ExplainData_NullValueExplanation": [
+"AccessibleZoneTabOrder",
+"AnimationOnByDefault",
+"AutoCreateAndUpdateDSDPhoneLayouts",
+"ExplainData_AuthorControls"
+],
+"MapboxVectorStylesAndLayers": [
+"AccessibleZoneTabOrder",
+"AnimationOnByDefault",
+"AutoCreateAndUpdateDSDPhoneLayouts",
+"ExplainData_AuthorControls",
+"ExplainData_NullValueExplanation"
+],
+"MarkAnimation": [
+"AccessibleZoneTabOrder",
+"AnimationOnByDefault",
+"AutoCreateAndUpdateDSDPhoneLayouts",
+"ExplainData_AuthorControls",
+"ExplainData_NullValueExplanation",
+"MapboxVectorStylesAndLayers"
+],
+"ObjectModelEncapsulateLegacy": [
+"AccessibleZoneTabOrder",
+"AnimationOnByDefault",
+"AutoCreateAndUpdateDSDPhoneLayouts",
+"ExplainData_AuthorControls",
+"ExplainData_NullValueExplanation",
+"MapboxVectorStylesAndLayers",
+"MarkAnimation"
+],
+"ObjectModelTableType": [
+"AccessibleZoneTabOrder",
+"AnimationOnByDefault",
+"AutoCreateAndUpdateDSDPhoneLayouts",
+"ExplainData_AuthorControls",
+"ExplainData_NullValueExplanation",
+"MapboxVectorStylesAndLayers",
+"MarkAnimation",
+"ObjectModelEncapsulateLegacy",
+"ObjectModelExtractV2"
+],
+"SchemaViewerObjectModel": [
+"AccessibleZoneTabOrder",
+"AnimationOnByDefault",
+"AutoCreateAndUpdateDSDPhoneLayouts",
+"ExplainData_AuthorControls",
+"ExplainData_NullValueExplanation",
+"MapboxVectorStylesAndLayers",
+"MarkAnimation",
+"ObjectModelEncapsulateLegacy",
+"ObjectModelExtractV2",
+"ObjectModelTableType"
+],
+"SetMembershipControl": [
+"AccessibleZoneTabOrder",
+"AnimationOnByDefault",
+"AutoCreateAndUpdateDSDPhoneLayouts",
+"ExplainData_AuthorControls",
+"ExplainData_NullValueExplanation",
+"MapboxVectorStylesAndLayers",
+"MarkAnimation",
+"ObjectModelEncapsulateLegacy",
+"ObjectModelExtractV2",
+"ObjectModelTableType",
+"SchemaViewerObjectModel"
+],
+"SheetIdentifierTracking": [
+"AccessibleZoneTabOrder",
+"AnimationOnByDefault",
+"AutoCreateAndUpdateDSDPhoneLayouts",
+"ExplainData_AuthorControls",
+"ExplainData_NullValueExplanation",
+"MapboxVectorStylesAndLayers",
+"MarkAnimation",
+"ObjectModelExtractV2",
+"SetMembershipControl"
+],
+"SortTagCleanup": [
+"AccessibleZoneTabOrder",
+"AnimationOnByDefault",
+"AutoCreateAndUpdateDSDPhoneLayouts",
+"ExplainData_AuthorControls",
+"ExplainData_NullValueExplanation",
+"MapboxVectorStylesAndLayers",
+"MarkAnimation",
+"ObjectModelEncapsulateLegacy",
+"ObjectModelExtractV2",
+"ObjectModelTableType",
+"SchemaViewerObjectModel",
+"SetMembershipControl",
+"SheetIdentifierTracking"
+],
+"VizInTooltipHideWorksheet": [
+"AccessibleZoneTabOrder",
+"AnimationOnByDefault",
+"AutoCreateAndUpdateDSDPhoneLayouts",
+"ExplainData_AuthorControls",
+"ExplainData_NullValueExplanation",
+"MapboxVectorStylesAndLayers",
+"MarkAnimation",
+"ObjectModelEncapsulateLegacy",
+"ObjectModelTableType",
+"SchemaViewerObjectModel",
+"SetMembershipControl",
+"SheetIdentifierTracking",
+"SortTagCleanup"
+],
+"WindowsPersistSimpleIdentifiers": [
+"AccessibleZoneTabOrder",
+"AnimationOnByDefault",
+"AutoCreateAndUpdateDSDPhoneLayouts",
+"ExplainData_AuthorControls",
+"ExplainData_NullValueExplanation",
+"MapboxVectorStylesAndLayers",
+"MarkAnimation",
+"ObjectModelExtractV2",
+"SetMembershipControl",
+"SheetIdentifierTracking",
+"SortTagCleanup",
+"VConnDownstreamExtractsWithWarnings",
+"VizInTooltipHideWorksheet"
+],
+"WorksheetBackgroundTransparency": [
+"AccessibleZoneTabOrder",
+"AnimationOnByDefault",
+"AutoCreateAndUpdateDSDPhoneLayouts",
+"ExplainData_AuthorControls",
+"ExplainData_NullValueExplanation",
+"MapboxVectorStylesAndLayers",
+"MarkAnimation",
+"ObjectModelEncapsulateLegacy",
+"ObjectModelTableType",
+"SchemaViewerObjectModel",
+"SetMembershipControl",
+"SheetIdentifierTracking",
+"SortTagCleanup",
+"VizInTooltipHideWorksheet",
+"WindowsPersistSimpleIdentifiers"
+],
+"ZoneFriendlyName": [
+"AccessibleZoneTabOrder",
+"AnimationOnByDefault",
+"AutoCreateAndUpdateDSDPhoneLayouts",
+"ExplainData_AuthorControls",
+"ExplainData_NullValueExplanation",
+"MapboxVectorStylesAndLayers",
+"MarkAnimation",
+"ObjectModelEncapsulateLegacy",
+"ObjectModelTableType",
+"SchemaViewerObjectModel",
+"SetMembershipControl",
+"SheetIdentifierTracking",
+"SortTagCleanup",
+"VizInTooltipHideWorksheet",
+"WindowsPersistSimpleIdentifiers",
+"WorksheetBackgroundTransparency"
+],
+"ObjectModelExtractV2": [
+"AnimationOnByDefault",
+"MarkAnimation",
+"ObjectModelEncapsulateLegacy"
+],
+"VConnDownstreamExtractsWithWarnings": [
+"AnimationOnByDefault",
+"MarkAnimation",
+"ObjectModelEncapsulateLegacy",
+"ObjectModelExtractV2",
+"ObjectModelTableType",
+"SchemaViewerObjectModel",
+"SetMembershipControl",
+"SheetIdentifierTracking",
+"SortTagCleanup"
+],
+"ParameterAction": [
+"AnimationOnByDefault",
+"MarkAnimation",
+"ObjectModelEncapsulateLegacy",
+"ObjectModelTableType",
+"SchemaViewerObjectModel",
+"SheetIdentifierTracking",
+"WindowsPersistSimpleIdentifiers"
+],
+"ParameterActionClearSelection": [
+"AnimationOnByDefault",
+"MarkAnimation",
+"ObjectModelEncapsulateLegacy",
+"ObjectModelTableType",
+"ParameterAction",
+"SchemaViewerObjectModel",
+"SheetIdentifierTracking",
+"WindowsPersistSimpleIdentifiers"
+],
+"GroupAction": [
+"AnimationOnByDefault",
+"MarkAnimation",
+"ObjectModelEncapsulateLegacy",
+"ObjectModelTableType",
+"ParameterAction",
+"ParameterActionClearSelection",
+"SchemaViewerObjectModel",
+"SheetIdentifierTracking",
+"WindowsPersistSimpleIdentifiers"
+],
+"GroupActionAddRemove": [
+"AnimationOnByDefault",
+"GroupAction",
+"MarkAnimation",
+"ObjectModelEncapsulateLegacy",
+"ObjectModelTableType",
+"ParameterAction",
+"ParameterActionClearSelection",
+"SchemaViewerObjectModel",
+"SheetIdentifierTracking",
+"WindowsPersistSimpleIdentifiers"
+],
+"BasicButtonObject": [
+"AnimationOnByDefault",
+"GroupAction",
+"GroupActionAddRemove",
+"MarkAnimation",
+"ObjectModelEncapsulateLegacy",
+"ObjectModelTableType",
+"ParameterAction",
+"ParameterActionClearSelection",
+"SchemaViewerObjectModel",
+"SheetIdentifierTracking",
+"WindowsPersistSimpleIdentifiers"
+],
+"BasicButtonObjectTextSupport": [
+"AnimationOnByDefault",
+"BasicButtonObject",
+"GroupAction",
+"GroupActionAddRemove",
+"MarkAnimation",
+"ObjectModelEncapsulateLegacy",
+"ObjectModelTableType",
+"ParameterAction",
+"ParameterActionClearSelection",
+"SchemaViewerObjectModel",
+"SheetIdentifierTracking",
+"WindowsPersistSimpleIdentifiers"
+],
+"NavigationAction": [
+"AnimationOnByDefault",
+"BasicButtonObject",
+"BasicButtonObjectTextSupport",
+"GroupAction",
+"GroupActionAddRemove",
+"MarkAnimation",
+"ObjectModelEncapsulateLegacy",
+"ObjectModelTableType",
+"ParameterAction",
+"ParameterActionClearSelection",
+"SchemaViewerObjectModel",
+"SheetIdentifierTracking",
+"WindowsPersistSimpleIdentifiers"
+]
+}
+},
+"workbook/explain-data": {
+"count": 30,
+"files": 30,
+"sources": [
+"tableau"
+],
+"attrs": {
+"enabled-for-viewer": {
+"count": 30,
+"kinds": [
+"bool"
+],
+"values": [
+"false",
+"true"
+]
+},
+"extreme-values-enabled-for-all": {
+"count": 30,
+"kinds": [
+"bool"
+],
+"values": [
+"false"
+]
+}
+},
+"children": {
+"explanation-types": 30
+},
+"order": [
+"explanation-types"
+],
+"strictly_after": {}
+},
+"workbook/mapsources": {
+"count": 30,
+"files": 30,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"mapsource": 30
+},
+"order": [
+"mapsource"
+],
+"strictly_after": {}
+},
+"workbook/preferences": {
+"count": 35,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"preference": 130
+},
+"order": [
+"preference"
+],
+"strictly_after": {}
+},
+"workbook/repository-location": {
+"count": 15,
+"files": 15,
+"sources": [
+"tableau"
+],
+"attrs": {
+"id": {
+"count": 15,
+"kinds": [
+"text"
+],
+"values": []
+},
+"path": {
+"count": 15,
+"kinds": [
+"text"
+],
+"values": []
+},
+"revision": {
+"count": 15,
+"kinds": [
+"number"
+],
+"values": [
+"1.2"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"workbook/style": {
+"count": 31,
+"files": 31,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"style-rule": 59
+},
+"order": [
+"style-rule"
+],
+"strictly_after": {}
+},
+"workbook/style-theme": {
+"count": 2,
+"files": 2,
+"sources": [
+"tableau"
+],
+"attrs": {
+"name": {
+"count": 2,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"workbook/thumbnails": {
+"count": 31,
+"files": 31,
+"sources": [
+"tableau"
+],
+"attrs": {},
+"children": {
+"thumbnail": 255
+},
+"order": [
+"thumbnail"
+],
+"strictly_after": {}
+},
+"workbook/windows": {
+"count": 35,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"source-height": {
+"count": 32,
+"kinds": [
+"number"
+],
+"values": [
+"30",
+"32",
+"37",
+"48",
+"72"
+]
+}
+},
+"children": {
+"window": 654
+},
+"order": [
+"window"
+],
+"strictly_after": {}
+},
+"workbook/worksheets": {
+"count": 35,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"worksheet": 510
+},
+"order": [
+"worksheet"
+],
+"strictly_after": {}
+},
+"worksheet/filter": {
+"count": 30,
+"files": 15,
+"sources": [
+"tableau"
+],
+"attrs": {
+"class": {
+"count": 30,
+"kinds": [
+"text"
+],
+"values": [
+"categorical"
+]
+},
+"column": {
+"count": 30,
+"kinds": [
+"ref"
+],
+"values": []
+}
+},
+"children": {
+"groupfilter": 30
+},
+"order": [
+"groupfilter"
+],
+"strictly_after": {}
+},
+"worksheet/layout-options": {
+"count": 437,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"title": 437,
+"caption": 31
+},
+"order": [
+"title",
+"caption"
+],
+"strictly_after": {
+"caption": [
+"title"
+]
+}
+},
+"worksheet/simple-id": {
+"count": 507,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"uuid": {
+"count": 507,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"worksheet/table": {
+"count": 510,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"view": 510,
+"style": 510,
+"panes": 510,
+"rows": 510,
+"cols": 510,
+"forecast-specification": 15,
+"tooltip-style": 75,
+"subtotals": 15,
+"pages": 1
+},
+"order": [
+"view",
+"style",
+"panes",
+"rows",
+"cols",
+"tooltip-style",
+"forecast-specification",
+"subtotals",
+"pages"
+],
+"strictly_after": {
+"style": [
+"view"
+],
+"panes": [
+"style",
+"view"
+],
+"rows": [
+"panes",
+"style",
+"view"
+],
+"cols": [
+"panes",
+"rows",
+"style",
+"view"
+],
+"forecast-specification": [
+"cols",
+"panes",
+"rows",
+"style",
+"view"
+],
+"tooltip-style": [
+"cols",
+"panes",
+"rows",
+"style",
+"view"
+],
+"subtotals": [
+"cols",
+"panes",
+"rows",
+"style",
+"view"
+],
+"pages": [
+"cols",
+"panes",
+"rows",
+"style",
+"view"
+]
+}
+},
+"worksheets/worksheet": {
+"count": 510,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"name": {
+"count": 510,
+"kinds": [
+"text"
+],
+"values": []
+}
+},
+"children": {
+"layout-options": 437,
+"table": 510,
+"simple-id": 507
+},
+"order": [
+"layout-options",
+"table",
+"simple-id"
+],
+"strictly_after": {
+"table": [
+"layout-options"
+],
+"simple-id": [
+"layout-options",
+"table"
+]
+}
+},
+"zone-style/format": {
+"count": 10069,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"attr": {
+"count": 10069,
+"kinds": [
+"text"
+],
+"values": [
+"background-color",
+"border-color",
+"border-style",
+"border-width",
+"margin",
+"margin-bottom",
+"margin-left",
+"margin-right",
+"margin-top",
+"padding",
+"padding-top"
+]
+},
+"value": {
+"count": 10069,
+"kinds": [
+"color",
+"text",
+"number"
+],
+"values": []
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"zone/button": {
+"count": 1,
+"files": 1,
+"sources": [
+"validated"
+],
+"attrs": {
+"action": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": [
+"tabdoc:goto-sheet window-id=\"{E942AD56-BF1E-4ED3-BAE2-31FE1350BBD9}\""
+]
+},
+"button-type": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": [
+"text"
+]
+}
+},
+"children": {
+"button-visual-state": 1
+},
+"order": [
+"button-visual-state"
+],
+"strictly_after": {}
+},
+"zone/flipboard": {
+"count": 16,
+"files": 16,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"active-id": {
+"count": 16,
+"kinds": [
+"number"
+],
+"values": [
+"1"
+]
+},
+"nav-type": {
+"count": 16,
+"kinds": [
+"text"
+],
+"values": [
+"caption"
+]
+},
+"show-nav-arrows": {
+"count": 16,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+}
+},
+"children": {
+"story-points": 16
+},
+"order": [
+"story-points"
+],
+"strictly_after": {}
+},
+"zone/formatted-text": {
+"count": 177,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"run": 193
+},
+"order": [
+"run"
+],
+"strictly_after": {}
+},
+"zone/layout-cache": {
+"count": 560,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"fixed-size-h": {
+"count": 111,
+"kinds": [
+"number"
+],
+"values": [
+"1",
+"112",
+"15837",
+"1756",
+"17640",
+"6616",
+"935"
+]
+},
+"type-h": {
+"count": 560,
+"kinds": [
+"text"
+],
+"values": [
+"cell",
+"fixed",
+"scalable"
+]
+},
+"type-w": {
+"count": 560,
+"kinds": [
+"text"
+],
+"values": [
+"cell",
+"fixed",
+"scalable"
+]
+},
+"cell-count-h": {
+"count": 30,
+"kinds": [
+"number"
+],
+"values": [
+"2"
+]
+},
+"non-cell-size-h": {
+"count": 30,
+"kinds": [
+"number"
+],
+"values": [
+"43"
+]
+},
+"minheight": {
+"count": 255,
+"kinds": [
+"number"
+],
+"values": []
+},
+"minwidth": {
+"count": 225,
+"kinds": [
+"number"
+],
+"values": []
+},
+"cell-count-w": {
+"count": 45,
+"kinds": [
+"number"
+],
+"values": [
+"1"
+]
+},
+"non-cell-size-w": {
+"count": 45,
+"kinds": [
+"number"
+],
+"values": [
+"40",
+"44"
+]
+}
+},
+"children": {},
+"order": [],
+"strictly_after": {}
+},
+"zone/zone": {
+"count": 3364,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"h": {
+"count": 3364,
+"kinds": [
+"number"
+],
+"values": []
+},
+"id": {
+"count": 3364,
+"kinds": [
+"number"
+],
+"values": []
+},
+"param": {
+"count": 2008,
+"kinds": [
+"text",
+"ref"
+],
+"values": []
+},
+"type-v2": {
+"count": 2623,
+"kinds": [
+"text"
+],
+"values": [
+"color",
+"dashboard-object",
+"empty",
+"filter",
+"flipboard",
+"flipboard-nav",
+"highlighter",
+"layout-basic",
+"layout-flow",
+"paramctrl",
+"text",
+"title",
+"web"
+]
+},
+"w": {
+"count": 3364,
+"kinds": [
+"number"
+],
+"values": []
+},
+"x": {
+"count": 3364,
+"kinds": [
+"number"
+],
+"values": []
+},
+"y": {
+"count": 3364,
+"kinds": [
+"number"
+],
+"values": []
+},
+"fixed-size": {
+"count": 668,
+"kinds": [
+"number"
+],
+"values": []
+},
+"is-fixed": {
+"count": 653,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"custom-title": {
+"count": 122,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+},
+"mode": {
+"count": 592,
+"kinds": [
+"text"
+],
+"values": [
+"checkdropdown",
+"compact",
+"dropdown",
+"list",
+"radiolist",
+"slider",
+"type_in",
+"typeinlist"
+]
+},
+"layout-strategy-id": {
+"count": 93,
+"kinds": [
+"text"
+],
+"values": [
+"distribute-evenly"
+]
+},
+"name": {
+"count": 1705,
+"kinds": [
+"text"
+],
+"values": []
+},
+"friendly-name": {
+"count": 60,
+"kinds": [
+"text"
+],
+"values": [
+"Color Legend"
+]
+},
+"pane-specification-id": {
+"count": 243,
+"kinds": [
+"number"
+],
+"values": []
+},
+"show-title": {
+"count": 236,
+"kinds": [
+"bool"
+],
+"values": [
+"false",
+"true"
+]
+},
+"leg-item-layout": {
+"count": 77,
+"kinds": [
+"text"
+],
+"values": [
+"grid",
+"horz",
+"vert"
+]
+},
+"values": {
+"count": 170,
+"kinds": [
+"text"
+],
+"values": [
+"context",
+"database",
+"relevant"
+]
+},
+"show-all": {
+"count": 90,
+"kinds": [
+"bool"
+],
+"values": [
+"false"
+]
+},
+"show-exclude": {
+"count": 30,
+"kinds": [
+"bool"
+],
+"values": [
+"false"
+]
+},
+"show-search": {
+"count": 90,
+"kinds": [
+"bool"
+],
+"values": [
+"false"
+]
+},
+"show-filter-state": {
+"count": 30,
+"kinds": [
+"bool"
+],
+"values": [
+"false"
+]
+},
+"removable": {
+"count": 48,
+"kinds": [
+"bool"
+],
+"values": [
+"false"
+]
+},
+"paired-zone-id": {
+"count": 32,
+"kinds": [
+"number"
+],
+"values": [
+"4",
+"5"
+]
+},
+"type": {
+"count": 6,
+"kinds": [
+"text"
+],
+"values": [
+"color",
+"filter",
+"layout-flow",
+"text",
+"title"
+]
+},
+"show-null-ctrls": {
+"count": 2,
+"kinds": [
+"bool"
+],
+"values": [
+"false"
+]
+},
+"forceUpdate": {
+"count": 2,
+"kinds": [
+"bool"
+],
+"values": [
+"true"
+]
+}
+},
+"children": {
+"zone": 2950,
+"zone-style": 2008,
+"formatted-text": 176,
+"layout-cache": 560,
+"flipboard": 16,
+"button": 1
+},
+"order": [
+"zone",
+"layout-cache",
+"formatted-text",
+"flipboard",
+"button",
+"zone-style"
+],
+"strictly_after": {
+"zone-style": [
+"button",
+"formatted-text",
+"layout-cache",
+"zone"
+]
+}
+},
+"zone/zone-style": {
+"count": 2117,
+"files": 34,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {},
+"children": {
+"format": 10069
+},
+"order": [
+"format"
+],
+"strictly_after": {}
+},
+"zones/zone": {
+"count": 298,
+"files": 35,
+"sources": [
+"tableau",
+"validated"
+],
+"attrs": {
+"h": {
+"count": 298,
+"kinds": [
+"number"
+],
+"values": []
+},
+"id": {
+"count": 298,
+"kinds": [
+"number"
+],
+"values": []
+},
+"type-v2": {
+"count": 297,
+"kinds": [
+"text"
+],
+"values": [
+"filter",
+"layout-basic",
+"text"
+]
+},
+"w": {
+"count": 298,
+"kinds": [
+"number"
+],
+"values": []
+},
+"x": {
+"count": 298,
+"kinds": [
+"number"
+],
+"values": []
+},
+"y": {
+"count": 298,
+"kinds": [
+"number"
+],
+"values": []
+},
+"type": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": [
+"layout-basic"
+]
+},
+"name": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": []
+},
+"param": {
+"count": 1,
+"kinds": [
+"ref"
+],
+"values": []
+},
+"mode": {
+"count": 1,
+"kinds": [
+"text"
+],
+"values": [
+"dropdown"
+]
+}
+},
+"children": {
+"zone": 414,
+"zone-style": 109,
+"formatted-text": 1
+},
+"order": [
+"zone",
+"formatted-text",
+"zone-style"
+],
+"strictly_after": {
+"zone-style": [
+"formatted-text",
+"zone"
+]
+}
+}
+}
+}

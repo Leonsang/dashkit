@@ -61,7 +61,16 @@ def validate(xml: str, target: str = "live") -> dict:
     try:
         c = _client(target if _is_live(target) else "live")
     except RuntimeError:
-        return {"ok": True, "isValid": None, "validationIssues": [], "validator": "lxml (no Desktop running: schema not checked)"}
+        # No Desktop running: Tableau's own XSD, read from the local install (tableu_mcp.xsd).
+        from . import xsd  # noqa: PLC0415
+
+        try:
+            r = xsd.validate(twb.parse(xml))
+        except (FileNotFoundError, OSError, etree.XMLSchemaParseError) as e:
+            return {"ok": True, "isValid": None, "validationIssues": [],
+                    "validator": f"lxml (no Desktop running and no local Tableau schema: {e})"}
+        return {"ok": r["valid"], "isValid": r["valid"], "validationIssues": r["issues"],
+                "validator": "tableau-xsd-offline"}
     return {**c.validate_document(xml), "validator": "tableau-desktop"}
 
 
@@ -238,6 +247,13 @@ def preflight(target: str) -> dict:
     for msg in v.get("validationIssues") or []:
         add("error", "schema", str(msg), "fix the element named in the message; the order rules are in authoring.*_ORDER")
     schema_checked = v.get("isValid") is not None
+
+    # Against what Tableau itself writes (docs/xml-catalog.json): runs with or without Desktop.
+    from . import structure  # noqa: PLC0415
+
+    for f in structure.check(root):
+        if f["level"] in ("error", "warning"):
+            add(f["level"], f["path"], f"{f['rule']}: {f['message']}", f["fix"])
 
     order = authoring.DATASOURCE_ORDER
     for ds in root.iter("datasource"):

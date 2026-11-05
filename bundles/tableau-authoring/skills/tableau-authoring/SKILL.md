@@ -85,6 +85,26 @@ dirección orientada automáticamente.
 | Botón de navegación | `dashboard AddZone kind=navigation` (`target_sheet`, `text`) | Necesita que la hoja destino tenga ventana (que se haya abierto alguna vez en Desktop) |
 | Exportar otra hoja | `workbook ShowSheet` (`confirm=true`) y después `export_image` | La API solo renderiza lo que está en pantalla. ShowSheet reabre Desktop en esa hoja |
 
+## Componentes, esquema y modales
+
+- **Referencia de componentes** (`tableu://components`): definición, uso, recomendación, XML de Tableau,
+  operación de tableu y si llega por la API en vivo o solo por archivo.
+- **Definición oficial de cualquier elemento:** `workbook Schema element=zone` (o `search=legend`). Sale del
+  XSD que trae la instalación local de Tableau.
+- **Sin Desktop abierto**, `Preflight` y la validación usan ese XSD, y `workbook CheckStructure` compara con lo
+  que escribe Tableau. Así un libro no se rompe al abrirlo.
+- **Tira de KPIs en una sola hoja:** `worksheet Create measures=[...] measure_labels={...}`.
+- **Etiqueta y tooltip:** `format Label text="<SUM(Ventas)> €"`; `format Tooltip viz_sheet=Detalle` (viz in
+  tooltip).
+- **Formato local:** `workbook Format locale=es_ES` (separadores, moneda y meses). Solo entra por archivo.
+- **Maquetación:**
+  - `dashboard AddZone container=title|row:N|<id>`, `position`, `fixed_width`/`fixed_height`;
+  - `title="Elige un canal"` en tarjetas de filtro y parámetro.
+- **Modales:** cada respuesta puede traer `desktopModals`. Si alguno no se cerró solo (File Recovery, Save
+  changes?…), dile al usuario qué pregunta y espera. No pulses sus botones.
+- **Qué falta todavía:** `tableu://coverage-gaps`. El comportamiento real de Desktop está en
+  `tableu://behavior`.
+
 ## Límite de la API en vivo y cómo se resuelve
 
 En `target=live`, Desktop aplica los cambios dentro de hojas, dashboards y

@@ -36,6 +36,51 @@ mcp = FastMCP(
 )
 
 
+class ModalWatch:
+    """While a tool runs, watch Tableau Desktop for modal windows (they block the External Client API and the
+    UI). Error/warning messages are closed so the call can finish; anything else (File Recovery, Save
+    changes?...) is left for the user. Every modal seen is reported to the agent in desktopModals."""
+
+    def __init__(self, active: bool = True, every: float = 2.0):
+        import threading  # noqa: PLC0415
+
+        self.seen: dict = {}
+        self.every = every
+        self._stop = threading.Event()
+        self._thread = threading.Thread(target=self._run, daemon=True) if active else None
+
+    def _run(self):
+        from . import desktop_setup  # noqa: PLC0415
+
+        while True:
+            try:
+                for m in desktop_setup.modals(close_safe=True):
+                    self.seen.setdefault((m.get("pid"), m.get("title")), m)
+            except Exception:  # noqa: BLE001,S110 - watching must never break the call
+                pass
+            if self._stop.wait(self.every):
+                break
+
+    def __enter__(self):
+        if self._thread:
+            self._thread.start()
+        return self
+
+    def __exit__(self, *exc):
+        if self._thread:
+            self._stop.set()
+            self._thread.join(timeout=30)
+        return False
+
+    def attach(self, res):
+        if not self.seen:
+            return res
+        note = {"desktopModals": list(self.seen.values()),
+                "modalNote": "Tableau Desktop showed these modal windows during the call. Closed ones were error "
+                             "messages; tell the user about any other one and what it asks before continuing."}
+        return {**res, **note} if isinstance(res, dict) else {"result": res, **note}
+
+
 def _make_tool(obj: str):
     ops_desc = registry.describe(obj)[obj]
     lines = [registry.OBJECT_HELP.get(obj, ""), "", "Operations (params):"]
@@ -47,10 +92,13 @@ def _make_tool(obj: str):
              target: str = "live", dry_run: bool = False, out: str | None = None) -> Any:
         if operation.lower() == "help":
             return registry.describe(obj)
-        try:
-            return registry.run(obj, operation, params, target=target, definitions=definitions, dry_run=dry_run, out=out)
-        except Exception as e:  # noqa: BLE001 - return the error to the agent instead of failing the call
-            return {"error": f"{type(e).__name__}: {e}", "hint": f"{obj}_operations operation='Help' lists operations"}
+        with ModalWatch(active=obj != "desktop" or operation.lower() == "launch") as watch:
+            try:
+                res = registry.run(obj, operation, params, target=target, definitions=definitions,
+                                   dry_run=dry_run, out=out)
+            except Exception as e:  # noqa: BLE001 - return the error to the agent instead of failing the call
+                res = {"error": f"{type(e).__name__}: {e}", "hint": f"{obj}_operations operation='Help' lists operations"}
+        return watch.attach(res)
 
     tool.__name__ = f"{obj}_operations"
     tool.__doc__ = "\n".join(lines)
@@ -81,6 +129,36 @@ def best_practices() -> str:
 def coverage() -> str:
     """Which Tableau features each operation covers, how it was verified, and known limits."""
     return (DOCS / "coverage.md").read_text(encoding="utf-8")
+
+
+@mcp.resource("tableu://behavior")
+def behavior() -> str:
+    """How Tableau Desktop 2026.3 really behaves (live API, file loading, layout, formatting) and tableu's protocol for each."""
+    return (DOCS / "desktop-behavior.md").read_text(encoding="utf-8")
+
+
+@mcp.resource("tableu://coverage-gaps")
+def coverage_gaps() -> str:
+    """What Tableau writes in its own documents that tableu cannot write yet (pool of missing tools)."""
+    return (DOCS / "coverage-gaps.md").read_text(encoding="utf-8")
+
+
+@mcp.resource("tableu://components")
+def components_reference() -> str:
+    """Every Tableau component: definition, when to use it, official recommendation, the XML Tableau writes
+    for it, the tableu operation that builds it, and whether it reaches Desktop through the live API or a file."""
+    from . import components  # noqa: PLC0415
+
+    paths = DOCS / "component-paths.json"
+    md = components.markdown()
+    if paths.exists():
+        p = json.loads(paths.read_text(encoding="utf-8"))
+        rows = [f"| {cid} | {'sí' if p.get('live', {}).get(cid) else 'no'} | {'sí' if p.get('file', {}).get(cid) else 'no'} |"
+                for cid in p.get("file", {})]
+        md += ("\n## Por qué vía llega cada componente a Desktop\n\n"
+               f"Medido con {p.get('checked', '')}: se conserva tras `POST /v0/workbook/document` (API en vivo) "
+               "y tras abrir el archivo.\n\n| componente | API en vivo | archivo |\n|---|---|---|\n" + "\n".join(rows) + "\n")
+    return md
 
 
 @mcp.resource("tableu://operations")

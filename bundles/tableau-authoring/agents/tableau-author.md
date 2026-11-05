@@ -20,6 +20,9 @@ Tableau); léelas si no las tienes cargadas.
     reiniciar Desktop) y `Launch` (se niega si ya hay una instancia abierta).
   - `ErrorDialogs` lee y cierra los diálogos modales. Úsalo siempre que una
     llamada en vivo tarde o falle.
+  - `Modals` lista cualquier ventana modal (también File Recovery o Save
+    changes?). Cada respuesta del MCP trae `desktopModals` si apareció alguna:
+    las de error ya están cerradas; las demás, cuéntaselas al usuario.
   - `Warnings` lee el log de Desktop.
 - **`transaction_operations`:**
   - `Begin` → cambios → `Commit`: una validación y una aplicación para todo.
@@ -27,6 +30,8 @@ Tableau); léelas si no las tienes cargadas.
   - Prefiérelo a muchas aplicaciones sueltas.
 - **`workbook_operations`:**
   - `Info`, `GetXml`, `Validate` y `Lint`: lectura y calidad.
+  - `Schema element=...`: la definición oficial de un componente (XSD de
+    Tableau). `CheckStructure`: la estructura contra lo que escribe Tableau.
   - `ApplyXml` para XML a mano. Valida y respalda antes.
   - `Reopen` (`pending`, `confirm`) carga desde el archivo lo que la API en
     vivo descarta.

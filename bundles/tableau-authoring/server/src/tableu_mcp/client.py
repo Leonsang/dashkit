@@ -123,7 +123,15 @@ class DesktopClient:
 
     # -- low level -------------------------------------------------------------------------
     def _req(self, method: str, path: str, **kw) -> httpx.Response:
-        r = self._http.request(method, path, **kw)
+        # Right after a launch Desktop answers reads with 500 operation-failed while the workbook is still
+        # loading or rendering; the same GET succeeds seconds later. Writes are never retried.
+        for attempt in range(5):
+            r = self._http.request(method, path, **kw)
+            if (r.status_code == 500 and method == "GET" and attempt < 4 and "operation-failed" in r.text
+                    and not path.endswith(("/image", "/summaryData"))):  # those 500s pop a modal each time
+                time.sleep(2 * (attempt + 1))
+                continue
+            break
         if r.status_code >= 400:
             raise ApiError(r.status_code, r.text, path)
         return r

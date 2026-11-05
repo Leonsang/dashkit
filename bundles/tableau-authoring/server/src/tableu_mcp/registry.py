@@ -202,6 +202,33 @@ def _summary(target: str, sheet: str, max_rows: int = 100):
     return _client_for(target).summary_data(sheet, max_rows=max_rows)
 
 
+def _check_structure(target: str, include_info: bool = False):
+    """Structural lint against what Tableau itself writes (xml-catalog.json from the documents Desktop ships):
+    unknown elements, forms Desktop 2026.3 rejects, children out of Tableau's order, values outside a closed
+    vocabulary. Works without Desktop; Preflight runs it too."""
+    from . import structure  # noqa: PLC0415
+
+    found = structure.check(ops.read_root(target))
+    return {**structure.summary(found), "findings": [f for f in found if include_info or f["level"] != "info"]}
+
+
+def _schema_info(element: str | None = None, search: str | None = None):
+    """Tableau's own definition of a component, from the workbook schema (XSD) of the local Tableau install:
+    attributes (type, required, allowed values), children, contexts and the manifest feature that enables
+    it. element='zone' | 'mark' | 'reference-line'...; search='legend' lists matching element names; no
+    argument lists every element."""
+    from . import xsd  # noqa: PLC0415
+
+    v = xsd.vocabulary()
+    if element:
+        if element not in v:
+            near = [k for k in v if element.lower() in k.lower()]
+            raise KeyError(f"No element {element!r} in Tableau's schema. Close: {near[:20]}")
+        return {"element": element, **v[element]}
+    names = [k for k in v if not search or search.lower() in k.lower()]
+    return {"count": len(names), "elements": names}
+
+
 def _lint(target: str):
     """Best-practice report (score 0-100, findings with fixes and sources)."""
     return ops.lint_target(target)
@@ -225,6 +252,7 @@ REGISTRY: dict[str, dict[str, Op]] = {
         "Launch": Op(_desktop_launch, "plain"),
         "ListInstances": Op(lambda: [i.public() for i in list_instances()], "plain"),
         "ErrorDialogs": Op(lambda dismiss=True: desktop_setup.error_dialogs(dismiss=dismiss), "plain"),
+        "Modals": Op(lambda close_safe=False: desktop_setup.modals(close_safe=close_safe), "plain"),
         "Warnings": Op(lambda pid=None, since=None, limit=50: desktop_setup.desktop_warnings(pid, since, limit), "plain"),
     },
     "settings": {
@@ -250,6 +278,8 @@ REGISTRY: dict[str, dict[str, Op]] = {
         "ApplyXml": Op(_apply_xml, "target"),
         "Validate": Op(_validate_xml, "target"),
         "Preflight": Op(lambda target: ops.preflight(target), "target"),
+        "CheckStructure": Op(_check_structure, "target"),
+        "Schema": Op(_schema_info, "plain"),
         "New": Op(lambda path: ops.new_file(path), "plain"),
         "SaveAs": Op(_save_as, "target"),
         "Lint": Op(_lint, "target"),
@@ -320,6 +350,7 @@ REGISTRY: dict[str, dict[str, Op]] = {
         "OrientTableCalcs": Op(A.orient_table_calcs, "edit"),
         "SetVisibility": Op(A.set_sheet_visibility, "edit"),
         "AddCard": Op(A.add_card, "edit"),
+        "AddMeasureValues": Op(A.add_measure_values, "edit"),
     },
     "filter": {
         "List": Op(A.list_filters, "read"),
@@ -340,6 +371,7 @@ REGISTRY: dict[str, dict[str, Op]] = {
         "Field": Op(A.format_field, "edit"),
         "Title": Op(A.set_title, "edit"),
         "Tooltip": Op(A.set_tooltip, "edit"),
+        "Label": Op(A.set_label_text, "edit"),
         "Workbook": Op(A.format_workbook, "edit"),
         "Dashboard": Op(A.format_dashboard, "edit"),
         "Zone": Op(A.format_zone, "edit"),

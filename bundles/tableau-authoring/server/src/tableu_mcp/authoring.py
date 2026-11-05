@@ -43,6 +43,9 @@ TABLE_ORDER = ("view", "style", "panes", "mark-layout", "rows", "cols", "table-c
                "show-full-range", "consider-zeros-empty", "percentages", "mark-labels", "annotations",
                "page-trail-options", "trail-overrides", "tooltip-style", "forecast-specification")
 FULL = 100000
+# <pane> content model in Desktop 2026.3's schema (its validator's message, 2026-11-05).
+PANE_ORDER = ("view", "mark", "mark-sizing", "encodings", "label-data", "dropline", "trendline", "reference-line",
+              "customized-tooltip", "customized-label", "style")
 
 
 # ============================================================================================
@@ -187,8 +190,7 @@ class Sheet:
                 panes = holder.find("panes")
                 (panes.addprevious(style) if panes is not None else holder.append(style))
             else:
-                pv = holder.find("mark")
-                (pv.addnext(style) if pv is not None else holder.append(style))
+                _insert_ordered(holder, style, PANE_ORDER)
         rule = style.find(f"style-rule[@element='{element}']")
         if rule is None:
             rule = etree.SubElement(style, "style-rule", element=element)
@@ -885,10 +887,17 @@ def add_card(root, worksheet: str, card_type: str, field_qname: str | None = Non
 def create_worksheet(root, name: str, datasource: str, rows=None, cols=None, mark="automatic", color=None,
                      size=None, label=None, detail=None, tooltip=None, shape=None, path=None, angle=None,
                      pages=None, title=None, sort_desc_by=None, sort: dict | None = None, filters: list | None = None,
-                     totals: dict | None = None, mark_color: str | None = None, show_labels: bool = False) -> dict:
+                     totals: dict | None = None, mark_color: str | None = None, show_labels: bool = False,
+                     measures: list[str] | None = None, measure_labels: dict | None = None,
+                     measures_on: str = "cols", label_font: dict | None = None, value_font: dict | None = None) -> dict:
     """Create a worksheet in one call. Shelves take field specs; encodings: color size label detail[] tooltip[]
     shape path angle; pages; sort={'field': 'Category', 'by': 'SUM(Sales)', 'direction': 'DESC'};
-    filters=[{...add_filter args}]; totals={'rows': True, 'cols': True}."""
+    filters=[{...add_filter args}]; totals={'rows': True, 'cols': True}.
+    KPI strip / text table of several measures in ONE view: measures=['SUM(Sales)', 'Profit Ratio', ...]
+    (Measure Names on measures_on, Measure Values on Text), measure_labels={spec: header}, label_font and
+    value_font={size, color, bold, family, align}."""
+    if measures:
+        mark = "text" if mark == "automatic" else mark
     twb.add_worksheet(root, name, datasource, rows=rows, cols=cols, mark=mark, color=color, size=size, label=label,
                       detail=detail, tooltip=tooltip, title=title, sort_desc_by=sort_desc_by)
     sh = Sheet(root, name)
@@ -908,7 +917,89 @@ def create_worksheet(root, name: str, datasource: str, rows=None, cols=None, mar
         set_totals(root, name, **totals)
     if mark_color or show_labels:
         format_marks(root, name, color=mark_color, show_labels=show_labels or None)
+    if measures:
+        add_measure_values(root, name, measures, labels=measure_labels, on=measures_on,
+                           label_font=label_font, value_font=value_font)
     return {"worksheet": name}
+
+
+def add_measure_values(root, worksheet: str, measures: list[str], labels: dict | None = None, on: str = "cols",
+                       label_font: dict | None = None, value_font: dict | None = None) -> dict:
+    """Several measures in one view with Measure Names / Measure Values, as Tableau's own KPI strips (Superstore
+    "Total Sales": Measure Names on Columns, Measure Values on Text): a manual Measure Names filter and sort
+    keep exactly ``measures`` in that order. labels={'SUM(ingresos)': 'Ingresos netos'} aliases the headers
+    (datasource-level [:Measure Names] aliases). label_font / value_font: {size, color, bold, family, align}
+    for the headers and the numbers."""
+    if on not in ("cols", "rows"):
+        raise ValueError("on must be 'cols' or 'rows'")
+    if not measures:
+        raise ValueError("measures needs at least one measure")
+    sh = Sheet(root, worksheet)
+    mn, mv = f"[{sh.dsn}].[:Measure Names]", f"[{sh.dsn}].[Multiple Values]"
+    refs = [sh.ref(m) for m in measures]
+    members = [f'"{sh.qname(r)}"' for r in refs]
+    for el in list(sh.view):
+        if el.get("column") == mn and el.tag in ("filter", "sort"):
+            sh.view.remove(el)
+    flt = etree.Element("filter", {"class": "categorical", "column": mn})
+    union = etree.SubElement(flt, "groupfilter", {"function": "union", f"{{{USER_NS}}}op": "manual"})
+    for m in members:
+        etree.SubElement(union, "groupfilter", function="member", level="[:Measure Names]", member=m)
+    _insert_ordered(sh.view, flt, VIEW_ORDER)
+    # Samples saved by older versions write <manual-sort>; Desktop 2026.3's schema takes <sort class="manual">.
+    ms = etree.Element("sort", {"class": "manual", "column": mn, "direction": "ASC"})
+    dic = etree.SubElement(ms, "dictionary")
+    for m in members:
+        etree.SubElement(dic, "bucket").text = m
+    _insert_ordered(sh.view, ms, VIEW_ORDER)
+    slices = sh.view.find("slices")
+    if slices is None:
+        slices = _insert_ordered(sh.view, etree.Element("slices"), VIEW_ORDER)
+    if mn not in [c.text for c in slices.findall("column")]:
+        etree.SubElement(slices, "column").text = mn
+    if sh.view.find("aggregation") is None:
+        _insert_ordered(sh.view, etree.Element("aggregation", value="true"), VIEW_ORDER)
+    table = sh.ws.find("table")
+    for shelf in ("rows", "cols"):
+        el = table.find(shelf)
+        if el is None:
+            el = _insert_ordered(table, etree.Element(shelf), TABLE_ORDER)
+        el.text = mn if shelf == on else None
+    for p in sh.ws.findall("./table/panes/pane"):
+        p.find("mark").set("class", "Automatic")
+        encs = p.find("encodings")
+        if encs is None:
+            encs = etree.Element("encodings")
+            _insert_ordered(p, encs, PANE_ORDER)
+        for e in encs.findall("text"):
+            encs.remove(e)
+        etree.SubElement(encs, "text", column=mv)
+    if labels:
+        col = _ds_column(sh.ds, "[:Measure Names]", create=False)
+        if col is None:
+            col = _ds_insert(sh.ds, etree.Element("column", datatype="string", name="[:Measure Names]",
+                                                  role="dimension", type="nominal"))
+        aliases = col.find("aliases")
+        if aliases is None:
+            aliases = etree.SubElement(col, "aliases")
+        for spec, text in labels.items():
+            key = f'"{sh.qname(make_ref(sh.ds, spec))}"'
+            a = next((a for a in aliases.findall("alias") if a.get("key") == key), None)
+            if a is None:
+                a = etree.SubElement(aliases, "alias", key=key)
+            a.set("value", text)
+    for element, font in (("label", label_font), ("cell", value_font)):
+        font = {"align": "center", **(font or {})}  # centred headers and numbers, as Tableau's KPI strips
+        if font:
+            for k, v in (("font-size", font.get("size")), ("color", font.get("color")),
+                         ("font-family", font.get("family")), ("text-align", font.get("align")),
+                         ("font-weight", None if font.get("bold") is None else ("bold" if font.get("bold") else "normal"))):
+                if v is not None:
+                    _set_format(sh.style(element), k, str(v), **({"field": mn} if element == "label" else {}))
+    # Column dividers off and no header-row title, as in Tableau's KPI strips.
+    for scope in ("cols", "rows"):
+        _set_format(sh.style("table-div"), "line-visibility", "off", scope=scope)
+    return {"worksheet": worksheet, "measures": [sh.qname(r) for r in refs], "on": on}
 
 
 def make_map(root, worksheet: str, filled: bool = True) -> dict:
@@ -930,7 +1021,7 @@ def make_map(root, worksheet: str, filled: bool = True) -> dict:
         encs = p.find("encodings")
         if encs is None:
             encs = etree.Element("encodings")
-            p.find("mark").addnext(encs)
+            _insert_ordered(p, encs, PANE_ORDER)
         if encs.find("geometry") is None:
             etree.SubElement(encs, "geometry", column=f"[{sh.dsn}].[Geometry (generated)]")
     return {"worksheet": worksheet, "map": "filled" if filled else "symbol"}
@@ -1016,7 +1107,7 @@ def set_encoding(root, worksheet: str, encoding: str, field: str | None, pane: i
     if encs is None:
         encs = etree.Element("encodings")
         anchor = p.find("style")
-        (anchor.addprevious(encs) if anchor is not None else p.find("mark").addnext(encs))
+        _insert_ordered(p, encs, PANE_ORDER)
     multi = enc_tag in ("lod", "tooltip")
     if not multi or field is None:
         for e in encs.findall(enc_tag):
@@ -1129,7 +1220,7 @@ def set_shared_axis(root, worksheet: str, measures: list[str], shelf: str = "row
     encs = p.find("encodings")
     if encs is None:
         encs = etree.Element("encodings")
-        p.find("mark").addnext(encs)
+        _insert_ordered(p, encs, PANE_ORDER)
     etree.SubElement(encs, "color", column=mn)
     return {"worksheet": worksheet, shelf: table.find(shelf).text, "measures": [sh.qname(r) for r in refs]}
 
@@ -1160,9 +1251,7 @@ def add_reference_line(root, worksheet: str, measure: str, formula: str = "avera
     if band_to:
         attrs["formula"] = formula
         attrs["band-formula"] = band_to
-    rl = etree.Element("reference-line", attrs)
-    anchor = pane.find("style")
-    (anchor.addprevious(rl) if anchor is not None else pane.append(rl))
+    rl = _insert_ordered(pane, etree.Element("reference-line", attrs), PANE_ORDER)
     if color:
         _set_format(sh.style("refline"), "stroke-color", color, id=rid)
     return {"worksheet": worksheet, "referenceLine": rid}
@@ -1179,9 +1268,7 @@ def add_trend_line(root, worksheet: str, fit: str = "linear", degree: int = 2, c
                  "fit": TREND_FITS.get(fit, fit)}
         if attrs["fit"] == "polynomial":
             attrs["degree"] = str(degree)
-        tl = etree.Element("trendline", attrs)
-        anchor = pane.find("style")
-        (anchor.addprevious(tl) if anchor is not None else pane.append(tl))
+        _insert_ordered(pane, etree.Element("trendline", attrs), PANE_ORDER)
     return {"worksheet": worksheet, "trendline": TREND_FITS.get(fit, fit)}
 
 
@@ -1251,10 +1338,19 @@ def set_color_palette(root, worksheet: str, field: str, colors: dict[str, str] |
     (e.g. 'tableau10', 'color_blind_10', 'tableau-blue-green' for measures)."""
     sh = Sheet(root, worksheet)
     r = sh.ref(field)
-    rule = sh.style("mark")
-    for e in rule.findall("encoding"):
-        if e.get("field") == r.instance_name:
-            rule.remove(e)
+    # Tableau keeps colour assignments with the data source (datasource/style/style-rule[@element='mark'],
+    # as in its Superstore sample), shared by every sheet; Desktop discards them inside a worksheet's style.
+    style = sh.ds.find("style")
+    if style is None:
+        style = _ds_insert(sh.ds, etree.Element("style"))
+    rule = style.find("style-rule[@element='mark']")
+    if rule is None:
+        rule = etree.SubElement(style, "style-rule", element="mark")
+    old_ws = sh.ws.find("./table/style/style-rule[@element='mark']")
+    for holder in (rule, old_ws):
+        for e in (holder.findall("encoding") if holder is not None else []):
+            if e.get("field") == r.instance_name and e.get("attr") == "color":
+                holder.remove(e)
     if colors:
         enc = etree.SubElement(rule, "encoding", attr="color", field=r.instance_name, type="palette")
         for member, hexcolor in colors.items():
@@ -1352,8 +1448,11 @@ def set_title(root, sheet: str, text: str | None, font_size: int | None = None, 
     return {"worksheet": sheet, "title": text}
 
 
-def set_tooltip(root, worksheet: str, text: str, pane: int = 0) -> dict:
-    """Custom tooltip. Reference fields as <SUM(Sales)> / <Region> (Tableau tooltip tokens)."""
+def set_tooltip(root, worksheet: str, text: str, pane: int = 0, viz_sheet: str | None = None,
+                viz_width: int = 300, viz_height: int = 300, viz_filter: str = "<All Fields>") -> dict:
+    """Custom tooltip. Reference fields as <SUM(Sales)> / <Region> (Tableau tooltip tokens).
+    viz_sheet='Detail' adds a viz in tooltip: that worksheet, filtered to the hovered mark (viz_filter:
+    '<All Fields>' or a field list), viz_width x viz_height pixels, as Tableau writes it (a <Sheet ...> run)."""
     sh = Sheet(root, worksheet)
     p = sh.pane(pane)
     old = p.find("customized-tooltip")
@@ -1364,9 +1463,39 @@ def set_tooltip(root, worksheet: str, text: str, pane: int = 0) -> dict:
     for i, line in enumerate(text.split("\n")):
         run = etree.SubElement(ft, "run")
         run.text = (line + ("\n" if i < len(text.split("\n")) - 1 else ""))
-    anchor = p.find("style")
-    (anchor.addprevious(ct) if anchor is not None else p.append(ct))
-    return {"worksheet": worksheet}
+    if viz_sheet:
+        if viz_sheet not in twb.sheet_names(root)["worksheets"]:
+            raise KeyError(f"Worksheet {viz_sheet!r} not found for the viz in tooltip")
+        etree.SubElement(ft, "run").text = "\n"
+        etree.SubElement(ft, "run").text = (f'<Sheet name="{viz_sheet}" maxwidth="{viz_width}" '
+                                            f'maxheight="{viz_height}" filter="{viz_filter}">')
+    _insert_ordered(p, ct, PANE_ORDER)
+    return {"worksheet": worksheet, **({"vizInTooltip": viz_sheet} if viz_sheet else {})}
+
+
+def set_label_text(root, worksheet: str, text: str, pane: int = 0, show: bool = True) -> dict:
+    """Custom mark label (Marks card > Label > Text): free text with fields as <SUM(Sales)> / <Region>.
+    Written as Tableau does: each field becomes the runs '<', '[datasource].[instance]', '>'."""
+    sh = Sheet(root, worksheet)
+    p = sh.pane(pane)
+    old = p.find("customized-label")
+    if old is not None:
+        p.remove(old)
+    cl = etree.Element("customized-label")
+    ft = etree.SubElement(cl, "formatted-text")
+    pos = 0
+    for m in re.finditer(r"<([^<>]+)>", text):
+        if m.start() > pos:
+            etree.SubElement(ft, "run").text = text[pos:m.start()]
+        for part in ("<", sh.qname(sh.ref(m.group(1))), ">"):
+            etree.SubElement(ft, "run").text = part
+        pos = m.end()
+    if pos < len(text):
+        etree.SubElement(ft, "run").text = text[pos:]
+    _insert_ordered(p, cl, PANE_ORDER)
+    if show:
+        format_marks(root, worksheet, show_labels=True, pane=pane)
+    return {"worksheet": worksheet, "label": text}
 
 
 def duplicate_sheet(root, sheet: str, new_name: str) -> dict:
@@ -1465,14 +1594,21 @@ def add_zone(root, dashboard: str, kind: str, sheet: str | None = None, text: st
              floating: bool = False, x: int = 0, y: int = 0, w: int = 300, h: int = 200,
              font_size: int | None = None, bold: bool = False, font_color: str | None = None,
              background: str | None = None, border: str | None = None, target_sheet: str | None = None,
-             italic: bool = False, font: str | None = None, align: str | None = None) -> dict:
+             italic: bool = False, font: str | None = None, align: str | None = None,
+             title: str | None = None, position: int | None = None, fixed_width: int | None = None,
+             fixed_height: int | None = None) -> dict:
     """Add an object to a dashboard.
     kind: sheet · text · image (image=path) · web (url) · blank · title · container (horizontal|vertical via
     mode) · filter (sheet+field, mode=checkdropdown|dropdown|slider|...) · legend-color|legend-size|legend-shape
     (sheet+field) · parameter (parameter name, mode=slider|type_in|compact|radiolist) · highlighter
     (sheet+field) · navigation (target_sheet, text=label).
-    Tiled objects go into ``container`` (zone id) or the main layout; floating=True places them at
-    x/y/w/h pixels."""
+    Tiled objects go into ``container`` or the main layout; floating=True places them at x/y/w/h pixels.
+    container: a zone id, 'title' (a row beside the dashboard title: filters/controls next to it) or 'row:N'
+    (the Nth row of the layout, 1-based). position: index inside that container (default: last).
+    fixed_width / fixed_height: pin the tiled object's size in pixels (is-fixed/fixed-size, as Tableau does);
+    width needs a horizontal container, height a vertical one.
+    title: custom title of a filter / parameter / legend card (custom-title + formatted-text, e.g.
+    'Elige un canal')."""
     db = _dashboard(root, dashboard)
     zid = str(_next_zone_id(db))
     attrs: dict[str, str] = {"id": zid}
@@ -1552,6 +1688,8 @@ def add_zone(root, dashboard: str, kind: str, sheet: str | None = None, text: st
         raise ValueError(f"Unknown zone kind {kind!r}")
     for kk, vv in attrs.items():
         z.set(kk, vv)
+    if title is not None and k not in ("filter", "parameter", "highlighter") and not k.startswith("legend"):
+        raise ValueError("title is for filter, parameter, highlighter and legend cards; use kind=text for text")
     if k == "navigation":
         uuid_, label, fg, bg = nav
         b = etree.SubElement(z, "button", action=f'tabdoc:goto-sheet window-id="{uuid_}"', **{"button-type": "text"})
@@ -1562,19 +1700,101 @@ def add_zone(root, dashboard: str, kind: str, sheet: str | None = None, text: st
         etree.SubElement(vs, "format", attr="background-color", value=bg)
         background = None  # the button carries its own colour
     _zone_style(z, background=background, border=border)
+    if title is not None:
+        z = _titled_card(db, z, title, font_color, font_size, bold, int(zid))
+        zid = z.get("id")
     if floating:  # floating objects are siblings of the root layout zone, positioned in dashboard units
         db.find("zones").append(z)
+        _relayout_group(db, z)
     elif container:
-        parent = next((c for c in db.iter("zone") if c.get("id") == str(container)), None)
-        if parent is None:
-            raise KeyError(f"Container zone {container!r} not found")
+        db.find("zones").append(z)  # reserve its ids while _resolve_container may create a row; moved below
+        parent = _resolve_container(db, str(container))
+        if (fixed_width and parent.get("param") != "horz") or (fixed_height and parent.get("param") != "vert"):
+            raise ValueError("fixed_width needs a horizontal container and fixed_height a vertical one; "
+                             f"container {container!r} is {parent.get('param')!r}")
         _append_zone(parent, z)
-        _relayout(db)
+        if position is not None:
+            kids = _kids(parent)
+            target = kids[min(max(position, 0), len(kids) - 1)]
+            if target is not z:
+                target.addprevious(z)
     else:
         _place_tiled(db, z)
+    if not floating and (fixed_width or fixed_height):
+        z.set("is-fixed", "true")
+        z.set("fixed-size", str(fixed_width or fixed_height))
+    if not floating:
+        _relayout(db)
     if k in ("sheet",) or (sheet and k in ("filter", "highlighter") or k.startswith("legend")):
         _register_viewpoint(root, dashboard, sheet)
     return {"dashboard": dashboard, "zone": zid, "kind": k}
+
+
+TITLE_PX = 22
+
+
+def _titled_card(db, card, title, color, size, bold, first_id):
+    """A card with a custom title, as a vertical container: a text zone with the title on top of the card,
+    whose own title is hidden (show-title='false'). Desktop 2026.3 keeps custom-title/formatted-text on
+    filter zones but still draws the field name, so the title is a text object. Returns the container."""
+    card.set("show-title", "false")
+    card.set("custom-title", "true")  # what Desktop shows if the author turns the card title back on
+    ft = etree.Element("formatted-text")
+    etree.SubElement(ft, "run").text = title
+    card.insert(0, ft)
+    box = etree.Element("zone", {k: card.get(k) for k in ("x", "y", "w", "h")})
+    box.attrib.update({"id": str(first_id + 1), "param": "vert", "type-v2": "layout-flow"})
+    txt = etree.SubElement(box, "zone", {"id": str(first_id + 2), "type-v2": "text", "is-fixed": "true",
+                                         "fixed-size": str(TITLE_PX), "x": "0", "y": "0", "w": "0", "h": "0"})
+    t = etree.SubElement(etree.SubElement(txt, "formatted-text"), "run", fontcolor=color or "#333333",
+                         fontsize=str(size or 10))
+    if bold:
+        t.set("bold", "true")
+    t.text = title
+    _zone_style(txt, margin=4)
+    box.append(card)
+    return box
+
+
+def _relayout_group(db, z):
+    """Lay out the children of a floating container inside its own x/y/w/h."""
+    dw, dh = _dash_size(db)
+    x, y, w, h = (int(z.get(a)) for a in ("x", "y", "w", "h"))
+    pos = y
+    kids = _kids(z)
+    fixed = sum(int(k.get("fixed-size")) * FULL // dh for k in kids if k.get("is-fixed") == "true")
+    flex = [k for k in kids if k.get("is-fixed") != "true"]
+    for k in kids:
+        kh = int(k.get("fixed-size")) * FULL // dh if k.get("is-fixed") == "true" else (h - fixed) // max(len(flex), 1)
+        k.set("x", str(x)); k.set("y", str(pos)); k.set("w", str(w)); k.set("h", str(kh))  # noqa: E702
+        pos += kh
+
+
+def _resolve_container(db, container: str):
+    """A zone id, 'title' (wraps the dashboard title in a horizontal row and returns that row) or 'row:N'."""
+    if container == "title":
+        t = next((c for c in db.iter("zone") if c.get("type-v2") == "title"), None)
+        if t is None:
+            raise KeyError("The dashboard has no title zone")
+        par = t.getparent()
+        if par.get("type-v2") == "layout-flow" and par.get("param") == "horz":
+            return par
+        row = etree.Element("zone", {"id": str(_next_zone_id(db)), "param": "horz", "type-v2": "layout-flow",
+                                     "is-fixed": "true", "fixed-size": str(FIXED_PX["title"] + 12)})
+        t.addprevious(row)
+        row.append(t)
+        return row
+    if container.startswith("row:"):
+        main, _ = _main_parts(db)
+        rows = [c for c in _kids(main) if c.get("type-v2") == "layout-flow"]
+        n = int(container.split(":", 1)[1])
+        if not 1 <= n <= len(rows):
+            raise KeyError(f"{container!r}: the dashboard has {len(rows)} rows")
+        return rows[n - 1]
+    parent = next((c for c in db.iter("zone") if c.get("id") == container), None)
+    if parent is None:
+        raise KeyError(f"Container zone {container!r} not found")
+    return parent
 
 
 def _window_uuid(root, sheet):
@@ -1601,10 +1821,19 @@ def _append_zone(parent, z):
     (tail.addprevious(z) if tail is not None else parent.append(z))
 
 
+def _is_card(z) -> bool:
+    """A filter/parameter/legend card, or one wrapped with its custom title by _titled_card."""
+    if z.get("type-v2") in PANEL_TYPES:
+        return True
+    kids = _kids(z)
+    return (z.get("type-v2") == "layout-flow" and z.get("param") == "vert" and len(kids) == 2
+            and kids[0].get("type-v2") == "text" and kids[1].get("type-v2") in PANEL_TYPES)
+
+
 def _is_panel(z) -> bool:
     kids = _kids(z)
     return (z.get("type-v2") == "layout-flow" and z.get("param") == "vert" and bool(kids)
-            and all(c.get("type-v2") in PANEL_TYPES for c in kids))
+            and not _is_card(z) and all(_is_card(c) for c in kids))
 
 
 def _main_parts(db):
@@ -1627,7 +1856,9 @@ def _ensure_panel(db):
     row = etree.Element("zone", {"id": str(_next_zone_id(db)), "param": "horz", "type-v2": "layout-flow"})
     outer.replace(main, row)
     row.append(main)
-    panel = etree.SubElement(row, "zone", {"id": str(_next_zone_id(db)), "param": "vert", "type-v2": "layout-flow"})
+    # Pinned width: without is-fixed Desktop splits the row by content and the panel takes ~half the page.
+    panel = etree.SubElement(row, "zone", {"id": str(_next_zone_id(db)), "param": "vert", "type-v2": "layout-flow",
+                                           "is-fixed": "true", "fixed-size": str(PANEL_WIDTH_PX)})
     return panel
 
 
@@ -1636,7 +1867,7 @@ def _place_tiled(db, z):
     text under the title, sheets into the chart grid, containers as new rows."""
     kind = z.get("type-v2")
     db.find("zones").append(z)  # reserve its id while containers are created; moved below
-    if kind in PANEL_TYPES:
+    if _is_card(z):
         _append_zone(_ensure_panel(db), z)
     else:
         main, _ = _main_parts(db)
@@ -1663,6 +1894,8 @@ def _relayout(db):
     outer = db.find("zones/zone")
 
     def fixed_h(z):
+        if z.get("is-fixed") == "true" and z.get("fixed-size") and z.getparent().get("param") == "vert":
+            return int(z.get("fixed-size")) * FULL // dh
         t = z.get("type-v2")
         return FIXED_PX.get(t) * FULL // dh if t in FIXED_PX else None
 
@@ -1676,13 +1909,16 @@ def _relayout(db):
                 lay(k, x, y, w, h)
             return
         if z.get("param") == "horz":
-            panel_w = PANEL_WIDTH_PX * FULL // dw
-            fixed = [k for k in kids if _is_panel(k)]
-            flex = [k for k in kids if k not in fixed]
-            each = (w - panel_w * len(fixed)) // max(len(flex), 1)
+            def fixed_w(k):
+                if k.get("is-fixed") == "true" and k.get("fixed-size"):
+                    return int(k.get("fixed-size")) * FULL // dw
+                return PANEL_WIDTH_PX * FULL // dw if _is_panel(k) else None
+            fixed_total = sum(fixed_w(k) or 0 for k in kids)
+            flex = [k for k in kids if fixed_w(k) is None]
+            each = max(w - fixed_total, 0) // max(len(flex), 1)
             pos = x
             for k in kids:
-                kw = panel_w if k in fixed else each
+                kw = fixed_w(k) if fixed_w(k) is not None else each
                 lay(k, pos, y, kw, h)
                 pos += kw
         else:
@@ -2019,8 +2255,19 @@ def add_story_point(root, story: str, sheet: str, caption: str) -> dict:
 # workbook-level
 # ============================================================================================
 def format_workbook(root, font: str | None = None, font_size: int | None = None, color: str | None = None,
-                    title_font_size: int | None = None) -> dict:
-    """Workbook-wide default formatting (Format > Workbook)."""
+                    title_font_size: int | None = None, locale: str | None = None) -> dict:
+    """Workbook-wide default formatting (Format > Workbook). locale (File > Workbook Locale), e.g. es_ES,
+    es_MX, en_US: number separators, currency and month names follow it; None leaves it as is, '' resets
+    it to the user's system locale. Stored as <workbook locale=...>, as Tableau's own localized samples."""
+    if locale is not None:
+        if locale and not re.fullmatch(r"[a-z]{2,3}_[A-Z]{2}", locale):
+            raise ValueError(f"locale must look like es_ES or en_US, got {locale!r}")
+        if locale:
+            root.set("locale", locale)
+        else:
+            root.attrib.pop("locale", None)
+    if not any(v is not None for v in (font, font_size, color, title_font_size)):
+        return {"locale": root.get("locale")}
     style = _wb_child(root, "style")
     rule = style.find("style-rule[@element='all']")
     if rule is None:
@@ -2033,7 +2280,7 @@ def format_workbook(root, font: str | None = None, font_size: int | None = None,
         if tr is None:
             tr = etree.SubElement(style, "style-rule", element="worksheet-title")
         _set_format(tr, "font-size", str(title_font_size))
-    return {"style": [dict(f.attrib) for f in rule]}
+    return {"style": [dict(f.attrib) for f in rule], "locale": root.get("locale")}
 
 
 def set_start_sheet(root, sheet: str) -> dict:
@@ -2103,8 +2350,7 @@ def _rule(holder, element):
         elif holder.tag == "table":
             holder.find("panes").addprevious(style)
         elif holder.tag == "pane":
-            anchor = next((c for c in holder if c.tag in ("customized-tooltip", "reference-line", "trendline")), None)
-            (anchor.addprevious(style) if anchor is not None else holder.append(style))
+            _insert_ordered(holder, style, PANE_ORDER)
         elif holder.tag == "dashboard":
             lo = holder.find("layout-options")
             (lo.addnext(style) if lo is not None else holder.insert(0, style))
@@ -2228,7 +2474,14 @@ def set_font(root, sheet: str, element: str = "worksheet", family: str | None = 
             if val is not None:
                 for q in names:
                     _set_format(rule, attr, str(val), field=q)
-        return {"sheet": sheet, "element": element, "fields": names}
+        out = {"sheet": sheet, "element": element, "fields": names}
+        # Text marks (KPI numbers, text tables) are drawn with the 'cell' rule, not 'label' (Tableau's own
+        # Superstore "Total Sales" sheet styles its values that way): apply it there too so the call works.
+        if any(p.find("mark") is not None and p.find("mark").get("class") in ("Text", "Automatic")
+               and p.find("encodings/text") is not None for p in sh.ws.findall("./table/panes/pane")):
+            set_font(root, sheet, "cell", family=family, size=size, color=color, bold=bold, italic=italic, align=align)
+            out["alsoApplied"] = "cell"
+        return out
     for attr, val in (("font-family", family), ("font-size", size), ("color", color),
                       ("font-weight", None if bold is None else ("bold" if bold else "normal")),
                       ("font-style", None if italic is None else ("italic" if italic else "normal")),
