@@ -53,3 +53,24 @@ def test_diffs_carry_no_local_paths():
     b = AFTER.replace("<table>", "<connection class='textscan' directory='C:/y' filename='a.csv'/><table>")
     d = ui_reverse.diff(a, b)
     assert "C:/" not in "\n".join(d["diff"]) and 'directory="<local>"' in "\n".join(d["diff"])
+
+
+def test_context_items_that_open_an_editor_in_place_are_skipped():
+    skip = lambda p: any(ui_reverse.SKIP.match(s) or ui_reverse.CTX_SKIP.match(s) for s in p.split(" > "))  # noqa: E731
+    for path in ("Rename", "Edit in Shelf", "View Data...", "Describe...", "Copy > Data", "Find in Data pane"):
+        assert skip(path), path
+    for path in ("Show Header", "Keep Only", "Hide Title", "Sort...", "Mark Label > Always Show"):
+        assert not skip(path), path
+    assert ui_reverse.CTX_ONCE.match("field:Region") and not ui_reverse.CTX_ONCE.match("shelf:rows")
+
+
+def test_report_lists_context_menus(tmp_path, monkeypatch):
+    monkeypatch.setattr(ui_reverse, "OUT", tmp_path / "ui-commands.json")
+    data = {"checked": "test", "sheets": {}, "context": {"B": {
+        "axis:left": {"menu": [{"path": "Split", "enabled": False, "checked": None, "submenu": False}],
+                      "commands": {"Show Header": {"commands": ['tabdoc:toggle-header'], "dialogs": [],
+                                                   **ui_reverse.diff(BEFORE, AFTER)}}},
+        "shelf:filters": {"error": "no context menu"}}}}
+    md = ui_reverse.report(data).read_text(encoding="utf-8")
+    assert "Menús contextuales" in md and "cabecera / eje" in md and "tabdoc:toggle-header" in md
+    assert "Desactivados: Split" in md and "No se abrió" in md

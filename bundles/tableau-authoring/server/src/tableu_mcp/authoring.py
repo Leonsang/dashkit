@@ -1257,19 +1257,30 @@ REFLINE_SCOPES = ("per-table", "per-pane", "per-cell")  # entire table / each pa
 
 def add_reference_line(root, worksheet: str, measure: str, formula: str = "average", scope: str = "per-table",
                        value: float | None = None, label: str | None = None, color: str | None = None,
-                       band_to: str | None = None) -> dict:
+                       band_to: str | None = None, value_of: str | None = None,
+                       percentages: list[float] | None = None) -> dict:
     """Reference line on a measure's axis. formula: average|median|sum|min|max|constant (value=...).
-    scope: per-table|per-pane|per-cell. label: text with <Value>, '' to hide. band_to: a second formula for a band."""
+    scope: per-table|per-pane|per-cell. label: text with <Value>, '' to hide. band_to: a second formula for a band.
+    value_of: compute the line on another measure (a target), put on Detail if it is not in the view.
+    percentages=[60, 80, 100]: a reference distribution (bands at those % of the value, shaded below), the
+    bullet-graph shape of Superstore's sheets (percentage-bands + <reference-line-value percentage>)."""
     if scope not in REFLINE_SCOPES:
         raise ValueError(f"scope must be one of {REFLINE_SCOPES}")
     sh = Sheet(root, worksheet)
     r = sh.ref(measure)
+    vcol = sh.qname(r)
+    if value_of:
+        vref = sh.ref(value_of)
+        vcol = sh.qname(vref)
+        if vcol not in {e.get("column") for e in sh.ws.iter() if e.get("column")}:
+            set_encoding(root, worksheet, "detail", value_of)  # the value must be in the view
+            sh = Sheet(root, worksheet)
     pane = sh.pane()
     n = len(sh.ws.findall(".//reference-line"))
     rid = f"refline{n}"
     attrs = {"axis-column": sh.qname(r), "enable-instant-analytics": "false", "formula": formula, "id": rid,
              "label-type": "automatic" if label is None else ("none" if label == "" else "custom"),
-             "scope": scope, "value-column": sh.qname(r), "z-order": str(n + 1)}
+             "scope": scope, "value-column": vcol, "z-order": str(n + 1)}
     if label:
         attrs["label"] = label
     if formula == "constant":
@@ -1279,10 +1290,16 @@ def add_reference_line(root, worksheet: str, measure: str, formula: str = "avera
     if band_to:
         attrs["formula"] = formula
         attrs["band-formula"] = band_to
+    if percentages:
+        if band_to:
+            raise ValueError("percentages and band_to are different kinds of reference line")
+        attrs.update({"fill-above": "false", "fill-below": "true", "percentage-bands": "true", "symmetric": "false"})
     rl = _insert_ordered(pane, etree.Element("reference-line", attrs), PANE_ORDER)
+    for pct in percentages or []:
+        etree.SubElement(rl, "reference-line-value", percentage=f"{float(pct):g}")
     if color:
         _set_format(sh.style("refline"), "stroke-color", color, id=rid)
-    return {"worksheet": worksheet, "referenceLine": rid}
+    return {"worksheet": worksheet, "referenceLine": rid, **({"percentages": list(percentages)} if percentages else {})}
 
 
 def add_trend_line(root, worksheet: str, fit: str = "linear", degree: int = 2, confidence_bands: bool = False) -> dict:
@@ -2452,7 +2469,10 @@ def delete_action(root, name: str) -> dict:
 # ============================================================================================
 def create_story(root, name: str, points: list[dict], width: int = 1016, height: int = 964,
                  title: str | None = None) -> dict:
-    """A story: points=[{'sheet': 'Overview', 'caption': 'Sales grew 20%'}, ...] (sheets or dashboards)."""
+    """A story: points=[{'sheet': 'Overview', 'caption': 'Sales grew 20%'}, ...] (sheets or dashboards).
+    A point can capture its own filter state, as Tableau's World Indicators story does:
+    'filters': [{'field': 'Region', 'values': ['Africa'], 'worksheet': 'Map'?}] (worksheet defaults to the
+    point's sheet; on a dashboard, name the worksheet). Written as <capturedDeltas><worksheet><filter>."""
     existing = twb.sheet_names(root)
     allowed = existing["worksheets"] + existing["dashboards"]
     for p in points:
@@ -2481,8 +2501,9 @@ def create_story(root, name: str, points: list[dict], width: int = 1016, height:
     fb = etree.SubElement(fb_zone, "flipboard", {"active-id": "1", "nav-type": "caption", "show-nav-arrows": "true"})
     sps = etree.SubElement(fb, "story-points")
     for i, p in enumerate(points, 1):
-        etree.SubElement(sps, "story-point", caption=p.get("caption", p["sheet"]), **{"captured-sheet": p["sheet"]},
-                         id=str(i))
+        sp = etree.SubElement(sps, "story-point", caption=p.get("caption", p["sheet"]),
+                              **{"captured-sheet": p["sheet"]}, id=str(i))
+        _captured_filters(root, sp, p)
     etree.SubElement(db, "simple-id", uuid=_uuid())
     _wb_child(root, "dashboards").append(db)
     win = etree.SubElement(_wb_child(root, "windows"), "window", {"class": "dashboard", "name": name})
@@ -2492,11 +2513,38 @@ def create_story(root, name: str, points: list[dict], width: int = 1016, height:
     return {"story": name, "points": len(points)}
 
 
-def add_story_point(root, story: str, sheet: str, caption: str) -> dict:
+def _captured_filters(root, sp, point: dict) -> None:
+    """<capturedDeltas>: the filters a story point shows on top of its sheet (World Indicators' story)."""
+    flts = point.get("filters") or []
+    if not flts:
+        return
+    names = twb.sheet_names(root)
+    deltas = etree.SubElement(sp, "capturedDeltas")
+    for f in flts:
+        ws = f.get("worksheet") or point["sheet"]
+        if ws not in names["worksheets"]:
+            raise ValueError(f"story point on {point['sheet']!r}: name the worksheet of filter {f.get('field')!r}")
+        sh = Sheet(root, ws)
+        r = sh.ref(f["field"])
+        member_type = "integer" if r.prefix in ("yr", "qr", "mn", "wk", "dy", "wd") else r.field.datatype
+        flt = _build_filter(sh.qname(r), r.instance_name, member_type, values=f.get("values"),
+                            exclude=f.get("exclude", False))
+        for g in flt.iter("groupfilter"):  # a captured state filters what is in the view, as Desktop writes it
+            if g.get(U + "ui-domain"):
+                g.set(U + "ui-domain", "relevant")
+        w = next((x for x in deltas.findall("worksheet") if x.get("name") == ws), None)
+        if w is None:
+            w = etree.SubElement(deltas, "worksheet", name=ws)
+        w.append(flt)
+
+
+def add_story_point(root, story: str, sheet: str, caption: str, filters: list[dict] | None = None) -> dict:
+    """Add a point to a story; filters=[{'field', 'values', 'worksheet'?}] as in create_story."""
     db = _dashboard(root, story, storyboard=True)
     sps = db.find(".//story-points")
     nid = max((int(s.get("id")) for s in sps), default=0) + 1
-    etree.SubElement(sps, "story-point", caption=caption, **{"captured-sheet": sheet}, id=str(nid))
+    sp = etree.SubElement(sps, "story-point", caption=caption, **{"captured-sheet": sheet}, id=str(nid))
+    _captured_filters(root, sp, {"sheet": sheet, "filters": filters})
     return {"story": story, "point": nid}
 
 

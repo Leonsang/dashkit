@@ -66,6 +66,10 @@ INTERNAL = {"thumbnail", "thumbnails", "approx-count", "precision", "scale", "se
             "explain-data", "explanation-types", "explanation-type", "device-preview", "geo-search-visibility",
             "floating-toolbar-visibility", "default-map-tool-selection", "map-navigation", "server-captions",
             "refresh", "refresh-event", "color-one-way", "bucket-selection", "mark-sizing"}
+# Values Desktop writes itself when a filter action runs: the hidden "Action (Region)" groups (crossjoin of the
+# action's fields, user:auto-column='sheet_link') and the state of the target's filter after a click
+# (crossjoin of the clicked members, or empty-level when "exclude all values" is cleared).
+INTERNAL_VALUES = {("groupfilter", "function", "crossjoin"), ("groupfilter", "function", "empty-level")}
 
 
 def area(tag: str) -> str:
@@ -132,7 +136,8 @@ def main() -> None:
                 continue
             for v in spec["values"]:
                 if v not in lit:
-                    missing_val[area(tag)].append((e["files"], f"{sig} @{a}={v}"))
+                    where = "internos" if (tag, a, v) in INTERNAL_VALUES else area(tag)
+                    missing_val[where].append((e["files"], f"{sig} @{a}={v}"))
     lines = ["# Pool de funciones que faltan en tableu",
              "",
              "Generado por `scripts/coverage_gaps.py` a partir de `xml-catalog.json`, que es la estructura de "

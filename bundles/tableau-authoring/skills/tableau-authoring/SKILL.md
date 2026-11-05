@@ -112,9 +112,14 @@ dirección orientada automáticamente.
   sola tabla lógica, para búsquedas al mismo nivel de detalle. Las relaciones (`relationships`) son lo
   recomendado cuando las tablas tienen distinto nivel de detalle. Se pueden combinar.
 - **Doble eje:** `worksheet SetDualAxis` da a cada eje su color (azul y naranja de Tableau 10, o `colors=[...]`).
-- **Comandos de la interfaz:** `tableu://ui-commands` dice qué escribe en el XML cada comando de menú de Desktop
-  (Show Mark Labels, Show Caption, Totals...) y qué comando interno ejecuta. Para replicar un comando, escribe
-  ese XML con la operación de `tableu` correspondiente.
+- **Real frente a objetivo:** `analytics AddReferenceLine value_of="SUM(Objetivo)" percentages=[60, 80]
+  scope="per-cell"` dibuja las bandas de un gráfico de bala (distribución de referencia, como Superstore).
+- **Historias que filtran:** un punto de `story Create` acepta `filters=[{"field", "values", "worksheet"?}]` y
+  muestra su hoja filtrada sin duplicarla.
+- **Comandos de la interfaz:** `tableu://ui-commands` dice qué escribe en el XML cada comando de Desktop, de la
+  barra de menús y de los menús contextuales (clic derecho en campos, píldoras, cabeceras, ejes, marcas,
+  título), y qué comando interno ejecuta. Para replicar un comando, escribe ese XML con la operación de
+  `tableu` correspondiente.
 - **Modales:** cada respuesta puede traer `desktopModals`. Si alguno no se cerró solo (File Recovery, Save
   changes?…), dile al usuario qué pregunta y espera. No pulses sus botones.
 - **Qué falta todavía:** `tableu://coverage-gaps`. El comportamiento real de Desktop está en

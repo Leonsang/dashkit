@@ -210,6 +210,106 @@ def commands_for(sheet: str) -> list[dict]:
     return items
 
 
+def measure(client, probe, sheet, todo, results, run, args, data, tail) -> None:
+    """Run each command of `todo` with `run(path)` on a freshly applied probe and record what it did:
+    internal command (log), dialogs (closed with the X), XML diff."""
+    prev, dirty = None, True
+    for i in todo:
+        if args.resume and results.get(i["path"], {}).get("invoked"):
+            continue
+        if dirty:  # only re-apply the probe when the last command changed something
+            try:
+                reset(client, probe, sheet)
+            except ApplyFailed as e:
+                if prev:  # the previous command left Desktop unable to apply documents
+                    results[prev]["breaksDesktop"] = str(e)
+                OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+                raise SystemExit(f"stopped after {prev!r}: {e}") from e
+        prev = i["path"]
+        before = client.get_document()
+        tail.read()
+        r = run(i["path"])
+        if not r.get("invoked") and "disabled" not in str(r.get("error")):
+            # a side pane left open by the previous command can keep a menu from opening: start clean, retry
+            reset(client, probe, sheet)
+            before = client.get_document()
+            tail.read()
+            r = run(i["path"])
+        time.sleep(1.5)
+        commands = tail.read()
+        if args.pid and args.pid not in desktop_setup.tableau_running():
+            results[i["path"]] = {"commands": commands, "crashesDesktop": True}
+            OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+            raise SystemExit(f"Desktop exited after {i['path']!r}")
+        seen = [{k: m.get(k) for k in ("title", "texts", "buttons")}
+                for m in desktop_setup.modals(pids=Watch.pids) if m.get("title")]
+        closed = []
+        if seen:
+            closed = uia.close_windows()
+            time.sleep(0.5)
+            left = [m.get("title") for m in desktop_setup.modals(pids=Watch.pids)]
+            if left:  # a window that stays open would swallow the next commands
+                results[i["path"]] = {"dialogs": seen, "commands": commands, "error": f"could not close {left}"}
+                OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+                raise SystemExit(f"stopped: {i['path']!r} left {left} open")
+        try:
+            after = client.get_document()
+            d = diff(before, after)
+        except Exception as e:  # noqa: BLE001
+            d = {"changed": None, "error": str(e)[:300]}
+        dirty = bool(seen) or d.get("changed") is not False or not r.get("invoked")
+        res = {"checkedBefore": i["checked"], "invoked": r.get("invoked"), "error": r.get("error"),
+               "commands": commands, "dialogs": seen, "closed": closed, **d}
+        results[i["path"]] = res
+        tag = "dialog" if seen else ("changed" if d.get("changed") else "no change")
+        print(f"  {i['path']}: {tag} {res.get('added', [])[:4]}", flush=True)
+        OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+
+# Context menus: never run what leaves the workbook (SKIP) nor what opens an editor in place (Rename, Edit in
+# Shelf), which keeps the keyboard focus and swallows the next commands.
+CTX_SKIP = re.compile(r"^(Rename|Edit in Shelf|View Data|Describe|Find in Data pane|Used In|Select All|Select Marks)", re.I)
+# Targets whose menu is the same on every sheet: measured on the first one only.
+CTX_ONCE = re.compile(r"^(field:|title$|view:empty$|tab:)")
+CTX_FIELDS = ("field:Region", "field:Importe", "field:Fecha")  # a dimension, a measure, a date
+
+
+def context_pass(client, probe, sheets, data, tail, args) -> None:
+    """The context menus of every worksheet: fields of the Data pane, pills on the shelves and the Marks card,
+    headers and axes, marks, the title, the sheet tab (tableu_mcp.uia.context_*)."""
+    doc = twb.parse(probe)
+    names = twb.sheet_names(doc)
+    order = [w.get("name") for w in doc.iter("window")]
+    ctx = data.setdefault("context", {})
+    for sheet in [s for s in sheets if s in names.get("worksheets", [])]:
+        reset(client, probe, sheet)
+        targets = uia.context_targets()
+        if "view:rect" in targets:  # the marks are drawn: find a point on one and one on the background
+            targets.update(uia.find_marks(targets.pop("view:rect")))
+        tab = f"tab:{order.index(sheet)}" if sheet in order else None
+        wanted = {t: pt for t, pt in targets.items()
+                  if (not t.startswith("field:") or t in CTX_FIELDS) and (not t.startswith("tab:") or t == tab)}
+        rec = ctx.setdefault(sheet, {})
+        print(f"== context {sheet}: {sorted(wanted)}", flush=True)
+        for tname, point in wanted.items():
+            key = "tab" if tname.startswith("tab:") else tname
+            if CTX_ONCE.match(tname) and not args.all and any(key in r for s, r in ctx.items() if s != sheet):
+                continue
+            items = uia.context_items(point, depth=2)
+            if not items or any("error" in i for i in items):
+                rec[key] = {"error": next((i["error"] for i in items if "error" in i), "empty menu")}
+                continue
+            trec = rec.setdefault(key, {})
+            trec["menu"] = [{k: i[k] for k in ("path", "enabled", "checked", "submenu")} for i in items]
+            results = trec.setdefault("commands", {})
+            todo = [i for i in items if i["enabled"] and not i["submenu"]
+                    and not any(SKIP.match(seg) or CTX_SKIP.match(seg) for seg in i["path"].split(" > "))
+                    and (not args.only or i["path"] in args.only)]
+            print(f"-- {sheet} {key}: {len(items)} items, {len(todo)} to run", flush=True)
+            measure(client, probe, sheet, todo, results, lambda path, pt=point: uia.context_invoke(pt, path),
+                    args, data, tail)
+            uia.context_close()
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("probe")
@@ -220,6 +320,8 @@ def main() -> None:
     ap.add_argument("--pid", type=int)
     ap.add_argument("--resume", action="store_true", help="skip commands already measured")
     ap.add_argument("--all", action="store_true", help="measure every command on every sheet")
+    ap.add_argument("--context", action="store_true", help="also the context (right-click) menus")
+    ap.add_argument("--no-menus", action="store_true", help="skip the menu bar (with --context)")
     args = ap.parse_args()
     if args.build:
         build_probe(Path(args.probe).resolve())
@@ -253,7 +355,7 @@ def main() -> None:
     data["checked"] = f"Tableau Desktop {client.app().get('applicationVersion')}, menus through UI Automation"
     data.setdefault("sheets", {})
     tail = LogTail(args.pid or desktop_setup.tableau_running()[0])
-    for sheet in sheets:
+    for sheet in ([] if args.no_menus else sheets):
         reset(client, probe, sheet)
         kind = next(k for k, v in twb.sheet_names(twb.parse(probe)).items() if sheet in v)
         items = commands_for(sheet)
@@ -273,58 +375,9 @@ def main() -> None:
                 and i["path"] not in seen_paths and not (data_done and i["path"].startswith("Data > "))
                 and (not args.only or i["path"] in args.only)]
         print(f"== {sheet} ({kind}): {len(items)} items, {len(todo)} to run", flush=True)
-        prev, dirty = None, True
-        for i in todo:
-            if args.resume and results.get(i["path"], {}).get("invoked"):
-                continue
-            if dirty:  # only re-apply the probe when the last command changed something
-                try:
-                    reset(client, probe, sheet)
-                except ApplyFailed as e:
-                    if prev:  # the previous command left Desktop unable to apply documents
-                        results[prev]["breaksDesktop"] = str(e)
-                    OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
-                    raise SystemExit(f"stopped after {prev!r}: {e}") from e
-            prev = i["path"]
-            before = client.get_document()
-            tail.read()
-            r = uia.invoke(i["path"])
-            if not r.get("invoked") and "disabled" not in str(r.get("error")):
-                # a side pane left open by the previous command can keep a menu from opening: start clean, retry
-                reset(client, probe, sheet)
-                before = client.get_document()
-                tail.read()
-                r = uia.invoke(i["path"])
-            time.sleep(1.5)
-            commands = tail.read()
-            if args.pid and args.pid not in desktop_setup.tableau_running():
-                results[i["path"]] = {"commands": commands, "crashesDesktop": True}
-                OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
-                raise SystemExit(f"Desktop exited after {i['path']!r}")
-            seen = [{k: m.get(k) for k in ("title", "texts", "buttons")}
-                    for m in desktop_setup.modals(pids=Watch.pids) if m.get("title")]
-            closed = []
-            if seen:
-                closed = uia.close_windows()
-                time.sleep(0.5)
-                left = [m.get("title") for m in desktop_setup.modals(pids=Watch.pids)]
-                if left:  # a window that stays open would swallow the next commands
-                    results[i["path"]] = {"dialogs": seen, "commands": commands, "error": f"could not close {left}"}
-                    OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
-                    raise SystemExit(f"stopped: {i['path']!r} left {left} open")
-            try:
-                after = client.get_document()
-                d = diff(before, after)
-            except Exception as e:  # noqa: BLE001
-                d = {"changed": None, "error": str(e)[:300]}
-            dirty = bool(seen) or d.get("changed") is not False or not r.get("invoked")
-            w = type("W", (), {"seen": seen})
-            res = {"checkedBefore": i["checked"], "invoked": r.get("invoked"), "error": r.get("error"),
-                   "commands": commands, "dialogs": w.seen, "closed": closed, **d}
-            results[i["path"]] = res
-            tag = "dialog" if w.seen else ("changed" if d.get("changed") else "no change")
-            print(f"  {i['path']}: {tag} {res.get('added', [])[:4]}", flush=True)
-            OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+        measure(client, probe, sheet, todo, results, uia.invoke, args, data, tail)
+    if args.context:
+        context_pass(client, probe, sheets, data, tail, args)
     reset(client, probe, sheets[0])
     OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
     report(data)
@@ -370,6 +423,26 @@ def report(data: dict) -> Path:
         if off:
             lines += ["", f"Desactivados en esta hoja (necesitan una selección o no aplican): {len(off)}. "
                       + ", ".join(off[:40]) + ("…" if len(off) > 40 else ""), ""]
+    targets = {"field": "campo del panel de datos", "shelf": "píldora del estante", "marks": "píldora de Marcas",
+               "axis": "cabecera / eje", "view": "marca de la vista", "view:empty": "fondo de la vista",
+               "title": "título", "tab": "pestaña de la hoja"}
+    if data.get("context"):
+        lines += ["# Menús contextuales (clic derecho)", "",
+                  "Mismo método sobre el menú que abre un clic derecho en cada objeto de la hoja.", ""]
+    for sheet, rec in data.get("context", {}).items():
+        for tname, t in rec.items():
+            what = targets.get(tname) or targets.get(tname.split(":")[0], tname)
+            if t.get("error"):
+                lines += [f"## `{sheet}` · {tname} ({what})", "", f"No se abrió: {t['error']}", ""]
+                continue
+            lines += [f"## `{sheet}` · {tname} ({what})", "", "| ítem | comando interno | efecto |", "|---|---|---|"]
+            for path, r in t.get("commands", {}).items():
+                cmd = "<br>".join(f"`{c[:90]}`" for c in r.get("commands", [])[:2]) or "—"
+                lines.append(f"| {path} | {cmd} | {_effect(r)} |")
+            off = [m["path"] for m in t.get("menu", []) if not m["enabled"] and not m["submenu"]]
+            if off:
+                lines += ["", f"Desactivados: {', '.join(off[:30])}"]
+            lines.append("")
     md = OUT.with_suffix(".md")
     md.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return md

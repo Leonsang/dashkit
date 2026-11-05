@@ -52,6 +52,12 @@ def create(root, name: str, layout: str = "overview", kpis: list[str] | None = N
     if not main:
         raise ValueError("main needs at least one view")
     filters, legends = list(filters or []), list(legends or [])
+    views = set(main + kpis + details)
+    for c in filters + legends:
+        if c.get("sheet") not in views:
+            # Desktop draws such a card with its title and no control: it has no sheet on the dashboard
+            raise ValueError(f"card for {c.get('field')!r} comes from {c.get('sheet')!r}, which is not on the "
+                             f"dashboard ({sorted(views)}): use one of those sheets")
 
     rows, heights = [], []
     body_px = height * (1 - (0.06 if title else 0))  # twb.add_dashboard's title takes 6% of the height

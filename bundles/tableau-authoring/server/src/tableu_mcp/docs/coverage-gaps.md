@@ -9,14 +9,6 @@ Valores de atributos que activan una función:
 - `style-rule/encoding @type=centersize` (33 documentos)
 - `style-rule/encoding @attr=size-bar` (33 documentos)
 
-## Filtros
-
-Valores de atributos que activan una función:
-
-- `group/groupfilter @function=crossjoin` (49 documentos)
-- `filter/groupfilter @function=empty-level` (35 documentos)
-- `filter/groupfilter @function=crossjoin` (35 documentos)
-
 ## Otros
 
 Elementos:
@@ -27,8 +19,6 @@ Elementos:
 - `document-format-change-manifest/ExplainData_AuthorControls` (30 documentos, 30 veces)
 - `document-format-change-manifest/AutoCreateAndUpdateDSDPhoneLayouts` (30 documentos, 30 veces)
 - `document-format-change-manifest/AccessibleZoneTabOrder` (30 documentos, 30 veces)
-- `story-point/capturedDeltas` (15 documentos, 30 veces)
-- `reference-line/reference-line-value` (15 documentos, 60 veces)
 - `document-format-change-manifest/ZoneFriendlyName` (15 documentos, 15 veces)
 - `document-format-change-manifest/WorksheetBackgroundTransparency` (15 documentos, 15 veces)
 - `document-format-change-manifest/VizInTooltipHideWorksheet` (15 documentos, 15 veces)
@@ -63,6 +53,12 @@ Elementos:
 - `refresh/refresh-event` (2 documentos, 2 veces)
 - `connection/refresh` (2 documentos, 3 veces)
 
+Valores de atributos que activan una función:
+
+- `group/groupfilter @function=crossjoin` (49 documentos)
+- `filter/groupfilter @function=empty-level` (35 documentos)
+- `filter/groupfilter @function=crossjoin` (35 documentos)
+
 ## Contra el esquema completo de Tableau (XSD de la instalación local)
 
 El esquema define 504 elementos. Estos son los que tableu todavía no escribe, por área, con el contexto donde van y la marca de funcionalidad que los activa. Consulta la definición completa de cualquiera con `workbook Schema element=<nombre>`.
@@ -71,7 +67,7 @@ El esquema define 504 elementos. Estos son los que tableu todavía no escribe, p
 
 - `<annotation>` en AnnotationSpecification-G, annotations
 
-### Otros (269)
+### Otros (267)
 
 - `<accelerator-details>` en Workbook-AcceleratorDetails-G · requiere `AcceleratorDetails`
 - `<actual-parameters>` en RelationActualParameters-G
@@ -99,7 +95,6 @@ El esquema define 504 elementos. Estos son los que tableu todavía no escribe, p
 - `<calcs-on-densified-marks>` en view · requiere `AllowCalculationsForDensifiedMarks`
 - `<calculated-member>` en DataSource-CalculatedMember-G
 - `<calculations>` en MaterialisedCalcs-G
-- `<capturedDeltas>` en Deltas-G
 - `<cast-to-local-type>` en metadata-record
 - `<categorical-domain>` en CategoricalDomain-G
 - `<clear-filter>` en ClearFilter-G
@@ -251,7 +246,6 @@ El esquema define 504 elementos. Estos son los que tableu todavía no escribe, p
 - `<quantitative-color-legend-node>` en QuantitativeColorLegendNode-G
 - `<quantitative-domain>` en QuantitativeDomain-G
 - `<reference-line-selection>` en ReferenceLineSelection-G
-- `<reference-line-value>` en reference-line
 - `<referenced-extension>` en ReferencedExtensions-CT
 - `<referenced-extensions>` en Workbook-ReferencedExtensions-G
 - `<referenced-view>` en ReferencedViews-CT

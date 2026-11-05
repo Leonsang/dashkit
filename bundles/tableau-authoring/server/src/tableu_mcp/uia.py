@@ -112,6 +112,8 @@ try {
   if (-not $it.Current.IsEnabled) { throw "item '$($parts[-1])' is disabled" }
   $it.GetCurrentPattern($IP::Pattern).Invoke()
   $res.invoked = $true
+  # Invoke leaves the menu expanded (measured): collapsed, or it swallows the next click on the canvas
+  Start-Sleep -Milliseconds 300; CloseAll
 } catch { CloseAll; $res.error = "$_" }
 ConvertTo-Json -InputObject $res -Compress
 """
@@ -226,3 +228,191 @@ def goto_sheet(name: str, index: int = -1) -> dict:
     """Open a sheet by its tab at the bottom of the window (works from the Data Source page too). The tabs
     expose no name to UI Automation, so `index` (its position among the document's <windows>) selects it."""
     return _run(_GOTO.replace("__SHEET__", name.replace("'", "''")).replace("__INDEX__", str(index)), timeout=60)
+
+
+# --- Context menus (right-click) ----------------------------------------------------------------------------
+# A right-click posted to the main window opens Desktop's context menu without moving the mouse. The menu is a
+# top-level window of class TableauMenu; a submenu is a Menu below the item that opened it (Expand). The objects
+# that carry a context menu are found by UI Automation: the fields of the Data pane (named TreeItems), the shelves
+# (their pills are drawn, not exposed: the first pill sits at the shelf's left edge), the Marks card, the axes and
+# headers around the view, the view itself, the title and the sheet tabs.
+
+_CTX_COMMON = _COMMON + r"""
+Add-Type @"
+using System; using System.Runtime.InteropServices;
+public static class CtxClick {
+  [StructLayout(LayoutKind.Sequential)] public struct POINT { public int X; public int Y; }
+  [DllImport("user32.dll")] public static extern bool ScreenToClient(IntPtr h, ref POINT p);
+  [DllImport("user32.dll")] public static extern bool GetCursorPos(out POINT p);
+  [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
+  [DllImport("user32.dll")] public static extern IntPtr PostMessage(IntPtr h, uint m, IntPtr w, IntPtr l);
+}
+"@
+function CtxMenus { @($A::RootElement.FindAll($T::Children, (New-Object $PC($A::ProcessIdProperty, $procId))) | Where-Object { $_.Current.ClassName -eq 'TableauMenu' }) }
+function CtxClose { foreach ($m in CtxMenus) { try { $m.GetCurrentPattern([System.Windows.Automation.WindowPattern]::Pattern).Close() } catch { } } }
+function CtxOpen([int]$sx, [int]$sy) {
+  CtxClose
+  $h = [IntPtr]$main.Current.NativeWindowHandle
+  $pt = New-Object CtxClick+POINT; $pt.X = $sx; $pt.Y = $sy
+  [CtxClick]::ScreenToClient($h, [ref]$pt) | Out-Null
+  $lp = [IntPtr](($pt.Y -shl 16) -bor ($pt.X -band 0xFFFF))
+  # The shelves, axes, headers and the view hit-test their menu with the real cursor (QCursor::pos), not with
+  # the click's position: the cursor is put on the point while the click is posted, then put back (~0.3 s).
+  # The click itself is posted to Desktop's window only: nothing reaches another application.
+  $save = New-Object CtxClick+POINT; [CtxClick]::GetCursorPos([ref]$save) | Out-Null
+  [CtxClick]::SetCursorPos($sx, $sy) | Out-Null
+  $m = @()
+  try {
+    [CtxClick]::PostMessage($h, 0x0200, [IntPtr]0, $lp) | Out-Null; Start-Sleep -Milliseconds 60
+    [CtxClick]::PostMessage($h, 0x0204, [IntPtr]2, $lp) | Out-Null; Start-Sleep -Milliseconds 60
+    [CtxClick]::PostMessage($h, 0x0205, [IntPtr]0, $lp) | Out-Null
+    for ($i = 0; $i -lt 24 -and -not $m.Count; $i++) {
+      Start-Sleep -Milliseconds 50; $m = CtxMenus
+      # the Data pane opens its menu on the button; the canvas waits for WM_CONTEXTMENU
+      if ($i -eq 5 -and -not $m.Count) { [CtxClick]::PostMessage($h, 0x007B, $h, [IntPtr](($sy -shl 16) -bor ($sx -band 0xFFFF))) | Out-Null }
+    }
+  } finally { [CtxClick]::SetCursorPos($save.X, $save.Y) | Out-Null }
+  if ($m.Count) { Start-Sleep -Milliseconds 300; return (CtxMenus)[0] }
+  return $null
+}
+function CtxOpenRetry([int]$sx, [int]$sy) {
+  # right after an apply the canvas may still be rebuilding: one more try
+  $m = CtxOpen $sx $sy; if (-not $m) { Start-Sleep -Milliseconds 800; $m = CtxOpen $sx $sy }; return $m
+}
+# Invoke on an item of a context menu returns but runs nothing (measured: no command in Desktop's log); a click
+# posted to the window of the (sub)menu at the item runs it.
+function ClickItem($it) {
+  $e = $it; $hm = [IntPtr]0
+  while ($e -and $hm -eq [IntPtr]0) {
+    $hm = [IntPtr]$e.Current.NativeWindowHandle
+    if ($hm -eq [IntPtr]0) { $e = [System.Windows.Automation.TreeWalker]::RawViewWalker.GetParent($e) }
+  }
+  if ($hm -eq [IntPtr]0) { throw 'no window for the menu item' }
+  $r = $it.Current.BoundingRectangle
+  $pt = New-Object CtxClick+POINT; $pt.X = [int]($r.X + $r.Width / 2); $pt.Y = [int]($r.Y + $r.Height / 2)
+  [CtxClick]::ScreenToClient($hm, [ref]$pt) | Out-Null
+  $lp = [IntPtr](($pt.Y -shl 16) -bor ($pt.X -band 0xFFFF))
+  [CtxClick]::PostMessage($hm, 0x0200, [IntPtr]0, $lp) | Out-Null; Start-Sleep -Milliseconds 100
+  [CtxClick]::PostMessage($hm, 0x0201, [IntPtr]1, $lp) | Out-Null; Start-Sleep -Milliseconds 80
+  [CtxClick]::PostMessage($hm, 0x0202, [IntPtr]0, $lp) | Out-Null
+}
+function SubMenu($it) {
+  try { $it.GetCurrentPattern($EC::Pattern).Expand() } catch { return $null }
+  for ($i = 0; $i -lt 15; $i++) {
+    Start-Sleep -Milliseconds 100
+    $s = $it.FindFirst($T::Children, (New-Object $PC($A::ControlTypeProperty, $CT::Menu)))
+    if ($s) { Start-Sleep -Milliseconds 150; return $s }
+  }
+  return $null
+}
+"""
+
+_CTX_LIST = _CTX_COMMON + r"""
+$depth = __DEPTH__
+$out = @()
+function Walk($popup, $path, $level) {
+  foreach ($it in Items $popup) {
+    $i = Info $it; $i.path = ($path + @($i.name)) -join ' > '
+    $script:out += [pscustomobject]$i
+    if ($i.submenu -and $i.enabled -and $level -lt $depth) {
+      $sub = SubMenu $it
+      if ($sub) { Walk $sub ($path + @($i.name)) ($level + 1); Collapse $it; Start-Sleep -Milliseconds 120 }
+    }
+  }
+}
+try {
+  $m = CtxOpenRetry __X__ __Y__
+  if ($m) { Walk $m @() 1 } else { $out += [pscustomobject]@{ error = 'no context menu' } }
+} catch { $out += [pscustomobject]@{ error = "$_" } }
+CtxClose
+ConvertTo-Json -InputObject @($out) -Compress -Depth 3
+"""
+
+_CTX_INVOKE = _CTX_COMMON + r"""
+$parts = @(__PATH__)
+$res = [ordered]@{ path = ($parts -join ' > '); invoked = $false }
+try {
+  $p = CtxOpenRetry __X__ __Y__
+  if (-not $p) { throw 'no context menu' }
+  for ($k = 0; $k -lt $parts.Count - 1; $k++) {
+    $it = Items $p | Where-Object { $_.Current.Name -eq $parts[$k] } | Select-Object -First 1
+    if (-not $it) { throw "no item '$($parts[$k])'" }
+    $p = SubMenu $it; if (-not $p) { throw "submenu '$($parts[$k])' did not open" }
+  }
+  $it = Items $p | Where-Object { $_.Current.Name -eq $parts[-1] } | Select-Object -First 1
+  if (-not $it) { throw "no item '$($parts[-1])'" }
+  if (-not $it.Current.IsEnabled) { throw "item '$($parts[-1])' is disabled" }
+  ClickItem $it
+  Start-Sleep -Milliseconds 600
+  $res.invoked = $true
+  if ((CtxMenus).Count) { $res.menuLeftOpen = $true; CtxClose }
+} catch { CtxClose; $res.error = "$_" }
+ConvertTo-Json -InputObject $res -Compress
+"""
+
+_CTX_TARGETS = _COMMON + r"""
+$out = [ordered]@{}
+function Center($e) { $r = $e.Current.BoundingRectangle; @([int]($r.X + $r.Width / 2), [int]($r.Y + $r.Height / 2)) }
+foreach ($e in @($main.FindAll($T::Descendants, [System.Windows.Automation.Condition]::TrueCondition))) {
+  $id = $e.Current.AutomationId; $r = $e.Current.BoundingRectangle
+  if ($r.Width -le 0 -or $e.Current.IsOffscreen) { continue }
+  $ct = $e.Current.ControlType
+  if ($ct -eq $CT::TreeItem -and $id -match 'm_commonTree' -and $e.Current.Name) { $out['field:' + $e.Current.Name] = Center $e }
+  elseif ($id -match '\.m_yAxisShelf$') { $out['shelf:rows'] = @([int]($r.X + __PILL__), [int]($r.Y + $r.Height / 2)) }
+  elseif ($id -match '\.m_xAxisShelf$') { $out['shelf:cols'] = @([int]($r.X + __PILL__), [int]($r.Y + $r.Height / 2)) }
+  elseif ($id -match '\.m_filterShelf$') { $out['shelf:filters'] = @([int]($r.X + $r.Width / 2), [int]($r.Y + 30)) }
+  elseif ($id -match 'defaultMarksCardTabContents\.m_en[^.]*$') { $out['marks:encoding'] = @([int]($r.X + $r.Width / 2), [int]($r.Y + 11)) }
+  elseif ($id -match 'SceneMarginWidget_m_(left|bottom|top|right)Axes$') {
+    # the first header / axis label: left headers are stacked rows, top headers side by side
+    if ($Matches[1] -eq 'left') { $out['axis:left'] = @([int]($r.X + $r.Width / 2), [int]($r.Y + 10)) } else { $out['axis:' + $Matches[1]] = Center $e } }
+  elseif ($id -match '\.SceneWidget_[^.]*$' -and -not $out.Contains('view')) {
+    $out['view:rect'] = @([int]$r.X, [int]$r.Y, [int]$r.Width, [int]$r.Height) }
+  elseif ($id -match 'm_titleWidget$') { $out['title'] = Center $e }
+  elseif ($id -match 'SheetTabsWidget\.SheetListWidget$') {
+    $k = 0; foreach ($t in $e.FindAll($T::Children, (New-Object $PC($A::ControlTypeProperty, $CT::ListItem)))) { $out['tab:' + $k] = Center $t; $k++ }
+  }
+  elseif ($id -match 'DashboardWidget\.ZoneWidget (\d+)$') { $out['zone:' + $Matches[1]] = @([int]($r.X + 8), [int]($r.Y + 8)) }
+}
+ConvertTo-Json -InputObject $out -Compress
+"""
+
+
+def context_targets(pill: int = 30) -> dict[str, list[int]]:
+    """Screen points that open a context menu on the sheet now on screen: field:<name>, shelf:rows|cols|filters,
+    marks:encoding, axis:left|bottom|top, title, tab:<i>, zone:<id>; view:rect is the view's x, y, w, h (the marks
+    are drawn, not exposed: `find_marks` finds one). `pill` is how far into a shelf its first pill sits."""
+    return _run(_CTX_TARGETS.replace("__PILL__", str(pill)), timeout=90)
+
+
+def find_marks(rect, cols: int = 6, rows: int = 5) -> dict[str, list[int]]:
+    """In the view's rect (x, y, w, h), a point on a mark (its menu has Keep Only) and one on the background."""
+    x, y, w, h = rect
+    found: dict[str, list[int]] = {}
+    for j in range(rows):
+        for i in range(cols):
+            pt = [int(x + w * (i + 0.5) / cols), int(y + h * (j + 0.5) / rows)]
+            names = {it.get("name") for it in context_items(pt, depth=1)}
+            key = "view" if "Keep Only" in names else ("view:empty" if "Annotate" in names else None)
+            if key and key not in found:
+                found[key] = pt
+            if len(found) == 2:
+                return found
+    return found
+
+
+def context_items(point, depth: int = 2) -> list[dict]:
+    """The items of the context menu a right-click at `point` (screen x, y) opens; the menu is closed after."""
+    return _run(_CTX_LIST.replace("__X__", str(int(point[0]))).replace("__Y__", str(int(point[1])))
+                .replace("__DEPTH__", str(depth)), timeout=150)
+
+
+def context_invoke(point, path: str) -> dict:
+    """Right-click at `point` and run the item `path` ('Sort...', 'Format > Font'). It changes the open workbook."""
+    parts = [p.strip() for p in path.split(">")]
+    return _run(_CTX_INVOKE.replace("__X__", str(int(point[0]))).replace("__Y__", str(int(point[1])))
+                .replace("__PATH__", _ps_list(parts)), timeout=90)
+
+
+def context_close() -> None:
+    """Close a context menu left open (WindowPattern.Close: no keystroke)."""
+    _run(_CTX_COMMON + "\nCtxClose\n'[]'", timeout=30)

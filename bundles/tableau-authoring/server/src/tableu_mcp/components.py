@@ -237,6 +237,14 @@ COMPONENTS: list[dict] = [
          recommendation="Etiquétala con su significado.", source=H + "reference_lines.htm",
          xml=["pane/reference-line"], op="analytics AddReferenceLine",
          example=[("analytics", "AddReferenceLine", {"worksheet": "Barras", "measure": "SUM(Importe)"})]),
+    dict(id="reference-distribution", area="Analítica", name="Distribución de referencia (gráfico de bala)",
+         definition="Bandas a varios porcentajes de un valor (p. ej. 60 % y 80 % del objetivo), sombreadas por debajo.",
+         use="Real frente a objetivo en poco espacio.",
+         recommendation="El objetivo en Detalle y la barra real encima; pocas bandas en grises.",
+         source=H + "reference_lines.htm", xml=["pane/reference-line@percentage-bands=true", "reference-line/reference-line-value"],
+         op="analytics AddReferenceLine",
+         example=[("analytics", "AddReferenceLine", {"worksheet": "Barras", "measure": "SUM(Importe)", "scope": "per-cell",
+                                                     "value_of": "SUM(Coste)", "percentages": [60, 80], "label": ""})]),
     dict(id="trend-line", area="Analítica", name="Línea de tendencia",
          definition="Modelo (lineal, log, polinómico...) ajustado a las marcas.", use="Dispersiones, series.",
          recommendation="Muestra la significación (p-value) en el tooltip.", source=H + "trendlines_add.htm",
@@ -390,6 +398,14 @@ COMPONENTS: list[dict] = [
          source=H + "story_best_practices.htm", xml=["flipboard/story-points", "story-points/story-point"], op="story Create",
          example=[("story", "Create", {"name": "Historia", "points": [{"sheet": "Tablero", "caption": "Visión general"},
                                                                      {"sheet": "Barras", "caption": "Por región"}]})]),
+    dict(id="story-point-filter", area="Historias", name="Filtro capturado en un punto de historia",
+         definition="Cada punto guarda su propio estado de filtros sobre la misma hoja.",
+         use="Recorrer una conclusión región a región sin duplicar hojas.",
+         recommendation="Di en la leyenda del punto qué se filtró.", source=H + "story_best_practices.htm",
+         xml=["story-point/capturedDeltas", "capturedDeltas/worksheet"], op="story Create",
+         example=[("story", "Create", {"name": "Recorrido", "points": [
+             {"sheet": "Barras", "caption": "Todas las regiones"},
+             {"sheet": "Barras", "caption": "Solo el norte", "filters": [{"field": "Region", "values": ["Norte"]}]}]})]),
 ]
 
 

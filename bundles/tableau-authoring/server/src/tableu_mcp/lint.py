@@ -277,6 +277,13 @@ def lint(xml: str | etree._Element, th: Thresholds | None = None) -> Report:
             add("WBO-LAYOUT-CONTAINERS", "warning", f"Dashboard has {len(containers)} layout containers.", loc, SOURCES["WBO"],
                 "Layout containers complicate rendering; flatten the layout.")
         _dashboard_geometry(root, db, loc, add)
+        on_db = {z.get("name") for z in db.iter("zone") if z.get("name") and not (z.get("type-v2") or z.get("type"))}
+        for z in db.iter("zone"):
+            kind = z.get("type-v2") or z.get("type")
+            if kind in ("filter", "color", "size", "shape", "highlighter", "map") and z.get("name") not in on_db:
+                # measured in Desktop 2026.3: the card shows its title and no control (no sheet to take data from)
+                add("DASH-ORPHAN-CARD", "error", f"{kind} card of '{z.get('name')}' but that sheet is not on the dashboard.",
+                    loc, SOURCES["DASH"], "Put the sheet on the dashboard or take the card from a sheet that is on it.")
         rel_filters = [z for z in db.iter("zone") if (z.get("type-v2") or z.get("type")) == "filter" and z.get("values") == "relevant"]
         if rel_filters:
             add("WBO-RELEVANT-VALUES", "warning", f"{len(rel_filters)} dashboard filter(s) use 'Only Relevant Values'.", loc, SOURCES["WBO"],

@@ -101,3 +101,14 @@ def test_adding_a_title_row_keeps_rows_inside_the_page(root):
     twb.add_dashboard(root, "T", [], "grid", 1200, 800, True, [["KPIs"], ["Tendencia"]], [20, 80])
     A.add_zone(root, "T", "filter", sheet="Tendencia", field="Region", container="title", fixed_width=160)
     _fixed_ok(root, "T")
+
+
+def test_cards_must_come_from_a_sheet_on_the_dashboard(root):
+    """Desktop 2026.3 draws a filter card of a sheet that is not on the dashboard with its title and no control."""
+    with pytest.raises(ValueError, match="not on the dashboard"):
+        layouts.create(root, "X", "filterbar", main=["Detalle"], filters=[{"sheet": "Tendencia", "field": "Region"}])
+    layouts.create(root, "Bien", "filterbar", main=["Detalle"], filters=[{"sheet": "Detalle", "field": "Region"}])
+    assert "DASH-ORPHAN-CARD" not in {f.rule for f in _dash_findings(root, "Bien")}
+    db = root.find("dashboards/dashboard[@name='Bien']")
+    next(z for z in db.iter("zone") if z.get("type-v2") == "filter").set("name", "Tendencia")
+    assert "DASH-ORPHAN-CARD" in {f.rule for f in _dash_findings(root, "Bien")}

@@ -117,3 +117,42 @@ def test_view_options_write_what_desktop_menus_write(root):
     edges = {e.get("name"): [c.get("type") for c in e.iter("card")] for e in win.find("cards")}
     assert "bottom" not in edges and "right" not in edges and "title" in edges["top"]
     assert view.find("hide-sort-controls") is None and win.find("viewpoint") is None
+
+
+def test_reference_distribution_like_superstore(root):
+    """Superstore's bullet bars: a reference line on a target with percentage bands, shaded below."""
+    out = A.add_reference_line(root, "Canal", "SUM(Importe)", scope="per-cell", value_of="SUM(Margen)",
+                               percentages=[60, 80], label="")
+    rl = next(root.iter("reference-line"))
+    assert out["percentages"] == [60, 80]
+    assert (rl.get("percentage-bands"), rl.get("fill-below"), rl.get("fill-above")) == ("true", "true", "false")
+    assert rl.get("value-column").endswith("[sum:Margen:qk]") and rl.get("axis-column").endswith("[sum:Importe:qk]")
+    assert [v.get("percentage") for v in rl.findall("reference-line-value")] == ["60", "80"]
+    ws = next(w for w in root.iter("worksheet") if w.get("name") == "Canal")
+    assert any(e.get("column", "").endswith("[sum:Margen:qk]") for e in ws.iter("lod"))  # the target is in the view
+    assert not [f for f in structure.check(root) if f["level"] == "error"]
+    if xsd.find_rcc():
+        assert xsd.validate(root)["valid"], xsd.validate(root)["issues"][:3]
+    with pytest.raises(ValueError):
+        A.add_reference_line(root, "Canal", "SUM(Importe)", band_to="max", percentages=[50])
+
+
+def test_story_point_captures_a_filter_like_world_indicators(root):
+    A.create_story(root, "Historia", [
+        {"sheet": "Mapa", "caption": "Todo"},
+        {"sheet": "Mapa", "caption": "Solo el norte", "filters": [{"field": "Region", "values": ["N"]}]},
+        {"sheet": "Resumen", "caption": "Canal online", "filters": [{"field": "Canal", "values": ["Online"],
+                                                                     "worksheet": "Canal"}]}])
+    sps = list(root.iter("story-point"))
+    assert sps[0].find("capturedDeltas") is None
+    w = sps[1].find("capturedDeltas/worksheet")
+    assert w.get("name") == "Mapa"
+    g = w.find("filter/groupfilter")
+    assert (g.get("function"), g.get("member"), g.get(A.U + "ui-domain")) == ("member", '"N"', "relevant")
+    assert sps[2].find("capturedDeltas/worksheet").get("name") == "Canal"
+    with pytest.raises(ValueError):
+        A.add_story_point(root, "Historia", "Resumen", "x", filters=[{"field": "Canal", "values": ["Online"]}])
+    A.add_story_point(root, "Historia", "Canal", "Tienda", filters=[{"field": "Canal", "values": ["Tienda"]}])
+    assert not [f for f in structure.check(root) if f["level"] == "error"]
+    if xsd.find_rcc():
+        assert xsd.validate(root)["valid"], xsd.validate(root)["issues"][:3]

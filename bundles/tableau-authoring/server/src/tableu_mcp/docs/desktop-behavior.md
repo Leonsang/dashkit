@@ -56,6 +56,7 @@ Fechas de verificación: 2026-11-04 y 2026-11-05.
 | Sin "Fit: Entire View" (`<zoom type='entire-view'/>`), las tablas de texto y las barras usan un tercio de su celda | Se escribe en cada viewpoint |
 | Las tarjetas de filtro conservan `custom-title` + `formatted-text`, pero siguen mostrando el nombre del campo; `show-title='false'` sí oculta el título | `AddZone title=` oculta el título de la tarjeta y pone un texto encima dentro de un contenedor vertical |
 | Si los tamaños fijos de un flujo suman más que el flujo, Desktop recorta la última fila | Al meter un elemento fijo (fila del título, barra de filtros), `tableu` recorta la fila fija más alta; `Lint` avisa con `DASH-FIXED-OVERFLOW` |
+| Una tarjeta de filtro o leyenda de una hoja que no está en el dashboard se dibuja con su título y sin control (no hay hoja de la que tomar los datos) | `CreateFromLayout` lo rechaza; `Lint` da `DASH-ORPHAN-CARD` |
 | Los dashboards de Tableau repiten cuatro distribuciones: KPIs de 117 px + vista + detalle (Superstore Overview), panel derecho de 160 a 192 px (Customers, Shipping, Tourism), barra de filtros de 62 px (Order Details) y cabecera de 71 px con filtros y leyenda (World Indicators Business) | `dashboard CreateFromLayout` (`tableu://layouts`) |
 
 ## Joins
@@ -74,6 +75,11 @@ Fechas de verificación: 2026-11-04 y 2026-11-05.
 | En la página de fuente de datos el menú Window no lista las hojas | `goto_sheet` vuelve por la pestaña |
 | Desktop anota en su log cada comando que ejecuta (`commands-controller.invoke-command`, `args: "tabdoc:…"` / `"tabui:…"`): es el comando interno detrás de cada menú | `scripts/ui_reverse.py` lo registra junto al diff del XML (`tableu://ui-commands`) |
 | Tras ciertos fallos (un diálogo de error durante un apply), la instancia deja de aplicar cualquier documento (`operation-failed`, 7195FDCA / E71AE512) hasta reiniciarla | El arnés trabaja en una instancia propia (`--launch`) y se detiene si Desktop deja de aplicar o se cierra |
+| Invoke sobre un ítem de la barra de menús deja ese menú expandido; el siguiente clic en el lienzo solo lo cierra | `uia.invoke` pliega los menús al terminar |
+| El menú contextual (clic derecho) es una ventana de nivel superior de clase `TableauMenu`; sus submenús son `Menu` bajo el ítem que los abre (Expand). Se cierra con `WindowPattern.Close`, sin teclas | `uia.context_items` / `uia.context_invoke` / `uia.context_close` |
+| Invoke sobre un ítem de un menú contextual responde sin ejecutar nada (no aparece comando en el log); un clic enviado a la ventana del menú sobre el ítem sí lo ejecuta | `context_invoke` hace ese clic |
+| El panel de datos abre su menú con el botón derecho enviado como mensaje. Los estantes, cabeceras, ejes y la vista eligen el objeto con la posición real del cursor, no con la del mensaje, y necesitan `WM_CONTEXTMENU` | `uia` pone el cursor en el punto durante el clic (~0,3 s) y lo devuelve a su sitio; los clics van solo a la ventana de Desktop |
+| Las píldoras y las marcas no existen para UI Automation (se dibujan): la primera píldora está en el borde izquierdo del estante; una marca se encuentra probando puntos de la vista hasta que el menú trae *Keep Only* | `uia.context_targets`, `uia.find_marks`; `scripts/ui_reverse.py --context` |
 
 ## Formato
 
@@ -89,5 +95,6 @@ Fechas de verificación: 2026-11-04 y 2026-11-05.
   libros que tableu escribió y Desktop validó y abrió.
 - `scripts/coverage_gaps.py` regenera `coverage-gaps.md`, el pool de funciones que faltan.
 - `scripts/ui_reverse.py <probe.twb> --build --launch` vuelve a medir los comandos de menú en una instancia
-  propia de Desktop y regenera `ui-commands.json` / `ui-commands.md`.
+  propia de Desktop y regenera `ui-commands.json` / `ui-commands.md`; con `--context` mide también los menús
+  contextuales (mueve el cursor un instante en cada clic derecho).
 - Cada comportamiento nuevo que se observe se añade aquí, con su protocolo en tableu y su test.
