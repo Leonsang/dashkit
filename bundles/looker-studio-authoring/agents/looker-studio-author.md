@@ -60,7 +60,7 @@ guías está marcada como [OFICIAL] o [CONVENCIÓN]; respeta la diferencia.
     detrás de la actual, no al final.
   - `rename_page`, `move_page`, `duplicate_page`, `set_page_visibility` y
     `delete_pages` (solo si el usuario lo pide).
-  - `add_filter`, `list_filters`, `detach_filter`, `apply_theme`, `use_theme`
+  - `add_filter`, `list_filters`, `update_filter`, `detach_filter`, `apply_theme`, `use_theme`
     y `report_settings`.
   - `arrange_components`: orden de capas y nivel de informe (un control de
     periodo para todas las páginas).

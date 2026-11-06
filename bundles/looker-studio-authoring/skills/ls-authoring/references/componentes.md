@@ -127,6 +127,7 @@ Solo si el usuario lo pide. Necesita `LS_ALLOW_DELETE=1` además de `LS_ALLOW_WR
 ## Lo que no se puede (todavía)
 
 - **Agrupar y alinear:** no hay herramienta. Calcula las cajas y aplícalas con `set_component_box_model`.
-- **Estilo por serie, ejes, etiquetas de datos o formato condicional:** no hay herramienta propia. Lo que
-  manda es el tema (`paginas-temas-y-ajustes.md`); un ajuste fino de un gráfico se hace a mano en el panel
-  Estilo.
+- **Estilo por serie, ejes, etiquetas de datos o formato condicional:** sin opciones con nombre. Lo que
+  manda es el tema (`paginas-temas-y-ajustes.md`); una clave suelta del panel Estilo se cambia con
+  `style={...}` si se conoce su nombre (`get_component_config` > `config.display.keys`). El formato
+  condicional es manual.

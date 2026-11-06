@@ -29,7 +29,7 @@ import {
 import { loadSpec, type ReportSpec } from './spec.js';
 import { addParameter, arrangeComponents, createBlend, deleteBlend, deletePages, duplicatePage, listBlends, movePage, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
 import { renamePage, reportSettings } from './ops3.js';
-import { addFilter, addPage, addSourceField, detachFilter, applyTheme, listFilters, listPages, readTheme, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
+import { addFilter, addPage, addSourceField, detachFilter, updateFilter, applyTheme, listFilters, listPages, readTheme, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
 
 const server = new McpServer(
   { name: 'looker-studio-mcp', version: '0.2.0' },
@@ -51,7 +51,7 @@ const server = new McpServer(
 const WRITE_TOOLS = new Set([
   'set_component_box_model', 'bind_fields_to_component', 'create_component', 'apply_report_spec', 'patch_component',
   'apply_theme', 'use_theme', 'add_page', 'rename_page', 'synthesize_templates', 'seed_templates_from_menu', 'add_filter',
-  'detach_filter', 'create_blend', 'update_blend', 'add_parameter', 'move_page', 'set_page_visibility', 'duplicate_page',
+  'detach_filter', 'update_filter', 'create_blend', 'update_blend', 'add_parameter', 'move_page', 'set_page_visibility', 'duplicate_page',
   'arrange_components',
 ]);
 const DESTRUCTIVE_TOOLS = new Set(['delete_component', 'delete_pages', 'delete_blend']);
@@ -548,6 +548,25 @@ server.registerTool(
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
   },
   async ({ filterId, target }) => run(() => detachFilter(filterId, target)),
+);
+
+server.registerTool(
+  'update_filter',
+  {
+    title: 'Cambiar un filtro',
+    description:
+      'Cambia nombre, condicion (op), valores o incluir/excluir de un filtro existente (id de list_filters). Conserva el id: ' +
+      'todas las paginas y componentes que lo usan pasan a la condicion nueva. El campo no se cambia (crea otro con add_filter).',
+    inputSchema: {
+      filterId: z.string().min(1),
+      name: z.string().min(1).optional(),
+      op: z.string().optional().describe('EQ, CONTAINS, STARTS_WITH, RM, RP, IN, NU, GT, GE, LT, LE, BETWEEN'),
+      values: z.array(z.union([z.string(), z.number()])).optional(),
+      include: z.boolean().optional().describe('false: excluye'),
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  },
+  async (f) => run(() => updateFilter(f)),
 );
 
 server.registerTool(

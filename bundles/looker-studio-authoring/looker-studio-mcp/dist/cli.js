@@ -5,7 +5,7 @@ import {
   getComponentConfig,
   getReportLayout,
   sanitizeLearning
-} from "./chunks/chunk-Z4H32KNL.js";
+} from "./chunks/chunk-LAQTVNEA.js";
 import {
   addFilter,
   addPage,
@@ -57,9 +57,10 @@ import {
   synthesizeTemplates,
   themeLibrary,
   updateBlend,
+  updateFilter,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-CRZZ7AX2.js";
+} from "./chunks/chunk-MAD7VOV6.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
 import "./chunks/chunk-MZHUAOKZ.js";
@@ -116,6 +117,7 @@ Combinaciones y parametros
   report settings [--viewer-filter-bar on|off] [--cross-filter on|off] [--set clave=valor,...]
   filters [list] | filters add --name N --field F [--op EQ] [--values a,b] [--exclude] [--to <pageId|cd-..>]
   filters detach <filterId> <pageId|cd-..>
+  filters update <filterId> [--name N] [--op EQ] [--values a,b [--numeric]] [--include|--exclude]
   theme [get] | theme set <json|archivo.json>    Tema: font,text,fill,accent,accentText,background,grid,
                                                  increase,decrease,border,borderWeight,borderRadius,series[]
   ux                               Auditoria UX: contraste WCAG, tema, paleta, tipografia, layout (0-100)
@@ -320,6 +322,16 @@ async function main() {
           },
           typeof flags.to === "string" ? flags.to : void 0
         );
+      }
+      if (pos[0] === "update") {
+        const vals = flags.values === void 0 ? void 0 : list(flags.values).map((v) => v !== "" && !Number.isNaN(Number(v)) && typeof flags.numeric !== "undefined" ? Number(v) : v);
+        return updateFilter({
+          filterId: need(pos[1], "filterId"),
+          ...typeof flags.name === "string" ? { name: flags.name } : {},
+          ...typeof flags.op === "string" ? { op: flags.op } : {},
+          ...vals ? { values: vals } : {},
+          ...flags.exclude ? { include: false } : flags.include ? { include: true } : {}
+        });
       }
       if (pos[0] === "detach") return detachFilter(need(pos[1], "filterId"), need(pos[2], "destino"));
       return listFilters();

@@ -14,6 +14,7 @@ import {
   reportSettingsScript,
   addPageScript,
   attachFilterScript,
+  updateFilterScript,
   listFiltersScript,
   setThemePresetScript,
   applyThemeScript,
@@ -159,6 +160,26 @@ export async function addFilter(f: FilterSpec, target?: string) {
   }
   learn('create_ok', 'filter', { source: existing ? 'reused' : 'addResource' });
   return { filterId, reused: !!existing, ...(attached ? { target, filters: attached } : {}) };
+}
+
+export async function updateFilter(f: { filterId: string; name?: string; op?: string; values?: Array<string | number>; include?: boolean }) {
+  const { page } = await requireEditMode();
+  const w = watchSaves(page);
+  const r = await evaluateOn(page, T, updateFilterScript, {
+    filterId: f.filterId,
+    ...(f.name !== undefined ? { name: f.name } : {}),
+    ...(f.op !== undefined ? { condition: f.op.toUpperCase() } : {}),
+    ...(f.values !== undefined ? { values: f.values } : {}),
+    ...(f.include !== undefined ? { include: f.include } : {}),
+  });
+  await sleep(2500);
+  w.stop();
+  if (!r.ok) throw new Error(r.error);
+  if (w.statuses.some((s) => s >= 400)) {
+    learn('save_rejected', 'filter_update', { statuses: w.statuses });
+    throw new Error(`El cambio del filtro fue rechazado (${w.statuses.join(',')}).`);
+  }
+  return { filterId: f.filterId, ...r.filter };
 }
 
 export async function detachFilter(filterId: string, target: string) {

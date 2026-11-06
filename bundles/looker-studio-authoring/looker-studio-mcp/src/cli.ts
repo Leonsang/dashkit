@@ -27,7 +27,7 @@ import {
   reloadReport,
 } from './ops.js';
 import { reportSettings } from './ops3.js';
-import { addFilter, addPage, addSourceField, applyTheme, detachFilter, exportTheme, importTheme, listFilters, listPages, readTheme, renamePage, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
+import { addFilter, addPage, addSourceField, applyTheme, detachFilter, updateFilter, exportTheme, importTheme, listFilters, listPages, readTheme, renamePage, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
 import { readFileSync, existsSync } from 'node:fs';
 import { addParameter, arrangeComponents, createBlend, deleteBlend, deletePages, duplicatePage, listBlends, movePage, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
 
@@ -75,6 +75,7 @@ Combinaciones y parametros
   report settings [--viewer-filter-bar on|off] [--cross-filter on|off] [--set clave=valor,...]
   filters [list] | filters add --name N --field F [--op EQ] [--values a,b] [--exclude] [--to <pageId|cd-..>]
   filters detach <filterId> <pageId|cd-..>
+  filters update <filterId> [--name N] [--op EQ] [--values a,b [--numeric]] [--include|--exclude]
   theme [get] | theme set <json|archivo.json>    Tema: font,text,fill,accent,accentText,background,grid,
                                                  increase,decrease,border,borderWeight,borderRadius,series[]
   ux                               Auditoria UX: contraste WCAG, tema, paleta, tipografia, layout (0-100)
@@ -277,6 +278,16 @@ async function main(): Promise<unknown> {
           },
           typeof flags.to === 'string' ? flags.to : undefined,
         );
+      }
+      if (pos[0] === 'update') {
+        const vals = flags.values === undefined ? undefined : list(flags.values).map((v) => (v !== '' && !Number.isNaN(Number(v)) && typeof flags.numeric !== 'undefined' ? Number(v) : v));
+        return updateFilter({
+          filterId: need(pos[1], 'filterId'),
+          ...(typeof flags.name === 'string' ? { name: flags.name } : {}),
+          ...(typeof flags.op === 'string' ? { op: flags.op } : {}),
+          ...(vals ? { values: vals } : {}),
+          ...(flags.exclude ? { include: false } : flags.include ? { include: true } : {}),
+        });
       }
       if (pos[0] === 'detach') return detachFilter(need(pos[1], 'filterId'), need(pos[2], 'destino'));
       return listFilters();

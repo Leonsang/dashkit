@@ -39,7 +39,7 @@ dateRangeDays=365`, o `dateRangeDays` en el spec.
 **Comprueba que filtra:** abre el informe en `/view`, cambia el control y mira que las cifras cambian. Un
 control sin errores no prueba que filtre.
 
-## Filtros: add_filter, list_filters, detach_filter
+## Filtros: add_filter, list_filters, update_filter, detach_filter
 
 ```json
 {"name": "Sin tablet", "field": "dispositivo", "op": "EQ", "values": ["Tablet"], "include": false,
@@ -53,12 +53,15 @@ CLI: `filters add --name "Sin tablet" --field dispositivo --op EQ --values Table
 - **`include=false`:** excluye en lugar de incluir.
 - **`target`:** un `pageId` (filtro de página: se aplica a todos sus componentes) o un `cd-...` (solo ese
   componente). Sin `target`, el filtro se crea en el informe pero no se aplica a nada.
-- **Se reutiliza por nombre:** si ya hay un filtro con ese `name`, se aplica el existente y no se crea otro.
-  Para cambiar su condición, usa otro nombre.
+- **Se reutiliza por nombre:** si ya hay un filtro con ese `name`, se aplica el existente y no se crea otro,
+  aunque la condición sea distinta. Para cambiarla, `update_filter`.
 - **`dataset`:** por defecto, el origen que tiene `field`.
 - **`list_filters`** (CLI `filters`): cada filtro con campo, condición, valores y dónde se aplica.
 - **`detach_filter filterId target`** (CLI `filters detach <filterId> <destino>`): lo quita de esa página o
   componente. El filtro sigue en el informe.
+- **`update_filter filterId [name] [op] [values] [include]`** (CLI `filters update <filterId> --op IN
+  --values Chile,Peru --exclude`): cambia el filtro sin cambiar su id, así que todos sus destinos pasan a la
+  condición nueva. Cambiar el campo no: crea otro con `add_filter`.
 
 Los filtros por id de campo solo afectan a gráficos del mismo origen (ver `ls-modelo-datos` §4).
 
@@ -75,6 +78,7 @@ Un control también puede mover un parámetro en vez de filtrar: `patch_componen
 
 ## Lo que no se puede (todavía)
 
-- Editar la condición de un filtro existente: crea uno con otro nombre y quita el viejo con `detach_filter`.
-- Controles a nivel de informe (en todas las páginas): manual, como cualquier componente de informe.
+- Cambiar el campo de un filtro existente, o editar filtros de varias cláusulas: a mano.
+- Controles a nivel de informe (en todas las páginas): se crean en una página y se pasan al informe con
+  `arrange_components op=report` (ver `componentes.md`).
 - Filtros de origen de datos (en la configuración del origen): manuales.

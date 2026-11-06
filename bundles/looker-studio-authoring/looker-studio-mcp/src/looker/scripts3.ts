@@ -275,6 +275,37 @@ export function addFilterScript(args: {
   }
 }
 
+// Changes an existing filter in place (same id, so every page/component using it follows).
+export function updateFilterScript(args: {
+  filterId: string; name?: string; condition?: string; values?: Array<string | number>; include?: boolean;
+}): { ok: boolean; filter?: { name: string; condition: string; include: boolean; values: unknown[] }; error?: string } {
+  const w = window as any;
+  try {
+    const inj = w.angular.element(document.body).injector();
+    const report = inj.get('legoUndoRedoService').report;
+    const res = (report.config.resource && report.config.resource.filter) || {};
+    const cur = res[args.filterId];
+    if (!cur) return { ok: false, error: `Filtro ${args.filterId} no encontrado (ids en list_filters).` };
+    const copy = JSON.parse(JSON.stringify(cur));
+    const ex = copy.filterDefinition && copy.filterDefinition.filterExpression;
+    if (!ex) return { ok: false, error: 'El filtro no tiene una condicion simple (filtro con varias clausulas): editalo a mano.' };
+    if (args.name !== undefined) copy.name = args.name;
+    if (args.condition !== undefined) ex.filterConditionType = args.condition;
+    if (args.include !== undefined) ex.include = args.include;
+    if (args.values !== undefined) {
+      ex.numberValues = args.values.filter((v) => typeof v === 'number');
+      ex.stringValues = args.values.filter((v) => typeof v !== 'number').map(String);
+    }
+    report.updateResourceById('filter', args.filterId, copy);
+    inj.get('wrapperSaveService').save([report]);
+    const now = report.config.resource.filter[args.filterId];
+    const e2 = now.filterDefinition.filterExpression;
+    return { ok: true, filter: { name: String(now.name), condition: String(e2.filterConditionType), include: !!e2.include, values: [...(e2.stringValues || []), ...(e2.numberValues || [])] } };
+  } catch (e: any) {
+    return { ok: false, error: String(e && e.message) };
+  }
+}
+
 export function attachFilterScript(args: { filterId: string; target: string; detach?: boolean }): { ok: boolean; filters: string[]; error?: string } {
   const w = window as any;
   try {

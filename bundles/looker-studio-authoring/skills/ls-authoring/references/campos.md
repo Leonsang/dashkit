@@ -75,8 +75,7 @@ de una página o del informe entero es manual (*Recurso > Administrar fuentes de
 
 ## Lo que no se puede (todavía)
 
-- **Blends:** se crean a mano en *Recurso > Administrar datos combinados*. Después aparecen en
-  `inspect_data_sources` y se vinculan como cualquier origen; sus campos llevan namespace (`t0.`, `t1.`).
-- **Parámetros:** no hay herramienta para crearlos. Uno creado a mano se usa en fórmulas por su nombre.
+- **Combinaciones y parámetros:** tienen herramientas propias (`create_blend`, `add_parameter`), en
+  `combinaciones-y-parametros.md`. Lo que aún no se puede de ellos está allí.
 - **Añadir un origen nuevo al informe:** manual (*Recurso > Administrar fuentes de datos agregadas >
   Añadir*).

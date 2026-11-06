@@ -8,7 +8,7 @@ import {
   getReportLayout,
   sanitizeLearning,
   writesAllowed
-} from "./chunks/chunk-Z4H32KNL.js";
+} from "./chunks/chunk-LAQTVNEA.js";
 import {
   addFilter,
   addPage,
@@ -59,9 +59,10 @@ import {
   synthesizeTemplates,
   themeLibrary,
   updateBlend,
+  updateFilter,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-CRZZ7AX2.js";
+} from "./chunks/chunk-MAD7VOV6.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
 import "./chunks/chunk-MZHUAOKZ.js";
@@ -36877,6 +36878,7 @@ var WRITE_TOOLS = /* @__PURE__ */ new Set([
   "seed_templates_from_menu",
   "add_filter",
   "detach_filter",
+  "update_filter",
   "create_blend",
   "update_blend",
   "add_parameter",
@@ -37284,6 +37286,22 @@ server.registerTool(
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true }
   },
   async ({ filterId, target }) => run(() => detachFilter(filterId, target))
+);
+server.registerTool(
+  "update_filter",
+  {
+    title: "Cambiar un filtro",
+    description: "Cambia nombre, condicion (op), valores o incluir/excluir de un filtro existente (id de list_filters). Conserva el id: todas las paginas y componentes que lo usan pasan a la condicion nueva. El campo no se cambia (crea otro con add_filter).",
+    inputSchema: {
+      filterId: external_exports.string().min(1),
+      name: external_exports.string().min(1).optional(),
+      op: external_exports.string().optional().describe("EQ, CONTAINS, STARTS_WITH, RM, RP, IN, NU, GT, GE, LT, LE, BETWEEN"),
+      values: external_exports.array(external_exports.union([external_exports.string(), external_exports.number()])).optional(),
+      include: external_exports.boolean().optional().describe("false: excluye")
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true }
+  },
+  async (f) => run(() => updateFilter(f))
 );
 server.registerTool(
   "seed_templates_from_menu",

@@ -3331,6 +3331,33 @@ function addFilterScript(args) {
     return { ok: false, filterId: null, error: String(e && e.message) };
   }
 }
+function updateFilterScript(args) {
+  const w = window;
+  try {
+    const inj = w.angular.element(document.body).injector();
+    const report = inj.get("legoUndoRedoService").report;
+    const res = report.config.resource && report.config.resource.filter || {};
+    const cur = res[args.filterId];
+    if (!cur) return { ok: false, error: `Filtro ${args.filterId} no encontrado (ids en list_filters).` };
+    const copy = JSON.parse(JSON.stringify(cur));
+    const ex = copy.filterDefinition && copy.filterDefinition.filterExpression;
+    if (!ex) return { ok: false, error: "El filtro no tiene una condicion simple (filtro con varias clausulas): editalo a mano." };
+    if (args.name !== void 0) copy.name = args.name;
+    if (args.condition !== void 0) ex.filterConditionType = args.condition;
+    if (args.include !== void 0) ex.include = args.include;
+    if (args.values !== void 0) {
+      ex.numberValues = args.values.filter((v) => typeof v === "number");
+      ex.stringValues = args.values.filter((v) => typeof v !== "number").map(String);
+    }
+    report.updateResourceById("filter", args.filterId, copy);
+    inj.get("wrapperSaveService").save([report]);
+    const now = report.config.resource.filter[args.filterId];
+    const e2 = now.filterDefinition.filterExpression;
+    return { ok: true, filter: { name: String(now.name), condition: String(e2.filterConditionType), include: !!e2.include, values: [...e2.stringValues || [], ...e2.numberValues || []] } };
+  } catch (e) {
+    return { ok: false, error: String(e && e.message) };
+  }
+}
 function attachFilterScript(args) {
   const w = window;
   try {
@@ -3711,6 +3738,25 @@ async function addFilter(f, target) {
   learn("create_ok", "filter", { source: existing ? "reused" : "addResource" });
   return { filterId, reused: !!existing, ...attached ? { target, filters: attached } : {} };
 }
+async function updateFilter(f) {
+  const { page } = await requireEditMode();
+  const w = watchSaves(page);
+  const r = await evaluateOn(page, T, updateFilterScript, {
+    filterId: f.filterId,
+    ...f.name !== void 0 ? { name: f.name } : {},
+    ...f.op !== void 0 ? { condition: f.op.toUpperCase() } : {},
+    ...f.values !== void 0 ? { values: f.values } : {},
+    ...f.include !== void 0 ? { include: f.include } : {}
+  });
+  await sleep(2500);
+  w.stop();
+  if (!r.ok) throw new Error(r.error);
+  if (w.statuses.some((s) => s >= 400)) {
+    learn("save_rejected", "filter_update", { statuses: w.statuses });
+    throw new Error(`El cambio del filtro fue rechazado (${w.statuses.join(",")}).`);
+  }
+  return { filterId: f.filterId, ...r.filter };
+}
 async function detachFilter(filterId, target) {
   const { page } = await requireEditMode();
   const a = await evaluateOn(page, T, attachFilterScript, { filterId, target, detach: true });
@@ -3998,7 +4044,7 @@ async function addSourceField(opts) {
   });
   const open = async () => {
     if (!await clickText2("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) {
-      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-LSXHAYTH.js");
+      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-XOR72GXR.js");
       await selectSourceChart2(page, opts.source && opts.source.startsWith("@") ? opts.source : void 0);
       if (!await clickText2("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) throw new Error('No se encontro "Anadir un campo" en el panel Datos.');
     }
@@ -4015,7 +4061,7 @@ async function addSourceField(opts) {
     let src = await editorSource();
     const byField = !!opts.source && opts.source.startsWith("@");
     if (byField) {
-      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-LSXHAYTH.js");
+      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-XOR72GXR.js");
       await clickText2("button", /^(Cancelar|Cancel)$/);
       await close();
       await selectSourceChart2(page, opts.source);
@@ -4459,17 +4505,17 @@ async function patchIfNeeded(page, id, c) {
   }
   if (c.text !== void 0) {
     const t = typeof c.text === "string" ? { text: c.text } : c.text;
-    const { setText: setText2 } = await import("./ops4-LSXHAYTH.js");
+    const { setText: setText2 } = await import("./ops4-XOR72GXR.js");
     await setText2(id, t.text, { ...t.size ? { size: t.size } : {}, ...t.bold ? { bold: true } : {}, ...t.color ? { color: t.color } : {} });
     changes.push("text");
   }
   if (c.style) {
-    const { setStyle: setStyle2 } = await import("./ops4-LSXHAYTH.js");
+    const { setStyle: setStyle2 } = await import("./ops4-XOR72GXR.js");
     await setStyle2(id, c.style);
     changes.push("style");
   }
   if (c.parameter) {
-    const { setControlParameter: setControlParameter2 } = await import("./ops4-LSXHAYTH.js");
+    const { setControlParameter: setControlParameter2 } = await import("./ops4-XOR72GXR.js");
     await setControlParameter2(id, c.parameter);
     changes.push(`parameter:${c.parameter}`);
   }
@@ -4932,6 +4978,7 @@ export {
   importTheme,
   listFilters,
   addFilter,
+  updateFilter,
   detachFilter,
   reportSettings,
   listPages,

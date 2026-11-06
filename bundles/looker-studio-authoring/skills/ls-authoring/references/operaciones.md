@@ -36,6 +36,7 @@ motor y no lleva el control de `LS_ALLOW_WRITE`.
 | `list_filters` | — | Filtros del informe (resource.filter) con campo, condicion, valores y donde se aplican (paginas/componentes). | `controles-y-filtros.md` |
 | `add_filter` | **name**, **field**, op, values, include, dataset, target | Crea un filtro (o reutiliza uno con el mismo nombre) y lo aplica a una pagina (filtro de pagina) o a un componente. | `controles-y-filtros.md` |
 | `detach_filter` | **filterId**, **target** | Quita un filtro (id de list_filters) de la pagina o el componente indicado. | `controles-y-filtros.md` |
+| `update_filter` | **filterId**, name, op, values, include | Cambia nombre, condicion (op), valores o incluir/excluir de un filtro existente (id de list_filters). | `controles-y-filtros.md` |
 | `seed_templates_from_menu` | **labels** | Inserta opciones del menu "Anadir un grafico" (por su nombre visible, p. | `componentes.md` |
 | `rename_page` | **pageId**, **name** | Renombra una pagina en el modelo y en la navegacion que ve el lector (accion de navegacion del editor -> /updateReportNavigationInfo). | `paginas-temas-y-ajustes.md` |
 | `report_settings` | patch | Lee o cambia ajustes del informe: viewerFilterBar (barra de filtros de lectores), crossFilterByDefault, viewModeNav, viewModeHeader, viewModeScale, viewModeMargin, viewModeMaxWidth, snapMode, showNavigationInEditMode, width, height. | `paginas-temas-y-ajustes.md` |
@@ -99,6 +100,7 @@ Cada comando de la CLI tiene su herramienta MCP. Lo que cambia, en la última co
 | `filters [list]` | `list_filters` | — |
 | `filters add --name --field [--op] [--values] [--exclude] [--to]` | `add_filter` | MCP: `include=false`, `target` |
 | `filters detach <filterId> <pageId\|cd-..>` | `detach_filter` | — |
+| `filters update <filterId> [--name N] [--op EQ] [--values a,b] [--include\|--exclude]` | `update_filter` | `--numeric` convierte los valores en números |
 | `ux` | `audit_ux` | — |
 | `orphans <spec.json...>` | `list_orphan_components` | — |
 | `lint <spec.json>` | `lint_report_spec` | MCP: ruta o el objeto spec |
