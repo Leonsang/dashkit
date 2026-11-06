@@ -73,5 +73,5 @@ usuario trabaje desde la terminal o en scripts.
   `get_learnings` muestra `method_missing`, avisa al usuario.
 - **Padding:** algunos tipos no tienen `paddingBottom` (p. ej. `kpi-metric`) y `generic-shape` no tiene
   padding; la herramienta lo avisa en `warnings`.
-- **Sin herramienta:** agrupar y alinear componentes, estilo fino de un gráfico (series, ejes, etiquetas)
-  y secciones de la navegación.
+- **Sin herramienta:** estilo fino de un gráfico (series, ejes, etiquetas; claves sueltas con `style`),
+  parámetros de informe y secciones de la navegación.

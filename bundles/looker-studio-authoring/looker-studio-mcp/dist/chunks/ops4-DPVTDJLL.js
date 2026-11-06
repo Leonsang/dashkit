@@ -2,6 +2,7 @@ import { createRequire as __lsCreateRequire } from 'node:module'; const require 
 import {
   JOIN_TYPES,
   addParameter,
+  alignComponents,
   arrangeComponents,
   createBlend,
   deleteBlend,
@@ -9,6 +10,7 @@ import {
   deleteParameter,
   duplicatePage,
   ensureVisible,
+  groupComponents,
   listBlends,
   movePage,
   navPages,
@@ -20,10 +22,10 @@ import {
   setText,
   updateBlend,
   updateParameter
-} from "./chunk-DJCKTACB.js";
+} from "./chunk-VPP5EBVT.js";
 import "./chunk-5J4RMU5E.js";
 import "./chunk-Y34SSGZY.js";
-import "./chunk-52DVBUYO.js";
+import "./chunk-BFA3FAWY.js";
 import "./chunk-FAVAKK4W.js";
 import "./chunk-GIAQTVDD.js";
 import "./chunk-BGDW2RS3.js";
@@ -33,6 +35,7 @@ import "./chunk-5QDPZ4I5.js";
 export {
   JOIN_TYPES,
   addParameter,
+  alignComponents,
   arrangeComponents,
   createBlend,
   deleteBlend,
@@ -40,6 +43,7 @@ export {
   deleteParameter,
   duplicatePage,
   ensureVisible,
+  groupComponents,
   listBlends,
   movePage,
   navPages,

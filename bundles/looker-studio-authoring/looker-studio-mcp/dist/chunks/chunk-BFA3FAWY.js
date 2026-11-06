@@ -536,6 +536,60 @@ function setConditionalFormatScript(args) {
     return { ok: false, error: String(e && e.message) };
   }
 }
+function componentBoxesScript(ids) {
+  const w = window;
+  const report = w.angular.element(document.body).injector().get("legoUndoRedoService").report;
+  return ids.map((id) => {
+    for (const p of report.pages) {
+      const c2 = p.components.find((x) => x.getId() === id);
+      if (c2) {
+        const a = c2.getAttribute();
+        return { id, x: Number(a.left), y: Number(a.top), w: Number(a.width), h: Number(a.height), pageId: String(p.getId()) };
+      }
+    }
+    const c = report.components.find((x) => x.getId() === id);
+    if (c) {
+      const a = c.getAttribute();
+      return { id, x: Number(a.left), y: Number(a.top), w: Number(a.width), h: Number(a.height), pageId: null };
+    }
+    return null;
+  });
+}
+function groupScript(args) {
+  const w = window;
+  try {
+    const inj = w.angular.element(document.body).injector();
+    const report = inj.get("legoUndoRedoService").report;
+    const groupsOf = (p) => p.getGroups ? p.getGroups() : [];
+    if (args.list) {
+      const pages = args.pageId ? report.pages.filter((p) => p.getId() === args.pageId) : report.pages;
+      return { ok: true, groups: pages.flatMap((p) => groupsOf(p).map((g2) => ({ pageId: String(p.getId()), groupId: String(g2.getId()), componentIds: g2.getComponents().map((c) => String(c.getId())) }))) };
+    }
+    const ids = args.componentIds || [];
+    if (args.ungroup) {
+      const removed = [];
+      for (const p of report.pages) {
+        const gs = groupsOf(p).filter((g2) => (args.groupIds || []).includes(String(g2.getId())) || g2.getComponents().some((c) => ids.includes(String(c.getId()))));
+        if (!gs.length) continue;
+        p.removeGroups(gs);
+        removed.push(...gs.map((g2) => String(g2.getId())));
+        inj.get("wrapperSaveService").save([p]);
+      }
+      if (!removed.length) return { ok: false, error: "Ningun grupo coincide (ids en group_components list)." };
+      return { ok: true, removed };
+    }
+    if (ids.length < 2) return { ok: false, error: "Un grupo necesita al menos 2 componentes." };
+    const page = report.pages.find((p) => ids.every((id) => p.components.some((c) => c.getId() === id)));
+    if (!page) return { ok: false, error: "Los componentes tienen que estar en la misma pagina (y no a nivel de informe)." };
+    const comps = ids.map((id) => page.components.find((c) => c.getId() === id));
+    const old = groupsOf(page).filter((g2) => g2.getComponents().some((c) => ids.includes(String(c.getId()))));
+    const g = page.createGroup(comps, old);
+    inj.get("wrapperSaveService").save([page]);
+    return { ok: true, groupId: g && g.getId ? String(g.getId()) : void 0 };
+  } catch (e) {
+    return { ok: false, error: String(e && e.message) };
+  }
+}
 
 export {
   navPagesScript,
@@ -553,5 +607,7 @@ export {
   ensureSeedScript,
   setDisplayKeysScript,
   editBlendScript,
-  setConditionalFormatScript
+  setConditionalFormatScript,
+  componentBoxesScript,
+  groupScript
 };

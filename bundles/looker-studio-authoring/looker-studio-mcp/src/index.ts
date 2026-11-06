@@ -27,7 +27,7 @@ import {
   reloadReport,
 } from './ops.js';
 import { loadSpec, type ReportSpec } from './spec.js';
-import { addParameter, arrangeComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
+import { addParameter, alignComponents, arrangeComponents, groupComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
 import { renamePage, reportSettings } from './ops3.js';
 import { addFilter, addPage, addSourceField, detachFilter, updateFilter, applyTheme, listFilters, listPages, readTheme, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
 
@@ -52,7 +52,7 @@ const WRITE_TOOLS = new Set([
   'set_component_box_model', 'bind_fields_to_component', 'create_component', 'apply_report_spec', 'patch_component',
   'apply_theme', 'use_theme', 'add_page', 'rename_page', 'synthesize_templates', 'seed_templates_from_menu', 'add_filter',
   'detach_filter', 'update_filter', 'create_blend', 'update_blend', 'add_parameter', 'update_parameter', 'move_page', 'set_page_visibility', 'duplicate_page',
-  'arrange_components', 'set_conditional_format',
+  'arrange_components', 'set_conditional_format', 'align_components', 'group_components',
 ]);
 const DESTRUCTIVE_TOOLS = new Set(['delete_component', 'delete_pages', 'delete_blend', 'delete_parameter']);
 {
@@ -750,6 +750,44 @@ server.registerTool(
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
   },
   async (args) => run(() => addParameter(args as never)),
+);
+
+server.registerTool(
+  'align_components',
+  {
+    title: 'Alinear y distribuir componentes',
+    description:
+      'Alinea componentes entre si (align: left, center, right, top, middle, bottom, respecto a los limites del conjunto), los ' +
+      'distribuye (distribute: horizontal o vertical; con gap, separacion fija en px) y/o iguala su tamano al mayor (matchSize: width, ' +
+      'height, both). Lo de Organizar > Alinear / Distribuir.',
+    inputSchema: {
+      componentIds: z.array(z.string().min(1)).min(2),
+      align: z.enum(['left', 'center', 'right', 'top', 'middle', 'bottom']).optional(),
+      distribute: z.enum(['horizontal', 'vertical']).optional(),
+      gap: z.number().min(0).optional(),
+      matchSize: z.enum(['width', 'height', 'both']).optional(),
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  },
+  async (args) => run(() => alignComponents(args)),
+);
+
+server.registerTool(
+  'group_components',
+  {
+    title: 'Agrupar componentes',
+    description:
+      'op=group agrupa componentes de una pagina (se mueven y seleccionan juntos; Organizar > Agrupar). op=ungroup deshace los ' +
+      'grupos indicados (groupIds) o los que contienen componentIds. op=list lista los grupos (pageId opcional).',
+    inputSchema: {
+      op: z.enum(['group', 'ungroup', 'list']),
+      componentIds: z.array(z.string().min(1)).optional(),
+      groupIds: z.array(z.string().min(1)).optional(),
+      pageId: z.string().optional(),
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  },
+  async (args) => run(() => groupComponents(args)),
 );
 
 const CfRuleSchema = z.object({

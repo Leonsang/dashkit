@@ -8,12 +8,13 @@ import {
   getReportLayout,
   sanitizeLearning,
   writesAllowed
-} from "./chunks/chunk-JM3UDF2W.js";
+} from "./chunks/chunk-2SVIZ4Z3.js";
 import {
   addFilter,
   addPage,
   addParameter,
   addSourceField,
+  alignComponents,
   applySpec,
   applyTheme,
   arrangeComponents,
@@ -32,6 +33,7 @@ import {
   duplicatePage,
   exportReport,
   findOrphans,
+  groupComponents,
   inspectDataSources,
   learn,
   lintSpec,
@@ -65,10 +67,10 @@ import {
   updateParameter,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-DJCKTACB.js";
+} from "./chunks/chunk-VPP5EBVT.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
-import "./chunks/chunk-52DVBUYO.js";
+import "./chunks/chunk-BFA3FAWY.js";
 import "./chunks/chunk-FAVAKK4W.js";
 import "./chunks/chunk-GIAQTVDD.js";
 import "./chunks/chunk-BGDW2RS3.js";
@@ -36890,7 +36892,9 @@ var WRITE_TOOLS = /* @__PURE__ */ new Set([
   "set_page_visibility",
   "duplicate_page",
   "arrange_components",
-  "set_conditional_format"
+  "set_conditional_format",
+  "align_components",
+  "group_components"
 ]);
 var DESTRUCTIVE_TOOLS = /* @__PURE__ */ new Set(["delete_component", "delete_pages", "delete_blend", "delete_parameter"]);
 {
@@ -37465,6 +37469,37 @@ server.registerTool(
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true }
   },
   async (args) => run(() => addParameter(args))
+);
+server.registerTool(
+  "align_components",
+  {
+    title: "Alinear y distribuir componentes",
+    description: "Alinea componentes entre si (align: left, center, right, top, middle, bottom, respecto a los limites del conjunto), los distribuye (distribute: horizontal o vertical; con gap, separacion fija en px) y/o iguala su tamano al mayor (matchSize: width, height, both). Lo de Organizar > Alinear / Distribuir.",
+    inputSchema: {
+      componentIds: external_exports.array(external_exports.string().min(1)).min(2),
+      align: external_exports.enum(["left", "center", "right", "top", "middle", "bottom"]).optional(),
+      distribute: external_exports.enum(["horizontal", "vertical"]).optional(),
+      gap: external_exports.number().min(0).optional(),
+      matchSize: external_exports.enum(["width", "height", "both"]).optional()
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true }
+  },
+  async (args) => run(() => alignComponents(args))
+);
+server.registerTool(
+  "group_components",
+  {
+    title: "Agrupar componentes",
+    description: "op=group agrupa componentes de una pagina (se mueven y seleccionan juntos; Organizar > Agrupar). op=ungroup deshace los grupos indicados (groupIds) o los que contienen componentIds. op=list lista los grupos (pageId opcional).",
+    inputSchema: {
+      op: external_exports.enum(["group", "ungroup", "list"]),
+      componentIds: external_exports.array(external_exports.string().min(1)).optional(),
+      groupIds: external_exports.array(external_exports.string().min(1)).optional(),
+      pageId: external_exports.string().optional()
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true }
+  },
+  async (args) => run(() => groupComponents(args))
 );
 var CfRuleSchema = external_exports.object({
   field: external_exports.string().min(1).describe("Campo del grafico: nombre visible o id qt_"),

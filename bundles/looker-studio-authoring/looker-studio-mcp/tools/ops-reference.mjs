@@ -70,6 +70,8 @@ const GUIDE = {
   duplicate_page: [R + 'paginas-temas-y-ajustes.md'],
   arrange_components: [R + 'componentes.md'],
   set_conditional_format: [R + 'componentes.md'],
+  align_components: [R + 'componentes.md'],
+  group_components: [R + 'componentes.md'],
 };
 
 // ls-studio command -> MCP tool, with what differs. Every CLI command must be here, and so must every tool.
@@ -98,6 +100,10 @@ const CLI = [
   ['pages hide <id> [--nav on|off] [--viewer on|off]', 'set_page_visibility', 'MCP: `hiddenFromNav`, `hiddenFromViewer`'],
   ['arrange <id...> --to front|back|forward|backward|report|page', 'arrange_components', 'MCP: `op`, `pageId`'],
   ['format <id> <reglas.json|json> [--append]', 'set_conditional_format', ''],
+  ['align <id...> [--align] [--distribute] [--gap] [--match]', 'align_components', 'MCP: `matchSize`'],
+  ['group <id...>', 'group_components', 'MCP: `op=group`'],
+  ['ungroup <id|g-...>', 'group_components', 'MCP: `op=ungroup`, `groupIds`'],
+  ['groups [--page <id>]', 'group_components', 'MCP: `op=list`'],
   ['blends [list]', 'list_blends', ''],
   ['blends create <spec.json|json>', 'create_blend', 'Mismo objeto que el MCP'],
   ['blends update <blendId> [--name] [--join] [--add-table] [--remove-table] [--keys]', 'update_blend', 'MCP: `joinType`, `addTable`, `removeTable`, `setKeys {table, keys}`; CLI `--keys 2:pais,anio_mes=mes`'],

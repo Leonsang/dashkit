@@ -106,6 +106,22 @@ manda.
 acento, que en casi todos los temas es blanco: no se lee. `stripThemeStyles=true` en tablas fija la cabecera al
 color de texto del tema, y `audit_ux` avisa de las tablas que no lo tienen.
 
+## Alinear, distribuir y agrupar: align_components, group_components
+
+Lo de *Organizar > Alinear / Distribuir / Agrupar*:
+
+- **`align_components componentIds align`**: `left`, `center`, `right`, `top`, `middle` o `bottom`,
+  respecto a los límites del conjunto. CLI `align cd-a cd-b cd-c --align top`.
+- **`distribute`** (`horizontal` o `vertical`): reparte el espacio entre el primero y el último; con `gap`,
+  separación fija en px desde el primero. CLI `align ... --distribute horizontal --gap 20`.
+- **`matchSize`** (`width`, `height`, `both`): iguala al mayor. CLI `--match both`.
+- Se pueden combinar en una llamada (primero el tamaño, luego la alineación y por último la distribución).
+- **`group_components op=group componentIds`**: agrupa componentes de una página; se mueven y seleccionan
+  juntos y siguen accesibles por su id. `op=ungroup` (con `groupIds` o `componentIds`) y `op=list`. CLI
+  `group <id...>`, `ungroup <id|g-...>`, `groups [--page <id>]`.
+- Verificado el 2026-11-06: alinear arriba y distribuir con separación fija devuelven un control desplazado
+  a su sitio; el grupo persiste al recargar.
+
 ## Formato condicional: set_conditional_format
 
 Lo que hace *Estilo > Formato condicional* en tablas, tablas dinámicas y scorecards:
@@ -150,7 +166,6 @@ Solo si el usuario lo pide. Necesita `LS_ALLOW_DELETE=1` además de `LS_ALLOW_WR
 
 ## Lo que no se puede (todavía)
 
-- **Agrupar y alinear:** no hay herramienta. Calcula las cajas y aplícalas con `set_component_box_model`.
 - **Estilo por serie, ejes o etiquetas de datos:** sin opciones con nombre. Lo que manda es el tema
   (`paginas-temas-y-ajustes.md`); una clave suelta del panel Estilo se cambia con `style={...}` si se conoce
   su nombre (`get_component_config` > `config.display.keys`).

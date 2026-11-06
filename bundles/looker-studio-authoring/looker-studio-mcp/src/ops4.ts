@@ -20,7 +20,9 @@ import { setComponentBoxModel } from './looker/boxModel.js';
 import {
   arrangeScript,
   blendSnapshotScript,
+  componentBoxesScript,
   componentPointsScript,
+  groupScript,
   deleteBlendScript,
   editBlendScript,
   listBlendsScript,
@@ -822,6 +824,76 @@ export async function setText(componentId: string, text: string, opts: { html?: 
 }
 
 /** Sets style (display) keys of a component, as the Style panel does: e.g. {hideMetric: false} on a scorecard. */
+export async function groupComponents(o: { op: 'group' | 'ungroup' | 'list'; componentIds?: string[]; groupIds?: string[]; pageId?: string }) {
+  const { page } = await requireEditMode();
+  const r = await evaluateOn(page, T, groupScript, {
+    ...(o.componentIds ? { componentIds: o.componentIds } : {}),
+    ...(o.groupIds ? { groupIds: o.groupIds } : {}),
+    ...(o.pageId ? { pageId: o.pageId } : {}),
+    ...(o.op === 'ungroup' ? { ungroup: true } : {}),
+    ...(o.op === 'list' ? { list: true } : {}),
+  });
+  if (!r.ok) throw new Error(r.error);
+  if (o.op !== 'list') await sleep(2000);
+  return r;
+}
+
+/**
+ * Aligns, distributes or matches the size of components, computing the boxes here and applying them
+ * with set_component_box_model. Alignment is to the selection's own bounds (as Organizar > Alinear).
+ */
+export async function alignComponents(o: {
+  componentIds: string[];
+  align?: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom';
+  distribute?: 'horizontal' | 'vertical';
+  /** With distribute: a fixed gap in px instead of spreading between the first and last. */
+  gap?: number;
+  /** Same width, height or both as the largest of them. */
+  matchSize?: 'width' | 'height' | 'both';
+}) {
+  if (o.componentIds.length < 2) throw new Error('Hacen falta al menos 2 componentes.');
+  if (!o.align && !o.distribute && !o.matchSize) throw new Error('Indica align, distribute o matchSize.');
+  const { page } = await requireEditMode();
+  const boxes = await evaluateOn(page, T, componentBoxesScript, o.componentIds);
+  const missing = o.componentIds.filter((_, i) => !boxes[i]);
+  if (missing.length) throw new Error(`No encontrados: ${missing.join(', ')}`);
+  const b = boxes.map((x) => ({ ...x! }));
+  if (o.matchSize) {
+    const W = Math.max(...b.map((x) => x.w)), H = Math.max(...b.map((x) => x.h));
+    for (const x of b) { if (o.matchSize !== 'height') x.w = W; if (o.matchSize !== 'width') x.h = H; }
+  }
+  const L = Math.min(...b.map((x) => x.x)), R = Math.max(...b.map((x) => x.x + x.w));
+  const T0 = Math.min(...b.map((x) => x.y)), B = Math.max(...b.map((x) => x.y + x.h));
+  switch (o.align) {
+    case 'left': for (const x of b) x.x = L; break;
+    case 'right': for (const x of b) x.x = R - x.w; break;
+    case 'center': for (const x of b) x.x = (L + R) / 2 - x.w / 2; break;
+    case 'top': for (const x of b) x.y = T0; break;
+    case 'bottom': for (const x of b) x.y = B - x.h; break;
+    case 'middle': for (const x of b) x.y = (T0 + B) / 2 - x.h / 2; break;
+  }
+  if (o.distribute) {
+    const hz = o.distribute === 'horizontal';
+    const s = [...b].sort((p, q) => (hz ? p.x - q.x : p.y - q.y));
+    if (s.length < 3 && o.gap === undefined) throw new Error('Distribuir sin gap necesita al menos 3 componentes.');
+    const size = (x: typeof s[number]) => (hz ? x.w : x.h);
+    const first = hz ? s[0]!.x : s[0]!.y;
+    const last = hz ? s[s.length - 1]!.x + s[s.length - 1]!.w : s[s.length - 1]!.y + s[s.length - 1]!.h;
+    const gap = o.gap ?? (last - first - s.reduce((a, x) => a + size(x), 0)) / (s.length - 1);
+    let pos = first;
+    for (const x of s) { if (hz) x.x = pos; else x.y = pos; pos += size(x) + gap; }
+  }
+  const changed: Array<{ id: string; x: number; y: number; w: number; h: number }> = [];
+  for (let i = 0; i < b.length; i++) {
+    const n = b[i]!, was = boxes[i]!;
+    const nx = Math.round(n.x), ny = Math.round(n.y), nw = Math.round(n.w), nh = Math.round(n.h);
+    if (nx === was.x && ny === was.y && nw === was.w && nh === was.h) continue;
+    await setComponentBoxModel({ componentId: n.id, position: { x: nx, y: ny }, ...(nw !== was.w || nh !== was.h ? { dimensions: { width: nw, height: nh } } : {}) });
+    changed.push({ id: n.id, x: nx, y: ny, w: nw, h: nh });
+  }
+  return { ok: true, changed, unchanged: b.length - changed.length };
+}
+
 export async function setConditionalFormat(componentId: string, rules: CfRule[], append = false) {
   const { page } = await requireEditMode();
   const r = await evaluateOn(page, T, setConditionalFormatScript, { componentId, rules, append });

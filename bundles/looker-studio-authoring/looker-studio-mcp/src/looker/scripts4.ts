@@ -644,3 +644,62 @@ export function setConditionalFormatScript(args: { componentId: string; rules: C
     return { ok: false, error: String(e && e.message) };
   }
 }
+
+// ---------------------------------------------------------------------------
+// groups and boxes (verified 2026-11-06): page.createGroup(components, groupsToRemove) makes a group
+// (id g-...), saved in page.config.group; grouped components stay in page.components with absolute
+// positions and the group as parent. page.removeGroups(groups) ungroups.
+// ---------------------------------------------------------------------------
+
+export function componentBoxesScript(ids: string[]): Array<{ id: string; x: number; y: number; w: number; h: number; pageId: string | null } | null> {
+  const w = window as any;
+  const report = w.angular.element(document.body).injector().get('legoUndoRedoService').report;
+  return ids.map((id) => {
+    for (const p of report.pages) {
+      const c = p.components.find((x: any) => x.getId() === id);
+      if (c) { const a = c.getAttribute(); return { id, x: Number(a.left), y: Number(a.top), w: Number(a.width), h: Number(a.height), pageId: String(p.getId()) }; }
+    }
+    const c = report.components.find((x: any) => x.getId() === id);
+    if (c) { const a = c.getAttribute(); return { id, x: Number(a.left), y: Number(a.top), w: Number(a.width), h: Number(a.height), pageId: null }; }
+    return null;
+  });
+}
+
+export function groupScript(args: { componentIds?: string[]; ungroup?: boolean; groupIds?: string[]; list?: boolean; pageId?: string }): {
+  ok: boolean; error?: string; groupId?: string; removed?: string[]; groups?: Array<{ pageId: string; groupId: string; componentIds: string[] }>;
+} {
+  const w = window as any;
+  try {
+    const inj = w.angular.element(document.body).injector();
+    const report = inj.get('legoUndoRedoService').report;
+    const groupsOf = (p: any) => (p.getGroups ? p.getGroups() : []) as any[];
+    if (args.list) {
+      const pages = args.pageId ? report.pages.filter((p: any) => p.getId() === args.pageId) : report.pages;
+      return { ok: true, groups: pages.flatMap((p: any) => groupsOf(p).map((g: any) => ({ pageId: String(p.getId()), groupId: String(g.getId()), componentIds: g.getComponents().map((c: any) => String(c.getId())) }))) };
+    }
+    const ids = args.componentIds || [];
+    if (args.ungroup) {
+      const removed: string[] = [];
+      for (const p of report.pages) {
+        const gs = groupsOf(p).filter((g: any) => (args.groupIds || []).includes(String(g.getId())) || g.getComponents().some((c: any) => ids.includes(String(c.getId()))));
+        if (!gs.length) continue;
+        p.removeGroups(gs);
+        removed.push(...gs.map((g: any) => String(g.getId())));
+        inj.get('wrapperSaveService').save([p]);
+      }
+      if (!removed.length) return { ok: false, error: 'Ningun grupo coincide (ids en group_components list).' };
+      return { ok: true, removed };
+    }
+    if (ids.length < 2) return { ok: false, error: 'Un grupo necesita al menos 2 componentes.' };
+    const page = report.pages.find((p: any) => ids.every((id) => p.components.some((c: any) => c.getId() === id)));
+    if (!page) return { ok: false, error: 'Los componentes tienen que estar en la misma pagina (y no a nivel de informe).' };
+    const comps = ids.map((id) => page.components.find((c: any) => c.getId() === id));
+    // Groups that already hold some of them are replaced by the new one (the editor does the same).
+    const old = groupsOf(page).filter((g: any) => g.getComponents().some((c: any) => ids.includes(String(c.getId()))));
+    const g = page.createGroup(comps, old);
+    inj.get('wrapperSaveService').save([page]);
+    return { ok: true, groupId: g && g.getId ? String(g.getId()) : undefined };
+  } catch (e: any) {
+    return { ok: false, error: String(e && e.message) };
+  }
+}

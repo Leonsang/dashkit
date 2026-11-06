@@ -29,7 +29,7 @@ import {
 import { reportSettings } from './ops3.js';
 import { addFilter, addPage, addSourceField, applyTheme, detachFilter, updateFilter, exportTheme, importTheme, listFilters, listPages, readTheme, renamePage, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
 import { readFileSync, existsSync } from 'node:fs';
-import { addParameter, arrangeComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
+import { addParameter, alignComponents, arrangeComponents, groupComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
 
 const HELP = `ls-studio <comando> [opciones]
 
@@ -63,6 +63,9 @@ Paginas y tema
   pages move <id> <indice> | pages delete <id...> | pages duplicate <id> [nombre]
   pages hide <id> [--nav on|off] [--viewer on|off]
   arrange <id...> --to front|back|forward|backward|report|page [--page <id>]
+  align <id...> [--align left|center|right|top|middle|bottom] [--distribute horizontal|vertical] [--gap N]
+        [--match width|height|both]       Alinear, distribuir, igualar tamano
+  group <id...> | ungroup <id|g-...> | groups [--page <id>]   Grupos de componentes
   format <id> <reglas.json|json> [--append]   Formato condicional: [{field, op, value, background, color, target}] o {field, scale:[...]}
 
 Combinaciones y parametros
@@ -219,6 +222,22 @@ async function main(): Promise<unknown> {
         return setPageVisibility(need(pos[1], 'pageId'), { ...(nav !== undefined ? { hiddenFromNav: nav } : { hiddenFromNav: true }), ...(viewer !== undefined ? { hiddenFromViewer: viewer } : {}) });
       }
       return listPages();
+    case 'align': {
+      // align <id...> [--align left|center|right|top|middle|bottom] [--distribute horizontal|vertical] [--gap N] [--match width|height|both]
+      return alignComponents({
+        componentIds: pos,
+        ...(typeof flags.align === 'string' ? { align: flags.align as never } : {}),
+        ...(typeof flags.distribute === 'string' ? { distribute: flags.distribute as never } : {}),
+        ...(typeof flags.gap === 'string' ? { gap: Number(flags.gap) } : {}),
+        ...(typeof flags.match === 'string' ? { matchSize: flags.match as never } : {}),
+      });
+    }
+    case 'group':
+      return groupComponents({ op: 'group', componentIds: pos });
+    case 'ungroup':
+      return groupComponents({ op: 'ungroup', componentIds: pos.filter((x) => !x.startsWith('g-')), groupIds: pos.filter((x) => x.startsWith('g-')) });
+    case 'groups':
+      return groupComponents({ op: 'list', ...(typeof flags.page === 'string' ? { pageId: flags.page } : {}) });
     case 'format': {
       // format <id> <rules.json|json> [--append]
       const arg = need(pos[1], 'las reglas (JSON o archivo)');

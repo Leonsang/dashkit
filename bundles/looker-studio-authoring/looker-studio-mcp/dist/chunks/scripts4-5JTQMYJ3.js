@@ -2,10 +2,12 @@ import { createRequire as __lsCreateRequire } from 'node:module'; const require 
 import {
   arrangeScript,
   blendSnapshotScript,
+  componentBoxesScript,
   componentPointsScript,
   deleteBlendScript,
   editBlendScript,
   ensureSeedScript,
+  groupScript,
   listBlendsScript,
   menuItemPointScript,
   navDispatchScript,
@@ -16,15 +18,17 @@ import {
   setDisplayKeysScript,
   setTextScript,
   updateBlendScript
-} from "./chunk-52DVBUYO.js";
+} from "./chunk-BFA3FAWY.js";
 import "./chunk-5QDPZ4I5.js";
 export {
   arrangeScript,
   blendSnapshotScript,
+  componentBoxesScript,
   componentPointsScript,
   deleteBlendScript,
   editBlendScript,
   ensureSeedScript,
+  groupScript,
   listBlendsScript,
   menuItemPointScript,
   navDispatchScript,

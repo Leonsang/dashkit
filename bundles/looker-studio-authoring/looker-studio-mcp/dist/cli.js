@@ -5,12 +5,13 @@ import {
   getComponentConfig,
   getReportLayout,
   sanitizeLearning
-} from "./chunks/chunk-JM3UDF2W.js";
+} from "./chunks/chunk-2SVIZ4Z3.js";
 import {
   addFilter,
   addPage,
   addParameter,
   addSourceField,
+  alignComponents,
   applySpec,
   applyTheme,
   arrangeComponents,
@@ -31,6 +32,7 @@ import {
   exportReport,
   exportTheme,
   findOrphans,
+  groupComponents,
   importTheme,
   inspectDataSources,
   learn,
@@ -63,10 +65,10 @@ import {
   updateParameter,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-DJCKTACB.js";
+} from "./chunks/chunk-VPP5EBVT.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
-import "./chunks/chunk-52DVBUYO.js";
+import "./chunks/chunk-BFA3FAWY.js";
 import "./chunks/chunk-FAVAKK4W.js";
 import "./chunks/chunk-GIAQTVDD.js";
 import "./chunks/chunk-BGDW2RS3.js";
@@ -108,6 +110,9 @@ Paginas y tema
   pages move <id> <indice> | pages delete <id...> | pages duplicate <id> [nombre]
   pages hide <id> [--nav on|off] [--viewer on|off]
   arrange <id...> --to front|back|forward|backward|report|page [--page <id>]
+  align <id...> [--align left|center|right|top|middle|bottom] [--distribute horizontal|vertical] [--gap N]
+        [--match width|height|both]       Alinear, distribuir, igualar tamano
+  group <id...> | ungroup <id|g-...> | groups [--page <id>]   Grupos de componentes
   format <id> <reglas.json|json> [--append]   Formato condicional: [{field, op, value, background, color, target}] o {field, scale:[...]}
 
 Combinaciones y parametros
@@ -261,6 +266,21 @@ async function main() {
         return setPageVisibility(need(pos[1], "pageId"), { ...nav !== void 0 ? { hiddenFromNav: nav } : { hiddenFromNav: true }, ...viewer !== void 0 ? { hiddenFromViewer: viewer } : {} });
       }
       return listPages();
+    case "align": {
+      return alignComponents({
+        componentIds: pos,
+        ...typeof flags.align === "string" ? { align: flags.align } : {},
+        ...typeof flags.distribute === "string" ? { distribute: flags.distribute } : {},
+        ...typeof flags.gap === "string" ? { gap: Number(flags.gap) } : {},
+        ...typeof flags.match === "string" ? { matchSize: flags.match } : {}
+      });
+    }
+    case "group":
+      return groupComponents({ op: "group", componentIds: pos });
+    case "ungroup":
+      return groupComponents({ op: "ungroup", componentIds: pos.filter((x) => !x.startsWith("g-")), groupIds: pos.filter((x) => x.startsWith("g-")) });
+    case "groups":
+      return groupComponents({ op: "list", ...typeof flags.page === "string" ? { pageId: flags.page } : {} });
     case "format": {
       const arg = need(pos[1], "las reglas (JSON o archivo)");
       const rules = JSON.parse(existsSync(arg) ? readFileSync(arg, "utf8") : arg);
