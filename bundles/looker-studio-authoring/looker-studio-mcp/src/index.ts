@@ -27,6 +27,7 @@ import {
   reloadReport,
 } from './ops.js';
 import { loadSpec, type ReportSpec } from './spec.js';
+import { addParameter, arrangeComponents, createBlend, deleteBlend, deletePages, duplicatePage, listBlends, movePage, setControlParameter, setPageVisibility, setText, updateBlend } from './ops4.js';
 import { renamePage, reportSettings } from './ops3.js';
 import { addFilter, addPage, addSourceField, detachFilter, applyTheme, listFilters, listPages, readTheme, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
 
@@ -50,9 +51,10 @@ const server = new McpServer(
 const WRITE_TOOLS = new Set([
   'set_component_box_model', 'bind_fields_to_component', 'create_component', 'apply_report_spec', 'patch_component',
   'apply_theme', 'use_theme', 'add_page', 'rename_page', 'synthesize_templates', 'seed_templates_from_menu', 'add_filter',
-  'detach_filter',
+  'detach_filter', 'create_blend', 'update_blend', 'add_parameter', 'move_page', 'set_page_visibility', 'duplicate_page',
+  'arrange_components',
 ]);
-const DESTRUCTIVE_TOOLS = new Set(['delete_component']);
+const DESTRUCTIVE_TOOLS = new Set(['delete_component', 'delete_pages', 'delete_blend']);
 {
   const original = server.registerTool.bind(server) as (...a: unknown[]) => unknown;
   (server as unknown as { registerTool: (...a: unknown[]) => unknown }).registerTool = (name: unknown, config: unknown, handler: unknown) => {
@@ -394,23 +396,33 @@ server.registerTool(
   {
     title: 'Ajustar control / estilos',
     description:
-      'dateRangeDays: periodo por defecto de un control de fechas (ultimos N dias, movil). stripThemeStyles: quita colores/fuentes/bordes ' +
+      'dateRangeDays: periodo por defecto de un control de fechas (ultimos N dias, movil). parameter: el control fija ese parametro (id). text (+ textSize, textBold, textColor): texto de un cuadro de texto. stripThemeStyles: quita colores/fuentes/bordes ' +
       'sobrescritos en el componente para que mande el tema del informe (util tras crear desde plantillas de otros informes).',
     inputSchema: {
       componentId: z.string().min(1),
       dateRangeDays: z.number().int().positive().optional(),
       stripThemeStyles: z.boolean().optional(),
+      parameter: z.string().optional().describe('Id de un parametro: el control (lista, deslizante, cuadro) pasa a fijar ese parametro en vez de filtrar'),
+      text: z.string().optional().describe('Texto de un cuadro de texto (simple-description); \n separa lineas'),
+      textSize: z.number().int().positive().optional(),
+      textBold: z.boolean().optional(),
+      textColor: z.string().optional(),
     },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
   },
   async (args) =>
-    run(() =>
-      patchComponent({
-        componentId: args.componentId,
-        ...(args.dateRangeDays !== undefined ? { dateRangeDays: args.dateRangeDays } : {}),
-        ...(args.stripThemeStyles ? { stripThemeStyles: true } : {}),
-      }),
-    ),
+    run(async () => {
+      const out: Record<string, unknown> = {};
+      if (args.dateRangeDays !== undefined || args.stripThemeStyles)
+        Object.assign(out, await patchComponent({
+          componentId: args.componentId,
+          ...(args.dateRangeDays !== undefined ? { dateRangeDays: args.dateRangeDays } : {}),
+          ...(args.stripThemeStyles ? { stripThemeStyles: true } : {}),
+        }));
+      if (args.parameter) out.parameter = await setControlParameter(args.componentId, args.parameter);
+      if (args.text !== undefined) out.text = await setText(args.componentId, args.text, { ...(args.textSize ? { size: args.textSize } : {}), ...(args.textBold ? { bold: true } : {}), ...(args.textColor ? { color: args.textColor } : {}) });
+      return out;
+    }),
 );
 
 const ThemeSchema = z
@@ -443,7 +455,7 @@ server.registerTool(
 
 server.registerTool(
   'list_pages',
-  { title: 'Listar paginas', description: 'Paginas del informe con id, nombre y numero de componentes.', inputSchema: {}, annotations: { readOnlyHint: true, openWorldHint: true } },
+  { title: 'Listar paginas', description: 'Paginas en el orden y con el nombre que ve el lector (navegacion), con su nombre interno, componentes y si estan ocultas.', inputSchema: {}, annotations: { readOnlyHint: true, openWorldHint: true } },
   async () => run(() => listPages()),
 );
 
@@ -551,7 +563,7 @@ server.registerTool(
   'rename_page',
   {
     title: 'Renombrar pagina',
-    description: 'Renombra una pagina en el modelo y en la navegacion visible (Gestionar paginas > Cambiar nombre -> /updateReportNavigationInfo).',
+    description: 'Renombra una pagina en el modelo y en la navegacion que ve el lector (accion de navegacion del editor -> /updateReportNavigationInfo).',
     inputSchema: { pageId: z.string().min(1), name: z.string().min(1).max(100) },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
   },
@@ -610,6 +622,147 @@ server.registerTool(
     annotations: { readOnlyHint: true, openWorldHint: true },
   },
   async ({ specs }) => run(() => findOrphans(specs.map((f) => assertJsonPath(f)))),
+);
+
+const BlendTableSchema = z.object({
+  dataset: z.string().min(1).describe('Id de origen o "@campo"'),
+  dimensions: z.array(z.string()).min(1).describe('Dimensiones; las que se llaman igual en todas las tablas son las claves de union'),
+  metrics: z.array(z.string()).optional(),
+}).strict();
+
+server.registerTool(
+  'create_blend',
+  {
+    title: 'Combinar origenes (blend)',
+    description:
+      'Crea una combinacion de 2 a 5 origenes y un grafico sobre ella, como "Combinar datos" del editor: crea graficos temporales con los campos de cada tabla, ' +
+      'los combina (une por las dimensiones que comparten), los borra, nombra la combinacion, fija el tipo de union y coloca y vincula el grafico nuevo. ' +
+      'joinType: left (defecto del editor), inner, right, full, cross.',
+    inputSchema: {
+      tables: z.array(BlendTableSchema).min(2).max(5),
+      box: BoxSchema,
+      name: z.string().optional(),
+      joinType: z.enum(['left', 'inner', 'right', 'full', 'cross']).optional(),
+      type: z.string().optional().describe('Tipo del grafico combinado (defecto simple-table)'),
+      pageId: z.string().optional(),
+      dimensions: z.array(z.string()).optional().describe('Campos de la combinacion a vincular al grafico'),
+      metrics: z.array(z.string()).optional(),
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+  },
+  async (args) => run(() => createBlend(args as never)),
+);
+
+server.registerTool(
+  'list_blends',
+  {
+    title: 'Combinaciones del informe',
+    description: 'Combinaciones (blends) del informe: id, nombre, origenes, uniones con su tipo y claves, campos y graficos que las usan. Solo lectura.',
+    inputSchema: {},
+    annotations: { readOnlyHint: true, openWorldHint: true },
+  },
+  async () => run(() => listBlends()),
+);
+
+server.registerTool(
+  'update_blend',
+  {
+    title: 'Renombrar o cambiar la union de una combinacion',
+    description: 'Cambia el nombre de una combinacion y/o el tipo de todas sus uniones (inner, left, right, full, cross).',
+    inputSchema: { blendId: z.string().min(1), name: z.string().optional(), joinType: z.enum(['left', 'inner', 'right', 'full', 'cross']).optional() },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  },
+  async (args) => run(() => updateBlend(args as never)),
+);
+
+server.registerTool(
+  'delete_blend',
+  {
+    title: 'Borrar una combinacion',
+    description: 'Borra una combinacion (blend) que ningun grafico usa. Confirma con el usuario antes de usarla.',
+    inputSchema: { blendId: z.string().min(1) },
+    annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
+  },
+  async ({ blendId }) => run(() => deleteBlend(blendId)),
+);
+
+server.registerTool(
+  'add_parameter',
+  {
+    title: 'Crear un parametro',
+    description:
+      'Crea un parametro en un origen con el formulario del editor (panel Datos > Anadir un parametro). type: text, integer, decimal, boolean. ' +
+      'allowed: any, list (values [{value,label}]) o range (min, max). En formulas se usa por su NOMBRE VISIBLE, no por su id. ' +
+      'Necesita en la pagina actual un grafico de ese origen.',
+    inputSchema: {
+      name: z.string().min(1),
+      type: z.enum(['text', 'integer', 'decimal', 'boolean']).optional(),
+      allowed: z.enum(['any', 'list', 'range']).optional(),
+      values: z.array(z.object({ value: z.union([z.string(), z.number()]), label: z.string().optional() })).optional(),
+      min: z.number().optional(),
+      max: z.number().optional(),
+      default: z.union([z.string(), z.number()]).optional(),
+      source: z.string().optional().describe('Id de origen o "@campo"'),
+      id: z.string().regex(/^[A-Za-z0-9_.]+$/).optional().describe('Id del parametro; por defecto, el nombre sin tildes'),
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+  },
+  async (args) => run(() => addParameter(args as never)),
+);
+
+server.registerTool(
+  'move_page',
+  {
+    title: 'Mover una pagina',
+    description: 'Mueve una pagina a la posicion index (0 = primera) en la navegacion del informe.',
+    inputSchema: { pageId: z.string().min(1), index: z.number().int().min(0) },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  },
+  async ({ pageId, index }) => run(() => movePage(pageId, index)),
+);
+
+server.registerTool(
+  'delete_pages',
+  {
+    title: 'Borrar paginas',
+    description: 'Borra paginas del informe con sus componentes. Confirma con el usuario antes de usarla.',
+    inputSchema: { pageIds: z.array(z.string().min(1)).min(1) },
+    annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
+  },
+  async ({ pageIds }) => run(() => deletePages(pageIds)),
+);
+
+server.registerTool(
+  'set_page_visibility',
+  {
+    title: 'Ocultar una pagina',
+    description: 'hiddenFromNav: la quita del menu de navegacion (sigue accesible por enlace). hiddenFromViewer: la oculta en modo vista.',
+    inputSchema: { pageId: z.string().min(1), hiddenFromNav: z.boolean().optional(), hiddenFromViewer: z.boolean().optional() },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  },
+  async ({ pageId, ...v }) => run(() => setPageVisibility(pageId, v)),
+);
+
+server.registerTool(
+  'duplicate_page',
+  {
+    title: 'Duplicar una pagina',
+    description: 'Duplica una pagina con sus componentes, filtros y ajustes (Pagina > Duplicar pagina) y, si se indica, le pone nombre.',
+    inputSchema: { pageId: z.string().min(1), name: z.string().optional() },
+    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+  },
+  async ({ pageId, name }) => run(() => duplicatePage(pageId, name)),
+);
+
+server.registerTool(
+  'arrange_components',
+  {
+    title: 'Orden de capas y nivel de informe',
+    description: 'op: front, back, forward, backward (orden de capas) o report (pasa los componentes a nivel de informe: salen en todas las paginas) / page (los devuelve a pageId).',
+    inputSchema: { componentIds: z.array(z.string().min(1)).min(1), op: z.enum(['front', 'back', 'forward', 'backward', 'report', 'page']), pageId: z.string().optional() },
+    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+  },
+  async ({ componentIds, op, pageId }) => run(() => arrangeComponents(componentIds, op, pageId)),
 );
 
 server.registerTool(

@@ -1,0 +1,123 @@
+{
+  "grid": 10,
+  "canvasWidth": 1200,
+  "canvasHeight": 900,
+  "themePreset": "marca-azul",
+  "defaults": { "dataset": "@ingresos", "padding": 12 },
+  "pages": [
+    {
+      "page": "41982637",
+      "components": [
+        { "key": "p1_titulo", "type": "simple-description", "x": 20, "y": 20, "w": 840, "h": 60,
+          "text": { "text": "¿Cómo vamos? Ventas de la tienda, 2024–2025", "size": 24, "bold": true, "color": "#202124" } },
+        { "key": "periodo", "type": "simple-daterangepicker", "x": 880, "y": 20, "w": 280, "h": 60, "dateRangeDays": 1100, "stripStyles": true },
+        { "row": { "y": 100, "h": 120, "margin": 20, "gap": 20 },
+          "items": [
+            { "key": "p1_kpi_ingresos", "type": "kpi-metric", "metrics": ["SUM(ingresos) as Ingresos"] },
+            { "key": "p1_kpi_pedidos", "type": "kpi-metric", "metrics": ["COUNT_DISTINCT(id_pedido) as Pedidos"] },
+            { "key": "p1_kpi_margen", "type": "kpi-metric", "metrics": ["=(SUM(ingresos) - SUM(coste)) / SUM(ingresos)::PERCENT as Margen"] },
+            { "key": "p1_kpi_valoracion", "type": "kpi-metric", "metrics": ["AVG(valoracion) as Valoración media"] },
+            { "key": "p1_kpi_unidades", "type": "kpi-metric", "metrics": ["SUM(unidades) as Unidades"] }
+          ] },
+        { "key": "p1_tendencia", "type": "simple-linechart", "stripStyles": true, "x": 20, "y": 240, "w": 740, "h": 300,
+          "dimensions": ["mes_inicio"], "metrics": ["SUM(ingresos) as Ingresos"] },
+        { "key": "p1_canal", "type": "simple-barchart", "stripStyles": true, "x": 780, "y": 240, "w": 380, "h": 300,
+          "dimensions": ["canal"], "metrics": ["SUM(ingresos) as Ingresos"] },
+        { "key": "p1_mapa", "type": "simple-geomap", "stripStyles": true, "x": 20, "y": 560, "w": 560, "h": 320,
+          "dimensions": ["codigo_pais"], "metrics": ["SUM(ingresos) as Ingresos"] },
+        { "key": "p1_paises", "type": "simple-table", "stripStyles": true, "x": 600, "y": 560, "w": 560, "h": 320,
+          "dimensions": ["pais"], "metrics": ["SUM(ingresos) as Ingresos", "COUNT_DISTINCT(id_pedido) as Pedidos", "AVG(valoracion) as Valoración"] }
+      ]
+    },
+    {
+      "page": "p_cv50p1wz8d",
+      "components": [
+        { "key": "p2_titulo", "type": "simple-description", "x": 20, "y": 20, "w": 500, "h": 60,
+          "text": { "text": "Qué impulsa los ingresos", "size": 24, "bold": true, "color": "#202124" } },
+        { "key": "p2_canal", "type": "dimension-filter", "variant": "lista-desplegable", "x": 540, "y": 20, "w": 150, "h": 60, "dimensions": ["canal"] },
+        { "key": "p2_region", "type": "dimension-filter", "variant": "lista-desplegable", "x": 710, "y": 20, "w": 150, "h": 60, "dimensions": ["region"] },
+        { "key": "p2_categorias", "type": "simple-treemap", "stripStyles": true, "x": 20, "y": 100, "w": 560, "h": 360,
+          "dimensions": ["categoria", "subcategoria"], "metrics": ["SUM(ingresos) as Ingresos"] },
+        { "key": "p2_region_canal", "type": "pivot-table", "variant": "tabla-dinamica-con-mapa-de-calor", "stripStyles": true, "x": 600, "y": 100, "w": 560, "h": 360,
+          "dimensions": ["region", "canal"], "metrics": ["SUM(ingresos) as Ingresos"] },
+        { "key": "p2_burbujas", "type": "simple-scatterchart", "variant": "grafico-de-burbujas", "stripStyles": true, "x": 20, "y": 480, "w": 560, "h": 400,
+          "dimensions": ["pais"], "slots": { "x_metric": ["SUM(ingresos)"], "y_metric": ["AVG(valoracion)"], "bubble_size": ["SUM(unidades)"] } },
+        { "key": "p2_productos", "type": "simple-table", "variant": "tabla-con-mapa-de-calor", "stripStyles": true, "x": 600, "y": 480, "w": 560, "h": 400,
+          "dimensions": ["producto", "categoria"], "metrics": ["SUM(ingresos) as Ingresos", "SUM(unidades) as Unidades", "AVG(descuento_pct) as Descuento"] }
+      ]
+    },
+    {
+      "page": "p_uroe6w0y8d",
+      "components": [
+        { "key": "p3_titulo", "type": "simple-description", "x": 20, "y": 20, "w": 500, "h": 60,
+          "text": { "text": "Rentabilidad y calidad del servicio", "size": 24, "bold": true, "color": "#202124" } },
+        { "key": "p3_devueltos", "type": "dimension-filter", "variant": "casilla", "x": 540, "y": 20, "w": 150, "h": 60, "dimensions": ["devuelto_bool"] },
+        { "key": "p3_online", "type": "button", "variant": "filtro-predefinido", "x": 710, "y": 20, "w": 150, "h": 60, "dimensions": ["es_online"] },
+        { "row": { "y": 100, "h": 120, "margin": 20, "gap": 20 },
+          "items": [
+            { "key": "p3_kpi_margen", "type": "kpi-metric", "metrics": ["=SUM(ingresos) - SUM(coste) as Margen"] },
+            { "key": "p3_kpi_margen_pct", "type": "kpi-metric", "metrics": ["=(SUM(ingresos) - SUM(coste)) / SUM(ingresos)::PERCENT as Margen %"] },
+            { "key": "p3_kpi_descuento", "type": "kpi-metric", "metrics": ["AVG(descuento_pct) as Descuento medio"] },
+            { "key": "p3_kpi_entrega", "type": "kpi-metric", "metrics": ["AVG(dias_entrega) as Días de entrega"] }
+          ] },
+        { "key": "p3_margen_categoria", "type": "simple-barchart", "stripStyles": true, "x": 20, "y": 240, "w": 740, "h": 300,
+          "dimensions": ["categoria"], "metrics": ["=SUM(ingresos) - SUM(coste) as Margen"] },
+        { "key": "p3_valoracion", "type": "gauge-viz", "stripStyles": true, "x": 780, "y": 240, "w": 380, "h": 300,
+          "metrics": ["AVG(valoracion) as Valoración media"] },
+        { "key": "p3_vendedores", "type": "simple-table", "stripStyles": true, "x": 20, "y": 560, "w": 1140, "h": 320,
+          "dimensions": ["vendedor"], "metrics": ["SUM(ingresos) as Ingresos", "=SUM(ingresos) - SUM(coste) as Margen", "AVG(valoracion) as Valoración", "AVG(dias_entrega) as Días de entrega"] }
+      ]
+    },
+    {
+      "page": "p_22gmzy0y8d",
+      "components": [
+        { "key": "p4_titulo", "type": "simple-description", "x": 20, "y": 20, "w": 840, "h": 60,
+          "text": { "text": "Tráfico y conversión (sin tablet: filtro de página)", "size": 24, "bold": true, "color": "#202124" } },
+        { "key": "p4_sesiones", "type": "simple-combochart", "stripStyles": true, "dataset": "@sesiones", "x": 20, "y": 100, "w": 740, "h": 300,
+          "dimensions": ["fecha"], "metrics": ["SUM(sesiones) as Sesiones", "SUM(conversiones) as Conversiones"] },
+        { "key": "p4_rebote", "type": "gauge-viz", "stripStyles": true, "dataset": "@sesiones", "x": 780, "y": 100, "w": 380, "h": 300,
+          "metrics": ["AVG(rebote_pct) as Rebote medio"] },
+        { "key": "p4_usuarios", "type": "simple-areachart", "stripStyles": true, "dataset": "@sesiones", "x": 20, "y": 420, "w": 560, "h": 300,
+          "dimensions": ["fecha"], "metrics": ["SUM(usuarios) as Usuarios"], "slots": { "breakdown": ["dispositivo"] } },
+        { "key": "p4_flujo", "type": "simple-sankey", "stripStyles": true, "dataset": "@sesiones", "x": 600, "y": 420, "w": 560, "h": 300,
+          "dimensions": ["fuente", "medio"], "metrics": ["SUM(sesiones) as Sesiones"] },
+        { "key": "p4_objetivo", "type": "bulletchart", "stripStyles": true, "dataset": "@objetivo_ingresos", "x": 20, "y": 740, "w": 560, "h": 140,
+          "metrics": ["SUM(objetivo_ingresos) as Objetivo de ingresos"] },
+        { "key": "p4_embudo", "type": "simple-funnel", "stripStyles": true, "dataset": "@sesiones", "x": 600, "y": 740, "w": 560, "h": 140,
+          "dimensions": ["dispositivo"], "metrics": ["SUM(sesiones) as Sesiones"] }
+      ]
+    },
+    {
+      "page": "p_3e208p5y8d",
+      "components": [
+        { "key": "p5_titulo", "type": "simple-description", "x": 20, "y": 20, "w": 840, "h": 60,
+          "text": { "text": "Ventas frente a objetivo: tres orígenes combinados", "size": 24, "bold": true, "color": "#202124" } },
+        { "row": { "y": 100, "h": 120, "margin": 20, "gap": 20 },
+          "items": [
+            { "key": "p5_kpi_ingresos", "type": "kpi-metric", "metrics": ["SUM(ingresos) as Ingresos"] },
+            { "key": "p5_kpi_objetivo", "type": "kpi-metric", "dataset": "@objetivo_ingresos", "metrics": ["SUM(objetivo_ingresos) as Objetivo de ingresos"] },
+            { "key": "p5_kpi_sesiones", "type": "kpi-metric", "dataset": "@sesiones", "metrics": ["SUM(sesiones) as Sesiones"] },
+            { "key": "p5_kpi_conversiones", "type": "kpi-metric", "dataset": "@sesiones", "metrics": ["SUM(conversiones) as Conversiones"] }
+          ] }
+      ]
+    },
+    {
+      "page": "p_0rxkmo7z8d",
+      "components": [
+        { "key": "p7_titulo", "type": "simple-description", "x": 320, "y": 20, "w": 540, "h": 60,
+          "text": { "text": "Explorar el detalle", "size": 24, "bold": true, "color": "#202124" } },
+        { "key": "p7_categoria", "type": "dimension-filter", "variant": "lista-desplegable", "x": 20, "y": 20, "w": 280, "h": 60, "dimensions": ["categoria"] },
+        { "key": "p7_producto", "type": "dimension-filter", "variant": "cuadro-de-entrada", "x": 20, "y": 100, "w": 280, "h": 60, "dimensions": ["producto"] },
+        { "key": "p7_ciudad", "type": "dimension-filter", "variant": "filtro-avanzado", "x": 20, "y": 180, "w": 280, "h": 60, "dimensions": ["ciudad"] },
+        { "key": "p7_entrega", "type": "dimension-filter", "variant": "control-deslizante", "x": 20, "y": 260, "w": 280, "h": 60, "dimensions": ["dias_entrega"] },
+        { "key": "p7_canal", "type": "dimension-filter", "variant": "lista-de-tamano-fijo", "x": 20, "y": 340, "w": 280, "h": 220, "dimensions": ["canal"] },
+        { "key": "p7_dimension", "type": "dimension-control", "variant": "control-de-dimensiones", "x": 320, "y": 100, "w": 400, "h": 60,
+          "dimensions": ["categoria", "canal", "region"] },
+        { "key": "p7_barras", "type": "simple-barchart", "stripStyles": true, "x": 320, "y": 180, "w": 840, "h": 320,
+          "dimensions": ["categoria"], "metrics": ["SUM(ingresos) as Ingresos", "SUM(unidades) as Unidades"] },
+        { "key": "p7_detalle", "type": "simple-table", "stripStyles": true, "x": 320, "y": 520, "w": 840, "h": 360,
+          "dimensions": ["producto", "ciudad", "canal"], "metrics": ["SUM(ingresos) as Ingresos", "AVG(dias_entrega) as Días de entrega", "AVG(valoracion) as Valoración"] }
+      ]
+    }
+  ]
+}

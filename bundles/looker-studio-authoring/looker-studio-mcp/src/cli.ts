@@ -29,6 +29,7 @@ import {
 import { reportSettings } from './ops3.js';
 import { addFilter, addPage, addSourceField, applyTheme, detachFilter, exportTheme, importTheme, listFilters, listPages, readTheme, renamePage, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
 import { readFileSync, existsSync } from 'node:fs';
+import { addParameter, arrangeComponents, createBlend, deleteBlend, deletePages, duplicatePage, listBlends, movePage, setControlParameter, setPageVisibility, setText, updateBlend } from './ops4.js';
 
 const HELP = `ls-studio <comando> [opciones]
 
@@ -53,10 +54,22 @@ Escritura (modo /edit)
   create --type <tipo[@variante]> --box x,y,w,h [--page <id>] [--dataset <id|@campo>]
          [--dims a,b] [--metrics m1,m2] [--padding N]
   delete <id>
-  patch <id> [--date-days N] [--strip-styles]   Periodo por defecto de un control / quitar estilos de tema
+  patch <id> [--date-days N] [--strip-styles] [--parameter <id>] [--text "T" [--size N --bold --color #hex]]
+                                   Periodo de un control / quitar estilos de tema / control que fija un parametro
 
 Paginas y tema
   pages [list] | pages add <nombre> | pages rename <id> <nombre>
+  pages move <id> <indice> | pages delete <id...> | pages duplicate <id> [nombre]
+  pages hide <id> [--nav on|off] [--viewer on|off]
+  arrange <id...> --to front|back|forward|backward|report|page [--page <id>]
+
+Combinaciones y parametros
+  blends [list]                    Combinaciones: origenes, uniones, claves, campos, graficos
+  blends create <spec.json|json>   {tables:[{dataset,dimensions,metrics}], box:{x,y,width,height}, name, joinType, type, dimensions, metrics}
+  blends update <blendId> [--name N] [--join inner|left|right|full|cross]
+  blends delete <blendId>          Solo si ningun grafico la usa
+  params add --name N [--type text|integer|decimal|boolean] [--values a:Etiqueta,b] [--min N --max N]
+             [--default V] [--source <id|@campo>]   (en formulas, por su nombre visible)
   theme presets | theme use <preset|nombre|biblioteca> | theme export <f.json> | theme import <f.json>
   report settings [--viewer-filter-bar on|off] [--cross-filter on|off] [--set clave=valor,...]
   filters [list] | filters add --name N --field F [--op EQ] [--values a,b] [--exclude] [--to <pageId|cd-..>]
@@ -173,11 +186,13 @@ async function main(): Promise<unknown> {
     }
     case 'patch': {
       const days = num(flags['date-days']);
-      return patchComponent({
-        componentId: need(pos[0], 'componentId'),
-        ...(days !== undefined ? { dateRangeDays: days } : {}),
-        ...(flags['strip-styles'] ? { stripThemeStyles: true } : {}),
-      });
+      const id = need(pos[0], 'componentId');
+      const out: Record<string, unknown> = {};
+      if (days !== undefined || flags['strip-styles'])
+        Object.assign(out, await patchComponent({ componentId: id, ...(days !== undefined ? { dateRangeDays: days } : {}), ...(flags['strip-styles'] ? { stripThemeStyles: true } : {}) }));
+      if (typeof flags.parameter === 'string') out.parameter = await setControlParameter(id, flags.parameter);
+      if (typeof flags.text === 'string') out.text = await setText(id, flags.text.replace(/\\n/g, '\n'), { ...(num(flags.size) ? { size: num(flags.size)! } : {}), ...(flags.bold ? { bold: true } : {}), ...(typeof flags.color === 'string' ? { color: flags.color } : {}) });
+      return out;
     }
     case 'delete':
       return deleteComponent(need(pos[0], 'componentId'));
@@ -188,7 +203,43 @@ async function main(): Promise<unknown> {
     case 'pages':
       if (pos[0] === 'add') return addPage(need(pos[1], 'el nombre de la pagina'));
       if (pos[0] === 'rename') return renamePage(need(pos[1], 'pageId'), need(pos.slice(2).join(' '), 'el nombre'));
+      if (pos[0] === 'move') return movePage(need(pos[1], 'pageId'), Number(need(pos[2], 'el indice')));
+      if (pos[0] === 'delete') return deletePages(pos.slice(1).length ? pos.slice(1) : [need(undefined, 'pageId')]);
+      if (pos[0] === 'duplicate') return duplicatePage(need(pos[1], 'pageId'), pos.slice(2).join(' ') || undefined);
+      if (pos[0] === 'hide') {
+        const onOff = (v: string | true | undefined) => (v === undefined ? undefined : v === true || /^(on|true|1|si|yes)$/i.test(String(v)));
+        const nav = onOff(flags.nav), viewer = onOff(flags.viewer);
+        return setPageVisibility(need(pos[1], 'pageId'), { ...(nav !== undefined ? { hiddenFromNav: nav } : { hiddenFromNav: true }), ...(viewer !== undefined ? { hiddenFromViewer: viewer } : {}) });
+      }
       return listPages();
+    case 'arrange': {
+      const to = need(typeof flags.to === 'string' ? flags.to : undefined, '--to front|back|forward|backward|report|page');
+      if (!['front', 'back', 'forward', 'backward', 'report', 'page'].includes(to)) throw new Error(`--to ${to} no valido`);
+      return arrangeComponents(pos.length ? pos : [need(undefined, 'componentId')], to as never, typeof flags.page === 'string' ? flags.page : undefined);
+    }
+    case 'blends': {
+      if (pos[0] === 'create') {
+        const arg = need(pos[1], 'el spec (JSON o archivo)');
+        return createBlend(JSON.parse(existsSync(arg) ? readFileSync(arg, 'utf8') : arg));
+      }
+      if (pos[0] === 'delete') return deleteBlend(need(pos[1], 'blendId'));
+      if (pos[0] === 'update') return updateBlend({ blendId: need(pos[1], 'blendId'), ...(typeof flags.name === 'string' ? { name: flags.name } : {}), ...(typeof flags.join === 'string' ? { joinType: flags.join } : {}) });
+      return listBlends();
+    }
+    case 'params': {
+      if (pos[0] !== 'add') throw new Error('Uso: params add --name N [--type ...] [--values a:Etiqueta,b] [--min N --max N] [--default V] [--source id|@campo]');
+      const values = list(flags.values).map((v) => { const [value, ...label] = v.split(':'); return { value: value!, ...(label.length ? { label: label.join(':') } : {}) }; });
+      const n = (k: string) => (typeof flags[k] === 'string' ? Number(flags[k]) : undefined);
+      return addParameter({
+        name: need(typeof flags.name === 'string' ? flags.name : undefined, '--name'),
+        ...(typeof flags.type === 'string' ? { type: flags.type as never } : {}),
+        ...(values.length ? { values } : {}),
+        ...(n('min') !== undefined ? { min: n('min') } : {}),
+        ...(n('max') !== undefined ? { max: n('max') } : {}),
+        ...(typeof flags.default === 'string' ? { default: flags.default } : {}),
+        ...(typeof flags.source === 'string' ? { source: flags.source } : {}),
+      });
+    }
     case 'orphans':
       return findOrphans(pos);
     case 'report': {

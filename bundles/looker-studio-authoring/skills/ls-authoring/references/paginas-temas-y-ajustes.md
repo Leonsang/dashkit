@@ -4,16 +4,23 @@
 
 | Qué | MCP | CLI |
 |---|---|---|
-| Listar (id, nombre, número de componentes) | `list_pages` | `pages` |
+| Listar en el orden y con el nombre que ve el lector | `list_pages` | `pages` |
 | Añadir una página vacía | `add_page name="Producto"` | `pages add "Producto"` |
-| Renombrar (modelo y navegación visible) | `rename_page pageId name` | `pages rename <id> "Resumen"` |
+| Renombrar | `rename_page pageId name` | `pages rename <id> "Resumen"` |
+| Mover | `move_page pageId index` (0 = primera) | `pages move <id> 0` |
+| Duplicar, con componentes, filtros y ajustes | `duplicate_page pageId name?` | `pages duplicate <id> "Copia"` |
+| Ocultar del menú o del lector | `set_page_visibility pageId hiddenFromNav hiddenFromViewer` | `pages hide <id> --nav on --viewer off` |
+| Borrar, con sus componentes | `delete_pages pageIds` (pide `LS_ALLOW_DELETE=1`) | `pages delete <id...>` |
 
-- `add_page` inserta la página **detrás de la actual**, no al final. Identifícala por el id que devuelve, no
-  por su posición. Recarga (`reload_report`) para verla.
-- `rename_page` usa el flujo *Gestionar páginas > Cambiar nombre* del editor, porque el nombre de la
-  navegación se guarda aparte del modelo.
+- **Dos nombres.** Cada página tiene el nombre interno del editor y el que ve el lector en la navegación, y
+  pueden diferir. `list_pages` devuelve los dos (`name` es el del lector, `modelName` el interno);
+  `rename_page` cambia ambos.
+- **El orden que cuenta es el de la navegación.** Reordenar el modelo del informe y guardarlo no persiste;
+  `move_page` usa la acción de navegación del editor, que sí.
+- `add_page` inserta la página **detrás de la actual**: identifícala por el id que devuelve, o muévela.
 - En un spec, `pages[].name` busca la página por nombre y la crea si no existe.
-- **No hay herramienta** para borrar, duplicar ni reordenar páginas: hazlo a mano en *Gestionar páginas*.
+- Borrar páginas no se deshace: confírmalo con el usuario. No se pueden borrar todas.
+- **No hay herramienta** para secciones, separadores ni cabeceras de la navegación.
 
 ## Temas
 

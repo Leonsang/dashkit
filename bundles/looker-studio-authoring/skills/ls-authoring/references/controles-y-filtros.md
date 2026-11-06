@@ -68,6 +68,11 @@ Con `report_settings` (ver `paginas-temas-y-ajustes.md`):
 - `viewerFilterBar`: la barra de filtros de lectores (*Añadir barra de filtros de lectores*).
 - `crossFilterByDefault`: que los gráficos nuevos filtren a los demás al hacer clic.
 
+## Controles que fijan un parámetro
+
+Un control también puede mover un parámetro en vez de filtrar: `patch_component parameter=<id>` (o
+`parameter` en el spec). Está en `combinaciones-y-parametros.md`.
+
 ## Lo que no se puede (todavía)
 
 - Editar la condición de un filtro existente: crea uno con otro nombre y quita el viejo con `detach_filter`.

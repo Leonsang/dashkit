@@ -76,8 +76,28 @@ sus colores y fuentes: quítalos con `patch_component stripThemeStyles=true` par
 
 - `dateRangeDays=N`: periodo por defecto de un control de fechas, los últimos N días (móvil).
 - `stripThemeStyles=true`: quita colores, fuentes y bordes sobrescritos en el componente.
+- `text="..."` (con `textSize`, `textBold`, `textColor`): el texto de un cuadro de texto
+  (`simple-description`). `
+` separa líneas.
+- `parameter=<id>`: un control pasa a fijar ese parámetro en vez de filtrar (ver
+  `combinaciones-y-parametros.md`).
 
-CLI: `patch <id> --date-days 28 --strip-styles`.
+CLI: `patch <id> --date-days 28 --strip-styles`, `patch <id> --text "Ventas 2025" --size 24 --bold`,
+`patch <id> --parameter metrica`.
+
+## Capas y nivel de informe: arrange_components
+
+`arrange_components componentIds op` (CLI `arrange <id...> --to <op>`):
+
+| `op` | Qué hace |
+|---|---|
+| `front`, `back` | Lo pone delante o detrás de todo (p. ej. una forma de fondo detrás de los KPIs) |
+| `forward`, `backward` | Un puesto adelante o atrás |
+| `report` | Lo pasa a **nivel de informe**: sale en todas las páginas, en la misma posición. Indica `pageId` de la página donde está |
+| `page` | Lo devuelve de nivel de informe a la página `pageId` |
+
+Un control de periodo o un logo a nivel de informe se ponen una vez para todo el informe. Verificado: el
+cambio persiste al recargar y el componente conserva su id.
 
 ## Borrar: delete_component
 
@@ -85,10 +105,7 @@ Solo si el usuario lo pide. Necesita `LS_ALLOW_DELETE=1` además de `LS_ALLOW_WR
 
 ## Lo que no se puede (todavía)
 
-- **Agrupar, alinear, traer al frente y enviar atrás:** no hay herramienta. Calcula las cajas y aplícalas
-  con `set_component_box_model`.
-- **Componentes a nivel de informe** (presentes en todas las páginas): se crean en la página actual; pasarlos
-  a nivel de informe es manual (clic derecho > *Hacer que sea a nivel de informe*).
+- **Agrupar y alinear:** no hay herramienta. Calcula las cajas y aplícalas con `set_component_box_model`.
 - **Estilo por serie, ejes, etiquetas de datos o formato condicional:** no hay herramienta propia. Lo que
   manda es el tema (`paginas-temas-y-ajustes.md`); un ajuste fino de un gráfico se hace a mano en el panel
   Estilo.

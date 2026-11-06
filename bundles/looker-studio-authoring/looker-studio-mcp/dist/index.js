@@ -1,34 +1,46 @@
 #!/usr/bin/env node
 import { createRequire as __lsCreateRequire } from 'node:module'; const require = __lsCreateRequire(import.meta.url);
 import {
-  addFilter,
-  addPage,
-  addSourceField,
-  applySpec,
-  applyTheme,
   assertJsonPath,
   assertReportUrl,
   assertWrite,
+  getComponentConfig,
+  getReportLayout,
+  sanitizeLearning,
+  writesAllowed
+} from "./chunks/chunk-IU3MR7Z5.js";
+import {
+  addFilter,
+  addPage,
+  addParameter,
+  addSourceField,
+  applySpec,
+  applyTheme,
+  arrangeComponents,
   attachToReport,
   bindFieldsToComponent,
   captureTemplates,
   copyReport,
+  createBlend,
   createComponent,
+  deleteBlend,
   deleteComponent,
+  deletePages,
   detachFilter,
   diagnoseWithKnowledge,
+  duplicatePage,
   exportReport,
   findOrphans,
-  getComponentConfig,
-  getReportLayout,
   inspectDataSources,
   learn,
   lintSpec,
+  listBlends,
   listFilters,
   listPages,
   listTemplates,
   loadSpec,
   log,
+  movePage,
   openReport,
   packageRoot,
   patchComponent,
@@ -37,18 +49,21 @@ import {
   reloadReport,
   renamePage,
   reportSettings,
-  sanitizeLearning,
   seedTemplatesFromUi,
   setComponentBoxModel,
+  setControlParameter,
+  setPageVisibility,
+  setText,
   summary,
   synthesizeTemplates,
   themeLibrary,
+  updateBlend,
   useThemePreset,
-  uxAudit,
-  writesAllowed
-} from "./chunks/chunk-CBFK5WAO.js";
+  uxAudit
+} from "./chunks/chunk-RHRJQMZC.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
+import "./chunks/chunk-GOVUAKXN.js";
 import "./chunks/chunk-FAVAKK4W.js";
 import "./chunks/chunk-GIAQTVDD.js";
 import "./chunks/chunk-BGDW2RS3.js";
@@ -36860,9 +36875,16 @@ var WRITE_TOOLS = /* @__PURE__ */ new Set([
   "synthesize_templates",
   "seed_templates_from_menu",
   "add_filter",
-  "detach_filter"
+  "detach_filter",
+  "create_blend",
+  "update_blend",
+  "add_parameter",
+  "move_page",
+  "set_page_visibility",
+  "duplicate_page",
+  "arrange_components"
 ]);
-var DESTRUCTIVE_TOOLS = /* @__PURE__ */ new Set(["delete_component"]);
+var DESTRUCTIVE_TOOLS = /* @__PURE__ */ new Set(["delete_component", "delete_pages", "delete_blend"]);
 {
   const original = server.registerTool.bind(server);
   server.registerTool = (name, config2, handler) => {
@@ -37120,21 +37142,31 @@ server.registerTool(
   "patch_component",
   {
     title: "Ajustar control / estilos",
-    description: "dateRangeDays: periodo por defecto de un control de fechas (ultimos N dias, movil). stripThemeStyles: quita colores/fuentes/bordes sobrescritos en el componente para que mande el tema del informe (util tras crear desde plantillas de otros informes).",
+    description: "dateRangeDays: periodo por defecto de un control de fechas (ultimos N dias, movil). parameter: el control fija ese parametro (id). text (+ textSize, textBold, textColor): texto de un cuadro de texto. stripThemeStyles: quita colores/fuentes/bordes sobrescritos en el componente para que mande el tema del informe (util tras crear desde plantillas de otros informes).",
     inputSchema: {
       componentId: external_exports.string().min(1),
       dateRangeDays: external_exports.number().int().positive().optional(),
-      stripThemeStyles: external_exports.boolean().optional()
+      stripThemeStyles: external_exports.boolean().optional(),
+      parameter: external_exports.string().optional().describe("Id de un parametro: el control (lista, deslizante, cuadro) pasa a fijar ese parametro en vez de filtrar"),
+      text: external_exports.string().optional().describe("Texto de un cuadro de texto (simple-description); \n separa lineas"),
+      textSize: external_exports.number().int().positive().optional(),
+      textBold: external_exports.boolean().optional(),
+      textColor: external_exports.string().optional()
     },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true }
   },
-  async (args) => run(
-    () => patchComponent({
-      componentId: args.componentId,
-      ...args.dateRangeDays !== void 0 ? { dateRangeDays: args.dateRangeDays } : {},
-      ...args.stripThemeStyles ? { stripThemeStyles: true } : {}
-    })
-  )
+  async (args) => run(async () => {
+    const out = {};
+    if (args.dateRangeDays !== void 0 || args.stripThemeStyles)
+      Object.assign(out, await patchComponent({
+        componentId: args.componentId,
+        ...args.dateRangeDays !== void 0 ? { dateRangeDays: args.dateRangeDays } : {},
+        ...args.stripThemeStyles ? { stripThemeStyles: true } : {}
+      }));
+    if (args.parameter) out.parameter = await setControlParameter(args.componentId, args.parameter);
+    if (args.text !== void 0) out.text = await setText(args.componentId, args.text, { ...args.textSize ? { size: args.textSize } : {}, ...args.textBold ? { bold: true } : {}, ...args.textColor ? { color: args.textColor } : {} });
+    return out;
+  })
 );
 var ThemeSchema = external_exports.object({
   font: external_exports.string().optional(),
@@ -37169,7 +37201,7 @@ server.registerTool(
 );
 server.registerTool(
   "list_pages",
-  { title: "Listar paginas", description: "Paginas del informe con id, nombre y numero de componentes.", inputSchema: {}, annotations: { readOnlyHint: true, openWorldHint: true } },
+  { title: "Listar paginas", description: "Paginas en el orden y con el nombre que ve el lector (navegacion), con su nombre interno, componentes y si estan ocultas.", inputSchema: {}, annotations: { readOnlyHint: true, openWorldHint: true } },
   async () => run(() => listPages())
 );
 server.registerTool(
@@ -37264,7 +37296,7 @@ server.registerTool(
   "rename_page",
   {
     title: "Renombrar pagina",
-    description: "Renombra una pagina en el modelo y en la navegacion visible (Gestionar paginas > Cambiar nombre -> /updateReportNavigationInfo).",
+    description: "Renombra una pagina en el modelo y en la navegacion que ve el lector (accion de navegacion del editor -> /updateReportNavigationInfo).",
     inputSchema: { pageId: external_exports.string().min(1), name: external_exports.string().min(1).max(100) },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true }
   },
@@ -37316,6 +37348,130 @@ server.registerTool(
     annotations: { readOnlyHint: true, openWorldHint: true }
   },
   async ({ specs }) => run(() => findOrphans(specs.map((f) => assertJsonPath(f))))
+);
+var BlendTableSchema = external_exports.object({
+  dataset: external_exports.string().min(1).describe('Id de origen o "@campo"'),
+  dimensions: external_exports.array(external_exports.string()).min(1).describe("Dimensiones; las que se llaman igual en todas las tablas son las claves de union"),
+  metrics: external_exports.array(external_exports.string()).optional()
+}).strict();
+server.registerTool(
+  "create_blend",
+  {
+    title: "Combinar origenes (blend)",
+    description: 'Crea una combinacion de 2 a 5 origenes y un grafico sobre ella, como "Combinar datos" del editor: crea graficos temporales con los campos de cada tabla, los combina (une por las dimensiones que comparten), los borra, nombra la combinacion, fija el tipo de union y coloca y vincula el grafico nuevo. joinType: left (defecto del editor), inner, right, full, cross.',
+    inputSchema: {
+      tables: external_exports.array(BlendTableSchema).min(2).max(5),
+      box: BoxSchema,
+      name: external_exports.string().optional(),
+      joinType: external_exports.enum(["left", "inner", "right", "full", "cross"]).optional(),
+      type: external_exports.string().optional().describe("Tipo del grafico combinado (defecto simple-table)"),
+      pageId: external_exports.string().optional(),
+      dimensions: external_exports.array(external_exports.string()).optional().describe("Campos de la combinacion a vincular al grafico"),
+      metrics: external_exports.array(external_exports.string()).optional()
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true }
+  },
+  async (args) => run(() => createBlend(args))
+);
+server.registerTool(
+  "list_blends",
+  {
+    title: "Combinaciones del informe",
+    description: "Combinaciones (blends) del informe: id, nombre, origenes, uniones con su tipo y claves, campos y graficos que las usan. Solo lectura.",
+    inputSchema: {},
+    annotations: { readOnlyHint: true, openWorldHint: true }
+  },
+  async () => run(() => listBlends())
+);
+server.registerTool(
+  "update_blend",
+  {
+    title: "Renombrar o cambiar la union de una combinacion",
+    description: "Cambia el nombre de una combinacion y/o el tipo de todas sus uniones (inner, left, right, full, cross).",
+    inputSchema: { blendId: external_exports.string().min(1), name: external_exports.string().optional(), joinType: external_exports.enum(["left", "inner", "right", "full", "cross"]).optional() },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true }
+  },
+  async (args) => run(() => updateBlend(args))
+);
+server.registerTool(
+  "delete_blend",
+  {
+    title: "Borrar una combinacion",
+    description: "Borra una combinacion (blend) que ningun grafico usa. Confirma con el usuario antes de usarla.",
+    inputSchema: { blendId: external_exports.string().min(1) },
+    annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true }
+  },
+  async ({ blendId }) => run(() => deleteBlend(blendId))
+);
+server.registerTool(
+  "add_parameter",
+  {
+    title: "Crear un parametro",
+    description: "Crea un parametro en un origen con el formulario del editor (panel Datos > Anadir un parametro). type: text, integer, decimal, boolean. allowed: any, list (values [{value,label}]) o range (min, max). En formulas se usa por su NOMBRE VISIBLE, no por su id. Necesita en la pagina actual un grafico de ese origen.",
+    inputSchema: {
+      name: external_exports.string().min(1),
+      type: external_exports.enum(["text", "integer", "decimal", "boolean"]).optional(),
+      allowed: external_exports.enum(["any", "list", "range"]).optional(),
+      values: external_exports.array(external_exports.object({ value: external_exports.union([external_exports.string(), external_exports.number()]), label: external_exports.string().optional() })).optional(),
+      min: external_exports.number().optional(),
+      max: external_exports.number().optional(),
+      default: external_exports.union([external_exports.string(), external_exports.number()]).optional(),
+      source: external_exports.string().optional().describe('Id de origen o "@campo"'),
+      id: external_exports.string().regex(/^[A-Za-z0-9_.]+$/).optional().describe("Id del parametro; por defecto, el nombre sin tildes")
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true }
+  },
+  async (args) => run(() => addParameter(args))
+);
+server.registerTool(
+  "move_page",
+  {
+    title: "Mover una pagina",
+    description: "Mueve una pagina a la posicion index (0 = primera) en la navegacion del informe.",
+    inputSchema: { pageId: external_exports.string().min(1), index: external_exports.number().int().min(0) },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true }
+  },
+  async ({ pageId, index }) => run(() => movePage(pageId, index))
+);
+server.registerTool(
+  "delete_pages",
+  {
+    title: "Borrar paginas",
+    description: "Borra paginas del informe con sus componentes. Confirma con el usuario antes de usarla.",
+    inputSchema: { pageIds: external_exports.array(external_exports.string().min(1)).min(1) },
+    annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true }
+  },
+  async ({ pageIds }) => run(() => deletePages(pageIds))
+);
+server.registerTool(
+  "set_page_visibility",
+  {
+    title: "Ocultar una pagina",
+    description: "hiddenFromNav: la quita del menu de navegacion (sigue accesible por enlace). hiddenFromViewer: la oculta en modo vista.",
+    inputSchema: { pageId: external_exports.string().min(1), hiddenFromNav: external_exports.boolean().optional(), hiddenFromViewer: external_exports.boolean().optional() },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true }
+  },
+  async ({ pageId, ...v }) => run(() => setPageVisibility(pageId, v))
+);
+server.registerTool(
+  "duplicate_page",
+  {
+    title: "Duplicar una pagina",
+    description: "Duplica una pagina con sus componentes, filtros y ajustes (Pagina > Duplicar pagina) y, si se indica, le pone nombre.",
+    inputSchema: { pageId: external_exports.string().min(1), name: external_exports.string().optional() },
+    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true }
+  },
+  async ({ pageId, name }) => run(() => duplicatePage(pageId, name))
+);
+server.registerTool(
+  "arrange_components",
+  {
+    title: "Orden de capas y nivel de informe",
+    description: "op: front, back, forward, backward (orden de capas) o report (pasa los componentes a nivel de informe: salen en todas las paginas) / page (los devuelve a pageId).",
+    inputSchema: { componentIds: external_exports.array(external_exports.string().min(1)).min(1), op: external_exports.enum(["front", "back", "forward", "backward", "report", "page"]), pageId: external_exports.string().optional() },
+    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true }
+  },
+  async ({ componentIds, op, pageId }) => run(() => arrangeComponents(componentIds, op, pageId))
 );
 server.registerTool(
   "get_learnings",

@@ -58,8 +58,19 @@ guías está marcada como [OFICIAL] o [CONVENCIÓN]; respeta la diferencia.
 - **Páginas, filtros y temas:**
   - `add_page`: identifica la página nueva por id; el editor la inserta
     detrás de la actual, no al final.
-  - `rename_page`, `add_filter`, `list_filters`, `detach_filter`,
-    `apply_theme`, `use_theme` y `report_settings`.
+  - `rename_page`, `move_page`, `duplicate_page`, `set_page_visibility` y
+    `delete_pages` (solo si el usuario lo pide).
+  - `add_filter`, `list_filters`, `detach_filter`, `apply_theme`, `use_theme`
+    y `report_settings`.
+  - `arrange_components`: orden de capas y nivel de informe (un control de
+    periodo para todas las páginas).
+- **Combinaciones y parámetros:**
+  - `create_blend` combina de 2 a 5 orígenes por las dimensiones que comparten
+    y deja un gráfico vinculado; `list_blends`, `update_blend`, `delete_blend`.
+  - `add_parameter` crea un parámetro en el origen; en las fórmulas se escribe
+    por su nombre visible. `patch_component parameter` hace que un control lo
+    mueva.
+- **Texto:** `patch_component text` pone el texto de un cuadro de texto.
 - **Informe como código:**
   - `lint_report_spec` hasta 0 errores;
   - después `apply_report_spec` con `dryRun=true`;

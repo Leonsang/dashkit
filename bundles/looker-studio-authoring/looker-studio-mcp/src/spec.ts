@@ -41,6 +41,11 @@ export interface SpecComponent {
   variant?: string;
   /** Extra concept slots (scatter x_metric/y_metric/bubble_size, breakdown, color...). */
   slots?: Record<string, string[]>;
+  /** Text box (simple-description) content: a string, or {text, size, bold, color}; "
+" separates lines. */
+  text?: string | { text: string; size?: number; bold?: boolean; color?: string };
+  /** Control that sets this parameter (id) instead of filtering. */
+  parameter?: string;
 }
 
 export interface SpecRow {
@@ -82,6 +87,8 @@ export interface ResolvedComponent extends Required<Pick<SpecComponent, 'key' | 
   filters?: import('./ops3.js').FilterSpec[];
   variant?: string;
   slots?: Record<string, string[]>;
+  text?: SpecComponent['text'];
+  parameter?: string;
 }
 
 export interface LintIssue {
@@ -135,6 +142,8 @@ export function resolveSpec(spec: ReportSpec): ResolvedComponent[] {
             ...(it.filters ? { filters: it.filters } : {}),
             ...(it.variant ? { variant: it.variant } : {}),
             ...(it.slots ? { slots: it.slots } : {}),
+            ...(it.text !== undefined ? { text: it.text } : {}),
+            ...(it.parameter ? { parameter: it.parameter } : {}),
           });
         });
       } else {
@@ -147,6 +156,8 @@ export function resolveSpec(spec: ReportSpec): ResolvedComponent[] {
           ...(c.filters ? { filters: c.filters } : {}),
           ...(c.variant ? { variant: c.variant } : {}),
           ...(c.slots ? { slots: c.slots } : {}),
+          ...(c.text !== undefined ? { text: c.text } : {}),
+          ...(c.parameter ? { parameter: c.parameter } : {}),
         });
       }
     }

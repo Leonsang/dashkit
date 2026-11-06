@@ -7,7 +7,7 @@
 //
 //   node tools/check-page-scripts.mjs [--minify] [--obfuscate]
 import { build } from 'esbuild';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -36,7 +36,8 @@ const obfuscate = process.argv.includes('--obfuscate');
 const out = mkdtempSync(join(tmpdir(), 'ls-page-'));
 
 try {
-  const names = ['scripts', 'scripts2', 'scripts3'];
+  // every src/looker/scripts*.ts, so a new file cannot slip past the check
+  const names = readdirSync(join(root, 'src', 'looker')).filter((f) => /^scripts\d*\.ts$/.test(f)).map((f) => f.replace(/\.ts$/, ''));
   await build({
     entryPoints: names.map((n) => join(root, 'src', 'looker', `${n}.ts`)),
     outdir: out,

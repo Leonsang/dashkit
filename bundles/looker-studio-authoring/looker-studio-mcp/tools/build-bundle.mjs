@@ -1,21 +1,23 @@
-// Builds dist/mcp-bundle.js: every page-injected script from dist/looker/scripts.js
+// Builds dist/mcp-bundle.js: every page-injected script from src/looker/scripts*.ts
 // exposed as window.__mcp.<name>. Useful to run the exact MCP logic from the
 // browser console, a bookmarklet or an extension when CDP is not available.
 //   node tools/build-bundle.mjs
 import { build } from 'esbuild';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const tmp = mkdtempSync(join(tmpdir(), 'ls-bundle-'));
+// every src/looker/scripts*.ts
+const names = readdirSync(join(root, 'src', 'looker')).filter((f) => /^scripts\d*\.ts$/.test(f)).map((f) => f.replace(/\.ts$/, ''));
 await build({
-  entryPoints: ['scripts', 'scripts2'].map((f) => join(root, 'src', 'looker', `${f}.ts`)),
+  entryPoints: names.map((f) => join(root, 'src', 'looker', `${f}.ts`)),
   outdir: tmp, bundle: true, format: 'esm', platform: 'node', target: 'node20', logLevel: 'error',
 });
 const load = (f) => import(pathToFileURL(join(tmp, f)).href);
-const scripts = { ...(await load('scripts.js')), ...(await load('scripts2.js')) };
+const scripts = Object.assign({}, ...(await Promise.all(names.map((n) => load(`${n}.js`)))));
 rmSync(tmp, { recursive: true, force: true });
 const entries = Object.entries(scripts).filter(([, v]) => typeof v === 'function');
 const body =

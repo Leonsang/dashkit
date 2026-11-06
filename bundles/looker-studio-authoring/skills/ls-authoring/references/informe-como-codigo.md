@@ -60,17 +60,29 @@ spec en lugar de la ruta; entonces no hay `.state.json` y cada aplicación vuelv
 | `dataset`, `dimensions`, `metrics`, `slots` | componente | Como en `create_component` (`campos.md`) |
 | `filters[]` | componente | Filtros del componente |
 | `dateRangeDays`, `stripStyles` | componente | Como `patch_component` |
+| `text` | componente | Texto de un cuadro de texto: una cadena, o `{text, size, bold, color}` |
+| `parameter` | componente | El control fija ese parámetro (id) en vez de filtrar |
 | `row` + `items` | macro | Reparte una fila: `w = (ancho − (n−1)·gap) / n`, redondeado a la retícula. `margin`, `gap`, `width`, `x` opcionales |
 
-Ejemplos completos en `looker-studio-mcp/examples/`: `resumen.spec.json` (una página),
-`paginas-2-3.spec.json` (dos páginas, 14 componentes, filtros de página y tema) y
-`pagina-4-controles.spec.json` (todos los controles).
+Ejemplos completos en `looker-studio-mcp/examples/`:
+- `resumen.spec.json`: una página;
+- `paginas-2-3.spec.json`: dos páginas, 14 componentes, filtros de página y tema;
+- `pagina-4-controles.spec.json`: todos los controles;
+- `showcase.spec.json`: seis páginas y 49 componentes con títulos, filas de KPIs, variantes, huecos, casilla y
+  botón de filtro, y tres orígenes. Es la base del informe de demostración; las combinaciones y los
+  parámetros se añaden después con sus herramientas.
+
+**Lo que el spec no hace:** combinaciones (`create_blend`), parámetros (`add_parameter`), campos de origen
+(`add_source_field`), mover u ocultar páginas y pasar componentes a nivel de informe. Van después del
+`apply`.
 
 ## Qué hace apply
 
 - **Copia de seguridad:** antes de tocar nada, exporta el informe completo a `backups/` (o `LS_BACKUP_DIR`).
 - **No aplica si el lint tiene errores:** todo sale como `skip`.
 - **Tema y páginas primero:** aplica el tema y crea las páginas que faltan por nombre.
+- **Informe vacío:** `"@campo"` funciona aunque ningún gráfico use todavía el origen: lo sondea con un
+  componente temporal hecho de la plantilla `kpi-metric`.
 - **Idempotente:** guarda la relación `key` → `cd-...` en `<spec>.state.json`. Si el componente existe, lo
   actualiza (caja, campos, filtros, ajustes); si no, lo crea. Si el state es de otro informe, lo ignora.
 - **Al final:** recarga y diagnostica, y devuelve los problemas con su `fix`.

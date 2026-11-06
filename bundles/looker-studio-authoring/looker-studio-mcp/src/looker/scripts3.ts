@@ -303,15 +303,18 @@ export function attachFilterScript(args: { filterId: string; target: string; det
 // add a temporary (never saved) component on it, query, read getSchema(), remove it.
 // ---------------------------------------------------------------------------
 
-export function probeStartScript(datasetId: string): { ok: boolean; error?: string } {
+export function probeStartScript(args: { datasetId: string; template?: any }): { ok: boolean; error?: string } {
   const w = window as any;
+  const datasetId = args.datasetId;
   try {
     const report = w.angular.element(document.body).injector().get('legoUndoRedoService').report;
     const page = report.pages[0];
     const all = report.pages.flatMap((p: any) => p.components);
     const base = all.find((c: any) => c.config.config.display.type === 'kpi-metric') || all.find((c: any) => c.config.config.datasource && c.config.config.datasource.keys);
-    if (!base) return { ok: false, error: 'Sin componentes para clonar.' };
-    const cfg = base.duplicateConfig();
+    // An empty report has nothing to clone: fall back to a learned template (kpi-metric).
+    if (!base && !args.template) return { ok: false, error: 'Sin componentes para clonar ni plantilla kpi-metric.' };
+    const cfg = base ? base.duplicateConfig() : JSON.parse(JSON.stringify(args.template));
+    if (!base) cfg.id = 'cd-probe' + Math.random().toString(36).slice(2, 10);
     cfg.config.datasource.keys.dataset = { stateKey: 'ds', dominant: 2, value: { id: datasetId } };
     Object.assign(cfg.attribute, { left: 0, top: 0, width: 10, height: 10 });
     const tmp = page.addComponent(cfg);

@@ -8,6 +8,7 @@ import { learn, listTemplates, saveTemplate } from './knowledge.js';
 import { requireEditMode } from './looker/report.js';
 import { bindFieldsScript, diagnoseReportScript, readComponentConfigScript, readDataSourcesScript } from './looker/scripts.js';
 import { deleteComponentScript } from './looker/scripts2.js';
+import { navDispatchScript, navPagesScript } from './looker/scripts4.js';
 import {
   addFilterScript,
   reportSettingsScript,
@@ -183,106 +184,15 @@ export async function reportSettings(patch?: Record<string, unknown>) {
 }
 
 
-// ---- page display names (navigation) ------------------------------------------------
-// The viewer navigation reads store.reportNavigation.navigationInfo.navItems[].page.displayName,
-// saved by POST /updateReportNavigationInfo (verified 2026-11-03). The stable way found to change
-// it is the editor's own "Gestionar paginas > Cambiar nombre" flow, driven with real input events.
-
-function navNames(): string[] {
-  let s: any;
-  (window as any).angular.element(document.body).injector().get('store').subscribe((x: any) => (s = x)).unsubscribe();
-  return s.reportNavigation.navigationInfo.navItems.map((n: any) => (n.page && n.page.displayName) || '');
-}
-
-async function openManagePages(page: Page): Promise<void> {
-  const open = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('*')).some((e) => e.children.length === 0 && /P[aá]ginas del informe|Report pages/.test(((e as HTMLElement).innerText || '').trim())));
-  if (open) return;
-  await page.evaluate(() => {
-    const b = Array.from(document.querySelectorAll('button')).find((x) => /^(P[aá]gina|Page)$/.test(((x as HTMLElement).innerText || '').trim()));
-    if (b) (b as HTMLElement).click();
-  });
-  await sleep(800);
-  await page.evaluate(() => {
-    const panes = Array.from(document.querySelectorAll('.cdk-overlay-pane'));
-    const pane = panes[panes.length - 1];
-    const it = pane && Array.from(pane.querySelectorAll('button,[role=menuitem]')).find((e) => /Gestionar p[aá]ginas|Manage pages/.test((e as HTMLElement).innerText));
-    if (it) (it as HTMLElement).click();
-  });
-  await sleep(1200);
-}
-
-export async function renamePageUi(index: number, name: string): Promise<{ ok: boolean; displayNames: string[]; saves: number[] }> {
-  const { page } = await requireEditMode();
-  await page.bringToFront();
-  await page.setViewport({ width: 1900, height: 1100 });
-  await sleep(800);
-  const statuses: number[] = [];
-  const onResp = (r: { url(): string; status(): number }) => {
-    if (/updateReportNavigationInfo/.test(r.url())) statuses.push(r.status());
-  };
-  page.on('response', onResp);
-  try {
-    await openManagePages(page);
-    const names = (await page.evaluate(navNames)) as string[];
-    if (names[index] === undefined) throw new Error(`No hay pagina en la posicion ${index}.`);
-    if (names[index] === name) return { ok: true, displayNames: names, saves: [] };
-    const rows = await page.evaluate((list: string[]) =>
-      Array.from(document.querySelectorAll('*'))
-        .filter((e) => e.children.length === 0 && list.includes(((e as HTMLElement).innerText || '').trim()))
-        .map((e) => { const r = e.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })
-        .filter((b) => b.x > window.innerWidth * 0.6 && b.y > 250)
-        .sort((a, b) => a.y - b.y), names);
-    const row = rows[index];
-    if (!row) throw new Error('Fila de la pagina no encontrada en "Paginas del informe".');
-    await page.mouse.move(row.x, row.y);
-    await sleep(500);
-    const more = await page.evaluate((y: number) =>
-      Array.from(document.querySelectorAll('button,[role=button]'))
-        .map((b) => { const r = b.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2, t: ((b as HTMLElement).innerText || '').trim() }; })
-        .filter((b) => Math.abs(b.y - y) < 12 && !b.t && b.x > window.innerWidth * 0.6)
-        .sort((a, b) => b.x - a.x)[0] || null, row.y);
-    if (!more) throw new Error('Menu de la fila no encontrado.');
-    await page.mouse.click(more.x, more.y);
-    await sleep(700);
-    const mi = await page.evaluate(() => {
-      const panes = Array.from(document.querySelectorAll('.cdk-overlay-pane'));
-      const it = Array.from(panes[panes.length - 1].querySelectorAll('button,[role=menuitem]')).find((e) => /Cambiar nombre|Rename/.test((e as HTMLElement).innerText));
-      if (!it) return null;
-      const r = it.getBoundingClientRect();
-      return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
-    });
-    if (!mi) throw new Error('Opcion "Cambiar nombre" no encontrada.');
-    await page.mouse.click(mi.x, mi.y);
-    await sleep(800);
-    const input = await page.evaluate((y: number) =>
-      Array.from(document.querySelectorAll('input'))
-        .map((e) => { const r = e.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })
-        .find((b) => Math.abs(b.y - y) < 16) || null, row.y);
-    if (!input) throw new Error('Campo de nombre no encontrado.');
-    await page.mouse.click(input.x, input.y);
-    await page.keyboard.down('Control');
-    await page.keyboard.press('KeyA');
-    await page.keyboard.up('Control');
-    await page.keyboard.press('Backspace');
-    await page.keyboard.type(name);
-    await page.keyboard.press('Enter');
-    for (let i = 0; i < 20 && !statuses.length; i++) await sleep(250);
-    const after = (await page.evaluate(navNames)) as string[];
-    if (after[index] !== name) throw new Error(`El nombre visible quedo como "${after[index]}".`);
-    learn('note', 'rename_page_ui', { text: 'Gestionar paginas > Cambiar nombre -> POST /updateReportNavigationInfo' });
-    return { ok: true, displayNames: after, saves: [...statuses] };
-  } finally {
-    page.off('response', onResp);
-    await page.keyboard.press('Escape').catch(() => undefined);
-    await page.setViewport(null as never).catch(() => undefined);
-  }
-}
-
 // ---- pages ---------------------------------------------------------------------
 
+/** Pages in the order and with the names viewers see (report navigation); modelName is the editor's internal name. */
 export async function listPages() {
-  return evaluateOn(await getReportPage(), T, listPagesScript);
+  const page = await getReportPage();
+  const nav = await evaluateOn(page, T, navPagesScript).catch(() => []);
+  if (!nav.length) return evaluateOn(page, T, listPagesScript);
+  return nav.map((p) => ({ id: p.pageId, name: p.displayName || p.modelName, modelName: p.modelName, components: p.components, index: p.index,
+    ...(p.hiddenFromNav ? { hiddenFromNav: true } : {}), ...(p.hiddenFromViewer ? { hiddenFromViewer: true } : {}) }));
 }
 
 export async function addPage(name: string) {
@@ -334,10 +244,11 @@ export async function addPage(name: string) {
   await sleep(2000);
   w.stop();
   if (!rn.ok) throw new Error(rn.error);
-  await renamePageUi(createdIndex, name).catch((e) =>
-    learn('note', 'rename_page_ui_failed', { text: String((e as Error).message).slice(0, 200) }));
+  const nd = await evaluateOn(page, T + 5000, navDispatchScript, { type: 'UPDATE NAV ITEM NAME', payload: { itemId: created.id, displayName: name } });
+  if (!nd.ok) learn('note', 'rename_page_nav_failed', { text: String(nd.error).slice(0, 200) });
+  const nav = await evaluateOn(page, T, navPagesScript);
   learn('create_ok', 'page', { source: 'toolbar+rename' });
-  return { ok: true, pageId: created.id, index: createdIndex, name, url: page.url(), saves: w.statuses };
+  return { ok: true, pageId: created.id, index: nav.findIndex((p) => p.pageId === created.id), name, url: page.url(), saves: w.statuses };
 }
 
 export async function renamePage(pageId: string, name: string) {
@@ -345,10 +256,14 @@ export async function renamePage(pageId: string, name: string) {
   const r = await evaluateOn(page, T, renamePageScript, { pageId, name });
   if (!r.ok) throw new Error(r.error);
   await sleep(1500);
-  // model name (above) + the visible navigation name (viewer nav / "Paginas del informe")
-  const idx = (await evaluateOn(page, T, listPagesScript)).findIndex((p) => p.id === pageId);
-  const nav = idx >= 0 ? await renamePageUi(idx, name) : null;
-  return { ...r, navigation: nav?.displayNames };
+  // model name (above) + the name viewers see, which lives in the report navigation and is saved
+  // by its own effect (/updateReportNavigationInfo) when this action is dispatched (verified 2026-11-06).
+  // The earlier "Gestionar paginas > Cambiar nombre" UI flow picked the page by the model's index,
+  // which differs from the navigation order once pages are moved.
+  const d = await evaluateOn(page, T + 5000, navDispatchScript, { type: 'UPDATE NAV ITEM NAME', payload: { itemId: pageId, displayName: name } });
+  if (!d.ok) throw new Error(d.error);
+  const nav = await evaluateOn(page, T, navPagesScript);
+  return { ...r, navigation: nav.map((p) => p.displayName) };
 }
 
 // ---- template synthesis ------------------------------------------------------------
@@ -584,7 +499,12 @@ export async function addSourceField(opts: { name: string; formula: string; sour
     return { name: (name || '').split('\n')[0], scope: hit ? hit.match(word)![1]! : '' };
   });
   const open = async () => {
-    if (!(await clickText('button', /^(add_circle\s*)?(Añadir un campo|Add a field)$/))) throw new Error('No se encontro "Anadir un campo" en el panel Datos (abre el panel Datos).');
+    if (!(await clickText('button', /^(add_circle\s*)?(Añadir un campo|Add a field)$/))) {
+      // The data panel lists a source's fields only with one of its charts selected: select one and retry.
+      const { selectSourceChart } = await import('./ops4.js');
+      await selectSourceChart(page, opts.source && opts.source.startsWith('@') ? opts.source : undefined);
+      if (!(await clickText('button', /^(add_circle\s*)?(Añadir un campo|Add a field)$/))) throw new Error('No se encontro "Anadir un campo" en el panel Datos.');
+    }
     await sleep(1200);
     if (!(await clickText('[role=menuitem], .mat-mdc-menu-item', /(Añadir campo calculado|Add calculated field)/))) throw new Error('No aparecio "Anadir campo calculado".');
     await sleep(2500);
@@ -610,7 +530,11 @@ export async function addSourceField(opts: { name: string; formula: string; sour
       throw new Error(`El origen "${src.name}" es reutilizable (${src.scope || 'ambito desconocido'}): el campo apareceria en todos los informes que lo usan. Repite con allowShared si es lo que quieres.`);
     }
     const fieldId = await page.evaluate((name: string, formula: string) => {
-      const inputs = Array.from(document.querySelectorAll('input.gmat-mdc-input')).filter((i) => (i as HTMLElement).offsetParent) as HTMLInputElement[];
+      // Only the field editor's inputs: once the source has a parameter, the properties panel shows
+      // its value as another gmat input, and typing the name there overrides the parameter of the
+      // selected chart (reason 67, seen 2026-11-06).
+      const inputs = Array.from(document.querySelectorAll('input.gmat-mdc-input'))
+        .filter((i) => (i as HTMLElement).offsetParent && !i.closest('[class*=propert]')) as HTMLInputElement[];
       const nameInput = inputs.find((i) => !/^calc_/.test(i.value));
       const idInput = inputs.find((i) => /^calc_/.test(i.value));
       if (!nameInput) return null;

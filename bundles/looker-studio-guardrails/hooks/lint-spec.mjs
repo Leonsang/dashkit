@@ -85,7 +85,9 @@ function resolveSpec(spec) {
             ...it.stripStyles ? { stripStyles: true } : {},
             ...it.filters ? { filters: it.filters } : {},
             ...it.variant ? { variant: it.variant } : {},
-            ...it.slots ? { slots: it.slots } : {}
+            ...it.slots ? { slots: it.slots } : {},
+            ...it.text !== void 0 ? { text: it.text } : {},
+            ...it.parameter ? { parameter: it.parameter } : {}
           });
         });
       } else {
@@ -106,7 +108,9 @@ function resolveSpec(spec) {
           ...c.stripStyles ? { stripStyles: true } : {},
           ...c.filters ? { filters: c.filters } : {},
           ...c.variant ? { variant: c.variant } : {},
-          ...c.slots ? { slots: c.slots } : {}
+          ...c.slots ? { slots: c.slots } : {},
+          ...c.text !== void 0 ? { text: c.text } : {},
+          ...c.parameter ? { parameter: c.parameter } : {}
         });
       }
     }

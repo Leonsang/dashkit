@@ -17,6 +17,20 @@ import {
   uninstall
 } from "./chunk-Y34SSGZY.js";
 import {
+  arrangeScript,
+  blendSnapshotScript,
+  componentPointsScript,
+  deleteBlendScript,
+  listBlendsScript,
+  menuItemPointScript,
+  navDispatchScript,
+  navPagesScript,
+  selectedIdsScript,
+  setControlParameterScript,
+  setTextScript,
+  updateBlendScript
+} from "./chunk-GOVUAKXN.js";
+import {
   CDPSessionEvent,
   CdpBrowser,
   Connection,
@@ -54,14 +68,6 @@ import {
   debug,
   environment
 } from "./chunk-PP647YHP.js";
-
-// src/log.ts
-function log(...args) {
-  process.stderr.write(
-    `[looker-studio-mcp] ${args.map((a) => typeof a === "string" ? a : JSON.stringify(a)).join(" ")}
-`
-  );
-}
 
 // node_modules/puppeteer-core/lib/puppeteer/node-env-setup.js
 import fs from "node:fs";
@@ -1275,8 +1281,8 @@ var ScreenRecorder = (() => {
     static {
       const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
       __esDecorate(this, _private_writeFrame_descriptor = { value: __setFunctionName(async function(buffer) {
-        const error = await new Promise((resolve2) => {
-          this.#process.stdin.write(buffer, resolve2);
+        const error = await new Promise((resolve) => {
+          this.#process.stdin.write(buffer, resolve);
         });
         if (error) {
           console.log(`ffmpeg failed to write: ${error.message}.`);
@@ -1470,8 +1476,8 @@ var ScreenRecorder = (() => {
       const [buffer, timestamp] = await this.#lastFrame;
       await Promise.all(Array(Math.max(1, Math.round(this.#fps * (performance.now() - timestamp) / 1e3))).fill(buffer).map(this.#writeFrame.bind(this)));
       this.#process.stdin.end();
-      await new Promise((resolve2) => {
-        this.#process.once("close", resolve2);
+      await new Promise((resolve) => {
+        this.#process.once("close", resolve);
       });
     }
     async [(_private_writeFrame_decorators = [guarded()], _stop_decorators = [guarded()], asyncDisposeSymbol)]() {
@@ -1505,6 +1511,14 @@ var {
   launch: launch2
 } = puppeteer;
 var puppeteer_core_default = puppeteer;
+
+// src/log.ts
+function log(...args) {
+  process.stderr.write(
+    `[looker-studio-mcp] ${args.map((a) => typeof a === "string" ? a : JSON.stringify(a)).join(" ")}
+`
+  );
+}
 
 // src/browser.ts
 var REPORT_URL_RE = /(lookerstudio|datastudio)\.google\.com\/(u\/\d+\/)?reporting\//;
@@ -1613,6 +1627,151 @@ async function evaluate(fn, ...args) {
 async function evaluateOn(page, timeoutMs, fn, ...args) {
   const run = page.evaluate(fn, ...args);
   return withTimeout(run, timeoutMs, fn.name || "script");
+}
+
+// src/knowledge.ts
+import { appendFileSync, existsSync as existsSync3, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join as join3 } from "node:path";
+
+// src/paths.ts
+import { existsSync as existsSync2 } from "node:fs";
+import { dirname, join as join2 } from "node:path";
+import { fileURLToPath } from "node:url";
+var cached = null;
+function packageRoot() {
+  if (cached) return cached;
+  let dir = dirname(fileURLToPath(import.meta.url));
+  for (let i = 0; i < 5; i++) {
+    if (existsSync2(join2(dir, "themes", "base-theme.json"))) return cached = dir;
+    const up = dirname(dir);
+    if (up === dir) break;
+    dir = up;
+  }
+  return cached = join2(dirname(fileURLToPath(import.meta.url)), "..");
+}
+
+// src/knowledge.ts
+var PACKAGE_KNOWLEDGE = join3(packageRoot(), "knowledge");
+var KNOWLEDGE_DIR = process.env.LS_KNOWLEDGE_DIR ?? (existsSync3(PACKAGE_KNOWLEDGE) ? PACKAGE_KNOWLEDGE : join3(homedir(), ".looker-studio-mcp", "knowledge"));
+var LOG = join3(KNOWLEDGE_DIR, "learnings.jsonl");
+var TPL = join3(KNOWLEDGE_DIR, "templates");
+function ensure() {
+  if (!existsSync3(TPL)) mkdirSync(TPL, { recursive: true });
+}
+function readLearnings() {
+  if (!existsSync3(LOG)) return [];
+  return readFileSync(LOG, "utf8").split("\n").filter(Boolean).map((l) => {
+    try {
+      return JSON.parse(l);
+    } catch {
+      return null;
+    }
+  }).filter((x) => !!x);
+}
+function learn(kind, key, data) {
+  ensure();
+  const sig = JSON.stringify([kind, key, data ?? null]);
+  const dup = readLearnings().some((l) => JSON.stringify([l.kind, l.key, l.data ?? null]) === sig);
+  if (dup) return false;
+  const entry = { ts: (/* @__PURE__ */ new Date()).toISOString(), kind, key, ...data ? { data } : {} };
+  appendFileSync(LOG, JSON.stringify(entry) + "\n");
+  return true;
+}
+var safe = (t) => t.replace(/[^a-z0-9_-]/gi, "_");
+function saveTemplate(type, config, origin) {
+  ensure();
+  const file = join3(TPL, `${safe(type)}.json`);
+  if (existsSync3(file)) return false;
+  writeFileSync(file, JSON.stringify({ type, capturedAt: (/* @__PURE__ */ new Date()).toISOString(), origin, config }, null, 2));
+  learn("template", type, origin);
+  return true;
+}
+function getTemplate(type) {
+  const file = join3(TPL, `${safe(type)}.json`);
+  if (!existsSync3(file)) return void 0;
+  return JSON.parse(readFileSync(file, "utf8")).config;
+}
+function listTemplates() {
+  if (!existsSync3(TPL)) return [];
+  return readdirSync(TPL).filter((f) => f.endsWith(".json")).map((f) => {
+    const j = JSON.parse(readFileSync(join3(TPL, f), "utf8"));
+    return { type: j.type, capturedAt: j.capturedAt, origin: j.origin };
+  });
+}
+function summary() {
+  const all = readLearnings();
+  const s = {
+    dir: KNOWLEDGE_DIR,
+    counts: {},
+    errorReasons: {},
+    fixes: {},
+    displayTypes: [],
+    templates: listTemplates().map((t) => t.type),
+    createOutcomes: {},
+    missingMethods: [],
+    notes: []
+  };
+  const types = /* @__PURE__ */ new Set();
+  for (const l of all) {
+    s.counts[l.kind] = (s.counts[l.kind] ?? 0) + 1;
+    const d = l.data ?? {};
+    switch (l.kind) {
+      case "error_reason":
+        s.errorReasons[l.key] = { ...s.errorReasons[l.key], title: d.title, description: d.description };
+        break;
+      case "fix":
+        s.fixes[l.key] = d.fix;
+        break;
+      case "display_type":
+        types.add(l.key);
+        break;
+      case "create_ok":
+      case "create_fail":
+      case "save_rejected": {
+        const o = s.createOutcomes[l.key] ??= { ok: 0, fail: 0, rejected: 0 };
+        if (l.kind === "create_ok") o.ok++;
+        else if (l.kind === "create_fail") o.fail++;
+        else o.rejected++;
+        break;
+      }
+      case "method_missing":
+        s.missingMethods.push(l.key);
+        break;
+      case "note":
+        s.notes.push({ ts: l.ts, key: l.key, text: d.text });
+        break;
+      default:
+        break;
+    }
+  }
+  for (const [k, v] of Object.entries(s.fixes)) {
+    if (k.startsWith("reason:") && s.errorReasons[k.slice(7)]) s.errorReasons[k.slice(7)].fix = v;
+  }
+  s.displayTypes = [...types].sort();
+  return s;
+}
+function knownFix(key) {
+  return summary().fixes[key];
+}
+function seedKnowledge() {
+  const seeds = [
+    ["reason:93", 'El origen no permite editar campos en informes y el grafico usa agregacion personalizada: revincula con bind_fields_to_component (sin agregacion en metricas nativas) o habilita "editar campos en informes" en el origen.'],
+    ["reason:13", "Sin acceso al conjunto de datos subyacente: revisa credenciales del origen (propietario/visor) o que la hoja/tabla siga existiendo y compartida."],
+    ["CUSTOM_AGGREGATION", "Agregacion distinta de la del origen: revincula el campo sin agregacion explicita si es metrica nativa."],
+    ["FIELD_NOT_IN_SCHEMA", "El campo ya no existe en el origen (migracion o renombrado): usa inspect_data_sources y bind_fields_to_component con el campo nuevo."],
+    ["RAW_ROWS", "Metrica sin agregar en un origen Sheets/CSV (todas las columnas son dimensiones): usa SUM(campo)/AVG(campo)/COUNT_DISTINCT(campo)."],
+    ["reason:268", "Orden no valido: el orden apunta a un campo que ya no esta en el grafico; vuelve a vincular con bind_fields_to_component (reasigna el orden) o elige el orden en el panel."],
+    ["SORT_INVALID", "Orden huerfano: bind_fields_to_component lo reasigna a la primera metrica (desc) o a la fecha (asc) en series temporales."],
+    ["reason:116", 'Casilla o boton de filtro con campo no booleano: necesitan un campo BOOLEANO del ORIGEN. Crealo con add_source_field / `fields add` (p. ej. UPPER(devuelto) IN ("TRUE","SI")) y vincula ese campo. Un campo calculado de grafico quita el error pero no filtra.'],
+    ["reason:265", 'Configuracion incompleta: al componente le falta su campo. Un boton de filtro predefinido necesita como campo de control un BOOLEANO del origen (la condicion es el propio campo, p. ej. canal = "Online"): crealo con add_source_field y vinculalo.'],
+    ["FORMULA_FORMAT", 'Campo calculado de grafico: dataTransformation {sourceType:1, sourceFieldName:qt_propio, textFormula y frontendTextFormula con campos como t0.<id>, formulaOutputDataType:2, aggregation:7} + displayTransformation.outputSemanticInfo {semanticConfig:[{semanticType:33}]}. Usa bind "=SUM(a) - SUM(b) as Nombre".'],
+    ["reason:267", "Metrica no valida: el componente conserva una metrica que no existe en su origen (p. ej. heredada de una plantilla); bind la elimina o vincula una metrica del origen actual."],
+    ["reason:266", "Dimension no valida: el campo de la dimension no existe en el origen del grafico; vincula una dimension del origen actual."],
+    ["save_rejected:scrubbed_template", "No vacies conceptDefs/dimensiones/metricas de una plantilla: cambia solo el dataset y vincula los campos antes del primer guardado."],
+    ["save_rejected:type_change", "updatePage 400 al crear: no cambies display.type de un JSON clonado; captura una plantilla real del tipo con capture_templates y recarga para descartar el estado invalido."]
+  ];
+  for (const [k, fix] of seeds) learn("fix", k, { fix, source: "seed" });
 }
 
 // src/looker/scripts.ts
@@ -1956,7 +2115,8 @@ async function bindFieldsScript(args) {
   if (!comp) return fail(`Componente ${args.componentId} no encontrado.`);
   if (typeof comp.updateMetrics !== "function") return fail(`El tipo "${comp.config.config.display.type}" no admite campos.`);
   const dsKeys = comp.config.config.datasource.keys;
-  const dsId = dsKeys.dataset && dsKeys.dataset.value && dsKeys.dataset.value.id || report.config.config.datasource.keys.dataset.value.id;
+  const viewId = dsKeys.dataViewActive && dsKeys.dataViewActive.value && dsKeys.dataViewResource && dsKeys.dataViewResource.value;
+  const dsId = dsKeys.dataset && dsKeys.dataset.value && dsKeys.dataset.value.id || viewId || (report.config.config.datasource.keys.dataset?.value?.id ?? "");
   let concepts = {};
   try {
     concepts = comp.getSchema && comp.getSchema()?.qe?.concepts || {};
@@ -1972,7 +2132,7 @@ async function bindFieldsScript(args) {
   if (!Object.keys(concepts).length) return fail(`Esquema del origen ${dsId} vacio (aun no cargado).`);
   const list = Object.values(concepts);
   const AGG = { NONE: 0, AVG: 1, COUNT: 2, COUNT_DISTINCT: 3, MAX: 4, MIN: 5, SUM: 6 };
-  const resolve2 = (ref, want) => {
+  const resolve = (ref, want) => {
     let r = String(ref).trim();
     let agg;
     let label;
@@ -2055,8 +2215,8 @@ async function bindFieldsScript(args) {
     }
     return { name: qt, id: `${ns}.${qt}`, namespace: ns, queryTimeTransformation: { dataTransformation, displayTransformation } };
   };
-  const dimFields = args.dimensions.map((d) => resolve2(d, 0)).filter(Boolean);
-  const metFields = args.metrics.map((m) => resolve2(m, 1)).filter(Boolean);
+  const dimFields = args.dimensions.map((d) => resolve(d, 0)).filter(Boolean);
+  const metFields = args.metrics.map((m) => resolve(m, 1)).filter(Boolean);
   if (dimFields.length !== args.dimensions.length || metFields.length !== args.metrics.length) {
     return fail("Algunos campos no se pudieron resolver. Usa inspect_data_sources para ver los ids validos.");
   }
@@ -2146,7 +2306,7 @@ async function bindFieldsScript(args) {
     for (const [slot, refs] of Object.entries(args.slots)) {
       const fc = fieldCfgs.find((f) => f.options && f.options.conceptKey === slot);
       const kind = fc ? fc.type === 1 ? 0 : 1 : 1;
-      const resolved = refs.map((r) => resolve2(r, kind)).filter(Boolean);
+      const resolved = refs.map((r) => resolve(r, kind)).filter(Boolean);
       if (resolved.length !== refs.length) return fail(`Campos del slot "${slot}" no resueltos.`);
       const defs = resolved.map(mkDef);
       if (kind === 0) comp.updateDimensions(slot, defs);
@@ -2367,16 +2527,19 @@ async function requireEditMode() {
   return { page, info };
 }
 
-// src/looker/layout.ts
+// src/looker/data.ts
 var EVAL_TIMEOUT_MS2 = Number(process.env.LS_EVAL_TIMEOUT_MS ?? 15e3);
-async function getReportLayout(pageId) {
-  const page = await getReportPage();
-  const current = parseReportUrl(page.url());
-  if (pageId && current.pageId && pageId !== current.pageId) {
-    const target = page.url().replace(/\/page\/[^/?#]+/, `/page/${encodeURIComponent(pageId)}`);
-    await page.goto(target, { waitUntil: "networkidle2", timeout: 3e4 });
+async function inspectDataSources() {
+  return evaluate(readDataSourcesScript);
+}
+async function bindFieldsToComponent(args) {
+  const { page } = await requireEditMode();
+  const res = await evaluateOn(page, EVAL_TIMEOUT_MS2, bindFieldsScript, args);
+  if (!res.ok) {
+    const extra = res.warnings.length ? ` (${res.warnings.join(" ")})` : "";
+    throw new Error((res.error ?? `No se pudieron vincular campos a ${args.componentId}.`) + extra);
   }
-  return evaluateOn(page, EVAL_TIMEOUT_MS2, readLayoutScript, pageId);
+  return res;
 }
 
 // src/looker/boxModel.ts
@@ -2399,378 +2562,9 @@ async function setComponentBoxModel(input) {
   return res;
 }
 
-// src/looker/data.ts
-var EVAL_TIMEOUT_MS4 = Number(process.env.LS_EVAL_TIMEOUT_MS ?? 15e3);
-async function inspectDataSources() {
-  return evaluate(readDataSourcesScript);
-}
-async function bindFieldsToComponent(args) {
-  const { page } = await requireEditMode();
-  const res = await evaluateOn(page, EVAL_TIMEOUT_MS4, bindFieldsScript, args);
-  if (!res.ok) {
-    const extra = res.warnings.length ? ` (${res.warnings.join(" ")})` : "";
-    throw new Error((res.error ?? `No se pudieron vincular campos a ${args.componentId}.`) + extra);
-  }
-  return res;
-}
-
-// src/looker/diagnose.ts
-async function getComponentConfig(componentId) {
-  const res = await evaluate(readComponentConfigScript, componentId);
-  if (!res.ok) throw new Error(res.error ?? `No se pudo leer ${componentId}.`);
-  return res.config;
-}
-
-// src/security.ts
-import { isAbsolute, relative, resolve } from "node:path";
-var SecurityError = class extends Error {
-  constructor(message) {
-    super(message);
-    this.name = "SecurityError";
-  }
-};
-function writesAllowed() {
-  return process.env.LS_ALLOW_WRITE === "1";
-}
-function assertWrite(tool, destructive = false) {
-  if (!writesAllowed())
-    throw new SecurityError(
-      `${tool} modifica el informe y el servidor esta en modo solo lectura. Para habilitar escrituras arranca el MCP con LS_ALLOW_WRITE=1 (trabaja sobre una copia del informe).`
-    );
-  if (destructive && process.env.LS_ALLOW_DELETE !== "1")
-    throw new SecurityError(`${tool} es destructiva: requiere ademas LS_ALLOW_DELETE=1 y confirmacion del usuario.`);
-}
-var REPORT_URL = /^https:\/\/(datastudio|lookerstudio)\.google\.com\/(u\/\d+\/)?reporting\/[A-Za-z0-9_-]+(\/[A-Za-z0-9_/-]*)?(\?[^#\s]*)?$/;
-function assertReportUrl(url) {
-  if (!REPORT_URL.test(url))
-    throw new SecurityError("Solo se permiten URLs de informes: https://datastudio.google.com/reporting/<id>/... (o lookerstudio.google.com).");
-}
-function workspaceDir() {
-  return resolve(process.env.LS_WORKSPACE ?? process.cwd());
-}
-function assertJsonPath(p) {
-  const abs = resolve(workspaceDir(), p);
-  const rel = relative(workspaceDir(), abs);
-  if (rel.startsWith("..") || isAbsolute(rel)) throw new SecurityError(`Ruta fuera del directorio de trabajo (${workspaceDir()}): ${p}`);
-  if (!/\.json$/i.test(abs)) throw new SecurityError(`Solo se permiten archivos .json: ${p}`);
-  return abs;
-}
-var SECRET = /(ya29\.[\w-]{10,}|AIza[\w-]{30,}|Bearer\s+[\w.-]{20,}|xsrf[\w-]*\s*[:=]|-----BEGIN|sessionid|SAPISID|__Secure-)/i;
-function sanitizeLearning(text) {
-  const clean = text.replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, " ").trim().slice(0, 500);
-  if (SECRET.test(clean)) throw new SecurityError("El texto parece contener una credencial; no se guarda.");
-  return clean;
-}
-
-// src/knowledge.ts
-import { appendFileSync, existsSync as existsSync3, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
-import { join as join3 } from "node:path";
-
-// src/paths.ts
-import { existsSync as existsSync2 } from "node:fs";
-import { dirname, join as join2 } from "node:path";
-import { fileURLToPath } from "node:url";
-var cached = null;
-function packageRoot() {
-  if (cached) return cached;
-  let dir = dirname(fileURLToPath(import.meta.url));
-  for (let i = 0; i < 5; i++) {
-    if (existsSync2(join2(dir, "themes", "base-theme.json"))) return cached = dir;
-    const up = dirname(dir);
-    if (up === dir) break;
-    dir = up;
-  }
-  return cached = join2(dirname(fileURLToPath(import.meta.url)), "..");
-}
-
-// src/knowledge.ts
-var PACKAGE_KNOWLEDGE = join3(packageRoot(), "knowledge");
-var KNOWLEDGE_DIR = process.env.LS_KNOWLEDGE_DIR ?? (existsSync3(PACKAGE_KNOWLEDGE) ? PACKAGE_KNOWLEDGE : join3(homedir(), ".looker-studio-mcp", "knowledge"));
-var LOG = join3(KNOWLEDGE_DIR, "learnings.jsonl");
-var TPL = join3(KNOWLEDGE_DIR, "templates");
-function ensure() {
-  if (!existsSync3(TPL)) mkdirSync(TPL, { recursive: true });
-}
-function readLearnings() {
-  if (!existsSync3(LOG)) return [];
-  return readFileSync(LOG, "utf8").split("\n").filter(Boolean).map((l) => {
-    try {
-      return JSON.parse(l);
-    } catch {
-      return null;
-    }
-  }).filter((x) => !!x);
-}
-function learn(kind, key, data) {
-  ensure();
-  const sig = JSON.stringify([kind, key, data ?? null]);
-  const dup = readLearnings().some((l) => JSON.stringify([l.kind, l.key, l.data ?? null]) === sig);
-  if (dup) return false;
-  const entry = { ts: (/* @__PURE__ */ new Date()).toISOString(), kind, key, ...data ? { data } : {} };
-  appendFileSync(LOG, JSON.stringify(entry) + "\n");
-  return true;
-}
-var safe = (t) => t.replace(/[^a-z0-9_-]/gi, "_");
-function saveTemplate(type, config, origin) {
-  ensure();
-  const file = join3(TPL, `${safe(type)}.json`);
-  if (existsSync3(file)) return false;
-  writeFileSync(file, JSON.stringify({ type, capturedAt: (/* @__PURE__ */ new Date()).toISOString(), origin, config }, null, 2));
-  learn("template", type, origin);
-  return true;
-}
-function getTemplate(type) {
-  const file = join3(TPL, `${safe(type)}.json`);
-  if (!existsSync3(file)) return void 0;
-  return JSON.parse(readFileSync(file, "utf8")).config;
-}
-function listTemplates() {
-  if (!existsSync3(TPL)) return [];
-  return readdirSync(TPL).filter((f) => f.endsWith(".json")).map((f) => {
-    const j = JSON.parse(readFileSync(join3(TPL, f), "utf8"));
-    return { type: j.type, capturedAt: j.capturedAt, origin: j.origin };
-  });
-}
-function summary() {
-  const all = readLearnings();
-  const s = {
-    dir: KNOWLEDGE_DIR,
-    counts: {},
-    errorReasons: {},
-    fixes: {},
-    displayTypes: [],
-    templates: listTemplates().map((t) => t.type),
-    createOutcomes: {},
-    missingMethods: [],
-    notes: []
-  };
-  const types = /* @__PURE__ */ new Set();
-  for (const l of all) {
-    s.counts[l.kind] = (s.counts[l.kind] ?? 0) + 1;
-    const d = l.data ?? {};
-    switch (l.kind) {
-      case "error_reason":
-        s.errorReasons[l.key] = { ...s.errorReasons[l.key], title: d.title, description: d.description };
-        break;
-      case "fix":
-        s.fixes[l.key] = d.fix;
-        break;
-      case "display_type":
-        types.add(l.key);
-        break;
-      case "create_ok":
-      case "create_fail":
-      case "save_rejected": {
-        const o = s.createOutcomes[l.key] ??= { ok: 0, fail: 0, rejected: 0 };
-        if (l.kind === "create_ok") o.ok++;
-        else if (l.kind === "create_fail") o.fail++;
-        else o.rejected++;
-        break;
-      }
-      case "method_missing":
-        s.missingMethods.push(l.key);
-        break;
-      case "note":
-        s.notes.push({ ts: l.ts, key: l.key, text: d.text });
-        break;
-      default:
-        break;
-    }
-  }
-  for (const [k, v] of Object.entries(s.fixes)) {
-    if (k.startsWith("reason:") && s.errorReasons[k.slice(7)]) s.errorReasons[k.slice(7)].fix = v;
-  }
-  s.displayTypes = [...types].sort();
-  return s;
-}
-function knownFix(key) {
-  return summary().fixes[key];
-}
-function seedKnowledge() {
-  const seeds = [
-    ["reason:93", 'El origen no permite editar campos en informes y el grafico usa agregacion personalizada: revincula con bind_fields_to_component (sin agregacion en metricas nativas) o habilita "editar campos en informes" en el origen.'],
-    ["reason:13", "Sin acceso al conjunto de datos subyacente: revisa credenciales del origen (propietario/visor) o que la hoja/tabla siga existiendo y compartida."],
-    ["CUSTOM_AGGREGATION", "Agregacion distinta de la del origen: revincula el campo sin agregacion explicita si es metrica nativa."],
-    ["FIELD_NOT_IN_SCHEMA", "El campo ya no existe en el origen (migracion o renombrado): usa inspect_data_sources y bind_fields_to_component con el campo nuevo."],
-    ["RAW_ROWS", "Metrica sin agregar en un origen Sheets/CSV (todas las columnas son dimensiones): usa SUM(campo)/AVG(campo)/COUNT_DISTINCT(campo)."],
-    ["reason:268", "Orden no valido: el orden apunta a un campo que ya no esta en el grafico; vuelve a vincular con bind_fields_to_component (reasigna el orden) o elige el orden en el panel."],
-    ["SORT_INVALID", "Orden huerfano: bind_fields_to_component lo reasigna a la primera metrica (desc) o a la fecha (asc) en series temporales."],
-    ["reason:116", 'Casilla o boton de filtro con campo no booleano: necesitan un campo BOOLEANO del ORIGEN. Crealo con add_source_field / `fields add` (p. ej. UPPER(devuelto) IN ("TRUE","SI")) y vincula ese campo. Un campo calculado de grafico quita el error pero no filtra.'],
-    ["reason:265", 'Configuracion incompleta: al componente le falta su campo. Un boton de filtro predefinido necesita como campo de control un BOOLEANO del origen (la condicion es el propio campo, p. ej. canal = "Online"): crealo con add_source_field y vinculalo.'],
-    ["FORMULA_FORMAT", 'Campo calculado de grafico: dataTransformation {sourceType:1, sourceFieldName:qt_propio, textFormula y frontendTextFormula con campos como t0.<id>, formulaOutputDataType:2, aggregation:7} + displayTransformation.outputSemanticInfo {semanticConfig:[{semanticType:33}]}. Usa bind "=SUM(a) - SUM(b) as Nombre".'],
-    ["reason:267", "Metrica no valida: el componente conserva una metrica que no existe en su origen (p. ej. heredada de una plantilla); bind la elimina o vincula una metrica del origen actual."],
-    ["reason:266", "Dimension no valida: el campo de la dimension no existe en el origen del grafico; vincula una dimension del origen actual."],
-    ["save_rejected:scrubbed_template", "No vacies conceptDefs/dimensiones/metricas de una plantilla: cambia solo el dataset y vincula los campos antes del primer guardado."],
-    ["save_rejected:type_change", "updatePage 400 al crear: no cambies display.type de un JSON clonado; captura una plantilla real del tipo con capture_templates y recarga para descartar el estado invalido."]
-  ];
-  for (const [k, fix] of seeds) learn("fix", k, { fix, source: "seed" });
-}
-
-// src/spec.ts
-import { readFileSync as readFileSync2 } from "node:fs";
-var KNOWN_TYPES = [
-  "simple-linechart",
-  "simple-barchart",
-  "simple-histogram",
-  "simple-combochart",
-  "simple-piechart",
-  "simple-table",
-  "google-map",
-  "simple-geomap",
-  "kpi-metric",
-  "simple-scatterchart",
-  "bulletchart",
-  "simple-areachart",
-  "pivot-table",
-  "simple-treemap",
-  "gauge-viz",
-  "simple-sankey",
-  "simple-waterfall",
-  "simple-timeline",
-  "simple-funnel",
-  "third-party-viz",
-  "framed-external-content",
-  "notebook-data-app",
-  "simple-description",
-  "image-component",
-  "arrow",
-  "placeholder",
-  "shape",
-  "ellipse",
-  "generic-shape",
-  "filter-bar",
-  "metric-filter",
-  "advanced-filter",
-  "simple-daterangepicker",
-  "dimension-filter",
-  "dataset-picker",
-  "dimension-control",
-  "button"
-];
-var NON_DATA = /* @__PURE__ */ new Set(["simple-description", "image-component", "arrow", "placeholder", "shape", "ellipse", "generic-shape", "framed-external-content", "button"]);
-function loadSpec(file) {
-  const spec = JSON.parse(readFileSync2(file, "utf8"));
-  if (!spec || !Array.isArray(spec.pages)) throw new Error(`${file}: falta "pages" (array).`);
-  return spec;
-}
-function resolveSpec(spec) {
-  const grid = spec.grid ?? 10;
-  const W = spec.canvasWidth ?? 1200;
-  const floorGrid = (v) => Math.floor(v / grid) * grid;
-  const out = [];
-  for (const p of spec.pages) {
-    const page = p.page ?? (p.name ? `name:${p.name}` : "active");
-    for (const c of p.components) {
-      if ("row" in c) {
-        const { y, h } = c.row;
-        const margin = c.row.margin ?? 20;
-        const gap = c.row.gap ?? 20;
-        const x0 = c.row.x ?? margin;
-        const width = c.row.width ?? W - x0 - margin;
-        const n = c.items.length;
-        const w = floorGrid((width - (n - 1) * gap) / n);
-        c.items.forEach((it, i) => {
-          out.push({
-            key: it.key,
-            type: it.type,
-            id: it.id,
-            x: x0 + i * (w + gap),
-            y,
-            w,
-            h,
-            padding: it.padding ?? spec.defaults?.padding,
-            dataset: it.dataset ?? spec.defaults?.dataset,
-            dimensions: it.dimensions ?? [],
-            metrics: it.metrics ?? [],
-            page,
-            ...it.dateRangeDays !== void 0 ? { dateRangeDays: it.dateRangeDays } : {},
-            ...it.stripStyles ? { stripStyles: true } : {},
-            ...it.filters ? { filters: it.filters } : {},
-            ...it.variant ? { variant: it.variant } : {},
-            ...it.slots ? { slots: it.slots } : {}
-          });
-        });
-      } else {
-        out.push({
-          key: c.key,
-          type: c.type,
-          id: c.id,
-          x: c.x ?? 0,
-          y: c.y ?? 0,
-          w: c.w ?? 400,
-          h: c.h ?? 300,
-          padding: c.padding ?? spec.defaults?.padding,
-          dataset: c.dataset ?? spec.defaults?.dataset,
-          dimensions: c.dimensions ?? [],
-          metrics: c.metrics ?? [],
-          page,
-          ...c.dateRangeDays !== void 0 ? { dateRangeDays: c.dateRangeDays } : {},
-          ...c.stripStyles ? { stripStyles: true } : {},
-          ...c.filters ? { filters: c.filters } : {},
-          ...c.variant ? { variant: c.variant } : {},
-          ...c.slots ? { slots: c.slots } : {}
-        });
-      }
-    }
-  }
-  return out;
-}
-function lintSpec(spec) {
-  const grid = spec.grid ?? 10;
-  const W = spec.canvasWidth ?? 1200;
-  const H = spec.canvasHeight ?? 1e4;
-  const comps = resolveSpec(spec);
-  const issues = [];
-  const push = (severity, key, rule, message) => issues.push({ severity, key, rule, message });
-  const keys = /* @__PURE__ */ new Set();
-  for (const c of comps) {
-    if (!c.key) push("error", null, "key", 'Cada componente necesita "key" (identificador estable del spec).');
-    if (keys.has(c.key)) push("error", c.key, "key", `Clave duplicada "${c.key}".`);
-    keys.add(c.key);
-    if (!KNOWN_TYPES.includes(c.type)) push("error", c.key, "type", `Tipo desconocido "${c.type}".`);
-    if ([c.x, c.y, c.w, c.h].some((v) => v % grid !== 0))
-      push("warning", c.key, "grid", `x/y/w/h (${c.x},${c.y},${c.w},${c.h}) no son multiplos de la reticula ${grid}px [diseno-layout \xA73].`);
-    if (c.x < 0 || c.y < 0 || c.x + c.w > W || c.y + c.h > H)
-      push("error", c.key, "canvas", `Se sale del lienzo ${W}x${H} [diseno-layout \xA72].`);
-    if (c.x < 20 || W - (c.x + c.w) < 20) push("info", c.key, "margin", "Margen exterior < 20 px [diseno-layout \xA73].");
-    if (c.padding !== void 0 && (c.padding < 10 || c.padding > 16))
-      push("info", c.key, "padding", `Padding ${c.padding}px fuera de 10\u201316 px [diseno-layout \xA73].`);
-    if (c.type === "kpi-metric") {
-      if (c.metrics.length !== 1 && !c.slots) push("warning", c.key, "kpi", "Un scorecard debe tener exactamente 1 metrica [kpi-scorecards].");
-      if (c.h < 100 || c.h > 140) push("info", c.key, "kpi", `Alto de scorecard ${c.h}px fuera de 100\u2013140 [kpi-scorecards \xA71].`);
-    }
-    if (c.type === "simple-daterangepicker" && c.dateRangeDays === void 0)
-      push("info", c.key, "date-range", "Control de periodo sin dateRangeDays: heredara el periodo por defecto (p. ej. ultimos 28 dias) y puede dejar la pagina sin datos.");
-    if (!NON_DATA.has(c.type) && !["filter-bar", "simple-daterangepicker"].includes(c.type) && !c.dataset)
-      push("warning", c.key, "dataset", "Sin dataset: se usara el del componente clonado o el del informe.");
-  }
-  const byPage = /* @__PURE__ */ new Map();
-  for (const c of comps) byPage.set(c.page, [...byPage.get(c.page) ?? [], c]);
-  for (const [page, list] of byPage) {
-    for (let i = 0; i < list.length; i++)
-      for (let j = i + 1; j < list.length; j++) {
-        const a = list[i], b = list[j];
-        if (a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h)
-          push("warning", a.key, "overlap", `Se solapa con "${b.key}" en la pagina ${page}.`);
-      }
-    const data = list.filter((c) => !NON_DATA.has(c.type)).length;
-    if (data > 25) push("error", null, "density", `Pagina ${page}: ${data} componentes con datos (>25) [rendimiento].`);
-    else if (data > 15) push("warning", null, "density", `Pagina ${page}: ${data} componentes con datos (>15) [rendimiento].`);
-    const kpis = list.filter((c) => c.type === "kpi-metric");
-    const rows = /* @__PURE__ */ new Map();
-    for (const k of kpis) rows.set(k.y, [...rows.get(k.y) ?? [], k]);
-    for (const [y, row] of rows) {
-      if (row.length > 1 && (row.length < 4 || row.length > 6))
-        push("info", null, "kpi-row", `Fila de KPIs en y=${y} con ${row.length} tarjetas (recomendado 4\u20136) [kpi-scorecards \xA71].`);
-      if (new Set(row.map((r) => r.h)).size > 1) push("warning", null, "kpi-row", `Fila y=${y}: alturas distintas [kpi-scorecards \xA71].`);
-      const sorted = [...row].sort((a, b) => a.x - b.x);
-      const gaps = sorted.slice(1).map((r, i) => r.x - (sorted[i].x + sorted[i].w));
-      if (gaps.length && Math.max(...gaps) - Math.min(...gaps) > 2) push("warning", null, "kpi-row", `Fila y=${y}: separaciones irregulares (${gaps.join(", ")}) [diseno-layout \xA73].`);
-    }
-  }
-  return { issues, components: comps };
-}
+// src/ops.ts
+import { existsSync as existsSync5, mkdirSync as mkdirSync2, readFileSync as readFileSync5, writeFileSync as writeFileSync3 } from "node:fs";
+import { join as join6 } from "node:path";
 
 // src/looker/scripts2.ts
 function readyStateScript() {
@@ -3086,6 +2880,175 @@ function componentExistsScript(componentId) {
   }
 }
 
+// src/spec.ts
+import { readFileSync as readFileSync2 } from "node:fs";
+var KNOWN_TYPES = [
+  "simple-linechart",
+  "simple-barchart",
+  "simple-histogram",
+  "simple-combochart",
+  "simple-piechart",
+  "simple-table",
+  "google-map",
+  "simple-geomap",
+  "kpi-metric",
+  "simple-scatterchart",
+  "bulletchart",
+  "simple-areachart",
+  "pivot-table",
+  "simple-treemap",
+  "gauge-viz",
+  "simple-sankey",
+  "simple-waterfall",
+  "simple-timeline",
+  "simple-funnel",
+  "third-party-viz",
+  "framed-external-content",
+  "notebook-data-app",
+  "simple-description",
+  "image-component",
+  "arrow",
+  "placeholder",
+  "shape",
+  "ellipse",
+  "generic-shape",
+  "filter-bar",
+  "metric-filter",
+  "advanced-filter",
+  "simple-daterangepicker",
+  "dimension-filter",
+  "dataset-picker",
+  "dimension-control",
+  "button"
+];
+var NON_DATA = /* @__PURE__ */ new Set(["simple-description", "image-component", "arrow", "placeholder", "shape", "ellipse", "generic-shape", "framed-external-content", "button"]);
+function loadSpec(file) {
+  const spec = JSON.parse(readFileSync2(file, "utf8"));
+  if (!spec || !Array.isArray(spec.pages)) throw new Error(`${file}: falta "pages" (array).`);
+  return spec;
+}
+function resolveSpec(spec) {
+  const grid = spec.grid ?? 10;
+  const W = spec.canvasWidth ?? 1200;
+  const floorGrid = (v) => Math.floor(v / grid) * grid;
+  const out = [];
+  for (const p of spec.pages) {
+    const page = p.page ?? (p.name ? `name:${p.name}` : "active");
+    for (const c of p.components) {
+      if ("row" in c) {
+        const { y, h } = c.row;
+        const margin = c.row.margin ?? 20;
+        const gap = c.row.gap ?? 20;
+        const x0 = c.row.x ?? margin;
+        const width = c.row.width ?? W - x0 - margin;
+        const n = c.items.length;
+        const w = floorGrid((width - (n - 1) * gap) / n);
+        c.items.forEach((it, i) => {
+          out.push({
+            key: it.key,
+            type: it.type,
+            id: it.id,
+            x: x0 + i * (w + gap),
+            y,
+            w,
+            h,
+            padding: it.padding ?? spec.defaults?.padding,
+            dataset: it.dataset ?? spec.defaults?.dataset,
+            dimensions: it.dimensions ?? [],
+            metrics: it.metrics ?? [],
+            page,
+            ...it.dateRangeDays !== void 0 ? { dateRangeDays: it.dateRangeDays } : {},
+            ...it.stripStyles ? { stripStyles: true } : {},
+            ...it.filters ? { filters: it.filters } : {},
+            ...it.variant ? { variant: it.variant } : {},
+            ...it.slots ? { slots: it.slots } : {},
+            ...it.text !== void 0 ? { text: it.text } : {},
+            ...it.parameter ? { parameter: it.parameter } : {}
+          });
+        });
+      } else {
+        out.push({
+          key: c.key,
+          type: c.type,
+          id: c.id,
+          x: c.x ?? 0,
+          y: c.y ?? 0,
+          w: c.w ?? 400,
+          h: c.h ?? 300,
+          padding: c.padding ?? spec.defaults?.padding,
+          dataset: c.dataset ?? spec.defaults?.dataset,
+          dimensions: c.dimensions ?? [],
+          metrics: c.metrics ?? [],
+          page,
+          ...c.dateRangeDays !== void 0 ? { dateRangeDays: c.dateRangeDays } : {},
+          ...c.stripStyles ? { stripStyles: true } : {},
+          ...c.filters ? { filters: c.filters } : {},
+          ...c.variant ? { variant: c.variant } : {},
+          ...c.slots ? { slots: c.slots } : {},
+          ...c.text !== void 0 ? { text: c.text } : {},
+          ...c.parameter ? { parameter: c.parameter } : {}
+        });
+      }
+    }
+  }
+  return out;
+}
+function lintSpec(spec) {
+  const grid = spec.grid ?? 10;
+  const W = spec.canvasWidth ?? 1200;
+  const H = spec.canvasHeight ?? 1e4;
+  const comps = resolveSpec(spec);
+  const issues = [];
+  const push = (severity, key, rule, message) => issues.push({ severity, key, rule, message });
+  const keys = /* @__PURE__ */ new Set();
+  for (const c of comps) {
+    if (!c.key) push("error", null, "key", 'Cada componente necesita "key" (identificador estable del spec).');
+    if (keys.has(c.key)) push("error", c.key, "key", `Clave duplicada "${c.key}".`);
+    keys.add(c.key);
+    if (!KNOWN_TYPES.includes(c.type)) push("error", c.key, "type", `Tipo desconocido "${c.type}".`);
+    if ([c.x, c.y, c.w, c.h].some((v) => v % grid !== 0))
+      push("warning", c.key, "grid", `x/y/w/h (${c.x},${c.y},${c.w},${c.h}) no son multiplos de la reticula ${grid}px [diseno-layout \xA73].`);
+    if (c.x < 0 || c.y < 0 || c.x + c.w > W || c.y + c.h > H)
+      push("error", c.key, "canvas", `Se sale del lienzo ${W}x${H} [diseno-layout \xA72].`);
+    if (c.x < 20 || W - (c.x + c.w) < 20) push("info", c.key, "margin", "Margen exterior < 20 px [diseno-layout \xA73].");
+    if (c.padding !== void 0 && (c.padding < 10 || c.padding > 16))
+      push("info", c.key, "padding", `Padding ${c.padding}px fuera de 10\u201316 px [diseno-layout \xA73].`);
+    if (c.type === "kpi-metric") {
+      if (c.metrics.length !== 1 && !c.slots) push("warning", c.key, "kpi", "Un scorecard debe tener exactamente 1 metrica [kpi-scorecards].");
+      if (c.h < 100 || c.h > 140) push("info", c.key, "kpi", `Alto de scorecard ${c.h}px fuera de 100\u2013140 [kpi-scorecards \xA71].`);
+    }
+    if (c.type === "simple-daterangepicker" && c.dateRangeDays === void 0)
+      push("info", c.key, "date-range", "Control de periodo sin dateRangeDays: heredara el periodo por defecto (p. ej. ultimos 28 dias) y puede dejar la pagina sin datos.");
+    if (!NON_DATA.has(c.type) && !["filter-bar", "simple-daterangepicker"].includes(c.type) && !c.dataset)
+      push("warning", c.key, "dataset", "Sin dataset: se usara el del componente clonado o el del informe.");
+  }
+  const byPage = /* @__PURE__ */ new Map();
+  for (const c of comps) byPage.set(c.page, [...byPage.get(c.page) ?? [], c]);
+  for (const [page, list] of byPage) {
+    for (let i = 0; i < list.length; i++)
+      for (let j = i + 1; j < list.length; j++) {
+        const a = list[i], b = list[j];
+        if (a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h)
+          push("warning", a.key, "overlap", `Se solapa con "${b.key}" en la pagina ${page}.`);
+      }
+    const data = list.filter((c) => !NON_DATA.has(c.type)).length;
+    if (data > 25) push("error", null, "density", `Pagina ${page}: ${data} componentes con datos (>25) [rendimiento].`);
+    else if (data > 15) push("warning", null, "density", `Pagina ${page}: ${data} componentes con datos (>15) [rendimiento].`);
+    const kpis = list.filter((c) => c.type === "kpi-metric");
+    const rows = /* @__PURE__ */ new Map();
+    for (const k of kpis) rows.set(k.y, [...rows.get(k.y) ?? [], k]);
+    for (const [y, row] of rows) {
+      if (row.length > 1 && (row.length < 4 || row.length > 6))
+        push("info", null, "kpi-row", `Fila de KPIs en y=${y} con ${row.length} tarjetas (recomendado 4\u20136) [kpi-scorecards \xA71].`);
+      if (new Set(row.map((r) => r.h)).size > 1) push("warning", null, "kpi-row", `Fila y=${y}: alturas distintas [kpi-scorecards \xA71].`);
+      const sorted = [...row].sort((a, b) => a.x - b.x);
+      const gaps = sorted.slice(1).map((r, i) => r.x - (sorted[i].x + sorted[i].w));
+      if (gaps.length && Math.max(...gaps) - Math.min(...gaps) > 2) push("warning", null, "kpi-row", `Fila y=${y}: separaciones irregulares (${gaps.join(", ")}) [diseno-layout \xA73].`);
+    }
+  }
+  return { issues, components: comps };
+}
+
 // src/looker/scripts3.ts
 function readThemeScript() {
   const w = window;
@@ -3349,15 +3312,17 @@ function attachFilterScript(args) {
     return { ok: false, filters: [], error: String(e && e.message) };
   }
 }
-function probeStartScript(datasetId) {
+function probeStartScript(args) {
   const w = window;
+  const datasetId = args.datasetId;
   try {
     const report = w.angular.element(document.body).injector().get("legoUndoRedoService").report;
     const page = report.pages[0];
     const all = report.pages.flatMap((p) => p.components);
     const base = all.find((c) => c.config.config.display.type === "kpi-metric") || all.find((c) => c.config.config.datasource && c.config.config.datasource.keys);
-    if (!base) return { ok: false, error: "Sin componentes para clonar." };
-    const cfg = base.duplicateConfig();
+    if (!base && !args.template) return { ok: false, error: "Sin componentes para clonar ni plantilla kpi-metric." };
+    const cfg = base ? base.duplicateConfig() : JSON.parse(JSON.stringify(args.template));
+    if (!base) cfg.id = "cd-probe" + Math.random().toString(36).slice(2, 10);
     cfg.config.datasource.keys.dataset = { stateKey: "ds", dominant: 2, value: { id: datasetId } };
     Object.assign(cfg.attribute, { left: 0, top: 0, width: 10, height: 10 });
     const tmp = page.addComponent(cfg);
@@ -3422,399 +3387,16 @@ function reportSettingsScript(patch) {
   }
 }
 
-// src/ops.ts
-import { existsSync as existsSync4, mkdirSync as mkdirSync2, readFileSync as readFileSync3, writeFileSync as writeFileSync2 } from "node:fs";
-import { join as join4 } from "node:path";
-var T = Number(process.env.LS_EVAL_TIMEOUT_MS ?? 15e3);
-var sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-seedKnowledge();
-var NET_RE = /\/(updatePage|updateReport|batchedDataV2|createReport|deletePage)\b/;
-var netLogs = /* @__PURE__ */ new WeakMap();
-function trackNet(page) {
-  if (netLogs.has(page)) return;
-  const log2 = [];
-  netLogs.set(page, log2);
-  page.on("response", (r) => {
-    const u = r.url();
-    if (!NET_RE.test(u)) return;
-    log2.push({ path: new URL(u).pathname, status: r.status(), t: Date.now() });
-    if (log2.length > 200) log2.splice(0, log2.length - 200);
-  });
-}
-function netSince(page, t0) {
-  return (netLogs.get(page) ?? []).filter((e) => e.t >= t0);
-}
-async function waitReady(page, timeoutMs = 45e3) {
-  const t0 = Date.now();
-  while (Date.now() - t0 < timeoutMs) {
-    const s = await evaluateOn(page, 5e3, readyStateScript).catch(() => null);
-    if (s?.ready) {
-      trackNet(page);
-      await evaluateOn(page, 5e3, installNetMonitorScript).catch(() => void 0);
-      return;
-    }
-    await sleep(500);
-  }
-  throw new Error("El editor no termino de cargar (legoUndoRedoService sin paginas).");
-}
-async function openReport(url) {
-  const browser = await getBrowser();
-  const target = browser.targets().find((t) => t.type() === "page" && REPORT_URL_RE.test(t.url()));
-  const page = target && await target.page() || await browser.newPage();
-  await page.bringToFront();
-  await page.goto(url, { waitUntil: "networkidle2", timeout: 9e4 });
-  await waitReady(page);
-  return { url: page.url() };
-}
-function reportId(urlOrId) {
-  const m = urlOrId.match(/reporting\/([A-Za-z0-9_-]+)/);
-  const id = m ? m[1] : urlOrId.trim();
-  if (!/^[A-Za-z0-9_-]{10,}$/.test(id)) throw new Error(`No es un id de informe: ${urlOrId}`);
-  return id;
-}
-async function copyReport(source, name) {
-  const sourceId = reportId(source);
-  const copyName = name?.trim() || `Copia de ${sourceId} ${(/* @__PURE__ */ new Date()).toISOString().slice(0, 16).replace("T", " ")}`;
-  const url = `https://datastudio.google.com/reporting/create?c.reportId=${encodeURIComponent(sourceId)}&r.reportName=${encodeURIComponent(copyName)}`;
-  const browser = await getBrowser();
-  const page = await browser.newPage();
-  await page.bringToFront();
-  await page.goto(url, { waitUntil: "networkidle2", timeout: 9e4 });
-  const click = (pattern, scope) => page.waitForFunction(
-    (p, s) => {
-      const re = new RegExp(p, "i");
-      const b = [...document.querySelectorAll(s)].find((x) => re.test(x.innerText.trim()) && !x.disabled);
-      if (!b) return false;
-      b.click();
-      return true;
-    },
-    { timeout: 45e3, polling: 500 },
-    pattern,
-    scope
-  );
-  try {
-    await click("^(Editar y compartir|Edit and share)$", "button");
-    await Promise.race([
-      click("^(Confirmar y guardar|Acknowledge and save|Confirm and save)$", "[role=dialog] button, mat-dialog-container button"),
-      page.waitForFunction(() => /\/reporting\/[^/]+\/page\//.test(location.href), { timeout: 45e3 })
-    ]);
-    await page.waitForFunction(() => /\/reporting\/[^/]+\/page\/[^/]+\/edit/.test(location.href), { timeout: 6e4, polling: 500 });
-  } catch (e) {
-    const shown = await page.evaluate(() => document.body.innerText.slice(0, 300)).catch(() => "");
-    throw new Error(`No se pudo copiar el informe ${sourceId} (${e.message}). La pagina muestra: ${shown}`);
-  }
-  await waitReady(page);
-  const id = reportId(page.url());
-  if (id === sourceId) throw new Error("La URL final es la del original, no la de una copia.");
-  learn("note", "report_copy", { text: "Linking API /reporting/create?c.reportId= -> Editar y compartir -> Confirmar y guardar" });
-  return { sourceId, id, url: page.url(), name: copyName };
-}
-async function reloadReport() {
-  const page = await getReportPage();
-  await page.bringToFront();
-  await page.reload({ waitUntil: "networkidle2", timeout: 9e4 });
-  await waitReady(page);
-  const s = await evaluateOn(page, T, readyStateScript);
-  return { url: s.url, components: s.components };
-}
-async function editPage() {
-  const { page } = await requireEditMode();
-  trackNet(page);
-  await evaluateOn(page, 5e3, installNetMonitorScript).catch(() => void 0);
-  return page;
-}
-async function exportReport(file) {
-  const page = await getReportPage();
-  const res = await evaluateOn(page, T, exportReportScript);
-  for (const t of res.types) learn("display_type", t, { seenIn: res.reportId });
-  const learned = await captureTemplatesOn(page);
-  if (file) writeFileSync2(file, JSON.stringify(res, null, 2));
-  return { ...res, learnedTemplates: learned, ...file ? { file } : {} };
-}
-async function captureTemplatesOn(page) {
-  const cap = await evaluateOn(page, T, captureTemplatesScript);
-  for (const t of cap.registeredTypes) learn("display_type", t, { registered: true });
-  const learned = [];
-  for (const [type, tpl] of Object.entries(cap.templates)) {
-    if (saveTemplate(type, tpl.config, { url: cap.url.split("?")[0], fromComponent: tpl.fromComponent, dataSourceId: tpl.dataSourceId }))
-      learned.push(type);
-  }
-  return learned;
-}
-async function captureTemplates() {
-  const page = await getReportPage();
-  const learned = await captureTemplatesOn(page);
-  const s = summary();
-  return { learned, known: s.templates, registeredTypes: s.displayTypes.length };
-}
-async function diagnoseWithKnowledge() {
-  const page = await getReportPage();
-  const res = await evaluateOn(page, T, diagnoseReportScript);
-  const issues = res.issues.map((i) => {
-    const m = i.message.match(/reason (\d+)\):\s*([^|]*)\|?\s*([^|]*)/);
-    if (m) learn("error_reason", m[1], { title: m[2].trim(), description: m[3].trim() });
-    const fix = (m && knownFix(`reason:${m[1]}`)) ?? knownFix(i.code);
-    return fix ? { ...i, fix } : i;
-  });
-  return { ...res, issues };
-}
-async function resolveDataset(page, sel) {
-  if (!sel) return void 0;
-  if (!sel.startsWith("@")) return sel;
-  const field = sel.slice(1).toLowerCase();
-  const ds = await evaluateOn(page, T, readDataSourcesScript);
-  let hit = ds.dataSources.find((d) => d.fields.some((f) => f.id.toLowerCase() === field || f.name.toLowerCase() === field));
-  if (!hit) {
-    for (const d of ds.dataSources.filter((x) => !x.fields.length)) {
-      const st = await evaluateOn(page, T, probeStartScript, d.dataSourceId);
-      if (!st.ok) continue;
-      let pr = { ready: false, fields: [] };
-      for (let i = 0; i < 24 && !pr.ready; i++) {
-        await sleep(250);
-        pr = await evaluateOn(page, T, probeReadScript, i === 23);
-      }
-      if (pr.ready) learn("note", `dataset_fields:${d.dataSourceId}`, { text: pr.fields.map((f) => f.name).join(",") });
-      if (pr.fields.some((f) => f.id.toLowerCase() === field || f.name.toLowerCase() === field)) return d.dataSourceId;
-    }
-  }
-  if (!hit) throw new Error(`Ningun origen del informe tiene el campo "${sel.slice(1)}". Anade el origen o revisa el nombre.`);
-  return hit.dataSourceId;
-}
-async function createComponent(o) {
-  const page = await editPage();
-  const datasetId = await resolveDataset(page, o.dataset);
-  const hasFields = !!(o.dimensions?.length || o.metrics?.length || o.slots && Object.keys(o.slots).length);
-  const NO_DIMS = ["gauge-viz", "bulletchart", "kpi-metric"];
-  const t0 = Date.now();
-  const res = await evaluateOn(page, T, createComponentScript, {
-    type: o.type,
-    box: o.box,
-    ...o.pageId ? { pageId: o.pageId } : {},
-    ...datasetId ? { datasetId } : {},
-    ...o.padding !== void 0 ? { padding: o.padding } : {},
-    template: o.variant && getTemplate(`${o.type}@${o.variant}`) || getTemplate(o.type),
-    ...o.variant ? { preferTemplate: true } : {},
-    deferSave: hasFields
-  });
-  if (!res.ok) {
-    learn("create_fail", o.type, { error: res.error });
-    throw new Error(res.error);
-  }
-  let bound;
-  if (hasFields) {
-    bound = await evaluateOn(page, T + 1e4, bindFieldsScript, {
-      componentId: res.componentId,
-      dimensions: o.dimensions ?? [],
-      metrics: o.metrics ?? [],
-      ...NO_DIMS.includes(o.type) && !o.dimensions?.length ? { clearDimensions: true } : {},
-      ...o.slots ? { slots: o.slots } : {}
-    });
-  }
-  await sleep(2500);
-  const inPage = await evaluateOn(page, 5e3, readNetLogScript, t0).catch(() => []);
-  const net = [...netSince(page, t0), ...inPage];
-  const rejected = net.filter((e) => /updatePage/.test(e.path) && e.status >= 400);
-  if (rejected.length) {
-    learn("save_rejected", o.type, { source: res.source, status: rejected[0].status });
-    await reloadReport();
-    const fix = knownFix("save_rejected:type_change");
-    throw new Error(`El servidor rechazo el guardado (updatePage ${rejected[0].status}) del ${o.type} creado desde ${res.source}. Se recargo el informe. ${fix ?? ""}`);
-  }
-  learn("create_ok", o.type, { source: res.source?.startsWith("clone") ? "clone" : res.source });
-  return { ...res, ...bound ? { bound } : {} };
-}
-async function deleteComponent(componentId) {
-  const page = await editPage();
-  const t0 = Date.now();
-  const r = await evaluateOn(page, T, deleteComponentScript, componentId);
-  if (r.ok) {
-    for (let i = 0; i < 24 && !netSince(page, t0).some((e) => /updatePage/.test(e.path)); i++) await sleep(250);
-    const saved = netSince(page, t0).filter((e) => /updatePage|updateReport/.test(e.path));
-    if (saved.some((e) => e.status >= 400)) {
-      learn("save_rejected", "delete", { statuses: saved.map((e) => e.status) });
-      throw new Error(`El borrado de ${componentId} fue rechazado (${saved.map((e) => e.status).join(",")}).`);
-    }
-    learn("note", "delete_method", { text: r.method });
-    return { ok: true, method: r.method, ...saved.length ? {} : { warning: "Sin respuesta de guardado en 6 s: verifica con reload si es critico." } };
-  }
-  if (r.needsKeyboard) {
-    learn("method_missing", "page.removeComponent", { fallback: "select+Delete" });
-    await page.bringToFront();
-    await page.keyboard.press("Delete");
-    await sleep(2e3);
-    const still = await evaluateOn(page, T, componentExistsScript, componentId);
-    if (!still) return { ok: true, method: "select+Delete" };
-    throw new Error(`No se pudo borrar ${componentId} (la tecla Supr no tuvo efecto; \xBFel foco esta en el lienzo?).`);
-  }
-  throw new Error(r.error ?? `No se pudo borrar ${componentId}.`);
-}
-async function applySpec(specOrFile, opts = {}) {
-  const spec = typeof specOrFile === "string" ? loadSpec(specOrFile) : specOrFile;
-  const statePath = opts.statePath ?? (typeof specOrFile === "string" ? specOrFile.replace(/\.json$/i, "") + ".state.json" : void 0);
-  const { issues, components } = lintSpec(spec);
-  const result = { dryRun: !!opts.dryRun, lint: issues, actions: [], ...statePath ? { stateFile: statePath } : {} };
-  if (issues.some((i) => i.severity === "error")) {
-    result.actions = components.map((c) => ({ key: c.key, action: "skip", error: "lint con errores" }));
-    return result;
-  }
-  const state = statePath && existsSync4(statePath) ? JSON.parse(readFileSync3(statePath, "utf8")) : { reportId: null, keys: {} };
-  const page = opts.dryRun ? await getReportPage() : await editPage();
-  const info = await evaluateOn(page, T, pageInfoScript);
-  if (state.reportId && state.reportId !== info.internalReportId) {
-    log(`El state ${statePath} es de otro informe (${state.reportId}); se ignora el mapeo de ids.`);
-    state.keys = {};
-  }
-  state.reportId = info.internalReportId;
-  if (!opts.dryRun) {
-    const dir = join4(process.env.LS_BACKUP_DIR ?? join4(process.cwd(), "backups"));
-    mkdirSync2(dir, { recursive: true });
-    const file = join4(dir, `${info.internalReportId}-${(/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-")}.json`);
-    writeFileSync2(file, JSON.stringify(await evaluateOn(page, T, exportReportScript), null, 2));
-    result.backup = file;
-  }
-  if (spec.theme && !opts.dryRun) result.theme = await applyTheme(spec.theme);
-  else if (spec.themePreset && !opts.dryRun) result.theme = await useThemePreset(spec.themePreset);
-  const pageIds = {};
-  const wanted = [...new Set(components.map((c) => c.page).filter((p) => p.startsWith("name:")))].map((p) => p.slice(5));
-  if (wanted.length) {
-    let pages = await listPages();
-    result.pages = [];
-    for (const name of wanted) {
-      let hit = pages.find((p) => p.name === name);
-      let created = false;
-      if (!hit && !opts.dryRun) {
-        await addPage(name);
-        await reloadReport();
-        pages = await listPages();
-        hit = pages.find((p) => p.name === name);
-        created = true;
-      }
-      if (hit) pageIds[`name:${name}`] = hit.id;
-      result.pages.push({ name, pageId: hit?.id ?? "(nueva)", created });
-    }
-  }
-  for (const c of components) {
-    const pageId = c.page === "active" ? void 0 : c.page.startsWith("name:") ? pageIds[c.page] : c.page;
-    const existingId = c.id ?? state.keys[c.key];
-    const exists = existingId ? await evaluateOn(page, T, componentExistsScript, existingId) : false;
-    if (opts.dryRun) {
-      result.actions.push({ key: c.key, action: exists ? "update" : "create", ...exists ? { componentId: existingId } : {} });
-      continue;
-    }
-    try {
-      if (exists) {
-        await updateExisting(page, existingId, c);
-        state.keys[c.key] = existingId;
-        const extra = await patchIfNeeded(page, existingId, c);
-        result.actions.push({ key: c.key, action: "update", componentId: existingId, ...extra.length ? { warnings: extra } : {} });
-      } else {
-        const r = await createComponent({
-          ...c.variant ? { variant: c.variant } : {},
-          type: c.type,
-          box: { x: c.x, y: c.y, width: c.w, height: c.h },
-          ...pageId ? { pageId } : {},
-          ...c.dataset ? { dataset: c.dataset } : {},
-          dimensions: c.dimensions,
-          metrics: c.metrics,
-          ...c.padding !== void 0 ? { padding: c.padding } : {},
-          ...c.slots ? { slots: c.slots } : {}
-        });
-        state.keys[c.key] = r.componentId;
-        const extra = await patchIfNeeded(page, r.componentId, c);
-        result.actions.push({ key: c.key, action: "create", componentId: r.componentId, warnings: [...r.warnings, ...extra] });
-      }
-    } catch (e) {
-      result.actions.push({ key: c.key, action: exists ? "update" : "create", error: e.message });
-    }
-    if (statePath) writeFileSync2(statePath, JSON.stringify(state, null, 2));
-  }
-  if (!opts.dryRun) {
-    const filterLog = [];
-    for (const p of spec.pages) {
-      const pid = p.page && p.page !== "active" ? p.page : p.name ? pageIds[`name:${p.name}`] : info.activePageId ?? void 0;
-      for (const f of p.filters ?? []) {
-        try {
-          const r = await addFilter(f, pid ?? void 0);
-          filterLog.push({ name: f.name, target: `page:${pid}`, filterId: r.filterId });
-        } catch (e) {
-          filterLog.push({ name: f.name, target: `page:${pid}`, error: e.message });
-        }
-      }
-    }
-    for (const c of components) {
-      const id = state.keys[c.key];
-      for (const f of c.filters ?? []) {
-        if (!id) continue;
-        try {
-          const r = await addFilter(f, id);
-          filterLog.push({ name: f.name, target: id, filterId: r.filterId });
-        } catch (e) {
-          filterLog.push({ name: f.name, target: id, error: e.message });
-        }
-      }
-    }
-    if (filterLog.length) result.filters = filterLog;
-    await reloadReport();
-    result.diagnose = await diagnoseWithKnowledge();
-  }
-  return result;
-}
-async function patchIfNeeded(page, id, c) {
-  if (c.dateRangeDays === void 0 && !c.stripStyles) return [];
-  const r = await evaluateOn(page, T, patchComponentScript, {
-    componentId: id,
-    ...c.dateRangeDays !== void 0 ? { dateRangeDays: c.dateRangeDays } : {},
-    ...c.stripStyles ? { stripThemeStyles: true } : {}
-  });
-  if (!r.ok) throw new Error(r.error);
-  return r.changes;
-}
-async function patchComponent(args) {
-  const page = await editPage();
-  const r = await evaluateOn(page, T, patchComponentScript, args);
-  if (!r.ok) throw new Error(r.error);
-  return r;
-}
-async function updateExisting(page, id, c) {
-  await evaluateOn(page, T, applyBoxModelScript, {
-    componentId: id,
-    position: { x: c.x, y: c.y },
-    dimensions: { width: c.w, height: c.h },
-    ...c.padding !== void 0 ? { padding: { top: c.padding, right: c.padding, bottom: c.padding, left: c.padding } } : {}
-  });
-  if (c.dimensions.length || c.metrics.length || c.slots) {
-    const r = await evaluateOn(page, T + 1e4, bindFieldsScript, {
-      componentId: id,
-      dimensions: c.dimensions,
-      metrics: c.metrics,
-      ...["gauge-viz", "bulletchart", "kpi-metric"].includes(c.type) && !c.dimensions.length ? { clearDimensions: true } : {},
-      ...c.slots ? { slots: c.slots } : {}
-    });
-    if (!r.ok) throw new Error(r.error);
-  }
-}
-async function findOrphans(specFiles) {
-  const known = /* @__PURE__ */ new Set();
-  for (const f of specFiles) {
-    const st = f.replace(/\.json$/i, "") + ".state.json";
-    if (existsSync4(st)) for (const id of Object.values(JSON.parse(readFileSync3(st, "utf8")).keys)) known.add(id);
-  }
-  const ex = await exportReport();
-  return ex.pages.flatMap(
-    (p) => p.components.filter((c) => !known.has(c.id)).map((c) => ({ page: p.name || p.id, id: c.id, type: c.config.display.type, box: [c.attribute.left, c.attribute.top, c.attribute.width, c.attribute.height] }))
-  );
-}
-
 // src/ops3.ts
-import { existsSync as existsSync5, readFileSync as readFileSync5, readdirSync as readdirSync2, writeFileSync as writeFileSync3 } from "node:fs";
-import { join as join6 } from "node:path";
+import { existsSync as existsSync4, readFileSync as readFileSync4, readdirSync as readdirSync2, writeFileSync as writeFileSync2 } from "node:fs";
+import { join as join5 } from "node:path";
 
 // src/theme.ts
-import { readFileSync as readFileSync4 } from "node:fs";
-import { join as join5 } from "node:path";
-var BASE = join5(packageRoot(), "themes", "base-theme.json");
+import { readFileSync as readFileSync3 } from "node:fs";
+import { join as join4 } from "node:path";
+var BASE = join4(packageRoot(), "themes", "base-theme.json");
 function baseTheme() {
-  return JSON.parse(readFileSync4(BASE, "utf8"));
+  return JSON.parse(readFileSync3(BASE, "utf8"));
 }
 function toThemeContent(t, base = baseTheme()) {
   const c = JSON.parse(JSON.stringify(base));
@@ -3950,8 +3532,8 @@ function auditUx(f, layoutIssues = []) {
 }
 
 // src/ops3.ts
-var T2 = Number(process.env.LS_EVAL_TIMEOUT_MS ?? 15e3);
-var sleep2 = (ms) => new Promise((r) => setTimeout(r, ms));
+var T = Number(process.env.LS_EVAL_TIMEOUT_MS ?? 15e3);
+var sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 function watchSaves(page) {
   const statuses = [];
   const on = (r) => {
@@ -3962,16 +3544,16 @@ function watchSaves(page) {
 }
 async function readTheme() {
   const page = await getReportPage();
-  const r = await evaluateOn(page, T2, readThemeScript);
+  const r = await evaluateOn(page, T, readThemeScript);
   return { themeConfig: r.themeConfig, customThemes: r.themes, theme: fromThemeContent(r.custom), raw: r.custom };
 }
 async function applyTheme(theme) {
   const { page } = await requireEditMode();
-  const cur = await evaluateOn(page, T2, readThemeScript);
+  const cur = await evaluateOn(page, T, readThemeScript);
   const content = toThemeContent(theme, cur.custom ?? void 0);
   const w = watchSaves(page);
-  const r = await evaluateOn(page, T2, applyThemeScript, content);
-  await sleep2(2500);
+  const r = await evaluateOn(page, T, applyThemeScript, content);
+  await sleep(2500);
   w.stop();
   if (!r.ok) throw new Error(r.error);
   if (w.statuses.some((s) => s >= 400)) {
@@ -4011,20 +3593,20 @@ var THEME_PRESETS = {
   "t-quartz": "Cuarzo",
   "t-onyx": "Onix"
 };
-var LIBRARY = join6(packageRoot(), "themes", "library");
+var LIBRARY = join5(packageRoot(), "themes", "library");
 function themeLibrary() {
-  const own = existsSync5(LIBRARY) ? readdirSync2(LIBRARY).filter((f) => f.endsWith(".json")).map((f) => ({ name: f.replace(/\.json$/, ""), file: join6(LIBRARY, f) })) : [];
+  const own = existsSync4(LIBRARY) ? readdirSync2(LIBRARY).filter((f) => f.endsWith(".json")).map((f) => ({ name: f.replace(/\.json$/, ""), file: join5(LIBRARY, f) })) : [];
   return { presets: Object.entries(THEME_PRESETS).map(([id, name]) => ({ id, name })), library: own };
 }
 async function useThemePreset(idOrName) {
   const { page } = await requireEditMode();
   const lib = themeLibrary().library.find((t) => t.name === idOrName);
-  if (lib) return applyTheme(JSON.parse(readFileSync5(lib.file, "utf8")));
+  if (lib) return applyTheme(JSON.parse(readFileSync4(lib.file, "utf8")));
   const id = THEME_PRESETS[idOrName] ? idOrName : Object.entries(THEME_PRESETS).find(([, n]) => n.toLowerCase() === idOrName.toLowerCase())?.[0];
   if (!id) throw new Error(`Tema "${idOrName}" no encontrado. Usa theme presets para ver los disponibles.`);
   const w = watchSaves(page);
-  const r = await evaluateOn(page, T2, setThemePresetScript, id);
-  await sleep2(2500);
+  const r = await evaluateOn(page, T, setThemePresetScript, id);
+  await sleep(2500);
   w.stop();
   if (!r.ok) throw new Error(r.error);
   learn("note", "theme_preset", { text: id });
@@ -4033,23 +3615,23 @@ async function useThemePreset(idOrName) {
 async function exportTheme(file) {
   const t = await readTheme();
   if (!t.raw) throw new Error(`El informe usa el tema predefinido "${t.themeConfig}": no hay colores que exportar (aplica uno personalizado o importa de la biblioteca).`);
-  writeFileSync3(file, JSON.stringify({ friendly: t.theme, raw: t.raw }, null, 2));
+  writeFileSync2(file, JSON.stringify({ friendly: t.theme, raw: t.raw }, null, 2));
   return { file, theme: t.theme };
 }
 async function importTheme(file) {
-  const j = JSON.parse(readFileSync5(file, "utf8"));
+  const j = JSON.parse(readFileSync4(file, "utf8"));
   return applyTheme(j.friendly ?? j);
 }
 async function listFilters() {
-  return evaluateOn(await getReportPage(), T2, listFiltersScript);
+  return evaluateOn(await getReportPage(), T, listFiltersScript);
 }
 async function addFilter(f, target) {
   const { page } = await requireEditMode();
-  const existing = (await evaluateOn(page, T2, listFiltersScript)).find((x) => x.name === f.name);
+  const existing = (await evaluateOn(page, T, listFiltersScript)).find((x) => x.name === f.name);
   let filterId = existing?.id ?? null;
   if (!filterId) {
     const datasetId = await resolveDataset(page, f.dataset ?? `@${f.field}`);
-    const r = await evaluateOn(page, T2, addFilterScript, {
+    const r = await evaluateOn(page, T, addFilterScript, {
       name: f.name,
       datasetId,
       field: f.field,
@@ -4059,13 +3641,13 @@ async function addFilter(f, target) {
     });
     if (!r.ok) throw new Error(r.error ?? "No se pudo crear el filtro.");
     filterId = r.filterId;
-    await sleep2(1500);
+    await sleep(1500);
   }
   let attached;
   if (target) {
     const w = watchSaves(page);
-    const a = await evaluateOn(page, T2, attachFilterScript, { filterId, target });
-    await sleep2(2500);
+    const a = await evaluateOn(page, T, attachFilterScript, { filterId, target });
+    await sleep(2500);
     w.stop();
     if (!a.ok) throw new Error(a.error);
     if (w.statuses.some((s) => s >= 400)) {
@@ -4079,124 +3661,51 @@ async function addFilter(f, target) {
 }
 async function detachFilter(filterId, target) {
   const { page } = await requireEditMode();
-  const a = await evaluateOn(page, T2, attachFilterScript, { filterId, target, detach: true });
+  const a = await evaluateOn(page, T, attachFilterScript, { filterId, target, detach: true });
   if (!a.ok) throw new Error(a.error);
-  await sleep2(2e3);
+  await sleep(2e3);
   return a;
 }
 async function reportSettings(patch) {
-  if (!patch || !Object.keys(patch).length) return evaluateOn(await getReportPage(), T2, reportSettingsScript, null);
+  if (!patch || !Object.keys(patch).length) return evaluateOn(await getReportPage(), T, reportSettingsScript, null);
   const { page } = await requireEditMode();
   const w = watchSaves(page);
-  const r = await evaluateOn(page, T2, reportSettingsScript, patch);
-  await sleep2(2500);
+  const r = await evaluateOn(page, T, reportSettingsScript, patch);
+  await sleep(2500);
   w.stop();
   if (!r.ok) throw new Error(r.error);
   if (w.statuses.some((s) => s >= 400)) throw new Error(`Guardado rechazado (${w.statuses.join(",")}).`);
   return { ...r, saves: w.statuses };
 }
-function navNames() {
-  let s;
-  window.angular.element(document.body).injector().get("store").subscribe((x) => s = x).unsubscribe();
-  return s.reportNavigation.navigationInfo.navItems.map((n) => n.page && n.page.displayName || "");
-}
-async function openManagePages(page) {
-  const open = await page.evaluate(() => Array.from(document.querySelectorAll("*")).some((e) => e.children.length === 0 && /P[aá]ginas del informe|Report pages/.test((e.innerText || "").trim())));
-  if (open) return;
-  await page.evaluate(() => {
-    const b = Array.from(document.querySelectorAll("button")).find((x) => /^(P[aá]gina|Page)$/.test((x.innerText || "").trim()));
-    if (b) b.click();
-  });
-  await sleep2(800);
-  await page.evaluate(() => {
-    const panes = Array.from(document.querySelectorAll(".cdk-overlay-pane"));
-    const pane = panes[panes.length - 1];
-    const it = pane && Array.from(pane.querySelectorAll("button,[role=menuitem]")).find((e) => /Gestionar p[aá]ginas|Manage pages/.test(e.innerText));
-    if (it) it.click();
-  });
-  await sleep2(1200);
-}
-async function renamePageUi(index, name) {
-  const { page } = await requireEditMode();
-  await page.bringToFront();
-  await page.setViewport({ width: 1900, height: 1100 });
-  await sleep2(800);
-  const statuses = [];
-  const onResp = (r) => {
-    if (/updateReportNavigationInfo/.test(r.url())) statuses.push(r.status());
-  };
-  page.on("response", onResp);
-  try {
-    await openManagePages(page);
-    const names = await page.evaluate(navNames);
-    if (names[index] === void 0) throw new Error(`No hay pagina en la posicion ${index}.`);
-    if (names[index] === name) return { ok: true, displayNames: names, saves: [] };
-    const rows = await page.evaluate((list) => Array.from(document.querySelectorAll("*")).filter((e) => e.children.length === 0 && list.includes((e.innerText || "").trim())).map((e) => {
-      const r = e.getBoundingClientRect();
-      return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
-    }).filter((b) => b.x > window.innerWidth * 0.6 && b.y > 250).sort((a, b) => a.y - b.y), names);
-    const row = rows[index];
-    if (!row) throw new Error('Fila de la pagina no encontrada en "Paginas del informe".');
-    await page.mouse.move(row.x, row.y);
-    await sleep2(500);
-    const more = await page.evaluate((y) => Array.from(document.querySelectorAll("button,[role=button]")).map((b) => {
-      const r = b.getBoundingClientRect();
-      return { x: r.x + r.width / 2, y: r.y + r.height / 2, t: (b.innerText || "").trim() };
-    }).filter((b) => Math.abs(b.y - y) < 12 && !b.t && b.x > window.innerWidth * 0.6).sort((a, b) => b.x - a.x)[0] || null, row.y);
-    if (!more) throw new Error("Menu de la fila no encontrado.");
-    await page.mouse.click(more.x, more.y);
-    await sleep2(700);
-    const mi = await page.evaluate(() => {
-      const panes = Array.from(document.querySelectorAll(".cdk-overlay-pane"));
-      const it = Array.from(panes[panes.length - 1].querySelectorAll("button,[role=menuitem]")).find((e) => /Cambiar nombre|Rename/.test(e.innerText));
-      if (!it) return null;
-      const r = it.getBoundingClientRect();
-      return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
-    });
-    if (!mi) throw new Error('Opcion "Cambiar nombre" no encontrada.');
-    await page.mouse.click(mi.x, mi.y);
-    await sleep2(800);
-    const input = await page.evaluate((y) => Array.from(document.querySelectorAll("input")).map((e) => {
-      const r = e.getBoundingClientRect();
-      return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
-    }).find((b) => Math.abs(b.y - y) < 16) || null, row.y);
-    if (!input) throw new Error("Campo de nombre no encontrado.");
-    await page.mouse.click(input.x, input.y);
-    await page.keyboard.down("Control");
-    await page.keyboard.press("KeyA");
-    await page.keyboard.up("Control");
-    await page.keyboard.press("Backspace");
-    await page.keyboard.type(name);
-    await page.keyboard.press("Enter");
-    for (let i = 0; i < 20 && !statuses.length; i++) await sleep2(250);
-    const after = await page.evaluate(navNames);
-    if (after[index] !== name) throw new Error(`El nombre visible quedo como "${after[index]}".`);
-    learn("note", "rename_page_ui", { text: "Gestionar paginas > Cambiar nombre -> POST /updateReportNavigationInfo" });
-    return { ok: true, displayNames: after, saves: [...statuses] };
-  } finally {
-    page.off("response", onResp);
-    await page.keyboard.press("Escape").catch(() => void 0);
-    await page.setViewport(null).catch(() => void 0);
-  }
-}
 async function listPages() {
-  return evaluateOn(await getReportPage(), T2, listPagesScript);
+  const page = await getReportPage();
+  const nav2 = await evaluateOn(page, T, navPagesScript).catch(() => []);
+  if (!nav2.length) return evaluateOn(page, T, listPagesScript);
+  return nav2.map((p) => ({
+    id: p.pageId,
+    name: p.displayName || p.modelName,
+    modelName: p.modelName,
+    components: p.components,
+    index: p.index,
+    ...p.hiddenFromNav ? { hiddenFromNav: true } : {},
+    ...p.hiddenFromViewer ? { hiddenFromViewer: true } : {}
+  }));
 }
 async function addPage(name) {
   const { page } = await requireEditMode();
-  const idsBefore = new Set((await evaluateOn(page, T2, listPagesScript)).map((p) => p.id));
+  const idsBefore = new Set((await evaluateOn(page, T, listPagesScript)).map((p) => p.id));
   const w = watchSaves(page);
   await page.bringToFront();
   await page.setViewport({ width: 1900, height: 1100 });
-  await sleep2(800);
-  let r = await evaluateOn(page, T2, addPageScript);
+  await sleep(800);
+  let r = await evaluateOn(page, T, addPageScript);
   if (!r.ok) {
     const opened = await page.evaluate(() => {
       const b = Array.from(document.querySelectorAll("button")).find((x) => /^(P[aá]gina|Page)$/.test((x.innerText || "").trim()));
       if (b) b.click();
       return !!b;
     });
-    await sleep2(800);
+    await sleep(800);
     const clicked = opened && await page.evaluate(() => {
       const it = Array.from(document.querySelectorAll("[role=menuitem],button")).find((x) => /Nueva p[aá]gina|New page/i.test(x.innerText || ""));
       if (it) it.click();
@@ -4204,17 +3713,17 @@ async function addPage(name) {
     });
     if (clicked) r = { ...r, ok: true };
   }
-  await sleep2(500);
+  await sleep(500);
   await page.setViewport(null).catch(() => void 0);
   if (!r.ok) {
     w.stop();
     learn("method_missing", "toolbar:add-page", { error: r.error });
     throw new Error(r.error);
   }
-  let pages = await evaluateOn(page, T2, listPagesScript);
+  let pages = await evaluateOn(page, T, listPagesScript);
   for (let i = 0; i < 20 && pages.length <= r.before; i++) {
-    await sleep2(500);
-    pages = await evaluateOn(page, T2, listPagesScript);
+    await sleep(500);
+    pages = await evaluateOn(page, T, listPagesScript);
   }
   const createdIndex = pages.findIndex((p) => !idsBefore.has(p.id));
   const created = createdIndex >= 0 ? pages[createdIndex] : void 0;
@@ -4222,23 +3731,26 @@ async function addPage(name) {
     w.stop();
     throw new Error('La pagina no aparecio tras pulsar "Anadir pagina".');
   }
-  await sleep2(1500);
-  const rn = await evaluateOn(page, T2, renamePageScript, { pageId: created.id, name });
-  await sleep2(2e3);
+  await sleep(1500);
+  const rn = await evaluateOn(page, T, renamePageScript, { pageId: created.id, name });
+  await sleep(2e3);
   w.stop();
   if (!rn.ok) throw new Error(rn.error);
-  await renamePageUi(createdIndex, name).catch((e) => learn("note", "rename_page_ui_failed", { text: String(e.message).slice(0, 200) }));
+  const nd = await evaluateOn(page, T + 5e3, navDispatchScript, { type: "UPDATE NAV ITEM NAME", payload: { itemId: created.id, displayName: name } });
+  if (!nd.ok) learn("note", "rename_page_nav_failed", { text: String(nd.error).slice(0, 200) });
+  const nav2 = await evaluateOn(page, T, navPagesScript);
   learn("create_ok", "page", { source: "toolbar+rename" });
-  return { ok: true, pageId: created.id, index: createdIndex, name, url: page.url(), saves: w.statuses };
+  return { ok: true, pageId: created.id, index: nav2.findIndex((p) => p.pageId === created.id), name, url: page.url(), saves: w.statuses };
 }
 async function renamePage(pageId, name) {
   const { page } = await requireEditMode();
-  const r = await evaluateOn(page, T2, renamePageScript, { pageId, name });
+  const r = await evaluateOn(page, T, renamePageScript, { pageId, name });
   if (!r.ok) throw new Error(r.error);
-  await sleep2(1500);
-  const idx = (await evaluateOn(page, T2, listPagesScript)).findIndex((p) => p.id === pageId);
-  const nav = idx >= 0 ? await renamePageUi(idx, name) : null;
-  return { ...r, navigation: nav?.displayNames };
+  await sleep(1500);
+  const d = await evaluateOn(page, T + 5e3, navDispatchScript, { type: "UPDATE NAV ITEM NAME", payload: { itemId: pageId, displayName: name } });
+  if (!d.ok) throw new Error(d.error);
+  const nav2 = await evaluateOn(page, T, navPagesScript);
+  return { ...r, navigation: nav2.map((p) => p.displayName) };
 }
 var RECIPES = {
   "simple-treemap": { dims: ["text", "text"], metrics: 1 },
@@ -4262,21 +3774,21 @@ var RECIPES = {
 async function synthesizeTemplates(types, opts = {}) {
   const { page } = await requireEditMode();
   const known = new Set(listTemplates().map((t) => t.type));
-  const ds = await evaluateOn(page, T2, readDataSourcesScript);
+  const ds = await evaluateOn(page, T, readDataSourcesScript);
   const results = [];
   for (const type of types) {
     if (known.has(type)) {
       results.push({ type, ok: true, skipped: "ya hay plantilla" });
       continue;
     }
-    const s = await evaluateOn(page, T2, synthesizeComponentScript, { type, box: { x: 20, y: 20, width: 400, height: 300 }, ...opts.pageId ? { pageId: opts.pageId } : {} });
+    const s = await evaluateOn(page, T, synthesizeComponentScript, { type, box: { x: 20, y: 20, width: 400, height: 300 }, ...opts.pageId ? { pageId: opts.pageId } : {} });
     if (!s.ok) {
       learn("create_fail", type, { source: "synth", error: s.error });
       results.push({ type, ok: false, error: s.error });
       continue;
     }
     const id = s.componentId;
-    const dsId = await evaluateOn(page, T2, readComponentConfigScript, id).then((r) => r.config?.config?.datasource?.keys?.dataset?.value?.id);
+    const dsId = await evaluateOn(page, T, readComponentConfigScript, id).then((r) => r.config?.config?.datasource?.keys?.dataset?.value?.id);
     const src = ds.dataSources.find((d) => d.dataSourceId === dsId) ?? ds.dataSources.find((d) => d.fields.length);
     const fields = src?.fields ?? [];
     const BAD = /(^|_)id(_|$)|url|imagen|image|comentario|lat_long/i;
@@ -4315,8 +3827,8 @@ async function synthesizeTemplates(types, opts = {}) {
       continue;
     }
     const w = watchSaves(page);
-    const b = await evaluateOn(page, T2 + 1e4, bindFieldsScript, { componentId: id, dimensions: dims, metrics, clearDimensions: !dims.length, ...Object.keys(slots).length ? { slots } : {} });
-    await sleep2(2500);
+    const b = await evaluateOn(page, T + 1e4, bindFieldsScript, { componentId: id, dimensions: dims, metrics, clearDimensions: !dims.length, ...Object.keys(slots).length ? { slots } : {} });
+    await sleep(2500);
     w.stop();
     if (!b.ok || w.statuses.some((x) => x >= 400)) {
       learn("save_rejected", type, { source: "synth", statuses: w.statuses, error: b.error });
@@ -4324,11 +3836,11 @@ async function synthesizeTemplates(types, opts = {}) {
       await reloadReport();
       continue;
     }
-    const cfg = await evaluateOn(page, T2, readComponentConfigScript, id);
+    const cfg = await evaluateOn(page, T, readComponentConfigScript, id);
     if (cfg.ok) saveTemplate(type, cfg.config, { source: "synthesized", fields: { dims, metrics } });
     learn("create_ok", type, { source: "synth" });
-    await evaluateOn(page, T2, deleteComponentScript, id);
-    await sleep2(1500);
+    await evaluateOn(page, T, deleteComponentScript, id);
+    await sleep(1500);
     results.push({ type, ok: true, status: w.statuses });
   }
   return { results, templates: listTemplates().map((t) => t.type) };
@@ -4338,7 +3850,7 @@ async function seedTemplatesFromUi(labels) {
   const results = [];
   await page.bringToFront();
   await page.setViewport({ width: 1900, height: 1100 });
-  await sleep2(1e3);
+  await sleep(1e3);
   try {
     for (const label of labels) {
       const before = new Set(await page.evaluate(() => window.angular.element(document.body).injector().get("legoUndoRedoService").report.pages.flatMap((p) => p.components.map((c) => c.getId()))));
@@ -4350,7 +3862,7 @@ async function seedTemplatesFromUi(labels) {
         if (b) b.click();
         return !!b;
       }, isControl);
-      await sleep2(900);
+      await sleep(900);
       const picked = opened && await page.evaluate((l, ctl) => {
         const panes = Array.from(document.querySelectorAll(".cdk-overlay-pane"));
         const pane = panes[panes.length - 1] || document;
@@ -4365,7 +3877,7 @@ async function seedTemplatesFromUi(labels) {
         learn("method_missing", `insert-menu:${label}`);
         continue;
       }
-      await sleep2(500);
+      await sleep(500);
       const box = await page.evaluate(() => {
         const c = document.querySelector(".ng2-canvas-container");
         const r = c ? c.getBoundingClientRect() : null;
@@ -4376,7 +3888,7 @@ async function seedTemplatesFromUi(labels) {
         continue;
       }
       await page.mouse.click(box.x + 80, box.y + 80);
-      await sleep2(2500);
+      await sleep(2500);
       const added = await page.evaluate((prev) => {
         const rep = window.angular.element(document.body).injector().get("legoUndoRedoService").report;
         const all = rep.pages.flatMap((p) => p.components);
@@ -4392,8 +3904,8 @@ async function seedTemplatesFromUi(labels) {
       saveTemplate(added.type, added.config, { source: isControl ? "control-menu" : "insert-menu", label: item });
       saveTemplate(`${added.type}@${slug}`, added.config, { source: isControl ? "control-menu" : "insert-menu", label: item });
       learn("create_ok", added.type, { source: "insert-menu" });
-      await evaluateOn(page, T2, deleteComponentScript, added.id);
-      await sleep2(1500);
+      await evaluateOn(page, T, deleteComponentScript, added.id);
+      await sleep(1500);
       results.push({ label, ok: true, type: added.type });
     }
   } finally {
@@ -4403,16 +3915,16 @@ async function seedTemplatesFromUi(labels) {
 }
 async function uxAudit() {
   const page = await getReportPage();
-  const facts = await evaluateOn(page, T2, uxFactsScript);
-  const diag = await evaluateOn(page, T2, diagnoseReportScript);
+  const facts = await evaluateOn(page, T, uxFactsScript);
+  const diag = await evaluateOn(page, T, diagnoseReportScript);
   return auditUx(facts, diag.issues);
 }
 async function addSourceField(opts) {
   const { page } = await requireEditMode();
   await page.bringToFront();
   await page.setViewport({ width: 1900, height: 1100 });
-  await sleep2(1e3);
-  const clickText = async (selector, re) => {
+  await sleep(1e3);
+  const clickText2 = async (selector, re) => {
     const box = await page.evaluate((sel, src, flags) => {
       const rx = new RegExp(src, flags);
       const el = Array.from(document.querySelectorAll(sel)).find((e) => e.offsetParent && rx.test((e.innerText || "").trim()));
@@ -4433,35 +3945,39 @@ async function addSourceField(opts) {
     return { name: (name || "").split("\n")[0], scope: hit ? hit.match(word)[1] : "" };
   });
   const open = async () => {
-    if (!await clickText("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) throw new Error('No se encontro "Anadir un campo" en el panel Datos (abre el panel Datos).');
-    await sleep2(1200);
-    if (!await clickText("[role=menuitem], .mat-mdc-menu-item", /(Añadir campo calculado|Add calculated field)/)) throw new Error('No aparecio "Anadir campo calculado".');
-    await sleep2(2500);
+    if (!await clickText2("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) {
+      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-PZTPV6CP.js");
+      await selectSourceChart2(page, opts.source && opts.source.startsWith("@") ? opts.source : void 0);
+      if (!await clickText2("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) throw new Error('No se encontro "Anadir un campo" en el panel Datos.');
+    }
+    await sleep(1200);
+    if (!await clickText2("[role=menuitem], .mat-mdc-menu-item", /(Añadir campo calculado|Add calculated field)/)) throw new Error('No aparecio "Anadir campo calculado".');
+    await sleep(2500);
   };
   const close = async () => {
-    await clickText("button", /^(Hecho|Done)$/);
-    await sleep2(2e3);
+    await clickText2("button", /^(Hecho|Done)$/);
+    await sleep(2e3);
   };
   try {
     await open();
     let src = await editorSource();
     if (opts.source && !src.name.toLowerCase().includes(opts.source.toLowerCase())) {
-      await clickText("button", /^(Cancelar|Cancel)$/);
+      await clickText2("button", /^(Cancelar|Cancel)$/);
       await close();
       const escaped = opts.source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      if (!await clickText("*", new RegExp(escaped, "i"))) throw new Error(`No hay un origen "${opts.source}" en el panel Datos.`);
-      await sleep2(1500);
+      if (!await clickText2("*", new RegExp(escaped, "i"))) throw new Error(`No hay un origen "${opts.source}" en el panel Datos.`);
+      await sleep(1500);
       await open();
       src = await editorSource();
       if (!src.name.toLowerCase().includes(opts.source.toLowerCase())) throw new Error(`El editor de campos abrio "${src.name}", no "${opts.source}".`);
     }
     if (!/^(Insertada|Embedded)$/.test(src.scope) && !opts.allowShared) {
-      await clickText("button", /^(Cancelar|Cancel)$/);
+      await clickText2("button", /^(Cancelar|Cancel)$/);
       await close();
       throw new Error(`El origen "${src.name}" es reutilizable (${src.scope || "ambito desconocido"}): el campo apareceria en todos los informes que lo usan. Repite con allowShared si es lo que quieres.`);
     }
     const fieldId = await page.evaluate((name, formula) => {
-      const inputs = Array.from(document.querySelectorAll("input.gmat-mdc-input")).filter((i) => i.offsetParent);
+      const inputs = Array.from(document.querySelectorAll("input.gmat-mdc-input")).filter((i) => i.offsetParent && !i.closest("[class*=propert]"));
       const nameInput = inputs.find((i) => !/^calc_/.test(i.value));
       const idInput = inputs.find((i) => /^calc_/.test(i.value));
       if (!nameInput) return null;
@@ -4475,15 +3991,15 @@ async function addSourceField(opts) {
       return idInput ? idInput.value : "";
     }, opts.name, opts.formula);
     if (fieldId === null) throw new Error("No se encontraron los campos Nombre/Formula del editor.");
-    await sleep2(2500);
-    const saved = await clickText("button:not([disabled])", /^(Guardar|Save)$/);
+    await sleep(2500);
+    const saved = await clickText2("button:not([disabled])", /^(Guardar|Save)$/);
     if (!saved) {
       const why = await page.evaluate(() => Array.from(document.querySelectorAll("[class*=error], [class*=invalid]")).filter((e) => e.offsetParent).map((e) => (e.innerText || "").trim()).filter(Boolean).join(" | ").slice(0, 300));
-      await clickText("button", /^(Cancelar|Cancel)$/);
+      await clickText2("button", /^(Cancelar|Cancel)$/);
       await close();
       throw new Error(`La formula no es valida para el editor: ${why || "Guardar sigue desactivado"}`);
     }
-    await sleep2(3500);
+    await sleep(3500);
     await close();
     learn("create_ok", "source-field", { source: "data-panel" });
     return { ok: true, fieldId, name: opts.name, formula: opts.formula, source: src.name, scope: src.scope };
@@ -4492,27 +4008,790 @@ async function addSourceField(opts) {
   }
 }
 
+// src/ops.ts
+var T2 = Number(process.env.LS_EVAL_TIMEOUT_MS ?? 15e3);
+var sleep2 = (ms) => new Promise((r) => setTimeout(r, ms));
+seedKnowledge();
+var NET_RE = /\/(updatePage|updateReport|batchedDataV2|createReport|deletePage)\b/;
+var netLogs = /* @__PURE__ */ new WeakMap();
+function trackNet(page) {
+  if (netLogs.has(page)) return;
+  const log2 = [];
+  netLogs.set(page, log2);
+  page.on("response", (r) => {
+    const u = r.url();
+    if (!NET_RE.test(u)) return;
+    log2.push({ path: new URL(u).pathname, status: r.status(), t: Date.now() });
+    if (log2.length > 200) log2.splice(0, log2.length - 200);
+  });
+}
+function netSince(page, t0) {
+  return (netLogs.get(page) ?? []).filter((e) => e.t >= t0);
+}
+async function waitReady(page, timeoutMs = 45e3) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < timeoutMs) {
+    const s = await evaluateOn(page, 5e3, readyStateScript).catch(() => null);
+    if (s?.ready) {
+      trackNet(page);
+      await evaluateOn(page, 5e3, installNetMonitorScript).catch(() => void 0);
+      return;
+    }
+    await sleep2(500);
+  }
+  throw new Error("El editor no termino de cargar (legoUndoRedoService sin paginas).");
+}
+async function openReport(url) {
+  const browser = await getBrowser();
+  const target = browser.targets().find((t) => t.type() === "page" && REPORT_URL_RE.test(t.url()));
+  const page = target && await target.page() || await browser.newPage();
+  await page.bringToFront();
+  await page.goto(url, { waitUntil: "networkidle2", timeout: 9e4 });
+  await waitReady(page);
+  return { url: page.url() };
+}
+function reportId(urlOrId) {
+  const m = urlOrId.match(/reporting\/([A-Za-z0-9_-]+)/);
+  const id = m ? m[1] : urlOrId.trim();
+  if (!/^[A-Za-z0-9_-]{10,}$/.test(id)) throw new Error(`No es un id de informe: ${urlOrId}`);
+  return id;
+}
+async function copyReport(source, name) {
+  const sourceId = reportId(source);
+  const copyName = name?.trim() || `Copia de ${sourceId} ${(/* @__PURE__ */ new Date()).toISOString().slice(0, 16).replace("T", " ")}`;
+  const url = `https://datastudio.google.com/reporting/create?c.reportId=${encodeURIComponent(sourceId)}&r.reportName=${encodeURIComponent(copyName)}`;
+  const browser = await getBrowser();
+  const page = await browser.newPage();
+  await page.bringToFront();
+  await page.goto(url, { waitUntil: "networkidle2", timeout: 9e4 });
+  const click = (pattern, scope) => page.waitForFunction(
+    (p, s) => {
+      const re = new RegExp(p, "i");
+      const b = [...document.querySelectorAll(s)].find((x) => re.test(x.innerText.trim()) && !x.disabled);
+      if (!b) return false;
+      b.click();
+      return true;
+    },
+    { timeout: 45e3, polling: 500 },
+    pattern,
+    scope
+  );
+  try {
+    await click("^(Editar y compartir|Edit and share)$", "button");
+    await Promise.race([
+      click("^(Confirmar y guardar|Acknowledge and save|Confirm and save)$", "[role=dialog] button, mat-dialog-container button"),
+      page.waitForFunction(() => /\/reporting\/[^/]+\/page\//.test(location.href), { timeout: 45e3 })
+    ]);
+    await page.waitForFunction(() => /\/reporting\/[^/]+\/page\/[^/]+\/edit/.test(location.href), { timeout: 6e4, polling: 500 });
+  } catch (e) {
+    const shown = await page.evaluate(() => document.body.innerText.slice(0, 300)).catch(() => "");
+    throw new Error(`No se pudo copiar el informe ${sourceId} (${e.message}). La pagina muestra: ${shown}`);
+  }
+  await waitReady(page);
+  const id = reportId(page.url());
+  if (id === sourceId) throw new Error("La URL final es la del original, no la de una copia.");
+  learn("note", "report_copy", { text: "Linking API /reporting/create?c.reportId= -> Editar y compartir -> Confirmar y guardar" });
+  return { sourceId, id, url: page.url(), name: copyName };
+}
+async function reloadReport() {
+  const page = await getReportPage();
+  await page.bringToFront();
+  await page.reload({ waitUntil: "networkidle2", timeout: 9e4 });
+  await waitReady(page);
+  const s = await evaluateOn(page, T2, readyStateScript);
+  return { url: s.url, components: s.components };
+}
+async function editPage() {
+  const { page } = await requireEditMode();
+  trackNet(page);
+  await evaluateOn(page, 5e3, installNetMonitorScript).catch(() => void 0);
+  return page;
+}
+async function exportReport(file) {
+  const page = await getReportPage();
+  const res = await evaluateOn(page, T2, exportReportScript);
+  for (const t of res.types) learn("display_type", t, { seenIn: res.reportId });
+  const learned = await captureTemplatesOn(page);
+  if (file) writeFileSync3(file, JSON.stringify(res, null, 2));
+  return { ...res, learnedTemplates: learned, ...file ? { file } : {} };
+}
+async function captureTemplatesOn(page) {
+  const cap = await evaluateOn(page, T2, captureTemplatesScript);
+  for (const t of cap.registeredTypes) learn("display_type", t, { registered: true });
+  const learned = [];
+  for (const [type, tpl] of Object.entries(cap.templates)) {
+    if (saveTemplate(type, tpl.config, { url: cap.url.split("?")[0], fromComponent: tpl.fromComponent, dataSourceId: tpl.dataSourceId }))
+      learned.push(type);
+  }
+  return learned;
+}
+async function captureTemplates() {
+  const page = await getReportPage();
+  const learned = await captureTemplatesOn(page);
+  const s = summary();
+  return { learned, known: s.templates, registeredTypes: s.displayTypes.length };
+}
+async function diagnoseWithKnowledge() {
+  const page = await getReportPage();
+  const res = await evaluateOn(page, T2, diagnoseReportScript);
+  const issues = res.issues.map((i) => {
+    const m = i.message.match(/reason (\d+)\):\s*([^|]*)\|?\s*([^|]*)/);
+    if (m) learn("error_reason", m[1], { title: m[2].trim(), description: m[3].trim() });
+    const fix = (m && knownFix(`reason:${m[1]}`)) ?? knownFix(i.code);
+    return fix ? { ...i, fix } : i;
+  });
+  return { ...res, issues };
+}
+async function resolveDataset(page, sel) {
+  if (!sel) return void 0;
+  if (!sel.startsWith("@")) return sel;
+  const field = sel.slice(1).toLowerCase();
+  const ds = await evaluateOn(page, T2, readDataSourcesScript);
+  let hit = ds.dataSources.find((d) => d.fields.some((f) => f.id.toLowerCase() === field || f.name.toLowerCase() === field));
+  if (!hit) {
+    for (const d of ds.dataSources.filter((x) => !x.fields.length)) {
+      const st = await evaluateOn(page, T2, probeStartScript, { datasetId: d.dataSourceId, template: getTemplate("kpi-metric") });
+      if (!st.ok) continue;
+      let pr = { ready: false, fields: [] };
+      for (let i = 0; i < 24 && !pr.ready; i++) {
+        await sleep2(250);
+        pr = await evaluateOn(page, T2, probeReadScript, i === 23);
+      }
+      if (pr.ready) learn("note", `dataset_fields:${d.dataSourceId}`, { text: pr.fields.map((f) => f.name).join(",") });
+      if (pr.fields.some((f) => f.id.toLowerCase() === field || f.name.toLowerCase() === field)) return d.dataSourceId;
+    }
+  }
+  if (!hit) throw new Error(`Ningun origen del informe tiene el campo "${sel.slice(1)}". Anade el origen o revisa el nombre.`);
+  return hit.dataSourceId;
+}
+async function createComponent(o) {
+  const page = await editPage();
+  const datasetId = await resolveDataset(page, o.dataset);
+  const hasFields = !!(o.dimensions?.length || o.metrics?.length || o.slots && Object.keys(o.slots).length);
+  const NO_DIMS = ["gauge-viz", "bulletchart", "kpi-metric"];
+  const t0 = Date.now();
+  const { ensureSeedScript } = await import("./scripts4-Z5M3GITN.js");
+  const seed = await evaluateOn(page, T2, ensureSeedScript, o.pageId);
+  if (seed.seedId) await sleep2(1500);
+  const res = await evaluateOn(page, T2, createComponentScript, {
+    type: o.type,
+    box: o.box,
+    ...o.pageId ? { pageId: o.pageId } : {},
+    ...datasetId ? { datasetId } : {},
+    ...o.padding !== void 0 ? { padding: o.padding } : {},
+    template: o.variant && getTemplate(`${o.type}@${o.variant}`) || getTemplate(o.type),
+    ...o.variant ? { preferTemplate: true } : {},
+    deferSave: hasFields
+  });
+  if (seed.seedId) await deleteComponent(seed.seedId).catch(() => void 0);
+  if (!res.ok) {
+    learn("create_fail", o.type, { error: res.error });
+    throw new Error(res.error);
+  }
+  let bound;
+  if (hasFields) {
+    bound = await evaluateOn(page, T2 + 1e4, bindFieldsScript, {
+      componentId: res.componentId,
+      dimensions: o.dimensions ?? [],
+      metrics: o.metrics ?? [],
+      ...NO_DIMS.includes(o.type) && !o.dimensions?.length ? { clearDimensions: true } : {},
+      ...o.slots ? { slots: o.slots } : {}
+    });
+  }
+  await sleep2(2500);
+  const inPage = await evaluateOn(page, 5e3, readNetLogScript, t0).catch(() => []);
+  const net = [...netSince(page, t0), ...inPage];
+  const rejected = net.filter((e) => /updatePage/.test(e.path) && e.status >= 400);
+  if (rejected.length) {
+    learn("save_rejected", o.type, { source: res.source, status: rejected[0].status });
+    await reloadReport();
+    const fix = knownFix("save_rejected:type_change");
+    throw new Error(`El servidor rechazo el guardado (updatePage ${rejected[0].status}) del ${o.type} creado desde ${res.source}. Se recargo el informe. ${fix ?? ""}`);
+  }
+  learn("create_ok", o.type, { source: res.source?.startsWith("clone") ? "clone" : res.source });
+  return { ...res, ...bound ? { bound } : {} };
+}
+async function deleteComponent(componentId) {
+  const page = await editPage();
+  const t0 = Date.now();
+  const r = await evaluateOn(page, T2, deleteComponentScript, componentId);
+  if (r.ok) {
+    for (let i = 0; i < 24 && !netSince(page, t0).some((e) => /updatePage/.test(e.path)); i++) await sleep2(250);
+    const saved = netSince(page, t0).filter((e) => /updatePage|updateReport/.test(e.path));
+    if (saved.some((e) => e.status >= 400)) {
+      learn("save_rejected", "delete", { statuses: saved.map((e) => e.status) });
+      throw new Error(`El borrado de ${componentId} fue rechazado (${saved.map((e) => e.status).join(",")}).`);
+    }
+    learn("note", "delete_method", { text: r.method });
+    return { ok: true, method: r.method, ...saved.length ? {} : { warning: "Sin respuesta de guardado en 6 s: verifica con reload si es critico." } };
+  }
+  if (r.needsKeyboard) {
+    learn("method_missing", "page.removeComponent", { fallback: "select+Delete" });
+    await page.bringToFront();
+    await page.keyboard.press("Delete");
+    await sleep2(2e3);
+    const still = await evaluateOn(page, T2, componentExistsScript, componentId);
+    if (!still) return { ok: true, method: "select+Delete" };
+    throw new Error(`No se pudo borrar ${componentId} (la tecla Supr no tuvo efecto; \xBFel foco esta en el lienzo?).`);
+  }
+  throw new Error(r.error ?? `No se pudo borrar ${componentId}.`);
+}
+async function applySpec(specOrFile, opts = {}) {
+  const spec = typeof specOrFile === "string" ? loadSpec(specOrFile) : specOrFile;
+  const statePath = opts.statePath ?? (typeof specOrFile === "string" ? specOrFile.replace(/\.json$/i, "") + ".state.json" : void 0);
+  const { issues, components } = lintSpec(spec);
+  const result = { dryRun: !!opts.dryRun, lint: issues, actions: [], ...statePath ? { stateFile: statePath } : {} };
+  if (issues.some((i) => i.severity === "error")) {
+    result.actions = components.map((c) => ({ key: c.key, action: "skip", error: "lint con errores" }));
+    return result;
+  }
+  const state = statePath && existsSync5(statePath) ? JSON.parse(readFileSync5(statePath, "utf8")) : { reportId: null, keys: {} };
+  const page = opts.dryRun ? await getReportPage() : await editPage();
+  const info = await evaluateOn(page, T2, pageInfoScript);
+  if (state.reportId && state.reportId !== info.internalReportId) {
+    log(`El state ${statePath} es de otro informe (${state.reportId}); se ignora el mapeo de ids.`);
+    state.keys = {};
+  }
+  state.reportId = info.internalReportId;
+  if (!opts.dryRun) {
+    const dir = join6(process.env.LS_BACKUP_DIR ?? join6(process.cwd(), "backups"));
+    mkdirSync2(dir, { recursive: true });
+    const file = join6(dir, `${info.internalReportId}-${(/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-")}.json`);
+    writeFileSync3(file, JSON.stringify(await evaluateOn(page, T2, exportReportScript), null, 2));
+    result.backup = file;
+  }
+  if (spec.theme && !opts.dryRun) result.theme = await applyTheme(spec.theme);
+  else if (spec.themePreset && !opts.dryRun) result.theme = await useThemePreset(spec.themePreset);
+  const pageIds = {};
+  const wanted = [...new Set(components.map((c) => c.page).filter((p) => p.startsWith("name:")))].map((p) => p.slice(5));
+  if (wanted.length) {
+    let pages = await listPages();
+    result.pages = [];
+    for (const name of wanted) {
+      let hit = pages.find((p) => p.name === name);
+      let created = false;
+      if (!hit && !opts.dryRun) {
+        await addPage(name);
+        await reloadReport();
+        pages = await listPages();
+        hit = pages.find((p) => p.name === name);
+        created = true;
+      }
+      if (hit) pageIds[`name:${name}`] = hit.id;
+      result.pages.push({ name, pageId: hit?.id ?? "(nueva)", created });
+    }
+  }
+  for (const c of components) {
+    const pageId = c.page === "active" ? void 0 : c.page.startsWith("name:") ? pageIds[c.page] : c.page;
+    const existingId = c.id ?? state.keys[c.key];
+    const exists = existingId ? await evaluateOn(page, T2, componentExistsScript, existingId) : false;
+    if (opts.dryRun) {
+      result.actions.push({ key: c.key, action: exists ? "update" : "create", ...exists ? { componentId: existingId } : {} });
+      continue;
+    }
+    try {
+      if (exists) {
+        await updateExisting(page, existingId, c);
+        state.keys[c.key] = existingId;
+        const extra = await patchIfNeeded(page, existingId, c);
+        result.actions.push({ key: c.key, action: "update", componentId: existingId, ...extra.length ? { warnings: extra } : {} });
+      } else {
+        const r = await createComponent({
+          ...c.variant ? { variant: c.variant } : {},
+          type: c.type,
+          box: { x: c.x, y: c.y, width: c.w, height: c.h },
+          ...pageId ? { pageId } : {},
+          ...c.dataset ? { dataset: c.dataset } : {},
+          dimensions: c.dimensions,
+          metrics: c.metrics,
+          ...c.padding !== void 0 ? { padding: c.padding } : {},
+          ...c.slots ? { slots: c.slots } : {}
+        });
+        state.keys[c.key] = r.componentId;
+        const extra = await patchIfNeeded(page, r.componentId, c);
+        result.actions.push({ key: c.key, action: "create", componentId: r.componentId, warnings: [...r.warnings, ...extra] });
+      }
+    } catch (e) {
+      result.actions.push({ key: c.key, action: exists ? "update" : "create", error: e.message });
+    }
+    if (statePath) writeFileSync3(statePath, JSON.stringify(state, null, 2));
+  }
+  if (!opts.dryRun) {
+    const filterLog = [];
+    for (const p of spec.pages) {
+      const pid = p.page && p.page !== "active" ? p.page : p.name ? pageIds[`name:${p.name}`] : info.activePageId ?? void 0;
+      for (const f of p.filters ?? []) {
+        try {
+          const r = await addFilter(f, pid ?? void 0);
+          filterLog.push({ name: f.name, target: `page:${pid}`, filterId: r.filterId });
+        } catch (e) {
+          filterLog.push({ name: f.name, target: `page:${pid}`, error: e.message });
+        }
+      }
+    }
+    for (const c of components) {
+      const id = state.keys[c.key];
+      for (const f of c.filters ?? []) {
+        if (!id) continue;
+        try {
+          const r = await addFilter(f, id);
+          filterLog.push({ name: f.name, target: id, filterId: r.filterId });
+        } catch (e) {
+          filterLog.push({ name: f.name, target: id, error: e.message });
+        }
+      }
+    }
+    if (filterLog.length) result.filters = filterLog;
+    await reloadReport();
+    result.diagnose = await diagnoseWithKnowledge();
+  }
+  return result;
+}
+async function patchIfNeeded(page, id, c) {
+  const changes = [];
+  if (c.dateRangeDays !== void 0 || c.stripStyles) {
+    const r = await evaluateOn(page, T2, patchComponentScript, {
+      componentId: id,
+      ...c.dateRangeDays !== void 0 ? { dateRangeDays: c.dateRangeDays } : {},
+      ...c.stripStyles ? { stripThemeStyles: true } : {}
+    });
+    if (!r.ok) throw new Error(r.error);
+    changes.push(...r.changes);
+  }
+  if (c.text !== void 0) {
+    const t = typeof c.text === "string" ? { text: c.text } : c.text;
+    const { setText: setText2 } = await import("./ops4-PZTPV6CP.js");
+    await setText2(id, t.text, { ...t.size ? { size: t.size } : {}, ...t.bold ? { bold: true } : {}, ...t.color ? { color: t.color } : {} });
+    changes.push("text");
+  }
+  if (c.parameter) {
+    const { setControlParameter: setControlParameter2 } = await import("./ops4-PZTPV6CP.js");
+    await setControlParameter2(id, c.parameter);
+    changes.push(`parameter:${c.parameter}`);
+  }
+  return changes;
+}
+async function patchComponent(args) {
+  const page = await editPage();
+  const r = await evaluateOn(page, T2, patchComponentScript, args);
+  if (!r.ok) throw new Error(r.error);
+  return r;
+}
+async function updateExisting(page, id, c) {
+  await evaluateOn(page, T2, applyBoxModelScript, {
+    componentId: id,
+    position: { x: c.x, y: c.y },
+    dimensions: { width: c.w, height: c.h },
+    ...c.padding !== void 0 ? { padding: { top: c.padding, right: c.padding, bottom: c.padding, left: c.padding } } : {}
+  });
+  if (c.dimensions.length || c.metrics.length || c.slots) {
+    const r = await evaluateOn(page, T2 + 1e4, bindFieldsScript, {
+      componentId: id,
+      dimensions: c.dimensions,
+      metrics: c.metrics,
+      ...["gauge-viz", "bulletchart", "kpi-metric"].includes(c.type) && !c.dimensions.length ? { clearDimensions: true } : {},
+      ...c.slots ? { slots: c.slots } : {}
+    });
+    if (!r.ok) throw new Error(r.error);
+  }
+}
+async function findOrphans(specFiles) {
+  const known = /* @__PURE__ */ new Set();
+  for (const f of specFiles) {
+    const st = f.replace(/\.json$/i, "") + ".state.json";
+    if (existsSync5(st)) for (const id of Object.values(JSON.parse(readFileSync5(st, "utf8")).keys)) known.add(id);
+  }
+  const ex = await exportReport();
+  return ex.pages.flatMap(
+    (p) => p.components.filter((c) => !known.has(c.id)).map((c) => ({ page: p.name || p.id, id: c.id, type: c.config.display.type, box: [c.attribute.left, c.attribute.top, c.attribute.width, c.attribute.height] }))
+  );
+}
+
+// src/ops4.ts
+var T3 = Number(process.env.LS_EVAL_TIMEOUT_MS ?? 15e3);
+var sleep3 = (ms) => new Promise((r) => setTimeout(r, ms));
+var JOIN_TYPES = { inner: 1, full: 2, left: 3, right: 4, cross: 101 };
+async function clickComponents(page, ids, opts = {}) {
+  await page.keyboard.press("Escape");
+  await sleep3(300);
+  const pts = await evaluateOn(page, T3, componentPointsScript, ids);
+  if (pts.some((p) => !p)) throw new Error(`No se encontraron en el lienzo: ${ids.filter((_, i) => !pts[i]).join(", ")}`);
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i];
+    if (i > 0) await page.keyboard.down("Shift");
+    await page.mouse.click(p.x, p.y);
+    if (i > 0) await page.keyboard.up("Shift");
+    await sleep3(500);
+  }
+  if (opts.button === "right") {
+    const last = pts[pts.length - 1];
+    await page.mouse.click(last.x, last.y, { button: "right" });
+    await sleep3(1300);
+  }
+  return evaluateOn(page, T3, selectedIdsScript);
+}
+async function clickText(page, re, scope = "*") {
+  const box = await page.evaluate((sel, src, flags) => {
+    const rx = new RegExp(src, flags);
+    const els = Array.from(document.querySelectorAll(sel)).filter((e) => e.offsetParent && e.children.length <= 3 && rx.test((e.innerText || "").trim()));
+    const el = els[els.length - 1];
+    if (!el) return null;
+    el.scrollIntoView({ block: "center" });
+    const r = el.getBoundingClientRect();
+    return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+  }, scope, re.source, re.flags);
+  if (!box) return false;
+  await page.mouse.click(box.x, box.y);
+  return true;
+}
+async function withViewport(page, fn) {
+  await page.bringToFront();
+  await page.setViewport({ width: 1900, height: 1100 });
+  await sleep3(800);
+  try {
+    return await fn();
+  } finally {
+    await page.setViewport(null).catch(() => void 0);
+  }
+}
+async function listBlends() {
+  return evaluateOn(await getReportPage(), T3, listBlendsScript);
+}
+async function updateBlend(args) {
+  const { page } = await requireEditMode();
+  const jt = args.joinType ? JOIN_TYPES[args.joinType] : void 0;
+  if (args.joinType && jt === void 0) throw new Error(`joinType no valido: ${args.joinType}. Usa ${Object.keys(JOIN_TYPES).join(", ")}.`);
+  const r = await evaluateOn(page, T3, updateBlendScript, { blendId: args.blendId, ...args.name !== void 0 ? { name: args.name } : {}, ...jt !== void 0 ? { joinType: jt } : {} });
+  if (!r.ok) throw new Error(r.error);
+  await sleep3(2500);
+  return (await evaluateOn(page, T3, listBlendsScript)).find((b) => b.blendId === args.blendId);
+}
+async function deleteBlend(blendId) {
+  const { page } = await requireEditMode();
+  const r = await evaluateOn(page, T3, deleteBlendScript, blendId);
+  if (!r.ok) throw new Error(r.error);
+  await sleep3(2500);
+  return { ok: true, blendId, remaining: (await evaluateOn(page, T3, listBlendsScript)).map((b) => b.blendId) };
+}
+async function createBlend(o) {
+  if (o.tables.length < 2 || o.tables.length > 5) throw new Error("Un blend combina entre 2 y 5 tablas.");
+  if (o.joinType && JOIN_TYPES[o.joinType] === void 0) throw new Error(`joinType no valido: ${o.joinType}. Usa ${Object.keys(JOIN_TYPES).join(", ")}.`);
+  const { page } = await requireEditMode();
+  const type = o.type ?? "simple-table";
+  const temps = [];
+  return withViewport(page, async () => {
+    try {
+      const n = o.tables.length;
+      const w = Math.max(120, Math.floor((o.box.width - (n - 1) * 10) / n));
+      for (let i = 0; i < n; i++) {
+        const t = o.tables[i];
+        const r = await createComponent({
+          type,
+          box: { x: o.box.x + i * (w + 10), y: o.box.y, width: w, height: Math.max(120, o.box.height) },
+          ...o.pageId ? { pageId: o.pageId } : {},
+          dataset: t.dataset,
+          dimensions: t.dimensions,
+          metrics: t.metrics ?? []
+        });
+        if (!r.componentId) throw new Error(`No se pudo crear la tabla temporal ${i + 1}.`);
+        temps.push(r.componentId);
+      }
+      await reloadReport();
+      const p = await getReportPage();
+      await p.setViewport({ width: 1900, height: 1100 });
+      await sleep3(1500);
+      const before = await evaluateOn(p, T3, blendSnapshotScript);
+      let selected = await clickComponents(p, temps, { button: "right" });
+      if (temps.some((id) => !selected.includes(id))) {
+        selected = await clickComponents(p, temps, { button: "right" });
+        if (temps.some((id) => !selected.includes(id))) throw new Error(`No se pudieron seleccionar las tablas temporales (seleccionadas: ${selected.join(", ")}).`);
+      }
+      const item = await evaluateOn(p, T3, menuItemPointScript, ["Combinar datos", "Blend data"]);
+      if (!item) throw new Error('El menu contextual no tiene "Combinar datos".');
+      if (item.disabled) throw new Error('"Combinar datos" esta desactivado: hacen falta de 2 a 5 graficos sin combinar, de tipos que se puedan combinar.');
+      await p.mouse.click(item.x, item.y);
+      let after = before;
+      for (let i = 0; i < 20; i++) {
+        await sleep3(700);
+        after = await evaluateOn(p, T3, blendSnapshotScript);
+        if (after.blends.length > before.blends.length && after.blended.length > before.blended.length) break;
+      }
+      const blendId = after.blends.find((b) => !before.blends.includes(b));
+      const componentId = after.blended.find((c) => !before.blended.includes(c));
+      if (!blendId || !componentId) {
+        learn("create_fail", "blend", { error: "no blend after menu" });
+        throw new Error("El editor no creo la combinacion (si se abrio el editor de combinaciones, las tablas no comparten ninguna dimension para unirse).");
+      }
+      await clickText(p, /^(close\s*)?(CERRAR|CLOSE)$/);
+      for (const id of temps.splice(0)) await deleteComponent(id).catch(() => void 0);
+      if (o.name || o.joinType) {
+        const r = await evaluateOn(p, T3, updateBlendScript, { blendId, ...o.name ? { name: o.name } : {}, ...o.joinType ? { joinType: JOIN_TYPES[o.joinType] } : {} });
+        if (!r.ok) throw new Error(r.error);
+        await sleep3(2500);
+      }
+      await setComponentBoxModel({ componentId, position: { x: o.box.x, y: o.box.y }, dimensions: { width: o.box.width, height: o.box.height } });
+      let bound;
+      if (o.dimensions?.length || o.metrics?.length) {
+        bound = await bindFieldsToComponent({ componentId, dimensions: o.dimensions ?? [], metrics: o.metrics ?? [] });
+      }
+      learn("create_ok", "blend", { tables: o.tables.length });
+      const blend = (await evaluateOn(p, T3, listBlendsScript)).find((b) => b.blendId === blendId);
+      return { ok: true, blendId, componentId, blend, ...bound ? { bound } : {} };
+    } finally {
+      for (const id of temps) await deleteComponent(id).catch(() => void 0);
+    }
+  });
+}
+async function selectSourceChart(page, source) {
+  const dsId = source ? await resolveDataset(page, source) : void 0;
+  const target = await page.evaluate((ds) => {
+    const rep = window.angular.element(document.body).injector().get("legoUndoRedoService").report;
+    const pid = (window.location.pathname.match(/\/page\/([^/]+)/) || [])[1];
+    const pg = rep.pages.find((p) => p.getId() === pid) || rep.pages[0];
+    const c = pg.components.find((x) => {
+      try {
+        const k = x.config.config.datasource.keys;
+        const id = k.dataset && k.dataset.value && k.dataset.value.id;
+        return id && (!ds || id === ds) && !(k.dataViewActive && k.dataViewActive.value);
+      } catch {
+        return false;
+      }
+    });
+    return c ? String(c.getId()) : null;
+  }, dsId ?? null);
+  if (!target) throw new Error(`No hay en esta pagina ningun grafico del origen ${source ?? ""}: el panel Datos solo ofrece sus campos con uno seleccionado.`);
+  await clickComponents(page, [target]);
+  await sleep3(800);
+  return target;
+}
+var PARAM_TYPES = {
+  text: /^(Texto|Text)$/,
+  integer: /^(Número \(entero\)|Number \(whole\)|Number \(integer\))$/,
+  decimal: /^(Número \(decimal\)|Number \(decimal\))$/,
+  boolean: /^(Booleano|Boolean)$/
+};
+async function addParameter(o) {
+  const { page } = await requireEditMode();
+  const type = o.type ?? "text";
+  if (!PARAM_TYPES[type]) throw new Error(`type no valido: ${type}. Usa text, integer, decimal o boolean.`);
+  const allowed = o.allowed ?? (o.values?.length ? "list" : o.min !== void 0 || o.max !== void 0 ? "range" : "any");
+  return withViewport(page, async () => {
+    await selectSourceChart(page, o.source);
+    if (!await clickText(page, /^(add_circle\s*)?(Añadir un parámetro|Add a parameter)$/)) throw new Error('No se encontro "A\xF1adir un parametro" en el panel Datos.');
+    await sleep3(2500);
+    const fill = async (pick, value) => {
+      const pt = await page.evaluate((how) => {
+        const inputs = Array.from(document.querySelectorAll("input")).filter((i) => i.offsetParent && !i.closest("[class*=propert]") && i.type !== "radio" && i.type !== "search");
+        const label = (i) => (i.closest("mat-form-field, .mat-mdc-form-field")?.innerText || "").trim();
+        const [kind, arg] = how.split(":");
+        let el;
+        if (kind === "ph") el = inputs.filter((i) => new RegExp(arg, "i").test(i.placeholder)).pop();
+        else if (kind === "value") el = inputs.filter((i) => i.value === arg).pop();
+        else if (kind === "label") el = inputs.filter((i) => new RegExp(arg, "i").test(label(i))).pop();
+        else if (kind === "emptyph") el = inputs.filter((i) => new RegExp(arg, "i").test(i.placeholder) && !i.value).pop();
+        if (!el) return null;
+        el.scrollIntoView({ block: "center" });
+        const r = el.getBoundingClientRect();
+        return { x: r.x + 15, y: r.y + r.height / 2 };
+      }, pick);
+      if (!pt) throw new Error(`Campo del formulario no encontrado (${pick}).`);
+      await page.mouse.click(pt.x, pt.y);
+      await page.keyboard.down("Control");
+      await page.keyboard.press("a");
+      await page.keyboard.up("Control");
+      await page.keyboard.type(value, { delay: 20 });
+      await sleep3(400);
+    };
+    const cancel = async () => {
+      await clickText(page, /^(Cancelar|Cancel)$/);
+      await sleep3(800);
+      await clickText(page, /^(Descartar|Discard)( cambios| changes)?$/);
+      await sleep3(500);
+      await clickText(page, /^(Hecho|Done)$/);
+    };
+    const id = o.id ?? o.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9_.]+/g, "_").replace(/^_+|_+$/g, "");
+    try {
+      await fill("ph:^(Nombre del par\xE1metro|Parameter name)$", o.name);
+      await sleep3(500);
+      await fill("label:(ID del par\xE1metro|Parameter ID)", id);
+      if (type !== "text") {
+        if (!await clickText(page, /^(Texto|Text)$/)) throw new Error('No se encontro el selector "Tipo de datos".');
+        await sleep3(800);
+        if (!await clickText(page, PARAM_TYPES[type])) throw new Error(`Tipo ${type} no disponible.`);
+        await sleep3(800);
+      }
+      if (allowed !== "any") {
+        const re = allowed === "list" ? /^(Lista de valores|List of values)$/ : /^(Rango|Range)$/;
+        if (!await clickText(page, re)) throw new Error(`Opcion "${allowed}" no disponible para el tipo ${type}.`);
+        await sleep3(800);
+      }
+      if (allowed === "range") {
+        if (o.min !== void 0) await fill("ph:^M[i\xED]n", String(o.min));
+        if (o.max !== void 0) await fill("ph:^M[a\xE1]x", String(o.max));
+      }
+      if (allowed === "list") {
+        const vals = o.values ?? [];
+        for (let i = 0; i < vals.length; i++) {
+          if (i > 0) {
+            if (!await clickText(page, /^(Añadir otro valor|Add another value)$/)) throw new Error('No se encontro "Anadir otro valor".');
+            await sleep3(600);
+          }
+          await fill("ph:^(Valor|Value)$", String(vals[i].value));
+          if (vals[i].label) await fill("ph:^(Etiqueta|Label)$", vals[i].label);
+        }
+      }
+      if (o.default !== void 0 && type !== "boolean" && allowed !== "list") {
+        await fill("label:(predeterminado|Default)", String(o.default)).catch(async () => fill("ph:^[0-9.]+$", String(o.default)));
+      }
+      await sleep3(1e3);
+      const enabled = await page.evaluate(() => {
+        const b = Array.from(document.querySelectorAll("button")).find((x) => x.offsetParent && /^(Guardar|Save)$/.test(x.innerText.trim()));
+        return b ? !b.disabled : false;
+      });
+      if (!enabled) {
+        const why = await page.evaluate(() => Array.from(document.querySelectorAll("mat-error, .mat-mdc-form-field-error")).filter((e) => e.offsetParent).map((e) => e.innerText.trim()).join(" | "));
+        throw new Error(`El editor no deja guardar el parametro: ${why || "Guardar desactivado"}`);
+      }
+      await clickText(page, /^(Guardar|Save)$/);
+      await sleep3(3e3);
+      await clickText(page, /^(Hecho|Done)$/);
+      await sleep3(2e3);
+    } catch (e) {
+      await cancel().catch(() => void 0);
+      throw e;
+    }
+    const seen = await page.evaluate((name) => Array.from(document.querySelectorAll("*")).some((e) => e.offsetParent && e.children.length === 0 && (e.innerText || "").trim() === name), o.name);
+    learn(seen ? "create_ok" : "create_fail", "parameter", { type, allowed });
+    return {
+      ok: seen,
+      name: o.name,
+      id,
+      type,
+      allowed,
+      ...o.values ? { values: o.values } : {},
+      ...o.min !== void 0 ? { min: o.min } : {},
+      ...o.max !== void 0 ? { max: o.max } : {},
+      ...o.default !== void 0 ? { default: o.default } : {},
+      note: "En formulas usa el nombre visible del parametro, no su id."
+    };
+  });
+}
+async function navPages() {
+  return evaluateOn(await getReportPage(), T3, navPagesScript);
+}
+async function nav(type, payload) {
+  const { page } = await requireEditMode();
+  const r = await evaluateOn(page, T3 + 5e3, navDispatchScript, { type, payload });
+  if (!r.ok) throw new Error(r.error);
+  return evaluateOn(page, T3, navPagesScript);
+}
+async function movePage(pageId, index) {
+  const pages = await navPages();
+  const it = pages.find((p) => p.pageId === pageId);
+  if (!it) throw new Error(`No hay una pagina ${pageId}.`);
+  return nav("MOVE NAV ITEM", { itemId: pageId, position: { sectionId: it.sectionId ?? void 0, index } });
+}
+async function deletePages(pageIds) {
+  const pages = await navPages();
+  const missing = pageIds.filter((id) => !pages.some((p) => p.pageId === id));
+  if (missing.length) throw new Error(`No existen: ${missing.join(", ")}.`);
+  if (pageIds.length >= pages.length) throw new Error("No se pueden borrar todas las paginas.");
+  return nav("REMOVE PAGES", { pageIds });
+}
+async function setPageVisibility(pageId, v) {
+  let out = await navPages();
+  if (v.hiddenFromNav !== void 0) out = await nav("UPDATE NAV ITEM HIDDEN FROM NAV", { itemId: pageId, hiddenFromNav: v.hiddenFromNav });
+  if (v.hiddenFromViewer !== void 0) out = await nav("UPDATE NAV ITEM HIDDEN FROM VIEWER", { itemId: pageId, hiddenFromViewer: v.hiddenFromViewer });
+  return out.find((p) => p.pageId === pageId);
+}
+async function duplicatePage(pageId, name) {
+  const { page, info } = await requireEditMode();
+  const before = await navPages();
+  if (!before.some((p2) => p2.pageId === pageId)) throw new Error(`No hay una pagina ${pageId}.`);
+  if (info.pageId !== pageId) await openReport(`https://datastudio.google.com/reporting/${info.reportId}/page/${pageId}/edit`);
+  const p = await getReportPage();
+  return withViewport(p, async () => {
+    if (!await clickText(p, /^(Página|Page)$/)) throw new Error('No se encontro el menu "Pagina".');
+    await sleep3(800);
+    if (!await clickText(p, /^(Duplicar página|Duplicate page)$/)) throw new Error('No se encontro "Duplicar pagina".');
+    let after = before;
+    for (let i = 0; i < 15; i++) {
+      await sleep3(800);
+      after = await evaluateOn(p, T3, navPagesScript);
+      if (after.length > before.length) break;
+    }
+    const created = after.find((x) => !before.some((b) => b.pageId === x.pageId));
+    if (!created) throw new Error("La pagina no se duplico.");
+    if (name) {
+      const r = await evaluateOn(p, T3 + 5e3, navDispatchScript, { type: "UPDATE NAV ITEM NAME", payload: { itemId: created.pageId, displayName: name } });
+      if (!r.ok) throw new Error(r.error);
+    }
+    return (await evaluateOn(p, T3, navPagesScript)).find((x) => x.pageId === created.pageId);
+  });
+}
+async function arrangeComponents(componentIds, op, pageId) {
+  const { page } = await requireEditMode();
+  const r = await evaluateOn(page, T3, arrangeScript, { componentIds, op, ...pageId ? { pageId } : {} });
+  if (!r.ok) throw new Error(r.error);
+  await sleep3(2500);
+  return r;
+}
+async function setControlParameter(componentId, parameterId) {
+  const { page } = await requireEditMode();
+  const r = await evaluateOn(page, T3, setControlParameterScript, { componentId, parameterKey: parameterId });
+  if (!r.ok) throw new Error(r.error);
+  await sleep3(2500);
+  return { ok: true, componentId, parameterId, note: "Recarga (reload_report) para ver el control con los valores del parametro." };
+}
+async function setText(componentId, text, opts = {}) {
+  const { page } = await requireEditMode();
+  const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  let html = opts.html ? text : text.split("\n").map((l) => `<div>${esc(l) || "<br>"}</div>`).join("");
+  if (!opts.html && (opts.size || opts.bold || opts.color)) {
+    const style = [opts.size ? `font-size:${opts.size}px` : "", opts.color ? `color:${opts.color}` : ""].filter(Boolean).join(";");
+    html = `<div style="${style}">${opts.bold ? `<b>${html}</b>` : html}</div>`;
+  }
+  const r = await evaluateOn(page, T3, setTextScript, { componentId, html });
+  if (!r.ok) throw new Error(r.error);
+  await sleep3(2e3);
+  return { ok: true, componentId };
+}
+
 export {
   log,
+  getReportPage,
   disconnectIfConnected,
+  evaluate,
+  evaluateOn,
+  readLayoutScript,
+  readComponentConfigScript,
+  parseReportUrl,
   attachToReport,
-  getReportLayout,
   setComponentBoxModel,
   inspectDataSources,
   bindFieldsToComponent,
-  getComponentConfig,
   packageRoot,
-  writesAllowed,
-  assertWrite,
-  assertReportUrl,
-  assertJsonPath,
-  sanitizeLearning,
   readLearnings,
   learn,
   listTemplates,
   summary,
   loadSpec,
   lintSpec,
+  JOIN_TYPES,
+  listBlends,
+  updateBlend,
+  deleteBlend,
+  createBlend,
+  selectSourceChart,
+  addParameter,
+  navPages,
+  movePage,
+  deletePages,
+  setPageVisibility,
+  duplicatePage,
+  arrangeComponents,
+  setControlParameter,
+  setText,
   readTheme,
   applyTheme,
   themeLibrary,

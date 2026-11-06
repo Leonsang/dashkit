@@ -396,7 +396,11 @@ export async function bindFieldsScript(args: BindFieldsArgs): Promise<BindFields
   if (typeof comp.updateMetrics !== 'function') return fail(`El tipo "${comp.config.config.display.type}" no admite campos.`);
 
   const dsKeys = comp.config.config.datasource.keys;
-  const dsId = (dsKeys.dataset && dsKeys.dataset.value && dsKeys.dataset.value.id) || report.config.config.datasource.keys.dataset.value.id;
+  // A blended component has no dataset: its source is the blend (dataViewResource), whose
+  // fields only come from comp.getSchema() (verified 2026-11-06).
+  const viewId = dsKeys.dataViewActive && dsKeys.dataViewActive.value && dsKeys.dataViewResource && dsKeys.dataViewResource.value;
+  const dsId = (dsKeys.dataset && dsKeys.dataset.value && dsKeys.dataset.value.id) || viewId ||
+    (report.config.config.datasource.keys.dataset?.value?.id ?? '');
   let concepts: any = {};
   try { concepts = (comp.getSchema && comp.getSchema()?.qe?.concepts) || {}; } catch { /* fall back */ }
   if (!Object.keys(concepts).length) {

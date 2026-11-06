@@ -49,7 +49,8 @@ campos en un origen reutilizable.
 | Crear, colocar y vincular componentes; plantillas y variantes | [componentes.md](references/componentes.md) |
 | Orígenes, ids de campo, agregaciones y campos calculados (de gráfico y de origen) | [campos.md](references/campos.md) |
 | Controles del menú "Añadir un control", filtros de página y de componente, barra de filtros | [controles-y-filtros.md](references/controles-y-filtros.md) |
-| Páginas, temas, auditoría UX y ajustes del informe | [paginas-temas-y-ajustes.md](references/paginas-temas-y-ajustes.md) |
+| Combinar orígenes (blends) y parámetros, con controles que los mueven | [combinaciones-y-parametros.md](references/combinaciones-y-parametros.md) |
+| Páginas (crear, mover, duplicar, ocultar, borrar), temas, auditoría UX y ajustes del informe | [paginas-temas-y-ajustes.md](references/paginas-temas-y-ajustes.md) |
 | Informe como código: spec, `lint`, `apply`, `orphans` | [informe-como-codigo.md](references/informe-como-codigo.md) |
 | Verificar, depurar, exportar y aprender entre sesiones | [revision.md](references/revision.md) |
 | Cómo se comporta el editor (errores pegados, modos, guardados rechazados) | [comportamiento-del-editor.md](references/comportamiento-del-editor.md) |
@@ -65,9 +66,13 @@ usuario trabaje desde la terminal o en scripts.
 
 ## Límites conocidos
 
-- **Blends (combinar orígenes):** no están automatizados. Se crean a mano en *Recurso > Administrar datos
-  combinados*; después los componentes se vinculan con normalidad.
+- **Combinaciones:** se crean, renombran, cambian de unión y borran; no se pueden añadir tablas ni cambiar
+  claves de una existente.
+- **Parámetros:** se crean y se enlazan a controles; no se editan ni se borran, y los de informe (textos
+  dinámicos) son manuales.
 - **Interfaz no oficial:** una actualización de Looker Studio puede romper los scripts. Si
   `get_learnings` muestra `method_missing`, avisa al usuario.
 - **Padding:** algunos tipos no tienen `paddingBottom` (p. ej. `kpi-metric`) y `generic-shape` no tiene
   padding; la herramienta lo avisa en `warnings`.
+- **Sin herramienta:** agrupar y alinear componentes, estilo fino de un gráfico (series, ejes, etiquetas,
+  formato condicional) y secciones de la navegación.

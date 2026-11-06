@@ -24,10 +24,10 @@ motor y no lleva el control de `LS_ALLOW_WRITE`.
 | `list_templates` | — | Tipos de componente con plantilla disponible en knowledge/templates. | `componentes.md` |
 | `create_component` | **type**, **box**, pageId, dataset, dimensions, metrics, padding, slots | Crea un componente (grafico, tabla, scorecard, control...) en modo edicion clonando uno del mismo tipo del informe o usando una plantilla aprendida. | `componentes.md` |
 | `delete_component` | **componentId** | Borra un componente del informe (modo edicion). | `componentes.md` |
-| `patch_component` | **componentId**, dateRangeDays, stripThemeStyles | dateRangeDays: periodo por defecto de un control de fechas (ultimos N dias, movil). | `componentes.md` |
+| `patch_component` | **componentId**, dateRangeDays, stripThemeStyles, parameter, text, textSize, textBold, textColor | dateRangeDays: periodo por defecto de un control de fechas (ultimos N dias, movil). | `componentes.md` |
 | `get_theme` | — | Tema del informe (preset o personalizado) en formato amigable. | `paginas-temas-y-ajustes.md` |
 | `apply_theme` | **theme** | Crea o actualiza el tema personalizado del informe: tipografia, color de texto, relleno, acento, fondo, rejilla, colores de subida/bajada, bordes y paleta de series. | `paginas-temas-y-ajustes.md` |
-| `list_pages` | — | Paginas del informe con id, nombre y numero de componentes. | `paginas-temas-y-ajustes.md` |
+| `list_pages` | — | Paginas en el orden y con el nombre que ve el lector (navegacion), con su nombre interno, componentes y si estan ocultas. | `paginas-temas-y-ajustes.md` |
 | `add_page` | **name** | Anade una pagina vacia con el nombre indicado (modo edicion). | `paginas-temas-y-ajustes.md` |
 | `synthesize_templates` | **types** | Genera plantillas de tipos de componente que no existen en ningun informe disponible (treemap, pivot-table, scatter, bulletchart, gauge-viz, combochart, areachart, sankey, funnel, waterfall, histogram, google-map) creando uno temporal, vinculando campos validos, guardandolo y borrandolo. | `componentes.md` |
 | `audit_ux` | — | Puntua (0-100) la UX del informe: contraste WCAG de texto/acento/series, coherencia con el tema (estilos sobrescritos), paleta (series casi iguales), tipografias, y problemas de layout del diagnostico. | `paginas-temas-y-ajustes.md`, `revision.md` |
@@ -37,11 +37,21 @@ motor y no lleva el control de `LS_ALLOW_WRITE`.
 | `add_filter` | **name**, **field**, op, values, include, dataset, target | Crea un filtro (o reutiliza uno con el mismo nombre) y lo aplica a una pagina (filtro de pagina) o a un componente. | `controles-y-filtros.md` |
 | `detach_filter` | **filterId**, **target** | Quita un filtro (id de list_filters) de la pagina o el componente indicado. | `controles-y-filtros.md` |
 | `seed_templates_from_menu` | **labels** | Inserta opciones del menu "Anadir un grafico" (por su nombre visible, p. | `componentes.md` |
-| `rename_page` | **pageId**, **name** | Renombra una pagina en el modelo y en la navegacion visible (Gestionar paginas > Cambiar nombre -> /updateReportNavigationInfo). | `paginas-temas-y-ajustes.md` |
+| `rename_page` | **pageId**, **name** | Renombra una pagina en el modelo y en la navegacion que ve el lector (accion de navegacion del editor -> /updateReportNavigationInfo). | `paginas-temas-y-ajustes.md` |
 | `report_settings` | patch | Lee o cambia ajustes del informe: viewerFilterBar (barra de filtros de lectores), crossFilterByDefault, viewModeNav, viewModeHeader, viewModeScale, viewModeMargin, viewModeMaxWidth, snapMode, showNavigationInEditMode, width, height. | `paginas-temas-y-ajustes.md` |
 | `lint_report_spec` | **spec** | Valida un spec contra las skills (reticula, lienzo, solapes, filas de KPIs, densidad por pagina) sin tocar el informe. | `informe-como-codigo.md` |
 | `apply_report_spec` | **spec**, dryRun | Crea o actualiza componentes segun el spec (idempotente: recuerda clave->componente en <spec>.state.json). | `informe-como-codigo.md` |
 | `list_orphan_components` | **specs** | Componentes del informe que ningun spec referencia (segun cada <spec>.state.json): restos de pruebas o anadidos a mano. | `informe-como-codigo.md` |
+| `create_blend` | **tables**, **box**, name, joinType, type, pageId, dimensions, metrics | Crea una combinacion de 2 a 5 origenes y un grafico sobre ella, como "Combinar datos" del editor: crea graficos temporales con los campos de cada tabla, los combina (une por las dimensiones que comparten), los borra, nombra la combinacion, fija el tipo de union y coloca y vincula el grafico nuevo. | `combinaciones-y-parametros.md` |
+| `list_blends` | — | Combinaciones (blends) del informe: id, nombre, origenes, uniones con su tipo y claves, campos y graficos que las usan. | `combinaciones-y-parametros.md` |
+| `update_blend` | **blendId**, name, joinType | Cambia el nombre de una combinacion y/o el tipo de todas sus uniones (inner, left, right, full, cross). | `combinaciones-y-parametros.md` |
+| `delete_blend` | **blendId** | Borra una combinacion (blend) que ningun grafico usa. | `combinaciones-y-parametros.md` |
+| `add_parameter` | **name**, type, allowed, values, min, max, default, source, id | Crea un parametro en un origen con el formulario del editor (panel Datos > Anadir un parametro). | `combinaciones-y-parametros.md` |
+| `move_page` | **pageId**, **index** | Mueve una pagina a la posicion index (0 = primera) en la navegacion del informe. | `paginas-temas-y-ajustes.md` |
+| `delete_pages` | **pageIds** | Borra paginas del informe con sus componentes. | `paginas-temas-y-ajustes.md` |
+| `set_page_visibility` | **pageId**, hiddenFromNav, hiddenFromViewer | hiddenFromNav: la quita del menu de navegacion (sigue accesible por enlace). | `paginas-temas-y-ajustes.md` |
+| `duplicate_page` | **pageId**, name | Duplica una pagina con sus componentes, filtros y ajustes (Pagina > Duplicar pagina) y, si se indica, le pone nombre. | `paginas-temas-y-ajustes.md` |
+| `arrange_components` | **componentIds**, **op**, pageId | op: front, back, forward, backward (orden de capas) o report (pasa los componentes a nivel de informe: salen en todas las paginas) / page (los devuelve a pageId). | `componentes.md` |
 | `get_learnings` | raw | Resumen de knowledge/: reason codes vistos, soluciones conocidas, plantillas, resultados de creacion, metodos que faltan y notas. | `revision.md` |
 | `record_learning` | **kind**, **key**, **text** | Guarda un hallazgo para futuras sesiones: una solucion (kind=fix, key "reason:93" o un codigo de issue) o una nota. | `revision.md` |
 
@@ -65,10 +75,20 @@ Cada comando de la CLI tiene su herramienta MCP. Lo que cambia, en la última co
 | `bind <id> --dims --metrics [--append]` | `bind_fields_to_component` | MCP: `mode=append` |
 | `create --type t[@variante] --box x,y,w,h` | `create_component` | MCP: `box{x,y,width,height}`; `type` también admite `@variante`; `slots` solo en MCP y spec |
 | `delete <id>` | `delete_component` | MCP: además `LS_ALLOW_DELETE=1` |
-| `patch <id> --date-days N --strip-styles` | `patch_component` | — |
+| `patch <id> --date-days N --strip-styles --parameter P --text T` | `patch_component` | MCP: `parameter`, `text`, `textSize`, `textBold`, `textColor` |
 | `pages [list]` | `list_pages` | — |
 | `pages add <nombre>` | `add_page` | — |
 | `pages rename <id> <nombre>` | `rename_page` | — |
+| `pages move <id> <indice>` | `move_page` | — |
+| `pages delete <id...>` | `delete_pages` | MCP: además `LS_ALLOW_DELETE=1` |
+| `pages duplicate <id> [nombre]` | `duplicate_page` | — |
+| `pages hide <id> [--nav on\|off] [--viewer on\|off]` | `set_page_visibility` | MCP: `hiddenFromNav`, `hiddenFromViewer` |
+| `arrange <id...> --to front\|back\|forward\|backward\|report\|page` | `arrange_components` | MCP: `op`, `pageId` |
+| `blends [list]` | `list_blends` | — |
+| `blends create <spec.json\|json>` | `create_blend` | Mismo objeto que el MCP |
+| `blends update <blendId> [--name] [--join]` | `update_blend` | MCP: `joinType` |
+| `blends delete <blendId>` | `delete_blend` | MCP: además `LS_ALLOW_DELETE=1` |
+| `params add --name N [--type] [--values a:Etiqueta,b] [--min --max] [--default] [--source]` | `add_parameter` | MCP: `values` [{value,label}], `allowed`, `id` |
 | `theme [get]` | `get_theme` | — |
 | `theme set <json\|f.json>` | `apply_theme` | — |
 | `theme export <f.json>` | `get_theme` | El MCP devuelve el mismo JSON; el agente lo guarda si hace falta |

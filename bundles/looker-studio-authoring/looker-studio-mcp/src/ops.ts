@@ -224,7 +224,7 @@ export async function resolveDataset(page: Page, sel: string | undefined): Promi
   if (!hit) {
     // Sources no component uses yet have an empty schema: probe them with a temporary, unsaved component.
     for (const d of ds.dataSources.filter((x) => !x.fields.length)) {
-      const st = await evaluateOn(page, T, probeStartScript, d.dataSourceId);
+      const st = await evaluateOn(page, T, probeStartScript, { datasetId: d.dataSourceId, template: getTemplate('kpi-metric') });
       if (!st.ok) continue;
       let pr = { ready: false, fields: [] as Array<{ id: string; name: string }> };
       for (let i = 0; i < 24 && !pr.ready; i++) {
@@ -262,6 +262,10 @@ export async function createComponent(o: CreateOptions): Promise<CreateComponent
   const hasFields = !!(o.dimensions?.length || o.metrics?.length || (o.slots && Object.keys(o.slots).length));
   const NO_DIMS = ['gauge-viz', 'bulletchart', 'kpi-metric'];
   const t0 = Date.now();
+  // Empty report: mint ids from a temporary seed made by the editor's own factory.
+  const { ensureSeedScript } = await import('./looker/scripts4.js');
+  const seed = await evaluateOn(page, T, ensureSeedScript, o.pageId);
+  if (seed.seedId) await sleep(1500);
   const res = await evaluateOn(page, T, createComponentScript, {
     type: o.type,
     box: o.box,
@@ -272,6 +276,7 @@ export async function createComponent(o: CreateOptions): Promise<CreateComponent
     ...(o.variant ? { preferTemplate: true } : {}),
     deferSave: hasFields,
   });
+  if (seed.seedId) await deleteComponent(seed.seedId).catch(() => undefined);
   if (!res.ok) {
     learn('create_fail', o.type, { error: res.error });
     throw new Error(res.error);
@@ -452,14 +457,28 @@ export async function applySpec(specOrFile: string | ReportSpec, opts: { dryRun?
 }
 
 async function patchIfNeeded(page: Page, id: string, c: ResolvedComponent): Promise<string[]> {
-  if (c.dateRangeDays === undefined && !c.stripStyles) return [];
-  const r = await evaluateOn(page, T, patchComponentScript, {
-    componentId: id,
-    ...(c.dateRangeDays !== undefined ? { dateRangeDays: c.dateRangeDays } : {}),
-    ...(c.stripStyles ? { stripThemeStyles: true } : {}),
-  });
-  if (!r.ok) throw new Error(r.error);
-  return r.changes;
+  const changes: string[] = [];
+  if (c.dateRangeDays !== undefined || c.stripStyles) {
+    const r = await evaluateOn(page, T, patchComponentScript, {
+      componentId: id,
+      ...(c.dateRangeDays !== undefined ? { dateRangeDays: c.dateRangeDays } : {}),
+      ...(c.stripStyles ? { stripThemeStyles: true } : {}),
+    });
+    if (!r.ok) throw new Error(r.error);
+    changes.push(...r.changes);
+  }
+  if (c.text !== undefined) {
+    const t = typeof c.text === 'string' ? { text: c.text } : c.text;
+    const { setText } = await import('./ops4.js');
+    await setText(id, t.text, { ...(t.size ? { size: t.size } : {}), ...(t.bold ? { bold: true } : {}), ...(t.color ? { color: t.color } : {}) });
+    changes.push('text');
+  }
+  if (c.parameter) {
+    const { setControlParameter } = await import('./ops4.js');
+    await setControlParameter(id, c.parameter);
+    changes.push(`parameter:${c.parameter}`);
+  }
+  return changes;
 }
 
 export async function patchComponent(args: { componentId: string; dateRangeDays?: number; stripThemeStyles?: boolean }) {

@@ -309,7 +309,8 @@ Mecanismo interno: `angular.element(document.body).injector().get('legoUndoRedoS
 
 - Interfaz no oficial: una actualización de Looker Studio/Data Studio puede romperla. Si `legoUndoRedoService` desaparece, las herramientas de lectura usan el DOM como alternativa.
 - Crear componentes requiere una plantilla del tipo: se obtiene clonando uno del informe, con `templates capture`, `seed-ui` (menú del editor) o `synth`.
-- Combinar orígenes (blends) aún no está automatizado.
+- Combinaciones (blends): `create_blend` las crea con el menú "Combinar datos" del editor, y `update_blend` / `delete_blend` las renombran, cambian la unión o las borran. No se pueden añadir tablas ni cambiar las claves de una existente.
+- Parámetros: `add_parameter` los crea en el origen y `patch_component parameter` enlaza un control. En fórmulas se usan por su nombre visible. No se editan ni se borran.
 - Campos calculados: de **gráfico** con `bind --dims|--metrics "=<fórmula>[::BOOLEAN|TEXT|NUMBER] as Nombre"` (una comparación sin tipo sale BOOLEAN); de **origen** con `fields add`, que maneja el editor de campos de la interfaz. Solo los de origen sirven para filtrar con controles. `fields add` se niega en orígenes reutilizables, porque el cambio llegaría a todos los informes que los usan, salvo con `--allow-shared`.
 - `paddingBottom` no existe en algunos tipos (p. ej. `kpi-metric`), y `generic-shape` no tiene padding: la herramienta lo avisa en `warnings`.
 - Usa un perfil de navegador dedicado. El puerto CDP da control total sobre ese navegador a cualquier proceso local.
