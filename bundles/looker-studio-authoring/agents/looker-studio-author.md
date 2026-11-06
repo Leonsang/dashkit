@@ -67,7 +67,7 @@ guías está marcada como [OFICIAL] o [CONVENCIÓN]; respeta la diferencia.
 - **Combinaciones y parámetros:**
   - `create_blend` combina de 2 a 5 orígenes por las dimensiones que comparten
     y deja un gráfico vinculado; `list_blends`, `update_blend`, `delete_blend`.
-  - `add_parameter` crea un parámetro en el origen; en las fórmulas se escribe
+  - `add_parameter`, `update_parameter`, `delete_parameter` crea un parámetro en el origen; en las fórmulas se escribe
     por su nombre visible. `patch_component parameter` hace que un control lo
     mueva.
 - **Texto:** `patch_component text` pone el texto de un cuadro de texto.

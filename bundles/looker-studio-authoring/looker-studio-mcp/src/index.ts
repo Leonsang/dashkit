@@ -27,7 +27,7 @@ import {
   reloadReport,
 } from './ops.js';
 import { loadSpec, type ReportSpec } from './spec.js';
-import { addParameter, arrangeComponents, createBlend, deleteBlend, deletePages, duplicatePage, listBlends, movePage, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
+import { addParameter, arrangeComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
 import { renamePage, reportSettings } from './ops3.js';
 import { addFilter, addPage, addSourceField, detachFilter, updateFilter, applyTheme, listFilters, listPages, readTheme, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
 
@@ -51,10 +51,10 @@ const server = new McpServer(
 const WRITE_TOOLS = new Set([
   'set_component_box_model', 'bind_fields_to_component', 'create_component', 'apply_report_spec', 'patch_component',
   'apply_theme', 'use_theme', 'add_page', 'rename_page', 'synthesize_templates', 'seed_templates_from_menu', 'add_filter',
-  'detach_filter', 'update_filter', 'create_blend', 'update_blend', 'add_parameter', 'move_page', 'set_page_visibility', 'duplicate_page',
+  'detach_filter', 'update_filter', 'create_blend', 'update_blend', 'add_parameter', 'update_parameter', 'move_page', 'set_page_visibility', 'duplicate_page',
   'arrange_components',
 ]);
-const DESTRUCTIVE_TOOLS = new Set(['delete_component', 'delete_pages', 'delete_blend']);
+const DESTRUCTIVE_TOOLS = new Set(['delete_component', 'delete_pages', 'delete_blend', 'delete_parameter']);
 {
   const original = server.registerTool.bind(server) as (...a: unknown[]) => unknown;
   (server as unknown as { registerTool: (...a: unknown[]) => unknown }).registerTool = (name: unknown, config: unknown, handler: unknown) => {
@@ -729,6 +729,42 @@ server.registerTool(
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
   },
   async (args) => run(() => addParameter(args as never)),
+);
+
+server.registerTool(
+  'update_parameter',
+  {
+    title: 'Cambiar un parametro',
+    description:
+      'Cambia un parametro existente en su formulario (icono fx del parametro en el panel Datos): nombre visible (newName), ' +
+      'valores de la lista (values, sustituye todas las filas), rango (min, max) y valor por defecto. El id y el tipo no cambian. ' +
+      'Las formulas lo nombran por su nombre visible: si lo renombras, revisa los campos que lo usan. Necesita en la pagina ' +
+      'actual un grafico de ese origen.',
+    inputSchema: {
+      name: z.string().min(1).describe('Nombre visible actual'),
+      newName: z.string().min(1).optional(),
+      values: z.array(z.object({ value: z.union([z.string(), z.number()]), label: z.string().optional() })).optional(),
+      min: z.number().optional(),
+      max: z.number().optional(),
+      default: z.union([z.string(), z.number()]).optional(),
+      source: z.string().optional().describe('Id de origen o "@campo"'),
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+  },
+  async (args) => run(() => updateParameter(args)),
+);
+
+server.registerTool(
+  'delete_parameter',
+  {
+    title: 'Borrar un parametro',
+    description:
+      'Quita un parametro de su origen (Quitar en su fila de la lista de campos del origen). Los campos y controles que lo usan ' +
+      'quedan en error. Destructiva: pide LS_ALLOW_DELETE=1 y confirmacion del usuario.',
+    inputSchema: { name: z.string().min(1).describe('Nombre visible'), source: z.string().optional().describe('Id de origen o "@campo"') },
+    annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
+  },
+  async (args) => run(() => deleteParameter(args)),
 );
 
 server.registerTool(

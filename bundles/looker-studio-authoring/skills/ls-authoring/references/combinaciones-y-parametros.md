@@ -95,8 +95,26 @@ Crea un control y apúntalo al parámetro con `patch_component componentId param
 Es lo que hace *Campo de control > Parámetros* en el panel: guarda `controlParameter {parameterKey}`, vacía
 la dimensión del control y quita su orden. Recarga para ver el control con los valores del parámetro.
 
-**No se puede (todavía):** editar o borrar un parámetro existente, ni crear parámetros de informe (los de
-los textos dinámicos). Se hace a mano en el editor del origen.
+### Cambiar o borrar: update_parameter, delete_parameter
+
+```json
+{"name": "Métrica", "values": [{"value": "Ingresos"}, {"value": "Margen"}], "source": "@ingresos"}
+{"name": "Umbral de margen", "newName": "Margen mínimo", "min": 0, "max": 0.6, "default": 0.25}
+```
+
+CLI: `params update "Métrica" --values Ingresos,Margen --source @ingresos`, `params update "Umbral de
+margen" --name "Margen mínimo" --max 0.6`, `params delete "Prueba" --source @ingresos`.
+
+- **`update_parameter`** abre el formulario del parámetro (el icono `fx` de su fila en el panel Datos) y
+  cambia nombre visible (`newName`), valores de la lista (`values` sustituye todas las filas: reutiliza las
+  que hay, añade o quita el resto), rango y valor por defecto. El id y el tipo no cambian.
+- **Renombrar:** las fórmulas lo nombran por su nombre visible. Revisa los campos que lo usan
+  (`inspect_data_sources`) y vuelve a escribirlos con `add_source_field` si hace falta.
+- **`delete_parameter`** lo quita del origen (*Quitar* en su fila de la lista de campos del origen). Los
+  campos y controles que lo usaban quedan en error. Pide `LS_ALLOW_DELETE=1` y confirmación del usuario.
+- Verificado el 2026-11-06: crear una lista de tres valores, renombrarla y dejarla en dos, y borrarla.
+
+**No se puede (todavía):** crear parámetros de informe (los de los textos dinámicos): manual.
 
 ## Errores que se ven
 

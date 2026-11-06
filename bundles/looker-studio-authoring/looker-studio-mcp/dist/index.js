@@ -8,7 +8,7 @@ import {
   getReportLayout,
   sanitizeLearning,
   writesAllowed
-} from "./chunks/chunk-LAQTVNEA.js";
+} from "./chunks/chunk-LEEVQRKN.js";
 import {
   addFilter,
   addPage,
@@ -26,6 +26,7 @@ import {
   deleteBlend,
   deleteComponent,
   deletePages,
+  deleteParameter,
   detachFilter,
   diagnoseWithKnowledge,
   duplicatePage,
@@ -60,9 +61,10 @@ import {
   themeLibrary,
   updateBlend,
   updateFilter,
+  updateParameter,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-MAD7VOV6.js";
+} from "./chunks/chunk-LHYHSSJM.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
 import "./chunks/chunk-MZHUAOKZ.js";
@@ -36882,12 +36884,13 @@ var WRITE_TOOLS = /* @__PURE__ */ new Set([
   "create_blend",
   "update_blend",
   "add_parameter",
+  "update_parameter",
   "move_page",
   "set_page_visibility",
   "duplicate_page",
   "arrange_components"
 ]);
-var DESTRUCTIVE_TOOLS = /* @__PURE__ */ new Set(["delete_component", "delete_pages", "delete_blend"]);
+var DESTRUCTIVE_TOOLS = /* @__PURE__ */ new Set(["delete_component", "delete_pages", "delete_blend", "delete_parameter"]);
 {
   const original = server.registerTool.bind(server);
   server.registerTool = (name, config2, handler) => {
@@ -37443,6 +37446,34 @@ server.registerTool(
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true }
   },
   async (args) => run(() => addParameter(args))
+);
+server.registerTool(
+  "update_parameter",
+  {
+    title: "Cambiar un parametro",
+    description: "Cambia un parametro existente en su formulario (icono fx del parametro en el panel Datos): nombre visible (newName), valores de la lista (values, sustituye todas las filas), rango (min, max) y valor por defecto. El id y el tipo no cambian. Las formulas lo nombran por su nombre visible: si lo renombras, revisa los campos que lo usan. Necesita en la pagina actual un grafico de ese origen.",
+    inputSchema: {
+      name: external_exports.string().min(1).describe("Nombre visible actual"),
+      newName: external_exports.string().min(1).optional(),
+      values: external_exports.array(external_exports.object({ value: external_exports.union([external_exports.string(), external_exports.number()]), label: external_exports.string().optional() })).optional(),
+      min: external_exports.number().optional(),
+      max: external_exports.number().optional(),
+      default: external_exports.union([external_exports.string(), external_exports.number()]).optional(),
+      source: external_exports.string().optional().describe('Id de origen o "@campo"')
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true }
+  },
+  async (args) => run(() => updateParameter(args))
+);
+server.registerTool(
+  "delete_parameter",
+  {
+    title: "Borrar un parametro",
+    description: "Quita un parametro de su origen (Quitar en su fila de la lista de campos del origen). Los campos y controles que lo usan quedan en error. Destructiva: pide LS_ALLOW_DELETE=1 y confirmacion del usuario.",
+    inputSchema: { name: external_exports.string().min(1).describe("Nombre visible"), source: external_exports.string().optional().describe('Id de origen o "@campo"') },
+    annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true }
+  },
+  async (args) => run(() => deleteParameter(args))
 );
 server.registerTool(
   "move_page",

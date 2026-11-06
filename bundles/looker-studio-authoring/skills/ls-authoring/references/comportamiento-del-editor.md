@@ -19,7 +19,10 @@ un informe de prueba.
 | **Plantillas de otros informes** traen sus colores y fuentes | Componentes que no siguen el tema | `patch_component stripThemeStyles=true` |
 | **Informe vacío** | No hay componente del que clonar ni del que sacar ids, y los orígenes no tienen esquema cargado | `create_component` crea una semilla con la fábrica del editor y la borra; `"@campo"` sondea el origen con una plantilla |
 | **El clic derecho reduce una selección múltiple** al gráfico pulsado (y con Mayús lo quita) | El menú contextual sale sin "Combinar datos" activo | `create_blend` abre el menú con el evento `contextmenu` solo, sin el `mousedown` |
-| **Pestaña oculta** (ventana tapada o minimizada) | El navegador no pinta el lienzo: capturas en blanco aunque el DOM tenga los gráficos | Captura desde una ventana visible |
+| **Pestaña oculta** (ventana tapada o minimizada) | El navegador no pinta el lienzo: capturas en blanco, y los clics reales no hacen nada | Las herramientas que hacen clics traen la ventana al frente (la minimizan y la restauran) |
+| **Un viewport emulado más alto que la ventana** | Lo que queda por debajo de la ventana real (el final del panel Datos) recibe el ratón encima pero no el clic | Las herramientas solo emulan un viewport grande si la ventana es pequeña |
+| **La lista del panel Datos es virtual** | Solo las filas visibles están en el DOM; los parámetros van al final | Las herramientas filtran la lista con su buscador antes de buscar un campo o parámetro |
+| **Un clic en un control desplegable lo abre** | El clic siguiente solo lo cierra | Para elegir un origen, las herramientas seleccionan un gráfico antes que un control |
 | **Extensiones del navegador** | "Sorry! We can't save this report right now." | Perfil dedicado sin extensiones |
 | **Dos órdenes y dos nombres de página:** el modelo del editor y la navegación que ve el lector | Reordenar o renombrar solo el modelo no cambia lo que se ve, y no persiste | `move_page`, `rename_page`: usan las acciones de navegación del editor |
 | **Seleccionar por el modelo no actualiza los paneles** | El panel Datos no ofrece "Añadir un campo" o "Añadir un parámetro" | Las herramientas que usan paneles seleccionan con clics reales |

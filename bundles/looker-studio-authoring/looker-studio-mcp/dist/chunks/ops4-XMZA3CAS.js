@@ -6,7 +6,9 @@ import {
   createBlend,
   deleteBlend,
   deletePages,
+  deleteParameter,
   duplicatePage,
+  ensureVisible,
   listBlends,
   movePage,
   navPages,
@@ -15,8 +17,9 @@ import {
   setPageVisibility,
   setStyle,
   setText,
-  updateBlend
-} from "./chunk-MAD7VOV6.js";
+  updateBlend,
+  updateParameter
+} from "./chunk-LHYHSSJM.js";
 import "./chunk-5J4RMU5E.js";
 import "./chunk-Y34SSGZY.js";
 import "./chunk-MZHUAOKZ.js";
@@ -33,7 +36,9 @@ export {
   createBlend,
   deleteBlend,
   deletePages,
+  deleteParameter,
   duplicatePage,
+  ensureVisible,
   listBlends,
   movePage,
   navPages,
@@ -42,5 +47,6 @@ export {
   setPageVisibility,
   setStyle,
   setText,
-  updateBlend
+  updateBlend,
+  updateParameter
 };

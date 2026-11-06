@@ -5,7 +5,7 @@ import {
   getComponentConfig,
   getReportLayout,
   sanitizeLearning
-} from "./chunks/chunk-LAQTVNEA.js";
+} from "./chunks/chunk-LEEVQRKN.js";
 import {
   addFilter,
   addPage,
@@ -23,6 +23,7 @@ import {
   deleteBlend,
   deleteComponent,
   deletePages,
+  deleteParameter,
   detachFilter,
   diagnoseWithKnowledge,
   disconnectIfConnected,
@@ -58,9 +59,10 @@ import {
   themeLibrary,
   updateBlend,
   updateFilter,
+  updateParameter,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-MAD7VOV6.js";
+} from "./chunks/chunk-LHYHSSJM.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
 import "./chunks/chunk-MZHUAOKZ.js";
@@ -113,6 +115,8 @@ Combinaciones y parametros
   blends delete <blendId>          Solo si ningun grafico la usa
   params add --name N [--type text|integer|decimal|boolean] [--values a:Etiqueta,b] [--min N --max N]
              [--default V] [--source <id|@campo>]   (en formulas, por su nombre visible)
+  params update <nombre> [--name nuevo] [--values a,b] [--min N --max N] [--default V] [--source <id|@campo>]
+  params delete <nombre> [--source <id|@campo>]   Lo quita del origen; sus campos y controles quedan en error
   theme presets | theme use <preset|nombre|biblioteca> | theme export <f.json> | theme import <f.json>
   report settings [--viewer-filter-bar on|off] [--cross-filter on|off] [--set clave=valor,...]
   filters [list] | filters add --name N --field F [--op EQ] [--values a,b] [--exclude] [--to <pageId|cd-..>]
@@ -269,12 +273,24 @@ async function main() {
       return listBlends();
     }
     case "params": {
-      if (pos[0] !== "add") throw new Error("Uso: params add --name N [--type ...] [--values a:Etiqueta,b] [--min N --max N] [--default V] [--source id|@campo]");
       const values = list(flags.values).map((v) => {
         const [value, ...label] = v.split(":");
         return { value, ...label.length ? { label: label.join(":") } : {} };
       });
       const n = (k) => typeof flags[k] === "string" ? Number(flags[k]) : void 0;
+      const src = typeof flags.source === "string" ? { source: flags.source } : {};
+      if (pos[0] === "update")
+        return updateParameter({
+          name: need(pos.slice(1).join(" ") || void 0, "el nombre del parametro"),
+          ...typeof flags.name === "string" ? { newName: flags.name } : {},
+          ...values.length ? { values } : {},
+          ...n("min") !== void 0 ? { min: n("min") } : {},
+          ...n("max") !== void 0 ? { max: n("max") } : {},
+          ...typeof flags.default === "string" ? { default: flags.default } : {},
+          ...src
+        });
+      if (pos[0] === "delete") return deleteParameter({ name: need(pos.slice(1).join(" ") || void 0, "el nombre del parametro"), ...src });
+      if (pos[0] !== "add") throw new Error("Uso: params add|update|delete ... (ver ayuda)");
       return addParameter({
         name: need(typeof flags.name === "string" ? flags.name : void 0, "--name"),
         ...typeof flags.type === "string" ? { type: flags.type } : {},

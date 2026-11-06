@@ -29,7 +29,7 @@ import {
 import { reportSettings } from './ops3.js';
 import { addFilter, addPage, addSourceField, applyTheme, detachFilter, updateFilter, exportTheme, importTheme, listFilters, listPages, readTheme, renamePage, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
 import { readFileSync, existsSync } from 'node:fs';
-import { addParameter, arrangeComponents, createBlend, deleteBlend, deletePages, duplicatePage, listBlends, movePage, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
+import { addParameter, arrangeComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
 
 const HELP = `ls-studio <comando> [opciones]
 
@@ -71,6 +71,8 @@ Combinaciones y parametros
   blends delete <blendId>          Solo si ningun grafico la usa
   params add --name N [--type text|integer|decimal|boolean] [--values a:Etiqueta,b] [--min N --max N]
              [--default V] [--source <id|@campo>]   (en formulas, por su nombre visible)
+  params update <nombre> [--name nuevo] [--values a,b] [--min N --max N] [--default V] [--source <id|@campo>]
+  params delete <nombre> [--source <id|@campo>]   Lo quita del origen; sus campos y controles quedan en error
   theme presets | theme use <preset|nombre|biblioteca> | theme export <f.json> | theme import <f.json>
   report settings [--viewer-filter-bar on|off] [--cross-filter on|off] [--set clave=valor,...]
   filters [list] | filters add --name N --field F [--op EQ] [--values a,b] [--exclude] [--to <pageId|cd-..>]
@@ -230,9 +232,21 @@ async function main(): Promise<unknown> {
       return listBlends();
     }
     case 'params': {
-      if (pos[0] !== 'add') throw new Error('Uso: params add --name N [--type ...] [--values a:Etiqueta,b] [--min N --max N] [--default V] [--source id|@campo]');
       const values = list(flags.values).map((v) => { const [value, ...label] = v.split(':'); return { value: value!, ...(label.length ? { label: label.join(':') } : {}) }; });
       const n = (k: string) => (typeof flags[k] === 'string' ? Number(flags[k]) : undefined);
+      const src = typeof flags.source === 'string' ? { source: flags.source } : {};
+      if (pos[0] === 'update')
+        return updateParameter({
+          name: need(pos.slice(1).join(' ') || undefined, 'el nombre del parametro'),
+          ...(typeof flags.name === 'string' ? { newName: flags.name } : {}),
+          ...(values.length ? { values } : {}),
+          ...(n('min') !== undefined ? { min: n('min') } : {}),
+          ...(n('max') !== undefined ? { max: n('max') } : {}),
+          ...(typeof flags.default === 'string' ? { default: flags.default } : {}),
+          ...src,
+        });
+      if (pos[0] === 'delete') return deleteParameter({ name: need(pos.slice(1).join(' ') || undefined, 'el nombre del parametro'), ...src });
+      if (pos[0] !== 'add') throw new Error('Uso: params add|update|delete ... (ver ayuda)');
       return addParameter({
         name: need(typeof flags.name === 'string' ? flags.name : undefined, '--name'),
         ...(typeof flags.type === 'string' ? { type: flags.type as never } : {}),

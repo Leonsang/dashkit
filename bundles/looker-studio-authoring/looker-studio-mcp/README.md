@@ -95,7 +95,7 @@ Reinicia Claude Desktop después de guardar el archivo.
 | `diagnose_report` | ninguno | `{issues:[{severity, code, componentId, pageId, message}], stats}`. Códigos: `COMPONENT_ERROR`, `FIELD_NOT_IN_SCHEMA`, `MISSING_CONCEPT_DEF`, `NO_METRICS`, `OUT_OF_CANVAS`, `OFF_GRID`, `TOO_MANY_CHARTS`, `UI_MESSAGE` | No |
 | `get_component_config` | `componentId` | JSON interno completo del componente | No |
 
-La tabla resume las herramientas de lectura y caja. Las 47 herramientas, con sus parámetros, el comando de la CLI que hace lo mismo y la referencia que las explica, están en [`../skills/ls-authoring/references/operaciones.md`](../skills/ls-authoring/references/operaciones.md). Ese índice se genera con `node tools/ops-reference.mjs`, y `npm run check` falla si una herramienta o un comando de la CLI se queda sin pareja o sin explicar.
+La tabla resume las herramientas de lectura y caja. Las 49 herramientas, con sus parámetros, el comando de la CLI que hace lo mismo y la referencia que las explica, están en [`../skills/ls-authoring/references/operaciones.md`](../skills/ls-authoring/references/operaciones.md). Ese índice se genera con `node tools/ops-reference.mjs`, y `npm run check` falla si una herramienta o un comando de la CLI se queda sin pareja o sin explicar.
 
 Todas las herramientas devuelven JSON como texto. Si algo falla, devuelven `isError: true` con la causa.
 Coordenadas en píxeles del informe, sin zoom, relativas al lienzo.
@@ -185,7 +185,7 @@ Herramientas nuevas en el MCP, todas aditivas: `open_report`, `reload_report`, `
 
 | Medida | Detalle |
 |---|---|
-| **MCP en solo lectura por defecto** | Las herramientas que modifican el informe devuelven error salvo con `LS_ALLOW_WRITE=1`. Las destructivas (`delete_component`, `delete_pages`, `delete_blend`) requieren además `LS_ALLOW_DELETE=1`. El control se aplica envolviendo `registerTool` por nombre, así que no depende de cada herramienta. El CLI no lleva este control, porque lo ejecuta una persona |
+| **MCP en solo lectura por defecto** | Las herramientas que modifican el informe devuelven error salvo con `LS_ALLOW_WRITE=1`. Las destructivas (`delete_component`, `delete_pages`, `delete_blend`, `delete_parameter`) requieren además `LS_ALLOW_DELETE=1`. El control se aplica envolviendo `registerTool` por nombre, así que no depende de cada herramienta. El CLI no lleva este control, porque lo ejecuta una persona |
 | **Solo URLs de informes** | `open` / `open_report` solo aceptan `https://(datastudio\|lookerstudio).google.com/reporting/...`. Así una inyección de prompt no puede llevar el navegador autenticado a otro sitio |
 | **Rutas acotadas** | Las rutas que recibe el MCP (spec, export) deben ser `.json` dentro de `LS_WORKSPACE` (por defecto, el directorio actual) |
 | **Aprendizajes como datos** | `record_learning` limpia caracteres de control, limita a 500 caracteres y rechaza lo que parezca una credencial. `get_learnings` marca su salida como datos, no instrucciones |

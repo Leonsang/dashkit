@@ -48,6 +48,8 @@ motor y no lleva el control de `LS_ALLOW_WRITE`.
 | `update_blend` | **blendId**, name, joinType | Cambia el nombre de una combinacion y/o el tipo de todas sus uniones (inner, left, right, full, cross). | `combinaciones-y-parametros.md` |
 | `delete_blend` | **blendId** | Borra una combinacion (blend) que ningun grafico usa. | `combinaciones-y-parametros.md` |
 | `add_parameter` | **name**, type, allowed, values, min, max, default, source, id | Crea un parametro en un origen con el formulario del editor (panel Datos > Anadir un parametro). | `combinaciones-y-parametros.md` |
+| `update_parameter` | **name**, newName, values, min, max, default, source | Cambia un parametro existente en su formulario (icono fx del parametro en el panel Datos): nombre visible (newName), valores de la lista (values, sustituye todas las filas), rango (min, max) y valor por defecto. | `combinaciones-y-parametros.md` |
+| `delete_parameter` | **name**, source | Quita un parametro de su origen (Quitar en su fila de la lista de campos del origen). | `combinaciones-y-parametros.md` |
 | `move_page` | **pageId**, **index** | Mueve una pagina a la posicion index (0 = primera) en la navegacion del informe. | `paginas-temas-y-ajustes.md` |
 | `delete_pages` | **pageIds** | Borra paginas del informe con sus componentes. | `paginas-temas-y-ajustes.md` |
 | `set_page_visibility` | **pageId**, hiddenFromNav, hiddenFromViewer | hiddenFromNav: la quita del menu de navegacion (sigue accesible por enlace). | `paginas-temas-y-ajustes.md` |
@@ -90,6 +92,8 @@ Cada comando de la CLI tiene su herramienta MCP. Lo que cambia, en la última co
 | `blends update <blendId> [--name] [--join]` | `update_blend` | MCP: `joinType` |
 | `blends delete <blendId>` | `delete_blend` | MCP: además `LS_ALLOW_DELETE=1` |
 | `params add --name N [--type] [--values a:Etiqueta,b] [--min --max] [--default] [--source]` | `add_parameter` | MCP: `values` [{value,label}], `allowed`, `id` |
+| `params update <nombre> [--name] [--values] [--min --max] [--default] [--source]` | `update_parameter` | `--name` es el nombre nuevo (MCP `newName`) |
+| `params delete <nombre> [--source]` | `delete_parameter` | Sin el control de escritura del MCP |
 | `theme [get]` | `get_theme` | — |
 | `theme set <json\|f.json>` | `apply_theme` | — |
 | `theme export <f.json>` | `get_theme` | El MCP devuelve el mismo JSON; el agente lo guarda si hace falta |

@@ -68,8 +68,8 @@ usuario trabaje desde la terminal o en scripts.
 
 - **Combinaciones:** se crean, renombran, cambian de unión y borran; no se pueden añadir tablas ni cambiar
   claves de una existente.
-- **Parámetros:** se crean y se enlazan a controles; no se editan ni se borran, y los de informe (textos
-  dinámicos) son manuales.
+- **Parámetros:** se crean, cambian, borran y enlazan a controles; los de informe (textos dinámicos) son
+  manuales.
 - **Interfaz no oficial:** una actualización de Looker Studio puede romper los scripts. Si
   `get_learnings` muestra `method_missing`, avisa al usuario.
 - **Padding:** algunos tipos no tienen `paddingBottom` (p. ej. `kpi-metric`) y `generic-shape` no tiene

@@ -4044,7 +4044,7 @@ async function addSourceField(opts) {
   });
   const open = async () => {
     if (!await clickText2("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) {
-      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-XOR72GXR.js");
+      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-XMZA3CAS.js");
       await selectSourceChart2(page, opts.source && opts.source.startsWith("@") ? opts.source : void 0);
       if (!await clickText2("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) throw new Error('No se encontro "Anadir un campo" en el panel Datos.');
     }
@@ -4061,7 +4061,7 @@ async function addSourceField(opts) {
     let src = await editorSource();
     const byField = !!opts.source && opts.source.startsWith("@");
     if (byField) {
-      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-XOR72GXR.js");
+      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-XMZA3CAS.js");
       await clickText2("button", /^(Cancelar|Cancel)$/);
       await close();
       await selectSourceChart2(page, opts.source);
@@ -4505,17 +4505,17 @@ async function patchIfNeeded(page, id, c) {
   }
   if (c.text !== void 0) {
     const t = typeof c.text === "string" ? { text: c.text } : c.text;
-    const { setText: setText2 } = await import("./ops4-XOR72GXR.js");
+    const { setText: setText2 } = await import("./ops4-XMZA3CAS.js");
     await setText2(id, t.text, { ...t.size ? { size: t.size } : {}, ...t.bold ? { bold: true } : {}, ...t.color ? { color: t.color } : {} });
     changes.push("text");
   }
   if (c.style) {
-    const { setStyle: setStyle2 } = await import("./ops4-XOR72GXR.js");
+    const { setStyle: setStyle2 } = await import("./ops4-XMZA3CAS.js");
     await setStyle2(id, c.style);
     changes.push("style");
   }
   if (c.parameter) {
-    const { setControlParameter: setControlParameter2 } = await import("./ops4-XOR72GXR.js");
+    const { setControlParameter: setControlParameter2 } = await import("./ops4-XMZA3CAS.js");
     await setControlParameter2(id, c.parameter);
     changes.push(`parameter:${c.parameter}`);
   }
@@ -4604,14 +4604,34 @@ async function clickText(page, re, scope = "*") {
   await page.mouse.click(box.x, box.y);
   return true;
 }
-async function withViewport(page, fn) {
+async function ensureVisible(page) {
   await page.bringToFront();
-  await page.setViewport({ width: 1900, height: 1100 });
-  await sleep3(800);
+  if (!await page.evaluate(() => document.hidden).catch(() => false)) return;
+  const s = await page.target().createCDPSession();
+  try {
+    const { windowId } = await s.send("Browser.getWindowForTarget");
+    await s.send("Browser.setWindowBounds", { windowId, bounds: { windowState: "minimized" } });
+    await sleep3(600);
+    await s.send("Browser.setWindowBounds", { windowId, bounds: { windowState: "normal" } });
+    await sleep3(1200);
+    await page.bringToFront();
+  } finally {
+    await s.detach().catch(() => void 0);
+  }
+  if (await page.evaluate(() => document.hidden).catch(() => false)) throw new Error("La ventana del navegador sigue oculta: ponla delante y repite.");
+}
+async function withViewport(page, fn) {
+  await ensureVisible(page);
+  const real = await page.evaluate(() => ({ w: window.innerWidth, h: window.innerHeight }));
+  const emulate = real.w < 1500 || real.h < 800;
+  if (emulate) {
+    await page.setViewport({ width: 1900, height: 1100 });
+    await sleep3(800);
+  }
   try {
     return await fn();
   } finally {
-    await page.setViewport(null).catch(() => void 0);
+    if (emulate) await page.setViewport(null).catch(() => void 0);
   }
 }
 async function listBlends() {
@@ -4658,7 +4678,8 @@ async function createBlend(o) {
       }
       await reloadReport();
       const p = await getReportPage();
-      await p.setViewport({ width: 1900, height: 1100 });
+      const vp = await p.evaluate(() => ({ w: window.innerWidth, h: window.innerHeight }));
+      if (vp.w < 1500 || vp.h < 800) await p.setViewport({ width: 1900, height: 1100 });
       await sleep3(1500);
       const before = await evaluateOn(p, T3, blendSnapshotScript);
       let selected = [];
@@ -4718,7 +4739,7 @@ async function selectSourceChart(page, source) {
     const rep = window.angular.element(document.body).injector().get("legoUndoRedoService").report;
     const pid = (window.location.pathname.match(/\/page\/([^/]+)/) || [])[1];
     const pg = rep.pages.find((p) => p.getId() === pid) || rep.pages[0];
-    const c = pg.components.find((x) => {
+    const ofSource = pg.components.filter((x) => {
       try {
         const k = x.config.config.datasource.keys;
         const id = k.dataset && k.dataset.value && k.dataset.value.id;
@@ -4727,6 +4748,8 @@ async function selectSourceChart(page, source) {
         return false;
       }
     });
+    const isControl = (x) => /filter|daterange|button|dataset-picker|dimension-control/.test(String(x.config.config.display.type));
+    const c = ofSource.find((x) => !isControl(x)) || ofSource[0];
     return c ? String(c.getId()) : null;
   }, dsId ?? null);
   if (!target) throw new Error(`No hay en esta pagina ningun grafico del origen ${source ?? ""}: el panel Datos solo ofrece sus campos con uno seleccionado.`);
@@ -4740,6 +4763,148 @@ var PARAM_TYPES = {
   decimal: /^(Número \(decimal\)|Number \(decimal\))$/,
   boolean: /^(Booleano|Boolean)$/
 };
+async function paramFill(page, pick, value) {
+  const pt = await page.evaluate((how) => {
+    const inputs = Array.from(document.querySelectorAll("input")).filter((i) => i.offsetParent && !i.closest("[class*=propert]") && i.type !== "radio" && i.type !== "search");
+    const label = (i) => (i.closest("mat-form-field, .mat-mdc-form-field")?.innerText || "").trim();
+    const [kind, arg, nth] = how.split(":");
+    let el;
+    if (kind === "ph") el = inputs.filter((i) => new RegExp(arg, "i").test(i.placeholder)).pop();
+    else if (kind === "nth") el = inputs.filter((i) => new RegExp(arg, "i").test(i.placeholder))[Number(nth)];
+    else if (kind === "value") el = inputs.filter((i) => i.value === arg).pop();
+    else if (kind === "label") el = inputs.filter((i) => new RegExp(arg, "i").test(label(i))).pop();
+    else if (kind === "emptyph") el = inputs.filter((i) => new RegExp(arg, "i").test(i.placeholder) && !i.value).pop();
+    if (!el) return null;
+    el.scrollIntoView({ block: "center" });
+    const r = el.getBoundingClientRect();
+    return { x: r.x + 15, y: r.y + r.height / 2 };
+  }, pick);
+  if (!pt) throw new Error(`Campo del formulario no encontrado (${pick}).`);
+  await page.mouse.click(pt.x, pt.y);
+  await page.keyboard.down("Control");
+  await page.keyboard.press("a");
+  await page.keyboard.up("Control");
+  await page.keyboard.type(value, { delay: 20 });
+  await sleep3(400);
+}
+async function paramCancel(page) {
+  await clickText(page, /^(Cancelar|Cancel)$/);
+  await sleep3(800);
+  await clickText(page, /^(Descartar|Discard)( cambios| changes)?$/);
+  await sleep3(500);
+  await clickText(page, /^(Hecho|Done)$/);
+  await sleep3(1e3);
+}
+async function paramSave(page, what) {
+  await sleep3(1e3);
+  const enabled = await page.evaluate(() => {
+    const b = Array.from(document.querySelectorAll("button")).find((x) => x.offsetParent && /^(Guardar|Save)$/.test(x.innerText.trim()));
+    return b ? !b.disabled : false;
+  });
+  if (!enabled) {
+    const why = await page.evaluate(() => Array.from(document.querySelectorAll("mat-error, .mat-mdc-form-field-error")).filter((e) => e.offsetParent).map((e) => e.innerText.trim()).join(" | "));
+    throw new Error(`El editor no deja guardar ${what}: ${why || "Guardar desactivado (\xBFsin cambios?)"}`);
+  }
+  await clickText(page, /^(Guardar|Save)$/);
+  await sleep3(3e3);
+  await clickText(page, /^(Hecho|Done)$/);
+  await sleep3(2e3);
+}
+async function buttonRightOf(page, ref) {
+  return page.evaluate((r0) => {
+    const mid = r0.y + r0.h / 2;
+    const b = Array.from(document.querySelectorAll("button, [role=button], mat-icon")).filter((x) => x.offsetParent).map((x) => ({ x, r: x.getBoundingClientRect() })).filter(({ r }) => r.x >= r0.right && r.x < r0.right + 90 && Math.abs(r.y + r.height / 2 - mid) < 14).sort((a, c) => a.r.x - c.r.x)[0];
+    return b ? { x: b.r.x + b.r.width / 2, y: b.r.y + b.r.height / 2 } : null;
+  }, ref);
+}
+async function paramFillList(page, vals) {
+  const rows = () => page.evaluate(() => Array.from(document.querySelectorAll("input")).filter((i) => i.offsetParent && /^(Valor|Value)$/.test(i.placeholder)).length);
+  for (let n = await rows(); n > Math.max(vals.length, 1); n--) {
+    const last = await page.evaluate(() => {
+      const labels = Array.from(document.querySelectorAll("input")).filter((i) => i.offsetParent && /^(Etiqueta|Label)$/.test(i.placeholder));
+      const el = labels[labels.length - 1];
+      if (!el) return null;
+      el.scrollIntoView({ block: "center" });
+      const r = el.getBoundingClientRect();
+      return { x: r.x, y: r.y, right: r.right, h: r.height };
+    });
+    const pt = last && await buttonRightOf(page, last);
+    if (!pt) throw new Error("No se encontro el boton para quitar un valor de la lista.");
+    await page.mouse.click(pt.x, pt.y);
+    await sleep3(600);
+  }
+  for (let i = 0; i < vals.length; i++) {
+    if (i >= await rows()) {
+      if (!await clickText(page, /^(Añadir otro valor|Add another value)$/)) throw new Error('No se encontro "Anadir otro valor".');
+      await sleep3(600);
+    }
+    await paramFill(page, `nth:^(Valor|Value)$:${i}`, String(vals[i].value));
+    await paramFill(page, `nth:^(Etiqueta|Label)$:${i}`, vals[i].label ?? String(vals[i].value));
+  }
+}
+async function waitParamForm(page, timeoutMs = 1e4) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < timeoutMs) {
+    const open = await page.evaluate(() => Array.from(document.querySelectorAll("input")).some((i) => i.offsetParent && /^(Nombre del parámetro|Parameter name)$/.test(i.placeholder)));
+    if (open) {
+      await sleep3(600);
+      return true;
+    }
+    await sleep3(400);
+  }
+  return false;
+}
+async function findParamChip(page, name, keep = false) {
+  const box = await page.evaluate(() => {
+    const i = Array.from(document.querySelectorAll("input")).find((x) => x.offsetParent && /^(Buscar campos|Search fields)/i.test(x.placeholder) && x.getBoundingClientRect().y < 400);
+    if (!i) return null;
+    const r = i.getBoundingClientRect();
+    return { x: r.x + 20, y: r.y + r.height / 2 };
+  });
+  if (box) {
+    await page.mouse.click(box.x, box.y);
+    await page.keyboard.down("Control");
+    await page.keyboard.press("a");
+    await page.keyboard.up("Control");
+    await page.keyboard.type(name, { delay: 15 });
+    await sleep3(1500);
+  }
+  const pt = await page.evaluate((nm) => {
+    const chip = Array.from(document.querySelectorAll(".common-chip.parameter")).find((c) => c.getAttribute("aria-label") === nm);
+    if (!chip) return null;
+    chip.scrollIntoView({ block: "center" });
+    const r = chip.getBoundingClientRect();
+    return { x: r.x + 12, y: r.y + r.height / 2 };
+  }, name);
+  if (!keep) await clearFieldSearch(page);
+  return pt;
+}
+async function clearFieldSearch(page) {
+  const box = await page.evaluate(() => {
+    const i = Array.from(document.querySelectorAll("input")).find((x) => x.offsetParent && /^(Buscar campos|Search fields)/i.test(x.placeholder) && x.getBoundingClientRect().y < 400);
+    if (!i || !i.value) return null;
+    const r = i.getBoundingClientRect();
+    return { x: r.x + 20, y: r.y + r.height / 2 };
+  });
+  if (!box) return;
+  await page.mouse.click(box.x, box.y);
+  await page.keyboard.down("Control");
+  await page.keyboard.press("a");
+  await page.keyboard.up("Control");
+  await page.keyboard.press("Backspace");
+  await sleep3(500);
+}
+async function openParameterEditor(page, name, source) {
+  await selectSourceChart(page, source);
+  const pt = await findParamChip(page, name, true);
+  if (!pt) await clearFieldSearch(page);
+  if (!pt) throw new Error(`No hay ningun parametro "${name}" en el origen del grafico seleccionado (usa source).`);
+  await page.mouse.move(pt.x, pt.y);
+  await sleep3(600);
+  await page.mouse.click(pt.x, pt.y);
+  if (!await waitParamForm(page)) throw new Error(`No se abrio el editor del parametro "${name}".`);
+}
+var paramId = (name) => name.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9_.]+/g, "_").replace(/^_+|_+$/g, "");
 async function addParameter(o) {
   const { page } = await requireEditMode();
   const type = o.type ?? "text";
@@ -4748,42 +4913,12 @@ async function addParameter(o) {
   return withViewport(page, async () => {
     await selectSourceChart(page, o.source);
     if (!await clickText(page, /^(add_circle\s*)?(Añadir un parámetro|Add a parameter)$/)) throw new Error('No se encontro "A\xF1adir un parametro" en el panel Datos.');
-    await sleep3(2500);
-    const fill = async (pick, value) => {
-      const pt = await page.evaluate((how) => {
-        const inputs = Array.from(document.querySelectorAll("input")).filter((i) => i.offsetParent && !i.closest("[class*=propert]") && i.type !== "radio" && i.type !== "search");
-        const label = (i) => (i.closest("mat-form-field, .mat-mdc-form-field")?.innerText || "").trim();
-        const [kind, arg] = how.split(":");
-        let el;
-        if (kind === "ph") el = inputs.filter((i) => new RegExp(arg, "i").test(i.placeholder)).pop();
-        else if (kind === "value") el = inputs.filter((i) => i.value === arg).pop();
-        else if (kind === "label") el = inputs.filter((i) => new RegExp(arg, "i").test(label(i))).pop();
-        else if (kind === "emptyph") el = inputs.filter((i) => new RegExp(arg, "i").test(i.placeholder) && !i.value).pop();
-        if (!el) return null;
-        el.scrollIntoView({ block: "center" });
-        const r = el.getBoundingClientRect();
-        return { x: r.x + 15, y: r.y + r.height / 2 };
-      }, pick);
-      if (!pt) throw new Error(`Campo del formulario no encontrado (${pick}).`);
-      await page.mouse.click(pt.x, pt.y);
-      await page.keyboard.down("Control");
-      await page.keyboard.press("a");
-      await page.keyboard.up("Control");
-      await page.keyboard.type(value, { delay: 20 });
-      await sleep3(400);
-    };
-    const cancel = async () => {
-      await clickText(page, /^(Cancelar|Cancel)$/);
-      await sleep3(800);
-      await clickText(page, /^(Descartar|Discard)( cambios| changes)?$/);
-      await sleep3(500);
-      await clickText(page, /^(Hecho|Done)$/);
-    };
-    const id = o.id ?? o.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9_.]+/g, "_").replace(/^_+|_+$/g, "");
+    if (!await waitParamForm(page)) throw new Error("No se abrio el formulario del parametro.");
+    const id = o.id ?? paramId(o.name);
     try {
-      await fill("ph:^(Nombre del par\xE1metro|Parameter name)$", o.name);
+      await paramFill(page, "ph:^(Nombre del par\xE1metro|Parameter name)$", o.name);
       await sleep3(500);
-      await fill("label:(ID del par\xE1metro|Parameter ID)", id);
+      await paramFill(page, "label:(ID del par\xE1metro|Parameter ID)", id);
       if (type !== "text") {
         if (!await clickText(page, /^(Texto|Text)$/)) throw new Error('No se encontro el selector "Tipo de datos".');
         await sleep3(800);
@@ -4796,41 +4931,20 @@ async function addParameter(o) {
         await sleep3(800);
       }
       if (allowed === "range") {
-        if (o.min !== void 0) await fill("ph:^M[i\xED]n", String(o.min));
-        if (o.max !== void 0) await fill("ph:^M[a\xE1]x", String(o.max));
+        if (o.min !== void 0) await paramFill(page, "ph:^M[i\xED]n", String(o.min));
+        if (o.max !== void 0) await paramFill(page, "ph:^M[a\xE1]x", String(o.max));
       }
-      if (allowed === "list") {
-        const vals = o.values ?? [];
-        for (let i = 0; i < vals.length; i++) {
-          if (i > 0) {
-            if (!await clickText(page, /^(Añadir otro valor|Add another value)$/)) throw new Error('No se encontro "Anadir otro valor".');
-            await sleep3(600);
-          }
-          await fill("ph:^(Valor|Value)$", String(vals[i].value));
-          if (vals[i].label) await fill("ph:^(Etiqueta|Label)$", vals[i].label);
-        }
-      }
+      if (allowed === "list") await paramFillList(page, o.values ?? []);
       if (o.default !== void 0 && type !== "boolean" && allowed !== "list") {
-        await fill("label:(predeterminado|Default)", String(o.default)).catch(async () => fill("ph:^[0-9.]+$", String(o.default)));
+        await paramFill(page, "label:(predeterminado|Default)", String(o.default)).catch(async () => paramFill(page, "ph:^[0-9.]+$", String(o.default)));
       }
-      await sleep3(1e3);
-      const enabled = await page.evaluate(() => {
-        const b = Array.from(document.querySelectorAll("button")).find((x) => x.offsetParent && /^(Guardar|Save)$/.test(x.innerText.trim()));
-        return b ? !b.disabled : false;
-      });
-      if (!enabled) {
-        const why = await page.evaluate(() => Array.from(document.querySelectorAll("mat-error, .mat-mdc-form-field-error")).filter((e) => e.offsetParent).map((e) => e.innerText.trim()).join(" | "));
-        throw new Error(`El editor no deja guardar el parametro: ${why || "Guardar desactivado"}`);
-      }
-      await clickText(page, /^(Guardar|Save)$/);
-      await sleep3(3e3);
-      await clickText(page, /^(Hecho|Done)$/);
-      await sleep3(2e3);
+      await paramSave(page, "el parametro");
     } catch (e) {
-      await cancel().catch(() => void 0);
+      await paramCancel(page).catch(() => void 0);
       throw e;
     }
-    const seen = await page.evaluate((name) => Array.from(document.querySelectorAll("*")).some((e) => e.offsetParent && e.children.length === 0 && (e.innerText || "").trim() === name), o.name);
+    await selectSourceChart(page, o.source).catch(() => void 0);
+    const seen = !!await findParamChip(page, o.name);
     learn(seen ? "create_ok" : "create_fail", "parameter", { type, allowed });
     return {
       ok: seen,
@@ -4844,6 +4958,102 @@ async function addParameter(o) {
       ...o.default !== void 0 ? { default: o.default } : {},
       note: "En formulas usa el nombre visible del parametro, no su id."
     };
+  });
+}
+async function updateParameter(o) {
+  const { page } = await requireEditMode();
+  return withViewport(page, async () => {
+    await openParameterEditor(page, o.name, o.source);
+    const changed = [];
+    try {
+      if (o.newName !== void 0 && o.newName !== o.name) {
+        await paramFill(page, "ph:^(Nombre del par\xE1metro|Parameter name)$", o.newName);
+        changed.push("name");
+      }
+      if (o.values) {
+        const isList = await page.evaluate(() => Array.from(document.querySelectorAll("input")).some((i) => i.offsetParent && /^(Valor|Value)$/.test(i.placeholder)));
+        if (!isList) {
+          if (!await clickText(page, /^(Lista de valores|List of values)$/)) throw new Error("Este parametro no admite lista de valores.");
+          await sleep3(800);
+        }
+        await paramFillList(page, o.values);
+        changed.push("values");
+      }
+      if (o.min !== void 0 || o.max !== void 0) {
+        const hasRange = await page.evaluate(() => Array.from(document.querySelectorAll("input")).some((i) => i.offsetParent && /^M[ií]n/.test(i.placeholder)));
+        if (!hasRange) {
+          if (!await clickText(page, /^(Rango|Range)$/)) throw new Error("Este parametro no admite rango.");
+          await sleep3(800);
+        }
+        if (o.min !== void 0) await paramFill(page, "ph:^M[i\xED]n", String(o.min));
+        if (o.max !== void 0) await paramFill(page, "ph:^M[a\xE1]x", String(o.max));
+        changed.push("range");
+      }
+      if (o.default !== void 0) {
+        await paramFill(page, "label:(predeterminado|Default)", String(o.default));
+        changed.push("default");
+      }
+      if (!changed.length) throw new Error("Nada que cambiar: indica newName, values, min, max o default.");
+      await paramSave(page, "el parametro");
+    } catch (e) {
+      await paramCancel(page).catch(() => void 0);
+      throw e;
+    }
+    await selectSourceChart(page, o.source).catch(() => void 0);
+    const seen = !!await findParamChip(page, o.newName ?? o.name);
+    learn("note", "parameter_update", { text: `${changed.join(",")} ${seen ? "ok" : "not listed"}` });
+    return {
+      ok: seen,
+      name: o.newName ?? o.name,
+      changed,
+      ...o.newName ? { note: "Las formulas nombran el parametro por su nombre visible: revisa los campos que lo usan." } : {}
+    };
+  });
+}
+async function deleteParameter(o) {
+  const { page } = await requireEditMode();
+  return withViewport(page, async () => {
+    await openParameterEditor(page, o.name, o.source);
+    try {
+      if (!await clickText(page, /^(Todos los campos|All fields)$/)) throw new Error('No se encontro "Todos los campos".');
+      await sleep3(2500);
+      const search = await page.evaluate(() => {
+        const i = Array.from(document.querySelectorAll("input")).find((x) => x.offsetParent && /^(Search fields|Buscar campos)/i.test(x.placeholder) && x.getBoundingClientRect().y > 400);
+        if (!i) return null;
+        const r = i.getBoundingClientRect();
+        return { x: r.x + 20, y: r.y + r.height / 2 };
+      });
+      if (!search) throw new Error("No se encontro el buscador de campos del origen.");
+      await page.mouse.click(search.x, search.y);
+      await page.keyboard.type(o.name, { delay: 20 });
+      await sleep3(1500);
+      const dots = await page.evaluate((nm) => {
+        const row = Array.from(document.querySelectorAll(".parameter-field-entry")).find((r2) => r2.offsetParent && Array.from(r2.querySelectorAll("*")).some((e) => e.children.length === 0 && (e.innerText || "").trim() === nm));
+        const btn = row && row.querySelector('button.more, button[aria-label*="opciones"], button[aria-label*="options"]');
+        if (!btn) return null;
+        btn.scrollIntoView({ block: "center" });
+        const r = btn.getBoundingClientRect();
+        return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+      }, o.name);
+      if (!dots) throw new Error(`No se encontro la fila de "${o.name}" en la lista de campos del origen.`);
+      await page.mouse.click(dots.x, dots.y);
+      await sleep3(1e3);
+      if (!await clickText(page, /^(Quitar|Remove)$/, "[role=menuitem], [role=menuitem] *")) throw new Error('El menu de la fila no tiene "Quitar".');
+      await sleep3(1500);
+      await clickText(page, /^(Quitar|Remove|Eliminar|Delete)$/, "mat-dialog-container button, [role=dialog] button");
+      await sleep3(1500);
+      await clickText(page, /^(Hecho|Done)$/);
+      await sleep3(2e3);
+    } catch (e) {
+      await page.keyboard.press("Escape").catch(() => void 0);
+      await clickText(page, /^(Hecho|Done)$/).catch(() => void 0);
+      throw e;
+    }
+    await selectSourceChart(page, o.source).catch(() => void 0);
+    const still = !!await findParamChip(page, o.name);
+    learn("note", "parameter_delete", { text: still ? "still listed" : "removed" });
+    if (still) throw new Error(`"${o.name}" sigue en el panel Datos tras quitarlo.`);
+    return { ok: true, removed: o.name, note: "Los campos y controles que lo usaban quedan en error: corrigelos o borralos." };
   });
 }
 async function navPages() {
@@ -4955,12 +5165,15 @@ export {
   loadSpec,
   lintSpec,
   JOIN_TYPES,
+  ensureVisible,
   listBlends,
   updateBlend,
   deleteBlend,
   createBlend,
   selectSourceChart,
   addParameter,
+  updateParameter,
+  deleteParameter,
   navPages,
   movePage,
   deletePages,
