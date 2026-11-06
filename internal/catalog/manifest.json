@@ -178,6 +178,11 @@
         "tableau-data-model",
         "tableau-design"
       ],
+      "skillSummaries": {
+        "tableau-authoring": "Drives Tableau Desktop 2026.3 through its External Client API with the tableu MCP server: data sources and .hyper extracts, fields, calculations, parameters, sets, sheets, filters, formatting, dashboards, navigation buttons, filter/parameter/set actions and stories, each validated by Tableau and linted against its best practices. Ten references, one per topic, map each operation to the XML Desktop writes for the same menu, context-menu or dialog command (measured). Includes a tableau-author subagent and /setup.",
+        "tableau-data-model": "The data model under the sheets: connections, relationships versus joins (and why totals double), data source filters, .hyper extracts, field properties as Desktop writes them, calculations, LOD and table calcs, and their performance rules.",
+        "tableau-design": "How Tableau work is structured per Tableau's official guidance: site, project, collection, workbook, worksheets, dashboards and stories; which chart answers which question; tiled fixed-size dashboard layout with 2-3 views and KPIs first; a pre-delivery checklist mapped to tableu operations. References: design brief, dashboard archetypes measured on Tableau's own dashboards, color (with Tableau's palettes), typography, accessibility, anti-patterns."
+      },
       "agents": [
         "tableau-author.md"
       ],
@@ -271,9 +276,10 @@
       "id": "looker-studio-authoring",
       "kind": "builtin",
       "title": "Looker Studio authoring",
-      "description": "Edits a Looker Studio / Data Studio report open in Edge or Chrome over CDP with the looker-studio MCP server: safe copies, layout, fields, source calculated fields, components, controls, filters, themes, pages and declarative report specs, with diagnosis and a UX audit. Six best-practice skills, a looker-studio-author subagent and /setup.",
+      "description": "Edits a Looker Studio / Data Studio report open in Edge or Chrome over CDP with the looker-studio MCP server: safe copies, layout, fields, source calculated fields, components, controls, filters, themes, pages and declarative report specs, with diagnosis and a UX audit. An authoring skill with one reference per topic and a CLI-to-MCP index that a check keeps in step with the server, six best-practice skills, a looker-studio-author subagent and /setup.",
       "dir": "looker-studio-authoring",
       "skills": [
+        "ls-authoring",
         "ls-depuracion-errores",
         "ls-diseno-layout",
         "ls-kpi-scorecards",
@@ -281,6 +287,15 @@
         "ls-modelo-datos",
         "ls-rendimiento"
       ],
+      "skillSummaries": {
+        "ls-authoring": "How to build with the looker-studio MCP server and its ls-studio CLI: safe copies, components and templates, fields and source calculated fields, controls and filters, pages, themes, report settings, report specs and verification, with one reference per topic and an index of every tool and CLI command that a check keeps in step with the server.",
+        "ls-depuracion-errores": "Debugging Looker Studio / Data Studio reports: programmatic detection, basic hygiene and a catalogue of errors (incomplete or invalid chart configuration, broken fields, credentials, quotas, blends) with their fixes.",
+        "ls-diseno-layout": "Report design and layout: layout mode, canvas size, grid and alignment, visual hierarchy, density, colour, typography, accessibility and mobile, with four page archetypes and the measured contrast of the theme library.",
+        "ls-kpi-scorecards": "KPI rows and scorecards: how many cards per row, Setup and Style options, comparison periods, compact numbers, change colours and conditional formatting.",
+        "ls-migracion": "Migrations: Universal Analytics to GA4, replacing a report's data source, what breaks, the copy-first workflow and moving to Data Studio Pro.",
+        "ls-modelo-datos": "The data model: embedded versus reusable sources, credentials, dimensions and metrics, field ids versus display names, calculated fields, parameters, blends and naming conventions.",
+        "ls-rendimiento": "Performance: official limits, components and queries per page, cache and freshness, Extract Data, BigQuery and BI Engine, blends, filters, cardinality and the GA4 token quota."
+      },
       "agents": [
         "looker-studio-author.md"
       ],

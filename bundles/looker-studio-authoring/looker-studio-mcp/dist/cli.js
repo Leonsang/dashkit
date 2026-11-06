@@ -18,6 +18,7 @@ import {
   disconnectIfConnected,
   exportReport,
   exportTheme,
+  findOrphans,
   getComponentConfig,
   getReportLayout,
   importTheme,
@@ -43,7 +44,7 @@ import {
   themeLibrary,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-3G7HQQXD.js";
+} from "./chunks/chunk-CBFK5WAO.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
 import "./chunks/chunk-FAVAKK4W.js";
@@ -211,17 +212,8 @@ async function main() {
       if (pos[0] === "add") return addPage(need(pos[1], "el nombre de la pagina"));
       if (pos[0] === "rename") return renamePage(need(pos[1], "pageId"), need(pos.slice(2).join(" "), "el nombre"));
       return listPages();
-    case "orphans": {
-      const known = /* @__PURE__ */ new Set();
-      for (const f of pos) {
-        const st = f.replace(/\.json$/i, "") + ".state.json";
-        if (existsSync(st)) for (const id of Object.values(JSON.parse(readFileSync(st, "utf8")).keys)) known.add(id);
-      }
-      const ex = await exportReport();
-      return ex.pages.flatMap(
-        (p) => p.components.filter((c) => !known.has(c.id)).map((c) => ({ page: p.name || p.id, id: c.id, type: c.config.display.type, box: [c.attribute.left, c.attribute.top, c.attribute.width, c.attribute.height] }))
-      );
-    }
+    case "orphans":
+      return findOrphans(pos);
     case "report": {
       if (pos[0] !== "settings") throw new Error("Uso: report settings [--viewer-filter-bar on|off] [--cross-filter on|off] [--set clave=valor ...]");
       const patch = {};

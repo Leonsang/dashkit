@@ -18,6 +18,7 @@ import {
   deleteComponent,
   diagnoseWithKnowledge,
   exportReport,
+  findOrphans,
   lintSpec,
   loadSpec,
   copyReport,
@@ -188,20 +189,8 @@ async function main(): Promise<unknown> {
       if (pos[0] === 'add') return addPage(need(pos[1], 'el nombre de la pagina'));
       if (pos[0] === 'rename') return renamePage(need(pos[1], 'pageId'), need(pos.slice(2).join(' '), 'el nombre'));
       return listPages();
-    case 'orphans': {
-      // components on the report that no spec state file references (leftovers, manual additions)
-      const known = new Set<string>();
-      for (const f of pos) {
-        const st = f.replace(/\.json$/i, '') + '.state.json';
-        if (existsSync(st)) for (const id of Object.values((JSON.parse(readFileSync(st, 'utf8')) as { keys: Record<string, string> }).keys)) known.add(id);
-      }
-      const ex = await exportReport();
-      return ex.pages.flatMap((p) =>
-        (p.components as Array<{ id: string; attribute: { left: number; top: number; width: number; height: number }; config: { display: { type: string } } }>)
-          .filter((c) => !known.has(c.id))
-          .map((c) => ({ page: p.name || p.id, id: c.id, type: c.config.display.type, box: [c.attribute.left, c.attribute.top, c.attribute.width, c.attribute.height] })),
-      );
-    }
+    case 'orphans':
+      return findOrphans(pos);
     case 'report': {
       // report settings [--viewer-filter-bar on|off] [--nav left|top|...] [--cross-filter on|off] [--key value]
       if (pos[0] !== 'settings') throw new Error('Uso: report settings [--viewer-filter-bar on|off] [--cross-filter on|off] [--set clave=valor ...]');

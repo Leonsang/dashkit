@@ -79,7 +79,7 @@ A thin spec-driven workflow for Power BI: survey an existing or published report
 </details>
 
 <details>
-<summary><strong>Tableau authoring</strong> &ensp;<code>tableau-authoring</code> &ensp;dashkit · 2 skills · 1 MCP server</summary>
+<summary><strong>Tableau authoring</strong> &ensp;<code>tableau-authoring</code> &ensp;dashkit · 3 skills · 1 MCP server</summary>
 
 Drives Tableau Desktop 2026.3 through its External Client API with the tableu MCP server: data sources and .hyper extracts, fields, calculations, parameters, sets, sheets, filters, formatting, dashboards, navigation buttons, filter/parameter/set actions and stories, each validated by Tableau and linted against its best practices. Includes a tableau-author subagent and /setup.
 
@@ -117,18 +117,19 @@ Checks that run automatically, without being asked:
 </details>
 
 <details>
-<summary><strong>Looker Studio authoring</strong> &ensp;<code>looker-studio-authoring</code> &ensp;dashkit · 6 skills · 1 MCP server</summary>
+<summary><strong>Looker Studio authoring</strong> &ensp;<code>looker-studio-authoring</code> &ensp;dashkit · 7 skills · 1 MCP server</summary>
 
-Edits a Looker Studio / Data Studio report open in Edge or Chrome over CDP with the looker-studio MCP server: safe copies, layout, fields, source calculated fields, components, controls, filters, themes, pages and declarative report specs, with diagnosis and a UX audit. Six best-practice skills, a looker-studio-author subagent and /setup.
+Edits a Looker Studio / Data Studio report open in Edge or Chrome over CDP with the looker-studio MCP server: safe copies, layout, fields, source calculated fields, components, controls, filters, themes, pages and declarative report specs, with diagnosis and a UX audit. An authoring skill with one reference per topic and a CLI-to-MCP index that a check keeps in step with the server, six best-practice skills, a looker-studio-author subagent and /setup.
 
 | Skill | What it does |
 |---|---|
-| [`ls-depuracion-errores`](../bundles/looker-studio-authoring/skills/ls-depuracion-errores/SKILL.md) | Edits a Looker Studio / Data Studio report open in Edge or Chrome over CDP with the looker-studio MCP server: safe copies, layout, fields, source calculated fields, components, controls, filters, themes, pages and declarative report specs, with diagnosis and a UX audit. Six best-practice skills, a looker-studio-author subagent and /setup. |
-| [`ls-diseno-layout`](../bundles/looker-studio-authoring/skills/ls-diseno-layout/SKILL.md) | Edits a Looker Studio / Data Studio report open in Edge or Chrome over CDP with the looker-studio MCP server: safe copies, layout, fields, source calculated fields, components, controls, filters, themes, pages and declarative report specs, with diagnosis and a UX audit. Six best-practice skills, a looker-studio-author subagent and /setup. |
-| [`ls-kpi-scorecards`](../bundles/looker-studio-authoring/skills/ls-kpi-scorecards/SKILL.md) | Edits a Looker Studio / Data Studio report open in Edge or Chrome over CDP with the looker-studio MCP server: safe copies, layout, fields, source calculated fields, components, controls, filters, themes, pages and declarative report specs, with diagnosis and a UX audit. Six best-practice skills, a looker-studio-author subagent and /setup. |
-| [`ls-migracion`](../bundles/looker-studio-authoring/skills/ls-migracion/SKILL.md) | Edits a Looker Studio / Data Studio report open in Edge or Chrome over CDP with the looker-studio MCP server: safe copies, layout, fields, source calculated fields, components, controls, filters, themes, pages and declarative report specs, with diagnosis and a UX audit. Six best-practice skills, a looker-studio-author subagent and /setup. |
-| [`ls-modelo-datos`](../bundles/looker-studio-authoring/skills/ls-modelo-datos/SKILL.md) | Edits a Looker Studio / Data Studio report open in Edge or Chrome over CDP with the looker-studio MCP server: safe copies, layout, fields, source calculated fields, components, controls, filters, themes, pages and declarative report specs, with diagnosis and a UX audit. Six best-practice skills, a looker-studio-author subagent and /setup. |
-| [`ls-rendimiento`](../bundles/looker-studio-authoring/skills/ls-rendimiento/SKILL.md) | Edits a Looker Studio / Data Studio report open in Edge or Chrome over CDP with the looker-studio MCP server: safe copies, layout, fields, source calculated fields, components, controls, filters, themes, pages and declarative report specs, with diagnosis and a UX audit. Six best-practice skills, a looker-studio-author subagent and /setup. |
+| [`ls-authoring`](../bundles/looker-studio-authoring/skills/ls-authoring/SKILL.md) | How to build with the looker-studio MCP server and its ls-studio CLI: safe copies, components and templates, fields and source calculated fields, controls and filters, pages, themes, report settings, report specs and verification, with one reference per topic and an index of every tool and CLI command that a check keeps in step with the server. |
+| [`ls-depuracion-errores`](../bundles/looker-studio-authoring/skills/ls-depuracion-errores/SKILL.md) | Debugging Looker Studio / Data Studio reports: programmatic detection, basic hygiene and a catalogue of errors (incomplete or invalid chart configuration, broken fields, credentials, quotas, blends) with their fixes. |
+| [`ls-diseno-layout`](../bundles/looker-studio-authoring/skills/ls-diseno-layout/SKILL.md) | Report design and layout: layout mode, canvas size, grid and alignment, visual hierarchy, density, colour, typography, accessibility and mobile, with four page archetypes and the measured contrast of the theme library. |
+| [`ls-kpi-scorecards`](../bundles/looker-studio-authoring/skills/ls-kpi-scorecards/SKILL.md) | KPI rows and scorecards: how many cards per row, Setup and Style options, comparison periods, compact numbers, change colours and conditional formatting. |
+| [`ls-migracion`](../bundles/looker-studio-authoring/skills/ls-migracion/SKILL.md) | Migrations: Universal Analytics to GA4, replacing a report's data source, what breaks, the copy-first workflow and moving to Data Studio Pro. |
+| [`ls-modelo-datos`](../bundles/looker-studio-authoring/skills/ls-modelo-datos/SKILL.md) | The data model: embedded versus reusable sources, credentials, dimensions and metrics, field ids versus display names, calculated fields, parameters, blends and naming conventions. |
+| [`ls-rendimiento`](../bundles/looker-studio-authoring/skills/ls-rendimiento/SKILL.md) | Performance: official limits, components and queries per page, cache and freshness, Extract Data, BigQuery and BI Engine, blends, filters, cardinality and the GA4 token quota. |
 
 </details>
 

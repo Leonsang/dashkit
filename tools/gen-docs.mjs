@@ -50,7 +50,7 @@ const builtin = manifest.bundles.filter((b) => b.kind === "builtin");
 function table(b) {
   const rows = b.skills.map((s) => {
     if (b.kind === "marketplace") return `| [\`${s}\`](${goblinLink(b, s)}) | |`;
-    if (b.kind === "builtin") return `| [\`${s}\`](../bundles/${b.dir}/skills/${s}/SKILL.md) | ${b.description.replace(/\|/g, "\|")} |`;
+    if (b.kind === "builtin") return `| [\`${s}\`](../bundles/${b.dir}/skills/${s}/SKILL.md) | ${(b.skillSummaries?.[s] ?? b.description).replace(/\|/g, "\|")} |`;
     const md = join(upstream, b.dir, "skills", s, "SKILL.md");
     const d = existsSync(md) ? firstSentence(description(md)) : "";
     return `| [\`${s}\`](${msLink(b, s)}) | ${d} |`;

@@ -158,11 +158,11 @@ A thin spec-driven workflow for Power BI: survey an existing or published report
 </details>
 
 <details>
-<summary><strong>Tableau authoring</strong> &ensp;<code>tableau-authoring</code> &ensp;dashkit · 2 skills · 1 MCP server</summary>
+<summary><strong>Tableau authoring</strong> &ensp;<code>tableau-authoring</code> &ensp;dashkit · 3 skills · 1 MCP server</summary>
 
 Drives Tableau Desktop 2026.3 through its External Client API with the tableu MCP server: data sources and .hyper extracts, fields, calculations, parameters, sets, sheets, filters, formatting, dashboards, navigation buttons, filter/parameter/set actions and stories, each validated by Tableau and linted against its best practices. Includes a tableau-author subagent and /setup.
 
-`tableau-authoring`
+`tableau-authoring` · `tableau-data-model` · `tableau-design`
 
 </details>
 
@@ -189,11 +189,11 @@ Checks that run automatically, without being asked:
 </details>
 
 <details>
-<summary><strong>Looker Studio authoring</strong> &ensp;<code>looker-studio-authoring</code> &ensp;dashkit · 6 skills · 1 MCP server</summary>
+<summary><strong>Looker Studio authoring</strong> &ensp;<code>looker-studio-authoring</code> &ensp;dashkit · 7 skills · 1 MCP server</summary>
 
-Edits a Looker Studio / Data Studio report open in Edge or Chrome over CDP with the looker-studio MCP server: safe copies, layout, fields, source calculated fields, components, controls, filters, themes, pages and declarative report specs, with diagnosis and a UX audit. Six best-practice skills, a looker-studio-author subagent and /setup.
+Edits a Looker Studio / Data Studio report open in Edge or Chrome over CDP with the looker-studio MCP server: safe copies, layout, fields, source calculated fields, components, controls, filters, themes, pages and declarative report specs, with diagnosis and a UX audit. An authoring skill with one reference per topic and a CLI-to-MCP index that a check keeps in step with the server, six best-practice skills, a looker-studio-author subagent and /setup.
 
-`ls-depuracion-errores` · `ls-diseno-layout` · `ls-kpi-scorecards` · `ls-migracion` · `ls-modelo-datos` · `ls-rendimiento`
+`ls-authoring` · `ls-depuracion-errores` · `ls-diseno-layout` · `ls-kpi-scorecards` · `ls-migracion` · `ls-modelo-datos` · `ls-rendimiento`
 
 </details>
 

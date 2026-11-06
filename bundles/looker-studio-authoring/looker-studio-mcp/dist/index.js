@@ -15,8 +15,10 @@ import {
   copyReport,
   createComponent,
   deleteComponent,
+  detachFilter,
   diagnoseWithKnowledge,
   exportReport,
+  findOrphans,
   getComponentConfig,
   getReportLayout,
   inspectDataSources,
@@ -44,7 +46,7 @@ import {
   useThemePreset,
   uxAudit,
   writesAllowed
-} from "./chunks/chunk-3G7HQQXD.js";
+} from "./chunks/chunk-CBFK5WAO.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
 import "./chunks/chunk-FAVAKK4W.js";
@@ -36680,7 +36682,7 @@ var StdioServerTransport = class {
 };
 
 // src/skills.ts
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 var SKILLS_DIR = process.env.LS_SKILLS_DIR ?? join(packageRoot(), "..", "skills");
 function loadSkill(category) {
@@ -36717,7 +36719,7 @@ var SKILLS = [
     },
     procedure: ({ count, metrics }) => [
       "1. attach_to_report (modo edit), get_report_layout e inspect_data_sources.",
-      `2. Selecciona ${count ?? "los"} componentes kpi-metric de la fila superior (no hay herramienta para crear componentes: si faltan, pide al usuario que los anada).`,
+      `2. Selecciona ${count ?? "los"} componentes kpi-metric de la fila superior ; si faltan, crealos con create_component type=kpi-metric (clona uno existente o usa la plantilla aprendida).`,
       "3. Calcula w = floor((canvasWidth - margenIzq - margenDer - (N-1)*gap) / N), x_i = margenIzq + i*(w+gap), misma y y altura.",
       `4. Metricas: ${metrics ?? "elige las 4-6 mas relevantes del esquema (type METRIC) segun la guia"}. Aplica con bind_fields_to_component (metrics:[una], dimensions:[]).`,
       "5. Aplica caja y padding con set_component_box_model; verifica y resume antes/despues."
@@ -36810,6 +36812,32 @@ function registerSkills(server2) {
       async (uri) => ({ contents: [{ uri: uri.href, mimeType: "text/markdown", text: loadSkill(s.file) }] })
     );
   }
+  registerReferences(server2);
+}
+function registerReferences(server2) {
+  if (!existsSync(SKILLS_DIR)) return;
+  const withPrompt = new Set(SKILLS.map((s) => s.file));
+  for (const skill of readdirSync(SKILLS_DIR, { withFileTypes: true })) {
+    if (!skill.isDirectory() || !existsSync(join(SKILLS_DIR, skill.name, "SKILL.md"))) continue;
+    if (!withPrompt.has(skill.name))
+      server2.registerResource(
+        skill.name,
+        `skill://${skill.name}`,
+        { title: skill.name, mimeType: "text/markdown" },
+        async (uri) => ({ contents: [{ uri: uri.href, mimeType: "text/markdown", text: loadSkill(skill.name) }] })
+      );
+    const refs = join(SKILLS_DIR, skill.name, "references");
+    if (!existsSync(refs)) continue;
+    for (const f of readdirSync(refs).filter((n) => n.endsWith(".md"))) {
+      const name = `${skill.name}/${f.replace(/\.md$/, "")}`;
+      server2.registerResource(
+        name,
+        `skill://${name}`,
+        { title: name, mimeType: "text/markdown" },
+        async (uri) => ({ contents: [{ uri: uri.href, mimeType: "text/markdown", text: readFileSync(join(refs, f), "utf8") }] })
+      );
+    }
+  }
 }
 
 // src/index.ts
@@ -36831,7 +36859,8 @@ var WRITE_TOOLS = /* @__PURE__ */ new Set([
   "rename_page",
   "synthesize_templates",
   "seed_templates_from_menu",
-  "add_filter"
+  "add_filter",
+  "detach_filter"
 ]);
 var DESTRUCTIVE_TOOLS = /* @__PURE__ */ new Set(["delete_component"]);
 {
@@ -37049,7 +37078,7 @@ server.registerTool(
   "create_component",
   {
     title: "Crear componente",
-    description: 'Crea un componente (grafico, tabla, scorecard, control...) en modo edicion clonando uno del mismo tipo del informe o usando una plantilla aprendida. Opcionalmente cambia el origen (dataset: id o "@campo") y vincula campos (misma sintaxis que bind_fields_to_component). Detecta guardados rechazados y lo registra. Tras crear varios, usa reload_report para verlos.',
+    description: 'Crea un componente (grafico, tabla, scorecard, control...) en modo edicion clonando uno del mismo tipo del informe o usando una plantilla aprendida. Opcionalmente cambia el origen (dataset: id o "@campo") y vincula campos (misma sintaxis que bind_fields_to_component). type admite "tipo@variante" para una variante sembrada con seed_templates_from_menu (p. ej. dimension-filter@casilla). slots vincula huecos propios del tipo (x_metric/y_metric/bubble_size, breakdown, color). Detecta guardados rechazados y lo registra. Tras crear varios, usa reload_report para verlos.',
     inputSchema: {
       type: external_exports.string().min(1).describe("Tipo interno: kpi-metric, simple-table, simple-linechart, simple-piechart, simple-geomap, google-map, pivot-table, simple-treemap, simple-scatterchart, bulletchart, gauge-viz, simple-sankey, simple-funnel, simple-daterangepicker, dimension-filter, ..."),
       box: BoxSchema,
@@ -37057,13 +37086,17 @@ server.registerTool(
       dataset: external_exports.string().optional().describe('Id de origen o "@campo" (el origen que contiene ese campo)'),
       dimensions: external_exports.array(external_exports.string()).optional(),
       metrics: external_exports.array(external_exports.string()).optional(),
-      padding: external_exports.number().min(0).optional()
+      padding: external_exports.number().min(0).optional(),
+      slots: external_exports.record(external_exports.string(), external_exports.array(external_exports.string())).optional().describe('Huecos extra por conceptKey: {"x_metric": ["SUM(a)"], "breakdown": ["canal"]}')
     },
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true }
   },
   async (args) => run(
     () => createComponent({
-      type: args.type,
+      // "<type>@<variant>" picks a learned variant template, as the CLI's --type does.
+      type: args.type.split("@")[0],
+      ...args.type.includes("@") ? { variant: args.type.split("@").slice(1).join("@") } : {},
+      ...args.slots ? { slots: args.slots } : {},
       box: args.box,
       ...args.pageId ? { pageId: args.pageId } : {},
       ...args.dataset ? { dataset: args.dataset } : {},
@@ -37208,6 +37241,16 @@ server.registerTool(
   async ({ target, ...f }) => run(() => addFilter(f, target))
 );
 server.registerTool(
+  "detach_filter",
+  {
+    title: "Quitar un filtro de una pagina o componente",
+    description: "Quita un filtro (id de list_filters) de la pagina o el componente indicado. El filtro sigue en el informe para otros destinos.",
+    inputSchema: { filterId: external_exports.string().min(1), target: external_exports.string().min(1).describe("pageId o componentId") },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true }
+  },
+  async ({ filterId, target }) => run(() => detachFilter(filterId, target))
+);
+server.registerTool(
   "seed_templates_from_menu",
   {
     title: "Sembrar plantillas desde el menu",
@@ -37263,6 +37306,16 @@ server.registerTool(
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true }
   },
   async ({ spec, dryRun }) => run(() => applySpec(typeof spec === "string" ? assertJsonPath(spec) : toSpec(spec), { dryRun: !!dryRun }))
+);
+server.registerTool(
+  "list_orphan_components",
+  {
+    title: "Componentes fuera de los specs",
+    description: "Componentes del informe que ningun spec referencia (segun cada <spec>.state.json): restos de pruebas o anadidos a mano. Solo lectura.",
+    inputSchema: { specs: external_exports.array(external_exports.string().min(1)).min(1).describe("Rutas a los spec.json del informe") },
+    annotations: { readOnlyHint: true, openWorldHint: true }
+  },
+  async ({ specs }) => run(() => findOrphans(specs.map((f) => assertJsonPath(f))))
 );
 server.registerTool(
   "get_learnings",

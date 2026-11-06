@@ -3793,6 +3793,17 @@ async function updateExisting(page, id, c) {
     if (!r.ok) throw new Error(r.error);
   }
 }
+async function findOrphans(specFiles) {
+  const known = /* @__PURE__ */ new Set();
+  for (const f of specFiles) {
+    const st = f.replace(/\.json$/i, "") + ".state.json";
+    if (existsSync4(st)) for (const id of Object.values(JSON.parse(readFileSync3(st, "utf8")).keys)) known.add(id);
+  }
+  const ex = await exportReport();
+  return ex.pages.flatMap(
+    (p) => p.components.filter((c) => !known.has(c.id)).map((c) => ({ page: p.name || p.id, id: c.id, type: c.config.display.type, box: [c.attribute.left, c.attribute.top, c.attribute.width, c.attribute.height] }))
+  );
+}
 
 // src/ops3.ts
 import { existsSync as existsSync5, readFileSync as readFileSync5, readdirSync as readdirSync2, writeFileSync as writeFileSync3 } from "node:fs";
@@ -4528,7 +4539,8 @@ export {
   createComponent,
   deleteComponent,
   applySpec,
-  patchComponent
+  patchComponent,
+  findOrphans
 };
 /*! Bundled license information:
 

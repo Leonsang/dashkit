@@ -487,3 +487,22 @@ async function updateExisting(page: Page, id: string, c: ResolvedComponent): Pro
 }
 
 export { lintSpec, loadSpec, summary };
+
+// ---------------------------------------------------------------------------
+// orphans: components that no spec state file references
+// ---------------------------------------------------------------------------
+
+/** Components on the report that none of the specs' <spec>.state.json files reference (leftovers, manual additions). */
+export async function findOrphans(specFiles: string[]) {
+  const known = new Set<string>();
+  for (const f of specFiles) {
+    const st = f.replace(/\.json$/i, '') + '.state.json';
+    if (existsSync(st)) for (const id of Object.values((JSON.parse(readFileSync(st, 'utf8')) as { keys: Record<string, string> }).keys)) known.add(id);
+  }
+  const ex = await exportReport();
+  return ex.pages.flatMap((p) =>
+    (p.components as Array<{ id: string; attribute: { left: number; top: number; width: number; height: number }; config: { display: { type: string } } }>)
+      .filter((c) => !known.has(c.id))
+      .map((c) => ({ page: p.name || p.id, id: c.id, type: c.config.display.type, box: [c.attribute.left, c.attribute.top, c.attribute.width, c.attribute.height] })),
+  );
+}

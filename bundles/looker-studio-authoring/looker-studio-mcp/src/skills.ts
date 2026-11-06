@@ -3,7 +3,7 @@
  * resources. Each prompt = the skill's knowledge + a tool-driven procedure, so
  * the model can create, migrate or debug any report, not just this sample.
  */
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -62,7 +62,7 @@ const SKILLS: SkillDef[] = [
     },
     procedure: ({ count, metrics }) => [
       '1. attach_to_report (modo edit), get_report_layout e inspect_data_sources.',
-      `2. Selecciona ${count ?? 'los'} componentes kpi-metric de la fila superior (no hay herramienta para crear componentes: si faltan, pide al usuario que los anada).`,
+      `2. Selecciona ${count ?? 'los'} componentes kpi-metric de la fila superior ; si faltan, crealos con create_component type=kpi-metric (clona uno existente o usa la plantilla aprendida).`,
       '3. Calcula w = floor((canvasWidth - margenIzq - margenDer - (N-1)*gap) / N), x_i = margenIzq + i*(w+gap), misma y y altura.',
       `4. Metricas: ${metrics ?? 'elige las 4-6 mas relevantes del esquema (type METRIC) segun la guia'}. Aplica con bind_fields_to_component (metrics:[una], dimensions:[]).`,
       '5. Aplica caja y padding con set_component_box_model; verifica y resume antes/despues.',
@@ -157,5 +157,25 @@ export function registerSkills(server: McpServer): void {
       { title: s.title, description: s.description, mimeType: 'text/markdown' },
       async (uri) => ({ contents: [{ uri: uri.href, mimeType: 'text/markdown', text: loadSkill(s.file) }] }),
     );
+  }
+  registerReferences(server);
+}
+
+/** Skills that have no prompt of their own (ls-authoring) and every references/*.md, as skill://<skill>[/<ref>]. */
+function registerReferences(server: McpServer): void {
+  if (!existsSync(SKILLS_DIR)) return;
+  const withPrompt = new Set(SKILLS.map((s) => s.file));
+  for (const skill of readdirSync(SKILLS_DIR, { withFileTypes: true })) {
+    if (!skill.isDirectory() || !existsSync(join(SKILLS_DIR, skill.name, 'SKILL.md'))) continue;
+    if (!withPrompt.has(skill.name))
+      server.registerResource(skill.name, `skill://${skill.name}`, { title: skill.name, mimeType: 'text/markdown' },
+        async (uri) => ({ contents: [{ uri: uri.href, mimeType: 'text/markdown', text: loadSkill(skill.name) }] }));
+    const refs = join(SKILLS_DIR, skill.name, 'references');
+    if (!existsSync(refs)) continue;
+    for (const f of readdirSync(refs).filter((n) => n.endsWith('.md'))) {
+      const name = `${skill.name}/${f.replace(/\.md$/, '')}`;
+      server.registerResource(name, `skill://${name}`, { title: name, mimeType: 'text/markdown' },
+        async (uri) => ({ contents: [{ uri: uri.href, mimeType: 'text/markdown', text: readFileSync(join(refs, f), 'utf8') }] }));
+    }
   }
 }

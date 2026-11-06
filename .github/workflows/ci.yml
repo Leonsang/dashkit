@@ -117,6 +117,7 @@ jobs:
           npm run build
           node tools/check-page-scripts.mjs --minify --obfuscate
           node tools/mcp-smoke.mjs
+          node tools/ops-reference.mjs --check
           git diff --exit-code -- dist ../../looker-studio-guardrails/hooks
 
   installers:

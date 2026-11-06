@@ -1,0 +1,91 @@
+# Operaciones del MCP looker-studio y de la CLI ls-studio
+
+Índice generado desde el servidor (`node tools/ops-reference.mjs`); no lo edites a mano. Los parámetros en
+negrita son obligatorios. La CLI es `node dist/cli.js <comando>` (o `ls-studio` tras `npm link`), usa el mismo
+motor y no lleva el control de `LS_ALLOW_WRITE`.
+
+## Herramientas MCP
+
+| Herramienta | Parámetros | Qué hace | Guía |
+|---|---|---|---|
+| `attach_to_report` | — | Se conecta por CDP al navegador (LS_CDP_URL, por defecto http://127.0.0.1:9222, o LS_CDP_WS) y localiza la pestana con el informe de Looker Studio (lookerstudio.google.com o datastudio.google.com). | `SKILL.md` |
+| `get_report_layout` | pageId | Lista los componentes de una pagina del informe con su caja y estilo: [{id, type, x, y, width, height, style:{padding:{top,right,bottom,left}, backgroundColor, borderColor, borderWidth, borderRadius}}], mas el tamano del lienzo. | `componentes.md` |
+| `set_component_box_model` | **componentId**, padding, dimensions, position | Cambia padding, tamano y/o posicion de UN componente. | `componentes.md` |
+| `inspect_data_sources` | — | Lista las fuentes de datos del informe y sus campos: [{dataSourceId, name, fields:[{id, name, type: DIMENSION\|METRIC, dataType}]}]. | `campos.md` |
+| `bind_fields_to_component` | **componentId**, **dimensions**, **metrics**, mode | Asigna dimensiones y metricas a un componente (grafico, tabla, scorecard). | `campos.md` |
+| `diagnose_report` | — | Recorre todas las paginas y devuelve problemas detectados: componentes en error, campos que no existen en el esquema del origen (tipico tras migraciones UA->GA4 o cambios de origen), conceptos qt_ huerfanos, graficos sin metricas, componentes fuera del lienzo o de la reticula, paginas con demasiados graficos y mensajes de error visibles en el canvas. | `revision.md` |
+| `get_component_config` | **componentId** | Devuelve el JSON interno completo de un componente (attribute, config.display.keys, config.datasource.keys, conceptDefs). | `revision.md` |
+| `open_report` | **url** | Navega la pestana del informe (o una nueva) a la URL indicada y espera a que cargue el editor. | `SKILL.md` |
+| `copy_report` | **report**, name | Crea una copia del informe (propiedad del usuario con sesion iniciada) y la abre en /edit. | `SKILL.md` |
+| `add_source_field` | **name**, **formula**, source, allowShared | Crea un campo calculado en el ORIGEN de datos (no en un grafico), con el editor de campos de Data Studio. | `campos.md` |
+| `reload_report` | — | Recarga la pestana: pinta los componentes creados por API y descarta estado local invalido. | `revision.md` |
+| `export_report` | file | Devuelve el informe completo como JSON (paginas, configuracion de cada componente, origenes y campos). | `informe-como-codigo.md`, `revision.md` |
+| `capture_templates` | — | Guarda en knowledge/templates una plantilla por cada tipo de componente del informe abierto (funciona en view/preview). | `componentes.md` |
+| `list_templates` | — | Tipos de componente con plantilla disponible en knowledge/templates. | `componentes.md` |
+| `create_component` | **type**, **box**, pageId, dataset, dimensions, metrics, padding, slots | Crea un componente (grafico, tabla, scorecard, control...) en modo edicion clonando uno del mismo tipo del informe o usando una plantilla aprendida. | `componentes.md` |
+| `delete_component` | **componentId** | Borra un componente del informe (modo edicion). | `componentes.md` |
+| `patch_component` | **componentId**, dateRangeDays, stripThemeStyles | dateRangeDays: periodo por defecto de un control de fechas (ultimos N dias, movil). | `componentes.md` |
+| `get_theme` | — | Tema del informe (preset o personalizado) en formato amigable. | `paginas-temas-y-ajustes.md` |
+| `apply_theme` | **theme** | Crea o actualiza el tema personalizado del informe: tipografia, color de texto, relleno, acento, fondo, rejilla, colores de subida/bajada, bordes y paleta de series. | `paginas-temas-y-ajustes.md` |
+| `list_pages` | — | Paginas del informe con id, nombre y numero de componentes. | `paginas-temas-y-ajustes.md` |
+| `add_page` | **name** | Anade una pagina vacia con el nombre indicado (modo edicion). | `paginas-temas-y-ajustes.md` |
+| `synthesize_templates` | **types** | Genera plantillas de tipos de componente que no existen en ningun informe disponible (treemap, pivot-table, scatter, bulletchart, gauge-viz, combochart, areachart, sankey, funnel, waterfall, histogram, google-map) creando uno temporal, vinculando campos validos, guardandolo y borrandolo. | `componentes.md` |
+| `audit_ux` | — | Puntua (0-100) la UX del informe: contraste WCAG de texto/acento/series, coherencia con el tema (estilos sobrescritos), paleta (series casi iguales), tipografias, y problemas de layout del diagnostico. | `paginas-temas-y-ajustes.md`, `revision.md` |
+| `list_theme_presets` | — | Temas predefinidos del editor (Cosecha=t-harvest, Eucalipto=t-eucalyptus, Pop=t-pop, Niebla=t-fog, ...) y biblioteca propia (themes/library). | `paginas-temas-y-ajustes.md` |
+| `use_theme` | **theme** | Aplica un tema predefinido (id o nombre) o uno de themes/library. | `paginas-temas-y-ajustes.md` |
+| `list_filters` | — | Filtros del informe (resource.filter) con campo, condicion, valores y donde se aplican (paginas/componentes). | `controles-y-filtros.md` |
+| `add_filter` | **name**, **field**, op, values, include, dataset, target | Crea un filtro (o reutiliza uno con el mismo nombre) y lo aplica a una pagina (filtro de pagina) o a un componente. | `controles-y-filtros.md` |
+| `detach_filter` | **filterId**, **target** | Quita un filtro (id de list_filters) de la pagina o el componente indicado. | `controles-y-filtros.md` |
+| `seed_templates_from_menu` | **labels** | Inserta opciones del menu "Anadir un grafico" (por su nombre visible, p. | `componentes.md` |
+| `rename_page` | **pageId**, **name** | Renombra una pagina en el modelo y en la navegacion visible (Gestionar paginas > Cambiar nombre -> /updateReportNavigationInfo). | `paginas-temas-y-ajustes.md` |
+| `report_settings` | patch | Lee o cambia ajustes del informe: viewerFilterBar (barra de filtros de lectores), crossFilterByDefault, viewModeNav, viewModeHeader, viewModeScale, viewModeMargin, viewModeMaxWidth, snapMode, showNavigationInEditMode, width, height. | `paginas-temas-y-ajustes.md` |
+| `lint_report_spec` | **spec** | Valida un spec contra las skills (reticula, lienzo, solapes, filas de KPIs, densidad por pagina) sin tocar el informe. | `informe-como-codigo.md` |
+| `apply_report_spec` | **spec**, dryRun | Crea o actualiza componentes segun el spec (idempotente: recuerda clave->componente en <spec>.state.json). | `informe-como-codigo.md` |
+| `list_orphan_components` | **specs** | Componentes del informe que ningun spec referencia (segun cada <spec>.state.json): restos de pruebas o anadidos a mano. | `informe-como-codigo.md` |
+| `get_learnings` | raw | Resumen de knowledge/: reason codes vistos, soluciones conocidas, plantillas, resultados de creacion, metodos que faltan y notas. | `revision.md` |
+| `record_learning` | **kind**, **key**, **text** | Guarda un hallazgo para futuras sesiones: una solucion (kind=fix, key "reason:93" o un codigo de issue) o una nota. | `revision.md` |
+
+## CLI ↔ MCP
+
+Cada comando de la CLI tiene su herramienta MCP. Lo que cambia, en la última columna.
+
+| CLI `ls-studio` | Herramienta MCP | Diferencias |
+|---|---|---|
+| `open <url>` | `open_report` | — |
+| `attach` | `attach_to_report` | — |
+| `reload` | `reload_report` | — |
+| `copy <url\|id> [--name N]` | `copy_report` | — |
+| `layout [--page <id>]` | `get_report_layout` | — |
+| `sources` | `inspect_data_sources` | — |
+| `fields add --name N --formula F` | `add_source_field` | `--source`, `--allow-shared` = `source`, `allowShared` |
+| `config <id>` | `get_component_config` | — |
+| `diagnose` | `diagnose_report` | — |
+| `export [-o f.json]` | `export_report` | MCP: `file`, dentro de `LS_WORKSPACE` |
+| `box <id> --x --y --w --h --padding` | `set_component_box_model` | MCP: `position{x,y}`, `dimensions{width,height}`, `padding` |
+| `bind <id> --dims --metrics [--append]` | `bind_fields_to_component` | MCP: `mode=append` |
+| `create --type t[@variante] --box x,y,w,h` | `create_component` | MCP: `box{x,y,width,height}`; `type` también admite `@variante`; `slots` solo en MCP y spec |
+| `delete <id>` | `delete_component` | MCP: además `LS_ALLOW_DELETE=1` |
+| `patch <id> --date-days N --strip-styles` | `patch_component` | — |
+| `pages [list]` | `list_pages` | — |
+| `pages add <nombre>` | `add_page` | — |
+| `pages rename <id> <nombre>` | `rename_page` | — |
+| `theme [get]` | `get_theme` | — |
+| `theme set <json\|f.json>` | `apply_theme` | — |
+| `theme export <f.json>` | `get_theme` | El MCP devuelve el mismo JSON; el agente lo guarda si hace falta |
+| `theme import <f.json>` | `apply_theme` | El MCP recibe el objeto del tema en lugar del archivo |
+| `theme presets` | `list_theme_presets` | — |
+| `theme use <preset\|biblioteca>` | `use_theme` | — |
+| `report settings [--viewer-filter-bar] [--cross-filter] [--set k=v]` | `report_settings` | MCP: `patch{viewerFilterBar, crossFilterByDefault, ...}` |
+| `filters [list]` | `list_filters` | — |
+| `filters add --name --field [--op] [--values] [--exclude] [--to]` | `add_filter` | MCP: `include=false`, `target` |
+| `filters detach <filterId> <pageId\|cd-..>` | `detach_filter` | — |
+| `ux` | `audit_ux` | — |
+| `orphans <spec.json...>` | `list_orphan_components` | — |
+| `lint <spec.json>` | `lint_report_spec` | MCP: ruta o el objeto spec |
+| `apply <spec.json> [--dry-run]` | `apply_report_spec` | MCP: `dryRun` |
+| `templates capture` | `capture_templates` | — |
+| `templates list` | `list_templates` | — |
+| `templates synth <tipo...>` | `synthesize_templates` | — |
+| `templates seed-ui "<opción>"...` | `seed_templates_from_menu` | — |
+| `learnings [--raw]` | `get_learnings` | — |
+| `learn <clave> <texto>` | `record_learning` | MCP: `kind=fix|note`, `key`, `text` |

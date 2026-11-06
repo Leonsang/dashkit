@@ -18,7 +18,7 @@
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit && node tools/esbuild.mjs",
     "dev": "tsc --noEmit --watch",
-    "check": "node tools/check-page-scripts.mjs && node tools/mcp-smoke.mjs",
+    "check": "node tools/check-page-scripts.mjs && node tools/mcp-smoke.mjs && node tools/ops-reference.mjs --check",
     "start": "node dist/index.js",
     "bundle": "node tools/build-bundle.mjs",
     "cli": "node dist/cli.js",

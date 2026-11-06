@@ -90,6 +90,14 @@ Checklist: todas las páginas con el mismo ancho; si una página es "larga", hac
 - Navegación: Izquierda, Pestañas, Arriba-izquierda u Oculta; cabecera: Mostrar siempre, Ocultar automáticamente, Inicialmente oculta. Para embebidos de una sola página, ocultar navegación. [OFICIAL opciones / CONVENCIÓN uso]
 - Componentes a nivel de informe (logo, filtros globales) aparecen en todas las páginas; posición Top/Bottom configurable. [OFICIAL]
 
+## Referencias
+| Tema | Archivo |
+|---|---|
+| Cuatro arquetipos de página con sus cajas (resumen, desglose, objetivos, exploración) | [arquetipos.md](references/arquetipos.md) |
+| Qué tema usar, contraste medido de la biblioteca, paleta de series, subida y bajada | [temas-y-color.md](references/temas-y-color.md) |
+
+Para construirlo con el MCP, la skill `ls-authoring`.
+
 ## Checklist de auditoría (`skill_layout_audit`)
 - [ ] Mismo ancho de lienzo en todas las páginas; ancho entre 1200 y 1440 px (o Responsive).
 - [ ] Todos los x/y/w/h múltiplos de la rejilla; gutters uniformes (±2 px).

@@ -19,6 +19,7 @@ import {
   deleteComponent,
   diagnoseWithKnowledge,
   exportReport,
+  findOrphans,
   lintSpec,
   copyReport,
   openReport,
@@ -27,7 +28,7 @@ import {
 } from './ops.js';
 import { loadSpec, type ReportSpec } from './spec.js';
 import { renamePage, reportSettings } from './ops3.js';
-import { addFilter, addPage, addSourceField, applyTheme, listFilters, listPages, readTheme, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
+import { addFilter, addPage, addSourceField, detachFilter, applyTheme, listFilters, listPages, readTheme, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
 
 const server = new McpServer(
   { name: 'looker-studio-mcp', version: '0.2.0' },
@@ -49,6 +50,7 @@ const server = new McpServer(
 const WRITE_TOOLS = new Set([
   'set_component_box_model', 'bind_fields_to_component', 'create_component', 'apply_report_spec', 'patch_component',
   'apply_theme', 'use_theme', 'add_page', 'rename_page', 'synthesize_templates', 'seed_templates_from_menu', 'add_filter',
+  'detach_filter',
 ]);
 const DESTRUCTIVE_TOOLS = new Set(['delete_component']);
 {
@@ -344,7 +346,9 @@ server.registerTool(
     description:
       'Crea un componente (grafico, tabla, scorecard, control...) en modo edicion clonando uno del mismo tipo del informe o ' +
       'usando una plantilla aprendida. Opcionalmente cambia el origen (dataset: id o "@campo") y vincula campos ' +
-      '(misma sintaxis que bind_fields_to_component). Detecta guardados rechazados y lo registra. Tras crear varios, usa reload_report para verlos.',
+      '(misma sintaxis que bind_fields_to_component). type admite "tipo@variante" para una variante sembrada con seed_templates_from_menu ' +
+      '(p. ej. dimension-filter@casilla). slots vincula huecos propios del tipo (x_metric/y_metric/bubble_size, breakdown, color). ' +
+      'Detecta guardados rechazados y lo registra. Tras crear varios, usa reload_report para verlos.',
     inputSchema: {
       type: z.string().min(1).describe('Tipo interno: kpi-metric, simple-table, simple-linechart, simple-piechart, simple-geomap, google-map, pivot-table, simple-treemap, simple-scatterchart, bulletchart, gauge-viz, simple-sankey, simple-funnel, simple-daterangepicker, dimension-filter, ...'),
       box: BoxSchema,
@@ -353,13 +357,17 @@ server.registerTool(
       dimensions: z.array(z.string()).optional(),
       metrics: z.array(z.string()).optional(),
       padding: z.number().min(0).optional(),
+      slots: z.record(z.string(), z.array(z.string())).optional().describe('Huecos extra por conceptKey: {"x_metric": ["SUM(a)"], "breakdown": ["canal"]}'),
     },
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
   },
   async (args) =>
     run(() =>
       createComponent({
-        type: args.type,
+        // "<type>@<variant>" picks a learned variant template, as the CLI's --type does.
+        type: args.type.split('@')[0]!,
+        ...(args.type.includes('@') ? { variant: args.type.split('@').slice(1).join('@') } : {}),
+        ...(args.slots ? { slots: args.slots } : {}),
         box: args.box,
         ...(args.pageId ? { pageId: args.pageId } : {}),
         ...(args.dataset ? { dataset: args.dataset } : {}),
@@ -518,6 +526,17 @@ server.registerTool(
 );
 
 server.registerTool(
+  'detach_filter',
+  {
+    title: 'Quitar un filtro de una pagina o componente',
+    description: 'Quita un filtro (id de list_filters) de la pagina o el componente indicado. El filtro sigue en el informe para otros destinos.',
+    inputSchema: { filterId: z.string().min(1), target: z.string().min(1).describe('pageId o componentId') },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  },
+  async ({ filterId, target }) => run(() => detachFilter(filterId, target)),
+);
+
+server.registerTool(
   'seed_templates_from_menu',
   {
     title: 'Sembrar plantillas desde el menu',
@@ -580,6 +599,17 @@ server.registerTool(
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
   },
   async ({ spec, dryRun }) => run(() => applySpec(typeof spec === 'string' ? assertJsonPath(spec) : toSpec(spec), { dryRun: !!dryRun })),
+);
+
+server.registerTool(
+  'list_orphan_components',
+  {
+    title: 'Componentes fuera de los specs',
+    description: 'Componentes del informe que ningun spec referencia (segun cada <spec>.state.json): restos de pruebas o anadidos a mano. Solo lectura.',
+    inputSchema: { specs: z.array(z.string().min(1)).min(1).describe('Rutas a los spec.json del informe') },
+    annotations: { readOnlyHint: true, openWorldHint: true },
+  },
+  async ({ specs }) => run(() => findOrphans(specs.map((f) => assertJsonPath(f)))),
 );
 
 server.registerTool(
