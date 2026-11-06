@@ -11,9 +11,10 @@ import {
   navPagesScript,
   selectedIdsScript,
   setControlParameterScript,
+  setDisplayKeysScript,
   setTextScript,
   updateBlendScript
-} from "./chunk-GOVUAKXN.js";
+} from "./chunk-MZHUAOKZ.js";
 import "./chunk-5QDPZ4I5.js";
 export {
   arrangeScript,
@@ -27,6 +28,7 @@ export {
   navPagesScript,
   selectedIdsScript,
   setControlParameterScript,
+  setDisplayKeysScript,
   setTextScript,
   updateBlendScript
 };

@@ -27,7 +27,7 @@ import {
   reloadReport,
 } from './ops.js';
 import { loadSpec, type ReportSpec } from './spec.js';
-import { addParameter, arrangeComponents, createBlend, deleteBlend, deletePages, duplicatePage, listBlends, movePage, setControlParameter, setPageVisibility, setText, updateBlend } from './ops4.js';
+import { addParameter, arrangeComponents, createBlend, deleteBlend, deletePages, duplicatePage, listBlends, movePage, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
 import { renamePage, reportSettings } from './ops3.js';
 import { addFilter, addPage, addSourceField, detachFilter, applyTheme, listFilters, listPages, readTheme, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
 
@@ -396,7 +396,7 @@ server.registerTool(
   {
     title: 'Ajustar control / estilos',
     description:
-      'dateRangeDays: periodo por defecto de un control de fechas (ultimos N dias, movil). parameter: el control fija ese parametro (id). text (+ textSize, textBold, textColor): texto de un cuadro de texto. stripThemeStyles: quita colores/fuentes/bordes ' +
+      'dateRangeDays: periodo por defecto de un control de fechas (ultimos N dias, movil). parameter: el control fija ese parametro (id). text (+ textSize, textBold, textColor): texto de un cuadro de texto. style: claves de estilo. stripThemeStyles: quita colores/fuentes/bordes ' +
       'sobrescritos en el componente para que mande el tema del informe (util tras crear desde plantillas de otros informes).',
     inputSchema: {
       componentId: z.string().min(1),
@@ -407,6 +407,7 @@ server.registerTool(
       textSize: z.number().int().positive().optional(),
       textBold: z.boolean().optional(),
       textColor: z.string().optional(),
+      style: z.record(z.string(), z.unknown()).optional().describe('Claves de estilo del componente (las de get_component_config > config.display.keys), p. ej. {"hideMetric": false} en un scorecard'),
     },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
   },
@@ -420,6 +421,7 @@ server.registerTool(
           ...(args.stripThemeStyles ? { stripThemeStyles: true } : {}),
         }));
       if (args.parameter) out.parameter = await setControlParameter(args.componentId, args.parameter);
+      if (args.style) out.style = await setStyle(args.componentId, args.style);
       if (args.text !== undefined) out.text = await setText(args.componentId, args.text, { ...(args.textSize ? { size: args.textSize } : {}), ...(args.textBold ? { bold: true } : {}), ...(args.textColor ? { color: args.textColor } : {}) });
       return out;
     }),

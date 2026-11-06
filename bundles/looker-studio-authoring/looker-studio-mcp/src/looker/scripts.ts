@@ -537,6 +537,12 @@ export async function bindFieldsScript(args: BindFieldsArgs): Promise<BindFields
     const ms = slotFor(2);
     if (ms !== 'primary') warnings.push(`Metricas enviadas al hueco "${ms}" (el tipo no usa metricas en "primary").`);
     comp.updateMetrics(ms, mode === 'append' ? [...existing('metrics'), ...defs] : defs);
+    // A template may still carry metrics in "primary" for a type that does not use it (sankey): they
+    // point at another source and leave the chart in error (FIELD_NOT_IN_SCHEMA, reason 268; seen 2026-11-06).
+    if (ms !== 'primary' && mode !== 'append') {
+      const mv = comp.getDataSourceKeyValue('metrics');
+      if (mv && Array.isArray(mv.primary) && mv.primary.length) comp.updateMetrics('primary', []);
+    }
   }
   mark('primary updated');
   if (args.clearDimensions && !args.dimensions.length) {
@@ -622,11 +628,13 @@ export async function bindFieldsScript(args: BindFieldsArgs): Promise<BindFields
     const firstDim = cur('dimensions')[0];
     const firstDimField = firstDim && comp.config.conceptDefs[firstDim]?.queryTimeTransformation?.dataTransformation?.sourceFieldName;
     const dimIsDate = !!firstDimField && concepts[firstDimField] && (concepts[firstDimField].dataType === 6 || concepts[firstDimField].dataType === 7);
-    if (isTimeType && dimIsDate && !(sd && sd[0] && sd[0].sortColumn === firstDim && sd[0].sortDir === 0)) {
+    // Trend charts read left to right: order by their first dimension ascending even when it is not a
+    // date type (a month number like anio_mes, or a "YYYY-MM" text), not by a metric.
+    if (isTimeType && firstDim && !(sd && sd[0] && sd[0].sortColumn === firstDim && sd[0].sortDir === 0)) {
       const v = [{ sortDir: 0, sortColumn: firstDim }];
       if (typeof comp.setDataSourceKeyValue === 'function') comp.setDataSourceKeyValue('sortData', v, true, true);
       else k.sortData = { stateKey: 'sortData', dominant: 2, value: v };
-      warnings.push('Orden temporal: por fecha ascendente.');
+      warnings.push(dimIsDate ? 'Orden temporal: por fecha ascendente.' : 'Orden de tendencia: por la primera dimension ascendente.');
     } else if (sd && sd.some((s: any) => !live.has(s.sortColumn))) {
       const isTime = /linechart|areachart|timeline|combochart/.test(String(comp.config.config.display.type));
       const col = isTime ? cur('dimensions')[0] ?? cur('metrics')[0] : cur('metrics')[0] ?? cur('dimensions')[0];

@@ -13,14 +13,14 @@
         { "key": "periodo", "type": "simple-daterangepicker", "x": 880, "y": 20, "w": 280, "h": 60, "dateRangeDays": 1100, "stripStyles": true },
         { "row": { "y": 100, "h": 120, "margin": 20, "gap": 20 },
           "items": [
-            { "key": "p1_kpi_ingresos", "type": "kpi-metric", "metrics": ["SUM(ingresos) as Ingresos"] },
-            { "key": "p1_kpi_pedidos", "type": "kpi-metric", "metrics": ["COUNT_DISTINCT(id_pedido) as Pedidos"] },
-            { "key": "p1_kpi_margen", "type": "kpi-metric", "metrics": ["=(SUM(ingresos) - SUM(coste)) / SUM(ingresos)::PERCENT as Margen"] },
-            { "key": "p1_kpi_valoracion", "type": "kpi-metric", "metrics": ["AVG(valoracion) as Valoración media"] },
-            { "key": "p1_kpi_unidades", "type": "kpi-metric", "metrics": ["SUM(unidades) as Unidades"] }
+            { "key": "p1_kpi_ingresos", "type": "kpi-metric", "style": { "hideMetric": false }, "metrics": ["SUM(ingresos) as Ingresos"] },
+            { "key": "p1_kpi_pedidos", "type": "kpi-metric", "style": { "hideMetric": false }, "metrics": ["COUNT_DISTINCT(id_pedido) as Pedidos"] },
+            { "key": "p1_kpi_margen", "type": "kpi-metric", "style": { "hideMetric": false }, "metrics": ["=(SUM(ingresos) - SUM(coste)) / SUM(ingresos)::PERCENT as Margen"] },
+            { "key": "p1_kpi_valoracion", "type": "kpi-metric", "style": { "hideMetric": false }, "metrics": ["AVG(valoracion) as Valoración media"] },
+            { "key": "p1_kpi_unidades", "type": "kpi-metric", "style": { "hideMetric": false }, "metrics": ["SUM(unidades) as Unidades"] }
           ] },
         { "key": "p1_tendencia", "type": "simple-linechart", "stripStyles": true, "x": 20, "y": 240, "w": 740, "h": 300,
-          "dimensions": ["mes_inicio"], "metrics": ["SUM(ingresos) as Ingresos"] },
+          "dimensions": ["mes_inicio"], "style": { "missingDataDisplayType": "linearInterpolation" }, "metrics": ["SUM(ingresos) as Ingresos"] },
         { "key": "p1_canal", "type": "simple-barchart", "stripStyles": true, "x": 780, "y": 240, "w": 380, "h": 300,
           "dimensions": ["canal"], "metrics": ["SUM(ingresos) as Ingresos"] },
         { "key": "p1_mapa", "type": "simple-geomap", "stripStyles": true, "x": 20, "y": 560, "w": 560, "h": 320,
@@ -55,10 +55,10 @@
         { "key": "p3_online", "type": "button", "variant": "filtro-predefinido", "x": 710, "y": 20, "w": 150, "h": 60, "dimensions": ["es_online"] },
         { "row": { "y": 100, "h": 120, "margin": 20, "gap": 20 },
           "items": [
-            { "key": "p3_kpi_margen", "type": "kpi-metric", "metrics": ["=SUM(ingresos) - SUM(coste) as Margen"] },
-            { "key": "p3_kpi_margen_pct", "type": "kpi-metric", "metrics": ["=(SUM(ingresos) - SUM(coste)) / SUM(ingresos)::PERCENT as Margen %"] },
-            { "key": "p3_kpi_descuento", "type": "kpi-metric", "metrics": ["AVG(descuento_pct) as Descuento medio"] },
-            { "key": "p3_kpi_entrega", "type": "kpi-metric", "metrics": ["AVG(dias_entrega) as Días de entrega"] }
+            { "key": "p3_kpi_margen", "type": "kpi-metric", "style": { "hideMetric": false }, "metrics": ["=SUM(ingresos) - SUM(coste) as Margen"] },
+            { "key": "p3_kpi_margen_pct", "type": "kpi-metric", "style": { "hideMetric": false }, "metrics": ["=(SUM(ingresos) - SUM(coste)) / SUM(ingresos)::PERCENT as Margen %"] },
+            { "key": "p3_kpi_descuento", "type": "kpi-metric", "style": { "hideMetric": false }, "metrics": ["AVG(descuento_pct) as Descuento medio"] },
+            { "key": "p3_kpi_entrega", "type": "kpi-metric", "style": { "hideMetric": false }, "metrics": ["AVG(dias_entrega) as Días de entrega"] }
           ] },
         { "key": "p3_margen_categoria", "type": "simple-barchart", "stripStyles": true, "x": 20, "y": 240, "w": 740, "h": 300,
           "dimensions": ["categoria"], "metrics": ["=SUM(ingresos) - SUM(coste) as Margen"] },
@@ -94,10 +94,10 @@
           "text": { "text": "Ventas frente a objetivo: tres orígenes combinados", "size": 24, "bold": true, "color": "#202124" } },
         { "row": { "y": 100, "h": 120, "margin": 20, "gap": 20 },
           "items": [
-            { "key": "p5_kpi_ingresos", "type": "kpi-metric", "metrics": ["SUM(ingresos) as Ingresos"] },
-            { "key": "p5_kpi_objetivo", "type": "kpi-metric", "dataset": "@objetivo_ingresos", "metrics": ["SUM(objetivo_ingresos) as Objetivo de ingresos"] },
-            { "key": "p5_kpi_sesiones", "type": "kpi-metric", "dataset": "@sesiones", "metrics": ["SUM(sesiones) as Sesiones"] },
-            { "key": "p5_kpi_conversiones", "type": "kpi-metric", "dataset": "@sesiones", "metrics": ["SUM(conversiones) as Conversiones"] }
+            { "key": "p5_kpi_ingresos", "type": "kpi-metric", "style": { "hideMetric": false }, "metrics": ["SUM(ingresos) as Ingresos"] },
+            { "key": "p5_kpi_objetivo", "type": "kpi-metric", "style": { "hideMetric": false }, "dataset": "@objetivo_ingresos", "metrics": ["SUM(objetivo_ingresos) as Objetivo de ingresos"] },
+            { "key": "p5_kpi_sesiones", "type": "kpi-metric", "style": { "hideMetric": false }, "dataset": "@sesiones", "metrics": ["SUM(sesiones) as Sesiones"] },
+            { "key": "p5_kpi_conversiones", "type": "kpi-metric", "style": { "hideMetric": false }, "dataset": "@sesiones", "metrics": ["SUM(conversiones) as Conversiones"] }
           ] }
       ]
     },

@@ -194,13 +194,16 @@ export function componentPointsScript(ids: string[]): Array<{ id: string; x: num
     if (!c) return null;
     const a = c.getAttribute();
     let r = cv.getBoundingClientRect();
-    let y = r.y + (a.top + Math.min(30, a.height / 2)) * z;
+    // Near the top edge and off-centre: inside a chart, a click lands on the plot (a series or a
+    // cross-filter) instead of selecting the component; the centre of the top edge is a resize handle.
+    const dy = Math.min(8, a.height / 2);
+    let y = r.y + (a.top + dy) * z;
     if ((y > window.innerHeight - 60 || y < 160) && scroller) {
       scroller.scrollTop += y - window.innerHeight / 2;
       r = cv.getBoundingClientRect();
-      y = r.y + (a.top + Math.min(30, a.height / 2)) * z;
+      y = r.y + (a.top + dy) * z;
     }
-    return { id, x: r.x + (a.left + a.width / 2) * z, y };
+    return { id, x: r.x + (a.left + Math.min(a.width / 4, 60)) * z, y };
   });
 }
 
@@ -345,5 +348,23 @@ export async function ensureSeedScript(pageId?: string): Promise<{ seedId: strin
     return { seedId: c && c.getId ? String(c.getId()) : null };
   } catch (e: any) {
     return { seedId: null, error: String(e && e.message) };
+  }
+}
+
+/** Sets display (style) keys of a component, e.g. a scorecard's hideMetric, as the Style panel does. */
+export function setDisplayKeysScript(args: { componentId: string; keys: Record<string, unknown> }): { ok: boolean; error?: string; set?: string[] } {
+  const w = window as any;
+  try {
+    const inj = w.angular.element(document.body).injector();
+    const report = inj.get('legoUndoRedoService').report;
+    const all = [...report.pages.flatMap((p: any) => p.components), ...report.components];
+    const comp = all.find((c: any) => c.getId() === args.componentId);
+    if (!comp) return { ok: false, error: `Componente ${args.componentId} no encontrado.` };
+    const set: string[] = [];
+    for (const [k, v] of Object.entries(args.keys)) { comp.setDisplayKeyValue(k, v); set.push(k); }
+    inj.get('wrapperSaveService').save([comp]);
+    return { ok: true, set };
+  } catch (e: any) {
+    return { ok: false, error: String(e && e.message) };
   }
 }

@@ -28,6 +28,7 @@ import {
   navPagesScript,
   selectedIdsScript,
   setControlParameterScript,
+  setDisplayKeysScript,
   setTextScript,
   updateBlendScript,
   type BlendInfo,
@@ -43,22 +44,35 @@ export const JOIN_TYPES: Record<string, number> = { inner: 1, full: 2, left: 3, 
 // real clicks
 // ---------------------------------------------------------------------------
 
+let lastClickTrace = '';
+
 async function clickComponents(page: Page, ids: string[], opts: { button?: 'left' | 'right' } = {}): Promise<string[]> {
   await page.keyboard.press('Escape');
   await sleep(300);
   const pts = await evaluateOn(page, T, componentPointsScript, ids);
   if (pts.some((p) => !p)) throw new Error(`No se encontraron en el lienzo: ${ids.filter((_, i) => !pts[i]).join(', ')}`);
+  const trace: string[] = [];
   for (let i = 0; i < pts.length; i++) {
     const p = pts[i]!;
     if (i > 0) await page.keyboard.down('Shift');
     await page.mouse.click(p.x, p.y);
     if (i > 0) await page.keyboard.up('Shift');
     await sleep(500);
+    trace.push(`${p.id}@${Math.round(p.x)},${Math.round(p.y)}->[${(await evaluateOn(page, T, selectedIdsScript)).join(' ')}]`);
   }
+  lastClickTrace = trace.join(' ');
   if (opts.button === 'right') {
+    // A real right click's mousedown can collapse the multi-selection to the clicked chart, and with Shift
+    // it toggles it off (seen 2026-11-06). Opening the menu with the contextmenu event alone keeps it.
+    await sleep(1500);
     const last = pts[pts.length - 1]!;
-    await page.mouse.click(last.x, last.y, { button: 'right' });
+    await page.evaluate((x: number, y: number) => {
+      const el = document.elementFromPoint(x, y);
+      el?.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: x, clientY: y, button: 2, buttons: 2, view: window }));
+    }, last.x, last.y);
     await sleep(1300);
+    trace.push(`right->[${(await evaluateOn(page, T, selectedIdsScript)).join(' ')}]`);
+    lastClickTrace = trace.join(' ');
   }
   return evaluateOn(page, T, selectedIdsScript);
 }
@@ -161,11 +175,14 @@ export async function createBlend(o: {
       await p.setViewport({ width: 1900, height: 1100 });
       await sleep(1500);
       const before = await evaluateOn(p, T, blendSnapshotScript);
-      let selected = await clickComponents(p, temps, { button: 'right' });
-      if (temps.some((id) => !selected.includes(id))) {
+      // Charts that are still loading right after the reload swallow the shift-click: retry with time to render.
+      let selected: string[] = [];
+      for (let attempt = 0; attempt < 3; attempt++) {
+        await sleep(attempt ? 2500 : 1500);
         selected = await clickComponents(p, temps, { button: 'right' });
-        if (temps.some((id) => !selected.includes(id))) throw new Error(`No se pudieron seleccionar las tablas temporales (seleccionadas: ${selected.join(', ')}).`);
+        if (temps.every((id) => selected.includes(id))) break;
       }
+      if (temps.some((id) => !selected.includes(id))) throw new Error(`No se pudieron seleccionar los graficos temporales (seleccionados: ${selected.join(', ')}; clics: ${lastClickTrace}).`);
       const item = await evaluateOn(p, T, menuItemPointScript, ['Combinar datos', 'Blend data']);
       if (!item) throw new Error('El menu contextual no tiene "Combinar datos".');
       if (item.disabled) throw new Error('"Combinar datos" esta desactivado: hacen falta de 2 a 5 graficos sin combinar, de tipos que se puedan combinar.');
@@ -191,9 +208,20 @@ export async function createBlend(o: {
         await sleep(2500);
       }
       await setComponentBoxModel({ componentId, position: { x: o.box.x, y: o.box.y }, dimensions: { width: o.box.width, height: o.box.height } });
-      let bound: unknown;
+      let bound: any;
       if (o.dimensions?.length || o.metrics?.length) {
+        // The editor finishes setting up the blended chart asynchronously and can overwrite a binding made
+        // too early with its own guess (seen 2026-11-06 on a combo chart): wait, bind, and bind again if a
+        // reload shows the guess came back.
+        await sleep(4000);
         bound = await bindFieldsToComponent({ componentId, dimensions: o.dimensions ?? [], metrics: o.metrics ?? [] });
+        await sleep(3000);
+        await reloadReport();
+        const again = await bindFieldsToComponent({ componentId, dimensions: [], metrics: [] }).catch(() => null);
+        const want = (bound?.dimensions?.length ?? 0) + (bound?.metrics?.length ?? 0);
+        const have = (again?.dimensions?.length ?? 0) + (again?.metrics?.length ?? 0);
+        if (!again || have !== want || (again.dimensions ?? []).join() !== (bound?.dimensions ?? []).join())
+          bound = await bindFieldsToComponent({ componentId, dimensions: o.dimensions ?? [], metrics: o.metrics ?? [] });
       }
       learn('create_ok', 'blend', { tables: o.tables.length });
       const blend = (await evaluateOn(p, T, listBlendsScript)).find((b) => b.blendId === blendId);
@@ -457,4 +485,13 @@ export async function setText(componentId: string, text: string, opts: { html?: 
   if (!r.ok) throw new Error(r.error);
   await sleep(2000);
   return { ok: true, componentId };
+}
+
+/** Sets style (display) keys of a component, as the Style panel does: e.g. {hideMetric: false} on a scorecard. */
+export async function setStyle(componentId: string, keys: Record<string, unknown>) {
+  const { page } = await requireEditMode();
+  const r = await evaluateOn(page, T, setDisplayKeysScript, { componentId, keys });
+  if (!r.ok) throw new Error(r.error);
+  await sleep(1500);
+  return { ok: true, componentId, set: r.set };
 }

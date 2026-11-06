@@ -5,7 +5,7 @@ import {
   getComponentConfig,
   getReportLayout,
   sanitizeLearning
-} from "./chunks/chunk-IU3MR7Z5.js";
+} from "./chunks/chunk-LN7H5GRX.js";
 import {
   addFilter,
   addPage,
@@ -51,6 +51,7 @@ import {
   setComponentBoxModel,
   setControlParameter,
   setPageVisibility,
+  setStyle,
   setText,
   summary,
   synthesizeTemplates,
@@ -58,10 +59,10 @@ import {
   updateBlend,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-RHRJQMZC.js";
+} from "./chunks/chunk-2NVG7DVM.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
-import "./chunks/chunk-GOVUAKXN.js";
+import "./chunks/chunk-MZHUAOKZ.js";
 import "./chunks/chunk-FAVAKK4W.js";
 import "./chunks/chunk-GIAQTVDD.js";
 import "./chunks/chunk-BGDW2RS3.js";
@@ -95,6 +96,7 @@ Escritura (modo /edit)
          [--dims a,b] [--metrics m1,m2] [--padding N]
   delete <id>
   patch <id> [--date-days N] [--strip-styles] [--parameter <id>] [--text "T" [--size N --bold --color #hex]]
+         [--style '{"hideMetric":false}']   Claves de estilo (config.display.keys)
                                    Periodo de un control / quitar estilos de tema / control que fija un parametro
 
 Paginas y tema
@@ -228,6 +230,7 @@ async function main() {
       if (days !== void 0 || flags["strip-styles"])
         Object.assign(out, await patchComponent({ componentId: id, ...days !== void 0 ? { dateRangeDays: days } : {}, ...flags["strip-styles"] ? { stripThemeStyles: true } : {} }));
       if (typeof flags.parameter === "string") out.parameter = await setControlParameter(id, flags.parameter);
+      if (typeof flags.style === "string") out.style = await setStyle(id, JSON.parse(flags.style));
       if (typeof flags.text === "string") out.text = await setText(id, flags.text.replace(/\\n/g, "\n"), { ...num(flags.size) ? { size: num(flags.size) } : {}, ...flags.bold ? { bold: true } : {}, ...typeof flags.color === "string" ? { color: flags.color } : {} });
       return out;
     }

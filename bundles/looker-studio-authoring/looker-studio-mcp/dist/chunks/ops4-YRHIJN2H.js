@@ -13,12 +13,13 @@ import {
   selectSourceChart,
   setControlParameter,
   setPageVisibility,
+  setStyle,
   setText,
   updateBlend
-} from "./chunk-RHRJQMZC.js";
+} from "./chunk-2NVG7DVM.js";
 import "./chunk-5J4RMU5E.js";
 import "./chunk-Y34SSGZY.js";
-import "./chunk-GOVUAKXN.js";
+import "./chunk-MZHUAOKZ.js";
 import "./chunk-FAVAKK4W.js";
 import "./chunk-GIAQTVDD.js";
 import "./chunk-BGDW2RS3.js";
@@ -39,6 +40,7 @@ export {
   selectSourceChart,
   setControlParameter,
   setPageVisibility,
+  setStyle,
   setText,
   updateBlend
 };

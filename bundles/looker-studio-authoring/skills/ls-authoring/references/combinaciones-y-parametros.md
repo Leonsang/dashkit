@@ -28,7 +28,9 @@ fija el tipo de unión y coloca y vincula el gráfico nuevo. Tarda unos 20 segun
 - **`type`:** el tipo del gráfico combinado (por defecto `simple-table`). Los temporales se crean de ese
   tipo, y el editor da al combinado el mismo.
 - **`dimensions` y `metrics`:** campos de la combinación, por su nombre (`ingresos`, `objetivo_ingresos`).
-  Si no se indican, el editor deja una vinculación propia que casi nunca sirve: indícalos siempre.
+  Si no se indican, el editor deja una vinculación propia que casi nunca sirve: indícalos siempre. El editor
+  termina de configurar el gráfico combinado después de crearlo y puede pisar una vinculación hecha
+  demasiado pronto; la herramienta espera, vincula, recarga y vuelve a vincular si hace falta.
 - **Calculados sobre la combinación:** las fórmulas de gráfico funcionan:
   `"=SUM(ingresos) / SUM(objetivo_ingresos)::PERCENT as Cumplimiento"`.
 - **Métricas de un origen:** en la combinación pasan a ser dimensiones numéricas. Agrégalas otra vez en el

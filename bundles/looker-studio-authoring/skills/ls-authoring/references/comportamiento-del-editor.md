@@ -18,6 +18,8 @@ un informe de prueba.
 | **Orden huérfano** tras cambiar campos (reason 268) | El gráfico no carga | `bind_fields_to_component` reasigna el orden; en series temporales, la fecha ascendente |
 | **Plantillas de otros informes** traen sus colores y fuentes | Componentes que no siguen el tema | `patch_component stripThemeStyles=true` |
 | **Informe vacío** | No hay componente del que clonar ni del que sacar ids, y los orígenes no tienen esquema cargado | `create_component` crea una semilla con la fábrica del editor y la borra; `"@campo"` sondea el origen con una plantilla |
+| **El clic derecho reduce una selección múltiple** al gráfico pulsado (y con Mayús lo quita) | El menú contextual sale sin "Combinar datos" activo | `create_blend` abre el menú con el evento `contextmenu` solo, sin el `mousedown` |
+| **Pestaña oculta** (ventana tapada o minimizada) | El navegador no pinta el lienzo: capturas en blanco aunque el DOM tenga los gráficos | Captura desde una ventana visible |
 | **Extensiones del navegador** | "Sorry! We can't save this report right now." | Perfil dedicado sin extensiones |
 | **Dos órdenes y dos nombres de página:** el modelo del editor y la navegación que ve el lector | Reordenar o renombrar solo el modelo no cambia lo que se ve, y no persiste | `move_page`, `rename_page`: usan las acciones de navegación del editor |
 | **Seleccionar por el modelo no actualiza los paneles** | El panel Datos no ofrece "Añadir un campo" o "Añadir un parámetro" | Las herramientas que usan paneles seleccionan con clics reales |

@@ -46,6 +46,8 @@ export interface SpecComponent {
   text?: string | { text: string; size?: number; bold?: boolean; color?: string };
   /** Control that sets this parameter (id) instead of filtering. */
   parameter?: string;
+  /** Style (display) keys, e.g. {"hideMetric": false} on a scorecard. */
+  style?: Record<string, unknown>;
 }
 
 export interface SpecRow {
@@ -89,6 +91,7 @@ export interface ResolvedComponent extends Required<Pick<SpecComponent, 'key' | 
   slots?: Record<string, string[]>;
   text?: SpecComponent['text'];
   parameter?: string;
+  style?: Record<string, unknown>;
 }
 
 export interface LintIssue {
@@ -144,6 +147,7 @@ export function resolveSpec(spec: ReportSpec): ResolvedComponent[] {
             ...(it.slots ? { slots: it.slots } : {}),
             ...(it.text !== undefined ? { text: it.text } : {}),
             ...(it.parameter ? { parameter: it.parameter } : {}),
+            ...(it.style ? { style: it.style } : {}),
           });
         });
       } else {
@@ -158,6 +162,7 @@ export function resolveSpec(spec: ReportSpec): ResolvedComponent[] {
           ...(c.slots ? { slots: c.slots } : {}),
           ...(c.text !== undefined ? { text: c.text } : {}),
           ...(c.parameter ? { parameter: c.parameter } : {}),
+          ...(c.style ? { style: c.style } : {}),
         });
       }
     }

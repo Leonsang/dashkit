@@ -29,7 +29,7 @@ import {
 import { reportSettings } from './ops3.js';
 import { addFilter, addPage, addSourceField, applyTheme, detachFilter, exportTheme, importTheme, listFilters, listPages, readTheme, renamePage, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
 import { readFileSync, existsSync } from 'node:fs';
-import { addParameter, arrangeComponents, createBlend, deleteBlend, deletePages, duplicatePage, listBlends, movePage, setControlParameter, setPageVisibility, setText, updateBlend } from './ops4.js';
+import { addParameter, arrangeComponents, createBlend, deleteBlend, deletePages, duplicatePage, listBlends, movePage, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
 
 const HELP = `ls-studio <comando> [opciones]
 
@@ -55,6 +55,7 @@ Escritura (modo /edit)
          [--dims a,b] [--metrics m1,m2] [--padding N]
   delete <id>
   patch <id> [--date-days N] [--strip-styles] [--parameter <id>] [--text "T" [--size N --bold --color #hex]]
+         [--style '{"hideMetric":false}']   Claves de estilo (config.display.keys)
                                    Periodo de un control / quitar estilos de tema / control que fija un parametro
 
 Paginas y tema
@@ -191,6 +192,7 @@ async function main(): Promise<unknown> {
       if (days !== undefined || flags['strip-styles'])
         Object.assign(out, await patchComponent({ componentId: id, ...(days !== undefined ? { dateRangeDays: days } : {}), ...(flags['strip-styles'] ? { stripThemeStyles: true } : {}) }));
       if (typeof flags.parameter === 'string') out.parameter = await setControlParameter(id, flags.parameter);
+      if (typeof flags.style === 'string') out.style = await setStyle(id, JSON.parse(flags.style));
       if (typeof flags.text === 'string') out.text = await setText(id, flags.text.replace(/\\n/g, '\n'), { ...(num(flags.size) ? { size: num(flags.size)! } : {}), ...(flags.bold ? { bold: true } : {}), ...(typeof flags.color === 'string' ? { color: flags.color } : {}) });
       return out;
     }

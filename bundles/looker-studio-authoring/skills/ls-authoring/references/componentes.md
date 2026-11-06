@@ -81,9 +81,22 @@ sus colores y fuentes: quítalos con `patch_component stripThemeStyles=true` par
 ` separa líneas.
 - `parameter=<id>`: un control pasa a fijar ese parámetro en vez de filtrar (ver
   `combinaciones-y-parametros.md`).
+- `style={...}`: claves de estilo del componente, las de `get_component_config` > `config.display.keys`,
+  como las cambia el panel Estilo. Las más útiles, verificadas:
+
+  | Tipo | Clave | Efecto |
+  |---|---|---|
+  | `kpi-metric` | `hideMetric: false` | Muestra el nombre de la métrica (la plantilla lo trae oculto) |
+  | `kpi-metric` | `hideCompare`, `compactNumbers` | Comparación y números compactos |
+  | `simple-linechart` | `missingDataDisplayType: "linearInterpolation"` | Une los puntos; con `lineToZero` (por defecto) una serie mensual sobre un eje diario sale en picos |
 
 CLI: `patch <id> --date-days 28 --strip-styles`, `patch <id> --text "Ventas 2025" --size 24 --bold`,
-`patch <id> --parameter metrica`.
+`patch <id> --parameter metrica`, `patch <id> --style '{"hideMetric":false}'`. En el spec, `style`.
+
+**Series temporales:** `simple-linechart` solo acepta una dimensión de fecha (con un número como `anio_mes`
+o un texto da reason 266). Para una tendencia mensual usa una fecha de inicio de mes y
+`missingDataDisplayType: "linearInterpolation"`. `bind` ordena las tendencias (línea, área, combinado) por
+su primera dimensión ascendente.
 
 ## Capas y nivel de informe: arrange_components
 

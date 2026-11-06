@@ -473,6 +473,11 @@ async function patchIfNeeded(page: Page, id: string, c: ResolvedComponent): Prom
     await setText(id, t.text, { ...(t.size ? { size: t.size } : {}), ...(t.bold ? { bold: true } : {}), ...(t.color ? { color: t.color } : {}) });
     changes.push('text');
   }
+  if (c.style) {
+    const { setStyle } = await import('./ops4.js');
+    await setStyle(id, c.style);
+    changes.push('style');
+  }
   if (c.parameter) {
     const { setControlParameter } = await import('./ops4.js');
     await setControlParameter(id, c.parameter);

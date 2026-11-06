@@ -8,7 +8,7 @@ import {
   getReportLayout,
   sanitizeLearning,
   writesAllowed
-} from "./chunks/chunk-IU3MR7Z5.js";
+} from "./chunks/chunk-LN7H5GRX.js";
 import {
   addFilter,
   addPage,
@@ -53,6 +53,7 @@ import {
   setComponentBoxModel,
   setControlParameter,
   setPageVisibility,
+  setStyle,
   setText,
   summary,
   synthesizeTemplates,
@@ -60,10 +61,10 @@ import {
   updateBlend,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-RHRJQMZC.js";
+} from "./chunks/chunk-2NVG7DVM.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
-import "./chunks/chunk-GOVUAKXN.js";
+import "./chunks/chunk-MZHUAOKZ.js";
 import "./chunks/chunk-FAVAKK4W.js";
 import "./chunks/chunk-GIAQTVDD.js";
 import "./chunks/chunk-BGDW2RS3.js";
@@ -37142,7 +37143,7 @@ server.registerTool(
   "patch_component",
   {
     title: "Ajustar control / estilos",
-    description: "dateRangeDays: periodo por defecto de un control de fechas (ultimos N dias, movil). parameter: el control fija ese parametro (id). text (+ textSize, textBold, textColor): texto de un cuadro de texto. stripThemeStyles: quita colores/fuentes/bordes sobrescritos en el componente para que mande el tema del informe (util tras crear desde plantillas de otros informes).",
+    description: "dateRangeDays: periodo por defecto de un control de fechas (ultimos N dias, movil). parameter: el control fija ese parametro (id). text (+ textSize, textBold, textColor): texto de un cuadro de texto. style: claves de estilo. stripThemeStyles: quita colores/fuentes/bordes sobrescritos en el componente para que mande el tema del informe (util tras crear desde plantillas de otros informes).",
     inputSchema: {
       componentId: external_exports.string().min(1),
       dateRangeDays: external_exports.number().int().positive().optional(),
@@ -37151,7 +37152,8 @@ server.registerTool(
       text: external_exports.string().optional().describe("Texto de un cuadro de texto (simple-description); \n separa lineas"),
       textSize: external_exports.number().int().positive().optional(),
       textBold: external_exports.boolean().optional(),
-      textColor: external_exports.string().optional()
+      textColor: external_exports.string().optional(),
+      style: external_exports.record(external_exports.string(), external_exports.unknown()).optional().describe('Claves de estilo del componente (las de get_component_config > config.display.keys), p. ej. {"hideMetric": false} en un scorecard')
     },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true }
   },
@@ -37164,6 +37166,7 @@ server.registerTool(
         ...args.stripThemeStyles ? { stripThemeStyles: true } : {}
       }));
     if (args.parameter) out.parameter = await setControlParameter(args.componentId, args.parameter);
+    if (args.style) out.style = await setStyle(args.componentId, args.style);
     if (args.text !== void 0) out.text = await setText(args.componentId, args.text, { ...args.textSize ? { size: args.textSize } : {}, ...args.textBold ? { bold: true } : {}, ...args.textColor ? { color: args.textColor } : {} });
     return out;
   })

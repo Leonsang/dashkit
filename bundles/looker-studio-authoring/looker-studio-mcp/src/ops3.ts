@@ -513,7 +513,17 @@ export async function addSourceField(opts: { name: string; formula: string; sour
   try {
     await open();
     let src = await editorSource();
-    if (opts.source && !src.name.toLowerCase().includes(opts.source.toLowerCase())) {
+    // "@campo" picks the source through a chart of it (selected before opening); a name is matched in the panel.
+    const byField = !!opts.source && opts.source.startsWith('@');
+    if (byField) {
+      const { selectSourceChart } = await import('./ops4.js');
+      await clickText('button', /^(Cancelar|Cancel)$/);
+      await close();
+      await selectSourceChart(page, opts.source);
+      await open();
+      src = await editorSource();
+    }
+    if (opts.source && !byField && !src.name.toLowerCase().includes(opts.source.toLowerCase())) {
       // The editor opened on another source: expand the requested one in the panel and retry once.
       await clickText('button', /^(Cancelar|Cancel)$/);
       await close();

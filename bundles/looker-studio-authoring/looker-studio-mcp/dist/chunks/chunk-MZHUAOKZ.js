@@ -155,13 +155,14 @@ function componentPointsScript(ids) {
     if (!c) return null;
     const a = c.getAttribute();
     let r = cv.getBoundingClientRect();
-    let y = r.y + (a.top + Math.min(30, a.height / 2)) * z;
+    const dy = Math.min(8, a.height / 2);
+    let y = r.y + (a.top + dy) * z;
     if ((y > window.innerHeight - 60 || y < 160) && scroller) {
       scroller.scrollTop += y - window.innerHeight / 2;
       r = cv.getBoundingClientRect();
-      y = r.y + (a.top + Math.min(30, a.height / 2)) * z;
+      y = r.y + (a.top + dy) * z;
     }
-    return { id, x: r.x + (a.left + a.width / 2) * z, y };
+    return { id, x: r.x + (a.left + Math.min(a.width / 4, 60)) * z, y };
   });
 }
 function selectedIdsScript() {
@@ -295,6 +296,25 @@ async function ensureSeedScript(pageId) {
     return { seedId: null, error: String(e && e.message) };
   }
 }
+function setDisplayKeysScript(args) {
+  const w = window;
+  try {
+    const inj = w.angular.element(document.body).injector();
+    const report = inj.get("legoUndoRedoService").report;
+    const all = [...report.pages.flatMap((p) => p.components), ...report.components];
+    const comp = all.find((c) => c.getId() === args.componentId);
+    if (!comp) return { ok: false, error: `Componente ${args.componentId} no encontrado.` };
+    const set = [];
+    for (const [k, v] of Object.entries(args.keys)) {
+      comp.setDisplayKeyValue(k, v);
+      set.push(k);
+    }
+    inj.get("wrapperSaveService").save([comp]);
+    return { ok: true, set };
+  } catch (e) {
+    return { ok: false, error: String(e && e.message) };
+  }
+}
 
 export {
   navPagesScript,
@@ -309,5 +329,6 @@ export {
   setControlParameterScript,
   setTextScript,
   deleteBlendScript,
-  ensureSeedScript
+  ensureSeedScript,
+  setDisplayKeysScript
 };

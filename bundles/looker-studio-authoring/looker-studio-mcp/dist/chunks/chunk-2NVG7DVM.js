@@ -27,9 +27,10 @@ import {
   navPagesScript,
   selectedIdsScript,
   setControlParameterScript,
+  setDisplayKeysScript,
   setTextScript,
   updateBlendScript
-} from "./chunk-GOVUAKXN.js";
+} from "./chunk-MZHUAOKZ.js";
 import {
   CDPSessionEvent,
   CdpBrowser,
@@ -2245,6 +2246,10 @@ async function bindFieldsScript(args) {
     const ms = slotFor(2);
     if (ms !== "primary") warnings.push(`Metricas enviadas al hueco "${ms}" (el tipo no usa metricas en "primary").`);
     comp.updateMetrics(ms, mode === "append" ? [...existing("metrics"), ...defs] : defs);
+    if (ms !== "primary" && mode !== "append") {
+      const mv = comp.getDataSourceKeyValue("metrics");
+      if (mv && Array.isArray(mv.primary) && mv.primary.length) comp.updateMetrics("primary", []);
+    }
   }
   mark("primary updated");
   if (args.clearDimensions && !args.dimensions.length) {
@@ -2323,11 +2328,11 @@ async function bindFieldsScript(args) {
     const firstDim = cur("dimensions")[0];
     const firstDimField = firstDim && comp.config.conceptDefs[firstDim]?.queryTimeTransformation?.dataTransformation?.sourceFieldName;
     const dimIsDate = !!firstDimField && concepts[firstDimField] && (concepts[firstDimField].dataType === 6 || concepts[firstDimField].dataType === 7);
-    if (isTimeType && dimIsDate && !(sd && sd[0] && sd[0].sortColumn === firstDim && sd[0].sortDir === 0)) {
+    if (isTimeType && firstDim && !(sd && sd[0] && sd[0].sortColumn === firstDim && sd[0].sortDir === 0)) {
       const v = [{ sortDir: 0, sortColumn: firstDim }];
       if (typeof comp.setDataSourceKeyValue === "function") comp.setDataSourceKeyValue("sortData", v, true, true);
       else k.sortData = { stateKey: "sortData", dominant: 2, value: v };
-      warnings.push("Orden temporal: por fecha ascendente.");
+      warnings.push(dimIsDate ? "Orden temporal: por fecha ascendente." : "Orden de tendencia: por la primera dimension ascendente.");
     } else if (sd && sd.some((s) => !live.has(s.sortColumn))) {
       const isTime = /linechart|areachart|timeline|combochart/.test(String(comp.config.config.display.type));
       const col = isTime ? cur("dimensions")[0] ?? cur("metrics")[0] : cur("metrics")[0] ?? cur("dimensions")[0];
@@ -2963,7 +2968,8 @@ function resolveSpec(spec) {
             ...it.variant ? { variant: it.variant } : {},
             ...it.slots ? { slots: it.slots } : {},
             ...it.text !== void 0 ? { text: it.text } : {},
-            ...it.parameter ? { parameter: it.parameter } : {}
+            ...it.parameter ? { parameter: it.parameter } : {},
+            ...it.style ? { style: it.style } : {}
           });
         });
       } else {
@@ -2986,7 +2992,8 @@ function resolveSpec(spec) {
           ...c.variant ? { variant: c.variant } : {},
           ...c.slots ? { slots: c.slots } : {},
           ...c.text !== void 0 ? { text: c.text } : {},
-          ...c.parameter ? { parameter: c.parameter } : {}
+          ...c.parameter ? { parameter: c.parameter } : {},
+          ...c.style ? { style: c.style } : {}
         });
       }
     }
@@ -3946,7 +3953,7 @@ async function addSourceField(opts) {
   });
   const open = async () => {
     if (!await clickText2("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) {
-      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-PZTPV6CP.js");
+      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-YRHIJN2H.js");
       await selectSourceChart2(page, opts.source && opts.source.startsWith("@") ? opts.source : void 0);
       if (!await clickText2("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) throw new Error('No se encontro "Anadir un campo" en el panel Datos.');
     }
@@ -3961,7 +3968,16 @@ async function addSourceField(opts) {
   try {
     await open();
     let src = await editorSource();
-    if (opts.source && !src.name.toLowerCase().includes(opts.source.toLowerCase())) {
+    const byField = !!opts.source && opts.source.startsWith("@");
+    if (byField) {
+      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-YRHIJN2H.js");
+      await clickText2("button", /^(Cancelar|Cancel)$/);
+      await close();
+      await selectSourceChart2(page, opts.source);
+      await open();
+      src = await editorSource();
+    }
+    if (opts.source && !byField && !src.name.toLowerCase().includes(opts.source.toLowerCase())) {
       await clickText2("button", /^(Cancelar|Cancel)$/);
       await close();
       const escaped = opts.source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -4170,7 +4186,7 @@ async function createComponent(o) {
   const hasFields = !!(o.dimensions?.length || o.metrics?.length || o.slots && Object.keys(o.slots).length);
   const NO_DIMS = ["gauge-viz", "bulletchart", "kpi-metric"];
   const t0 = Date.now();
-  const { ensureSeedScript } = await import("./scripts4-Z5M3GITN.js");
+  const { ensureSeedScript } = await import("./scripts4-U5ZBSV4F.js");
   const seed = await evaluateOn(page, T2, ensureSeedScript, o.pageId);
   if (seed.seedId) await sleep2(1500);
   const res = await evaluateOn(page, T2, createComponentScript, {
@@ -4360,12 +4376,17 @@ async function patchIfNeeded(page, id, c) {
   }
   if (c.text !== void 0) {
     const t = typeof c.text === "string" ? { text: c.text } : c.text;
-    const { setText: setText2 } = await import("./ops4-PZTPV6CP.js");
+    const { setText: setText2 } = await import("./ops4-YRHIJN2H.js");
     await setText2(id, t.text, { ...t.size ? { size: t.size } : {}, ...t.bold ? { bold: true } : {}, ...t.color ? { color: t.color } : {} });
     changes.push("text");
   }
+  if (c.style) {
+    const { setStyle: setStyle2 } = await import("./ops4-YRHIJN2H.js");
+    await setStyle2(id, c.style);
+    changes.push("style");
+  }
   if (c.parameter) {
-    const { setControlParameter: setControlParameter2 } = await import("./ops4-PZTPV6CP.js");
+    const { setControlParameter: setControlParameter2 } = await import("./ops4-YRHIJN2H.js");
     await setControlParameter2(id, c.parameter);
     changes.push(`parameter:${c.parameter}`);
   }
@@ -4411,22 +4432,32 @@ async function findOrphans(specFiles) {
 var T3 = Number(process.env.LS_EVAL_TIMEOUT_MS ?? 15e3);
 var sleep3 = (ms) => new Promise((r) => setTimeout(r, ms));
 var JOIN_TYPES = { inner: 1, full: 2, left: 3, right: 4, cross: 101 };
+var lastClickTrace = "";
 async function clickComponents(page, ids, opts = {}) {
   await page.keyboard.press("Escape");
   await sleep3(300);
   const pts = await evaluateOn(page, T3, componentPointsScript, ids);
   if (pts.some((p) => !p)) throw new Error(`No se encontraron en el lienzo: ${ids.filter((_, i) => !pts[i]).join(", ")}`);
+  const trace = [];
   for (let i = 0; i < pts.length; i++) {
     const p = pts[i];
     if (i > 0) await page.keyboard.down("Shift");
     await page.mouse.click(p.x, p.y);
     if (i > 0) await page.keyboard.up("Shift");
     await sleep3(500);
+    trace.push(`${p.id}@${Math.round(p.x)},${Math.round(p.y)}->[${(await evaluateOn(page, T3, selectedIdsScript)).join(" ")}]`);
   }
+  lastClickTrace = trace.join(" ");
   if (opts.button === "right") {
+    await sleep3(1500);
     const last = pts[pts.length - 1];
-    await page.mouse.click(last.x, last.y, { button: "right" });
+    await page.evaluate((x, y) => {
+      const el = document.elementFromPoint(x, y);
+      el?.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: x, clientY: y, button: 2, buttons: 2, view: window }));
+    }, last.x, last.y);
     await sleep3(1300);
+    trace.push(`right->[${(await evaluateOn(page, T3, selectedIdsScript)).join(" ")}]`);
+    lastClickTrace = trace.join(" ");
   }
   return evaluateOn(page, T3, selectedIdsScript);
 }
@@ -4501,11 +4532,13 @@ async function createBlend(o) {
       await p.setViewport({ width: 1900, height: 1100 });
       await sleep3(1500);
       const before = await evaluateOn(p, T3, blendSnapshotScript);
-      let selected = await clickComponents(p, temps, { button: "right" });
-      if (temps.some((id) => !selected.includes(id))) {
+      let selected = [];
+      for (let attempt = 0; attempt < 3; attempt++) {
+        await sleep3(attempt ? 2500 : 1500);
         selected = await clickComponents(p, temps, { button: "right" });
-        if (temps.some((id) => !selected.includes(id))) throw new Error(`No se pudieron seleccionar las tablas temporales (seleccionadas: ${selected.join(", ")}).`);
+        if (temps.every((id) => selected.includes(id))) break;
       }
+      if (temps.some((id) => !selected.includes(id))) throw new Error(`No se pudieron seleccionar los graficos temporales (seleccionados: ${selected.join(", ")}; clics: ${lastClickTrace}).`);
       const item = await evaluateOn(p, T3, menuItemPointScript, ["Combinar datos", "Blend data"]);
       if (!item) throw new Error('El menu contextual no tiene "Combinar datos".');
       if (item.disabled) throw new Error('"Combinar datos" esta desactivado: hacen falta de 2 a 5 graficos sin combinar, de tipos que se puedan combinar.');
@@ -4532,7 +4565,15 @@ async function createBlend(o) {
       await setComponentBoxModel({ componentId, position: { x: o.box.x, y: o.box.y }, dimensions: { width: o.box.width, height: o.box.height } });
       let bound;
       if (o.dimensions?.length || o.metrics?.length) {
+        await sleep3(4e3);
         bound = await bindFieldsToComponent({ componentId, dimensions: o.dimensions ?? [], metrics: o.metrics ?? [] });
+        await sleep3(3e3);
+        await reloadReport();
+        const again = await bindFieldsToComponent({ componentId, dimensions: [], metrics: [] }).catch(() => null);
+        const want = (bound?.dimensions?.length ?? 0) + (bound?.metrics?.length ?? 0);
+        const have = (again?.dimensions?.length ?? 0) + (again?.metrics?.length ?? 0);
+        if (!again || have !== want || (again.dimensions ?? []).join() !== (bound?.dimensions ?? []).join())
+          bound = await bindFieldsToComponent({ componentId, dimensions: o.dimensions ?? [], metrics: o.metrics ?? [] });
       }
       learn("create_ok", "blend", { tables: o.tables.length });
       const blend = (await evaluateOn(p, T3, listBlendsScript)).find((b) => b.blendId === blendId);
@@ -4756,6 +4797,13 @@ async function setText(componentId, text, opts = {}) {
   await sleep3(2e3);
   return { ok: true, componentId };
 }
+async function setStyle(componentId, keys) {
+  const { page } = await requireEditMode();
+  const r = await evaluateOn(page, T3, setDisplayKeysScript, { componentId, keys });
+  if (!r.ok) throw new Error(r.error);
+  await sleep3(1500);
+  return { ok: true, componentId, set: r.set };
+}
 
 export {
   log,
@@ -4792,6 +4840,7 @@ export {
   arrangeComponents,
   setControlParameter,
   setText,
+  setStyle,
   readTheme,
   applyTheme,
   themeLibrary,

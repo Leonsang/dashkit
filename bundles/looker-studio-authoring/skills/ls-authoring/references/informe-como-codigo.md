@@ -62,6 +62,7 @@ spec en lugar de la ruta; entonces no hay `.state.json` y cada aplicación vuelv
 | `dateRangeDays`, `stripStyles` | componente | Como `patch_component` |
 | `text` | componente | Texto de un cuadro de texto: una cadena, o `{text, size, bold, color}` |
 | `parameter` | componente | El control fija ese parámetro (id) en vez de filtrar |
+| `style` | componente | Claves de estilo, p. ej. `{"hideMetric": false}` en un scorecard |
 | `row` + `items` | macro | Reparte una fila: `w = (ancho − (n−1)·gap) / n`, redondeado a la retícula. `margin`, `gap`, `width`, `x` opcionales |
 
 Ejemplos completos en `looker-studio-mcp/examples/`:
