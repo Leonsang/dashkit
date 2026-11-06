@@ -46,6 +46,25 @@ dashboards, historias, proyecto y colección donde publicar) sigue la skill `tab
 5. `workbook_operations Lint`. Corrige los avisos hasta llegar a 90 o más.
 6. Si algo se rompe, `workbook_operations ListBackups` y `Restore`.
 
+## Referencias (léelas antes de cada tipo de trabajo)
+
+| Archivo | Cuándo |
+|---|---|
+| `references/vistas.md` | Crear una hoja: marca, estantes, codificaciones, recetas por pregunta, cálculos de tabla |
+| `references/tablas-y-kpis.md` | Tira de KPIs en una hoja, tablas de texto, totales, formatos de número |
+| `references/mapas.md` | Roles geográficos, mapa de símbolos o relleno |
+| `references/filtros-y-parametros.md` | Filtros (orden de aplicación, tipos, compartidos, tarjetas), parámetros, conjuntos, grupos |
+| `references/ejes-y-formato.md` | Edit Axis (rango, cero, invertido, logarítmico, marcas), fuentes, líneas, color, tooltips |
+| `references/analitica.md` | Líneas, bandas y distribuciones de referencia, gráfico de bala, tendencias, pronóstico |
+| `references/dashboards.md` | Maquetaciones de Tableau, zonas, tamaños fijos, lint del espacio |
+| `references/acciones-e-historias.md` | Acciones de filtro, resaltado, URL, parámetro, conjunto; historias con filtros |
+| `references/revision.md` | Validar, Preflight, Lint, mirar la imagen, modales y respaldos |
+| `references/operaciones.md` | Índice de todas las herramientas y operaciones con sus parámetros (generado del servidor) |
+| `references/comandos-de-desktop.md` | El usuario habla en términos de la interfaz de Desktop: qué escribe ese comando y qué operación lo replica |
+
+El modelo de datos (fuentes, joins, relaciones, calculados, LOD, extracts) está en la skill
+`tableau-data-model`. El diseño (qué contar y cómo) está en `tableau-design`.
+
 ## Especificaciones de campo
 
 `Region` · `SUM(Sales)` · `AVG|MIN|MAX|COUNT|COUNTD|MEDIAN|ATTR(...)` ·

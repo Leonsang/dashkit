@@ -208,10 +208,14 @@ def _set_format(rule: etree._Element, attr: str, value: str, **extra: str) -> No
 # ============================================================================================
 # fields
 # ============================================================================================
+# As Desktop writes them (Geographic Role in a field's context menu, measured with ui_reverse --context): the
+# CBSA/MSA role is [CMSA].[Name] and the congressional district one [Congress].[Name].
 GEO_ROLES = {
     "country": "[Country].[Name]", "state": "[State].[Name]", "county": "[County].[Name]", "city": "[City].[Name]",
-    "zip": "[ZipCode].[Name]", "latitude": "[Geographical].[Latitude]", "longitude": "[Geographical].[Longitude]",
-    "airport": "[Airport].[Name]", "cbsa": "[CBSA].[Name]", "congress": "[CongressionalDistrict].[Name]",
+    "zip": "[ZipCode].[Name]", "zipcode": "[ZipCode].[Name]", "latitude": "[Geographical].[Latitude]",
+    "longitude": "[Geographical].[Longitude]", "airport": "[Airport].[Name]", "cbsa": "[CMSA].[Name]",
+    "cmsa": "[CMSA].[Name]", "msa": "[CMSA].[Name]", "congress": "[Congress].[Name]", "areacode": "[AreaCode].[Name]",
+    "nuts": "[NUTS].[Name]",
 }
 
 
@@ -697,7 +701,7 @@ def add_datasource_filter(root, datasource: str, field: str, values: list[str] |
 # ============================================================================================
 def _build_filter(column: str, level: str, datatype: str, values=None, exclude=False, min=None, max=None,  # noqa: A002
                   relative: dict | None = None, top: dict | None = None, condition: str | None = None,
-                  wildcard: str | None = None) -> etree._Element:
+                  wildcard: str | None = None, include_null: bool = False) -> etree._Element:
     if relative:
         flt = etree.Element("filter", {"class": "relative-date", "column": column})
         flt.set("first-period", str(relative.get("from", -1)))
@@ -707,9 +711,10 @@ def _build_filter(column: str, level: str, datatype: str, values=None, exclude=F
         flt.set("period-type", relative.get("period", "year"))
         return flt
     if min is not None or max is not None:
+        # Desktop's Filter dialog writes Range, At least and At most alike: in-range with the bounds it has
+        # (measured with ui_reverse --dialogs); Include Null Values makes it in-range-or-null.
         flt = etree.Element("filter", {"class": "quantitative", "column": column,
-                                       "included-values": "in-range" if (min is not None and max is not None)
-                                       else ("in-range-or-null" if False else ("at-least" if min is not None else "at-most"))})
+                                       "included-values": "in-range-or-null" if include_null else "in-range"})
         if min is not None:
             etree.SubElement(flt, "min").text = _literal(min, datatype) if datatype in ("date", "datetime") else str(min)
         if max is not None:
@@ -777,8 +782,10 @@ def _build_filter(column: str, level: str, datatype: str, values=None, exclude=F
 def add_filter(root, worksheet: str, field: str, values: list[str] | None = None, exclude: bool = False,
                min=None, max=None, relative: dict | None = None, top: dict | None = None,  # noqa: A002
                condition: str | None = None, wildcard: str | None = None, context: bool = False,
-               show_card: bool = False, card_mode: str | None = None, group: int | None = None) -> dict:
-    """Filter a worksheet. One of: values (+exclude) · min/max (measures 'SUM(Sales)' or dates) ·
+               show_card: bool = False, card_mode: str | None = None, group: int | None = None,
+               include_null: bool = False) -> dict:
+    """Filter a worksheet. One of: values (+exclude) · min/max (measures 'SUM(Sales)' or dates; only one of
+    them is 'at least' / 'at most'; include_null keeps null values too) ·
     relative={'period': 'month', 'from': -11, 'to': 0} · top={'n': 10, 'by': 'SUM([Sales])', 'direction': 'top'} ·
     condition='SUM([Sales]) > 1000' · wildcard='abc'. context=True makes it a context filter.
     show_card adds the interactive filter card (card_mode: checkdropdown|dropdown|radiolist|checklist|slider|
@@ -797,7 +804,8 @@ def add_filter(root, worksheet: str, field: str, values: list[str] | None = None
     col = sh.qname(r)
     member_type = "integer" if r.prefix in ("yr", "qr", "mn", "wk", "dy", "wd") else r.field.datatype
     flt = _build_filter(col, r.instance_name, member_type, values=values, exclude=exclude, min=min, max=max,
-                        relative=relative, top=top, condition=condition, wildcard=wildcard)
+                        relative=relative, top=top, condition=condition, wildcard=wildcard,
+                        include_null=include_null)
     if context:
         flt.set("context", "true")
     if group is not None:  # shared with every sheet whose filter carries the same group (see add_shared_filter)
@@ -1287,13 +1295,23 @@ def add_reference_line(root, worksheet: str, measure: str, formula: str = "avera
         if value is None:
             raise ValueError("constant reference lines need value=")
         attrs["value"] = str(value)
-    if band_to:
-        attrs["formula"] = formula
-        attrs["band-formula"] = band_to
     if percentages:
         if band_to:
             raise ValueError("percentages and band_to are different kinds of reference line")
         attrs.update({"fill-above": "false", "fill-below": "true", "percentage-bands": "true", "symmetric": "false"})
+    if band_to:
+        # A band is two reference lines that name each other in paired-id, as Desktop's Add Reference Line,
+        # Band, or Box > Band writes it (measured with ui_reverse --dialogs; the schema has no band formula).
+        rid2 = f"refline{n + 1}"
+        attrs.update({"paired-id": rid2, "symmetric": "false"})
+        other = {**attrs, "formula": band_to, "id": rid2, "paired-id": rid}
+        other.pop("value", None)
+        _insert_ordered(pane, etree.Element("reference-line", attrs), PANE_ORDER)
+        rl2 = _insert_ordered(pane, etree.Element("reference-line", other), PANE_ORDER)
+        if color:
+            _set_format(sh.style("refline"), "stroke-color", color, id=rid)
+            _set_format(sh.style("refline"), "stroke-color", color, id=rid2)
+        return {"worksheet": worksheet, "referenceLine": rid, "pairedWith": rl2.get("id")}
     rl = _insert_ordered(pane, etree.Element("reference-line", attrs), PANE_ORDER)
     for pct in percentages or []:
         etree.SubElement(rl, "reference-line-value", percentage=f"{float(pct):g}")
@@ -1458,11 +1476,18 @@ def format_worksheet(root, worksheet: str, font: str | None = None, font_size: i
     return {"worksheet": worksheet}
 
 
+AXIS_RANGES = {"automatic": None, "uniform": "uniform", "independent": "independent", "fixed": "fixed"}
+
+
 def format_field(root, worksheet: str, field: str, number_format: str | None = None, axis_title: str | None = None,
                  axis_min: float | None = None, axis_max: float | None = None, show_header: bool | None = None,
-                 legend_title: str | None = None) -> dict:
-    """Per-field formatting inside a worksheet: number format (cells/labels/axis), axis title and fixed range,
-    hide header, legend title."""
+                 legend_title: str | None = None, axis_range: str | None = None, include_zero: bool | None = None,
+                 reverse: bool | None = None, log_scale: bool | None = None, tick_spacing: float | None = None,
+                 tick_origin: float | None = None, show_ticks: bool | None = None) -> dict:
+    """Per-field formatting inside a worksheet: number format (cells/labels/axis), axis title, hide header,
+    legend title, and the axis options of Desktop's Edit Axis dialog (measured with ui_reverse --dialogs):
+    axis_range automatic | uniform | independent | fixed (axis_min/axis_max imply fixed), include_zero,
+    reverse, log_scale, tick_spacing/tick_origin (fixed major tick marks), show_ticks=False (no tick marks)."""
     sh = Sheet(root, worksheet)
     r = sh.ref(field)
     q = sh.qname(r)
@@ -1473,20 +1498,48 @@ def format_field(root, worksheet: str, field: str, number_format: str | None = N
     scope = "rows" if q in (sh.ws.findtext("./table/rows") or "") else "cols"
     if axis_title is not None:
         _set_format(sh.style("axis"), "title", axis_title, **{"class": "0", "field": q, "scope": scope})
-    if axis_min is not None or axis_max is not None:
-        enc = sh.style("axis")
-        for e in enc.findall("encoding"):
-            if e.get("field") == q:
-                enc.remove(e)
-        attrs = {"attr": "space", "class": "0", "field": q, "field-type": "quantitative", "fold": "true",
-                 "scope": scope, "type": "space"}
+    axis = {"axis_min": axis_min, "axis_max": axis_max, "axis_range": axis_range, "include_zero": include_zero,
+            "reverse": reverse, "log_scale": log_scale, "tick_spacing": tick_spacing, "tick_origin": tick_origin,
+            "show_ticks": show_ticks}
+    if any(v is not None for v in axis.values()):
+        if axis_range is not None and axis_range not in AXIS_RANGES:
+            raise ValueError(f"axis_range must be one of {sorted(AXIS_RANGES)}")
+        style = sh.style("axis")
+        # one <encoding attr='space'> per field holds every option of the axis, as Desktop writes it
+        enc = next((e for e in style.findall("encoding") if e.get("field") == q and e.get("attr") == "space"), None)
+        if enc is None:
+            enc = etree.SubElement(style, "encoding", {"attr": "space", "class": "0", "field": q,
+                                                       "field-type": "quantitative", "fold": "true",
+                                                       "scope": scope, "type": "space"})
+
+        def put(name, value):
+            if value is None:
+                enc.attrib.pop(name, None)
+            else:
+                enc.set(name, value)
+
+        if axis_range is not None:
+            put("range-type", AXIS_RANGES[axis_range])
+            if axis_range != "fixed":
+                put("min", None)
+                put("max", None)
         if axis_min is not None:
-            attrs["min"] = str(axis_min)
-            attrs["range-type"] = "fixed"
+            put("min", str(float(axis_min)))
+            put("range-type", "fixed")
         if axis_max is not None:
-            attrs["max"] = str(axis_max)
-            attrs["range-type"] = "fixed"
-        etree.SubElement(enc, "encoding", attrs)
+            put("max", str(float(axis_max)))
+            put("range-type", "fixed")
+        if include_zero is not None:
+            put("domain-expand", None if include_zero else "false")
+        if reverse is not None:
+            put("reverse", "true" if reverse else None)
+        if log_scale is not None:
+            put("scale", "log" if log_scale else None)
+        if tick_spacing is not None or tick_origin is not None:
+            put("major-spacing", str(float(tick_spacing if tick_spacing is not None else 1)))
+            put("major-origin", str(float(tick_origin or 0)))
+        if show_ticks is not None:
+            put("major-show", None if show_ticks else "false")
     if show_header is not None:
         _set_format(sh.style("header"), "display", str(show_header).lower(), field=q)
     if legend_title is not None:

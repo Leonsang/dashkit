@@ -19,6 +19,18 @@ Esta skill dice **qué** construir y **cómo se organiza**. `tableau-authoring`
 dice **cómo** construirlo con `tableu`. Cada regla cita su fuente oficial en
 [references/fuentes.md](references/fuentes.md).
 
+## Referencias
+
+| Archivo | Cuándo |
+|---|---|
+| `references/brief.md` | Antes de diseñar: audiencia, decisión, preguntas, KPIs, estilo; y qué decide cada punto |
+| `references/arquetipos.md` | Elegir la forma de la página: resumen, exploración, detalle, protagonista o relato |
+| `references/color.md` | Paleta, acento, secuencial y divergente, paletas de Tableau con sus hex |
+| `references/tipografia.md` | Fuentes y tamaños, medidos en los libros de Tableau |
+| `references/accesibilidad.md` | WCAG 2.2 AA: títulos, contraste, no solo color, orden de lectura |
+| `references/antipatrones.md` | Revisar un diseño propio o ajeno: qué falla y cómo se arregla |
+| `references/fuentes.md` | La documentación oficial de cada regla |
+
 ## 1. La jerarquía del contenido
 
 | Nivel | Qué es | Regla práctica |

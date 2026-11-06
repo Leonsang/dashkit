@@ -156,3 +156,47 @@ def test_story_point_captures_a_filter_like_world_indicators(root):
     assert not [f for f in structure.check(root) if f["level"] == "error"]
     if xsd.find_rcc():
         assert xsd.validate(root)["valid"], xsd.validate(root)["issues"][:3]
+
+
+def _axis(root, sheet="Canal"):
+    ws = root.find(f".//worksheet[@name='{sheet}']")
+    return [e for e in ws.iter("encoding") if e.get("attr") == "space"]
+
+
+def test_axis_options_as_desktops_edit_axis_dialog_writes_them(root):
+    # measured with ui_reverse --dialogs on Edit Axis: one <encoding attr='space'> per axis holds every option
+    A.format_field(root, "Canal", "SUM(Importe)", axis_min=0, axis_max=1000, include_zero=False, reverse=True,
+                   log_scale=True, tick_spacing=250)
+    (e,) = _axis(root)
+    assert {k: e.get(k) for k in ("range-type", "min", "max", "domain-expand", "reverse", "scale",
+                                  "major-spacing", "major-origin")} == {
+        "range-type": "fixed", "min": "0.0", "max": "1000.0", "domain-expand": "false", "reverse": "true",
+        "scale": "log", "major-spacing": "250.0", "major-origin": "0.0"}
+    A.format_field(root, "Canal", "SUM(Importe)", axis_range="independent", reverse=False, show_ticks=False)
+    (e,) = _axis(root)
+    assert e.get("range-type") == "independent" and e.get("min") is None and e.get("reverse") is None
+    assert e.get("major-show") == "false" and e.get("scale") == "log"
+    with pytest.raises(ValueError):
+        A.format_field(root, "Canal", "SUM(Importe)", axis_range="sideways")
+    assert not [f for f in structure.check(root) if f.get("level") == "error"]
+
+
+def test_measure_filters_as_desktops_filter_dialog_writes_them(root):
+    # Range, At least and At most are all in-range with the bounds given; Include Null Values: in-range-or-null
+    A.add_filter(root, "Canal", "SUM(Importe)", min=5)
+    f = next(x for x in root.find(".//worksheet[@name='Canal']").iter("filter") if x.get("class") == "quantitative")
+    assert f.get("included-values") == "in-range" and f.find("min").text == "5" and f.find("max") is None
+    A.add_filter(root, "Canal", "SUM(Importe)", min=5, max=50, include_null=True)
+    f = next(x for x in root.find(".//worksheet[@name='Canal']").iter("filter") if x.get("class") == "quantitative")
+    assert f.get("included-values") == "in-range-or-null"
+
+
+def test_band_is_two_paired_lines_like_desktop(root):
+    # Add Reference Line, Band, or Box > Band: two <reference-line> naming each other in paired-id
+    res = A.add_reference_line(root, "Canal", "SUM(Importe)", formula="min", band_to="max", scope="per-pane")
+    lines = list(root.find(".//worksheet[@name='Canal']").iter("reference-line"))
+    assert [(rl.get("id"), rl.get("formula"), rl.get("paired-id")) for rl in lines] == [
+        ("refline0", "min", "refline1"), ("refline1", "max", "refline0")]
+    assert res["pairedWith"] == "refline1" and all(rl.get("band-formula") is None for rl in lines)
+    from tableu_mcp import xsd
+    assert xsd.validate(root)["valid"]
