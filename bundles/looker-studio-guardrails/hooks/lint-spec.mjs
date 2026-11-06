@@ -88,7 +88,8 @@ function resolveSpec(spec) {
             ...it.slots ? { slots: it.slots } : {},
             ...it.text !== void 0 ? { text: it.text } : {},
             ...it.parameter ? { parameter: it.parameter } : {},
-            ...it.style ? { style: it.style } : {}
+            ...it.style ? { style: it.style } : {},
+            ...it.conditional ? { conditional: it.conditional } : {}
           });
         });
       } else {
@@ -112,7 +113,8 @@ function resolveSpec(spec) {
           ...c.slots ? { slots: c.slots } : {},
           ...c.text !== void 0 ? { text: c.text } : {},
           ...c.parameter ? { parameter: c.parameter } : {},
-          ...c.style ? { style: c.style } : {}
+          ...c.style ? { style: c.style } : {},
+          ...c.conditional ? { conditional: c.conditional } : {}
         });
       }
     }
