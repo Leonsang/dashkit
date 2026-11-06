@@ -2346,6 +2346,30 @@ async function bindFieldsScript(args) {
   } catch (e) {
     warnings.push("No se pudo revisar sortData: " + (e && e.message));
   }
+  try {
+    const k = comp.config.config.datasource.keys;
+    const sd = k.sortData && Array.isArray(k.sortData.value) ? k.sortData.value : null;
+    const beh = comp.config.behavior || comp.config.config.behavior;
+    const acts = (beh && Array.isArray(beh.onSort) ? beh.onSort : []).filter((a) => a && a.init && a.init.sortOptions);
+    if (sd && sd.length && acts.length) {
+      for (const a of acts) {
+        const old = a.init.sortOptions.sortData || [];
+        const datasetNs = old[0] && old[0].sortColumn && old[0].sortColumn.datasetNs || "d0";
+        const next = sd.map((s) => {
+          const def = comp.config.conceptDefs[s.sortColumn] || {};
+          const dt = def.queryTimeTransformation && def.queryTimeTransformation.dataTransformation || {};
+          return { sortDir: s.sortDir, sortColumn: { name: s.sortColumn, datasetNs, tableNs: def.namespace || "t0", dataTransformation: JSON.parse(JSON.stringify(dt)) } };
+        });
+        const same = old.length === next.length && old.every((o, i) => o.sortDir === next[i].sortDir && o.sortColumn && o.sortColumn.name === next[i].sortColumn.name);
+        if (!same) {
+          a.init.sortOptions.sortData = next;
+          warnings.push("Orden inicial del grafico alineado con sortData.");
+        }
+      }
+    }
+  } catch (e) {
+    warnings.push("No se pudo alinear el orden inicial: " + (e && e.message));
+  }
   mark("sort done");
   try {
     comp.syncState(true);
@@ -2867,6 +2891,18 @@ function patchComponentScript(args) {
       for (const k of Object.keys(dk).filter((x) => THEME.test(x) && has(dk[x] && dk[x].value))) {
         comp.setDisplayKeyValue(k, void 0);
         changes.push(`-${k}`);
+      }
+      if (/table/.test(String(comp.config.config.display.type))) {
+        let color = "#202124";
+        try {
+          const themes = report.config.resource && report.config.resource.theme || [];
+          const list = Array.isArray(themes) ? themes : Object.values(themes);
+          const fc = list.map((t) => t && t.content && t.content.themeFontColor).find(Boolean);
+          if (fc && fc.color) color = fc.color;
+        } catch {
+        }
+        comp.setDisplayKeyValue("headerFontColor", { color, opacity: 1, themeRef: { index: 1 } });
+        changes.push("headerFontColor=texto del tema");
       }
     }
     if (changes.length) inj.get("wrapperSaveService").save([comp]);
@@ -3515,8 +3551,17 @@ function auditUx(f, layoutIssues = []) {
   }
   const fonts = /* @__PURE__ */ new Set();
   if (t?.font) fonts.add(t.font);
+  const tint = (hex, base, a) => {
+    const x = rgb(hex), y = rgb(base);
+    if (!x || !y) return null;
+    return "#" + x.map((v, i) => Math.round(y[i] + (v - y[i]) * a).toString(16).padStart(2, "0")).join("");
+  };
+  const headerBack = t?.accent ? tint(t.accent, t.fill && t.fill !== "transparent" ? t.fill : PAGE_BG, 0.08) : null;
+  const headerRatio = headerBack && t?.accentText ? contrast(t.accentText, headerBack) : null;
   for (const c of f.components) {
-    const keys = Object.keys(c.overrides);
+    if (/table/.test(c.type) && headerRatio !== null && headerRatio < 4.5 && !c.overrides.headerFontColor)
+      issues.push({ severity: "error", area: "contraste", componentId: c.id, rule: "WCAG 1.4.3", message: `${c.type}: la cabecera usa el texto de acento (${t.accentText}) sobre un tinte del acento (~${headerBack}) = ${headerRatio}:1. patch_component style={"headerFontColor":{"color":"${t.text ?? "#202124"}","opacity":1,"themeRef":{"index":1}}} o stripThemeStyles=true.` });
+    const keys = Object.keys(c.overrides).filter((k) => !c.overrides[k]?.themeRef);
     if (keys.length) issues.push({ severity: "info", area: "tema", componentId: c.id, rule: "diseno-layout \xA76", message: `${c.type} sobrescribe el tema en ${keys.length} claves (${keys.slice(0, 5).join(", ")}${keys.length > 5 ? "\u2026" : ""}).` });
     for (const [k, v] of Object.entries(c.overrides)) {
       if (/fontfamily/i.test(k) && typeof v === "string") fonts.add(v);
@@ -3953,7 +3998,7 @@ async function addSourceField(opts) {
   });
   const open = async () => {
     if (!await clickText2("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) {
-      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-YRHIJN2H.js");
+      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-LSXHAYTH.js");
       await selectSourceChart2(page, opts.source && opts.source.startsWith("@") ? opts.source : void 0);
       if (!await clickText2("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) throw new Error('No se encontro "Anadir un campo" en el panel Datos.');
     }
@@ -3970,7 +4015,7 @@ async function addSourceField(opts) {
     let src = await editorSource();
     const byField = !!opts.source && opts.source.startsWith("@");
     if (byField) {
-      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-YRHIJN2H.js");
+      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-LSXHAYTH.js");
       await clickText2("button", /^(Cancelar|Cancel)$/);
       await close();
       await selectSourceChart2(page, opts.source);
@@ -4031,6 +4076,7 @@ seedKnowledge();
 var NET_RE = /\/(updatePage|updateReport|batchedDataV2|createReport|deletePage)\b/;
 var netLogs = /* @__PURE__ */ new WeakMap();
 function trackNet(page) {
+  trackSaves(page);
   if (netLogs.has(page)) return;
   const log2 = [];
   netLogs.set(page, log2);
@@ -4043,6 +4089,38 @@ function trackNet(page) {
 }
 function netSince(page, t0) {
   return (netLogs.get(page) ?? []).filter((e) => e.t >= t0);
+}
+var SAVE_RE = /\/(updatePage|updateReport|createPages|deletePages|updateReportNavigationInfo)\b/;
+var saveState = /* @__PURE__ */ new WeakMap();
+function trackSaves(page) {
+  let s = saveState.get(page);
+  if (s) return s;
+  const st = { inflight: 0, last: 0 };
+  saveState.set(page, st);
+  page.on("request", (r) => {
+    if (SAVE_RE.test(r.url())) {
+      st.inflight++;
+      st.last = Date.now();
+    }
+  });
+  const done = (r) => {
+    if (SAVE_RE.test(r.url())) {
+      st.inflight = Math.max(0, st.inflight - 1);
+      st.last = Date.now();
+    }
+  };
+  page.on("requestfinished", done);
+  page.on("requestfailed", done);
+  return st;
+}
+async function settleSaves(page, quietMs = 2500, timeoutMs = 2e4) {
+  const st = trackSaves(page);
+  const t0 = Date.now();
+  const since = Math.max(st.last, t0);
+  while (Date.now() - t0 < timeoutMs) {
+    if (st.inflight === 0 && Date.now() - Math.max(st.last, since) >= quietMs) return;
+    await sleep2(200);
+  }
 }
 async function waitReady(page, timeoutMs = 45e3) {
   const t0 = Date.now();
@@ -4061,6 +4139,7 @@ async function openReport(url) {
   const browser = await getBrowser();
   const target = browser.targets().find((t) => t.type() === "page" && REPORT_URL_RE.test(t.url()));
   const page = target && await target.page() || await browser.newPage();
+  if (target) await settleSaves(page, 1500);
   await page.bringToFront();
   await page.goto(url, { waitUntil: "networkidle2", timeout: 9e4 });
   await waitReady(page);
@@ -4111,6 +4190,7 @@ async function copyReport(source, name) {
 }
 async function reloadReport() {
   const page = await getReportPage();
+  await settleSaves(page);
   await page.bringToFront();
   await page.reload({ waitUntil: "networkidle2", timeout: 9e4 });
   await waitReady(page);
@@ -4297,8 +4377,11 @@ async function applySpec(specOrFile, opts = {}) {
       result.pages.push({ name, pageId: hit?.id ?? "(nueva)", created });
     }
   }
+  let prevPage;
   for (const c of components) {
     const pageId = c.page === "active" ? void 0 : c.page.startsWith("name:") ? pageIds[c.page] : c.page;
+    if (!opts.dryRun && prevPage !== void 0 && pageId !== prevPage) await settleSaves(page);
+    prevPage = pageId;
     const existingId = c.id ?? state.keys[c.key];
     const exists = existingId ? await evaluateOn(page, T2, componentExistsScript, existingId) : false;
     if (opts.dryRun) {
@@ -4376,17 +4459,17 @@ async function patchIfNeeded(page, id, c) {
   }
   if (c.text !== void 0) {
     const t = typeof c.text === "string" ? { text: c.text } : c.text;
-    const { setText: setText2 } = await import("./ops4-YRHIJN2H.js");
+    const { setText: setText2 } = await import("./ops4-LSXHAYTH.js");
     await setText2(id, t.text, { ...t.size ? { size: t.size } : {}, ...t.bold ? { bold: true } : {}, ...t.color ? { color: t.color } : {} });
     changes.push("text");
   }
   if (c.style) {
-    const { setStyle: setStyle2 } = await import("./ops4-YRHIJN2H.js");
+    const { setStyle: setStyle2 } = await import("./ops4-LSXHAYTH.js");
     await setStyle2(id, c.style);
     changes.push("style");
   }
   if (c.parameter) {
-    const { setControlParameter: setControlParameter2 } = await import("./ops4-YRHIJN2H.js");
+    const { setControlParameter: setControlParameter2 } = await import("./ops4-LSXHAYTH.js");
     await setControlParameter2(id, c.parameter);
     changes.push(`parameter:${c.parameter}`);
   }

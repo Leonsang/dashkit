@@ -648,6 +648,30 @@ export async function bindFieldsScript(args: BindFieldsArgs): Promise<BindFields
   } catch (e: any) {
     warnings.push('No se pudo revisar sortData: ' + (e && e.message));
   }
+  // The editor also keeps a default sort in behavior.onSort[].init.sortOptions.sortData, and that one
+  // wins over datasource sortData. Blended charts get one by "Record Count" when created, which left
+  // a combo's month axis unordered (observed 2026-11-06). Mirror sortData into it.
+  try {
+    const k = comp.config.config.datasource.keys;
+    const sd = k.sortData && Array.isArray(k.sortData.value) ? k.sortData.value : null;
+    const beh = comp.config.behavior || comp.config.config.behavior;
+    const acts = (beh && Array.isArray(beh.onSort) ? beh.onSort : []).filter((a: any) => a && a.init && a.init.sortOptions);
+    if (sd && sd.length && acts.length) {
+      for (const a of acts) {
+        const old = a.init.sortOptions.sortData || [];
+        const datasetNs = (old[0] && old[0].sortColumn && old[0].sortColumn.datasetNs) || 'd0';
+        const next = sd.map((s: any) => {
+          const def = comp.config.conceptDefs[s.sortColumn] || {};
+          const dt = (def.queryTimeTransformation && def.queryTimeTransformation.dataTransformation) || {};
+          return { sortDir: s.sortDir, sortColumn: { name: s.sortColumn, datasetNs, tableNs: def.namespace || 't0', dataTransformation: JSON.parse(JSON.stringify(dt)) } };
+        });
+        const same = old.length === next.length && old.every((o: any, i: number) => o.sortDir === next[i].sortDir && o.sortColumn && o.sortColumn.name === next[i].sortColumn.name);
+        if (!same) { a.init.sortOptions.sortData = next; warnings.push('Orden inicial del grafico alineado con sortData.'); }
+      }
+    }
+  } catch (e: any) {
+    warnings.push('No se pudo alinear el orden inicial: ' + (e && e.message));
+  }
   mark('sort done');
   try { comp.syncState(true); } catch (e: any) { warnings.push('syncState fallo: ' + (e && e.message)); }
   mark('synced');

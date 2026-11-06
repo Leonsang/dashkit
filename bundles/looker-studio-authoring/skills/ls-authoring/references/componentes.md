@@ -89,6 +89,8 @@ sus colores y fuentes: quítalos con `patch_component stripThemeStyles=true` par
   | `kpi-metric` | `hideMetric: false` | Muestra el nombre de la métrica (la plantilla lo trae oculto) |
   | `kpi-metric` | `hideCompare`, `compactNumbers` | Comparación y números compactos |
   | `simple-linechart` | `missingDataDisplayType: "linearInterpolation"` | Une los puntos; con `lineToZero` (por defecto) una serie mensual sobre un eje diario sale en picos |
+  | `button` | `text: "Solo pedidos online"`, `fontSize: "16px"` | Etiqueta del botón (la plantilla dice "Botón nuevo") |
+  | `simple-table`, `pivot-table` | `headerFontColor: {"color":"#202124","opacity":1,"themeRef":{"index":1}}` | Cabecera con el color de texto del tema. `stripThemeStyles` ya lo pone |
 
 CLI: `patch <id> --date-days 28 --strip-styles`, `patch <id> --text "Ventas 2025" --size 24 --bold`,
 `patch <id> --parameter metrica`, `patch <id> --style '{"hideMetric":false}'`. En el spec, `style`.
@@ -96,7 +98,13 @@ CLI: `patch <id> --date-days 28 --strip-styles`, `patch <id> --text "Ventas 2025
 **Series temporales:** `simple-linechart` solo acepta una dimensión de fecha (con un número como `anio_mes`
 o un texto da reason 266). Para una tendencia mensual usa una fecha de inicio de mes y
 `missingDataDisplayType: "linearInterpolation"`. `bind` ordena las tendencias (línea, área, combinado) por
-su primera dimensión ascendente.
+su primera dimensión ascendente, y alinea con ese orden el orden inicial que el editor guarda aparte
+(`behavior.onSort`): en un gráfico combinado nuevo el editor lo pone por "Número de registros" y es el que
+manda.
+
+**Cabeceras de tabla:** el editor pinta la cabecera sobre un tinte claro del acento con el color de texto del
+acento, que en casi todos los temas es blanco: no se lee. `stripThemeStyles=true` en tablas fija la cabecera al
+color de texto del tema, y `audit_ux` avisa de las tablas que no lo tienen.
 
 ## Capas y nivel de informe: arrange_components
 

@@ -23,6 +23,9 @@ un informe de prueba.
 | **Extensiones del navegador** | "Sorry! We can't save this report right now." | Perfil dedicado sin extensiones |
 | **Dos órdenes y dos nombres de página:** el modelo del editor y la navegación que ve el lector | Reordenar o renombrar solo el modelo no cambia lo que se ve, y no persiste | `move_page`, `rename_page`: usan las acciones de navegación del editor |
 | **Seleccionar por el modelo no actualiza los paneles** | El panel Datos no ofrece "Añadir un campo" o "Añadir un parámetro" | Las herramientas que usan paneles seleccionan con clics reales |
+| **Dos órdenes por gráfico:** `sortData` y el orden inicial de `behavior.onSort` | Manda el segundo; un combinado creado al combinar datos quedó ordenado por "Número de registros" y su eje de meses, desordenado | `bind_fields_to_component` alinea los dos |
+| **Un guardado pendiente se pierde** si se recarga o se escribe en otra página antes de que salga | El último componente creado en una página desaparecía al recargar (tres tablas en el showcase) | Las herramientas esperan a que no quede ningún guardado en curso antes de recargar, abrir o cambiar de página |
+| **Cabecera de tabla** en texto de acento sobre un tinte del acento | Blanco sobre azul pálido (1,1:1) | `stripThemeStyles` en tablas usa el texto del tema; `audit_ux` lo detecta |
 | **Un parámetro del origen aparece como campo de texto en Propiedades** | Escribir ahí cambia el valor del parámetro en ese gráfico (reason 67) | `add_source_field` solo escribe en el editor de campos |
 
 ## Cómo escribe el servidor

@@ -43,6 +43,7 @@ seedKnowledge();
 const NET_RE = /\/(updatePage|updateReport|batchedDataV2|createReport|deletePage)\b/;
 const netLogs = new WeakMap<Page, Array<{ path: string; status: number; t: number }>>();
 function trackNet(page: Page): void {
+  trackSaves(page);
   if (netLogs.has(page)) return;
   const log: Array<{ path: string; status: number; t: number }> = [];
   netLogs.set(page, log);
@@ -55,6 +56,34 @@ function trackNet(page: Page): void {
 }
 function netSince(page: Page, t0: number) {
   return (netLogs.get(page) ?? []).filter((e) => e.t >= t0);
+}
+
+// Saves in flight. A reload, or a save on another page, that starts before the previous save has
+// gone out drops that save: the last component created on a page vanished three times in the
+// showcase (p1_paises, p3_vendedores, p7_detalle; found 2026-11-06).
+const SAVE_RE = /\/(updatePage|updateReport|createPages|deletePages|updateReportNavigationInfo)\b/;
+const saveState = new WeakMap<Page, { inflight: number; last: number }>();
+function trackSaves(page: Page): { inflight: number; last: number } {
+  let s = saveState.get(page);
+  if (s) return s;
+  const st = { inflight: 0, last: 0 };
+  saveState.set(page, st);
+  page.on('request', (r) => { if (SAVE_RE.test(r.url())) { st.inflight++; st.last = Date.now(); } });
+  const done = (r: { url(): string }) => { if (SAVE_RE.test(r.url())) { st.inflight = Math.max(0, st.inflight - 1); st.last = Date.now(); } };
+  page.on('requestfinished', done);
+  page.on('requestfailed', done);
+  return st;
+}
+
+/** Waits until no save is in flight and none has started for `quietMs` (the editor debounces saves). */
+export async function settleSaves(page: Page, quietMs = 2500, timeoutMs = 20_000): Promise<void> {
+  const st = trackSaves(page);
+  const t0 = Date.now();
+  const since = Math.max(st.last, t0);
+  while (Date.now() - t0 < timeoutMs) {
+    if (st.inflight === 0 && Date.now() - Math.max(st.last, since) >= quietMs) return;
+    await sleep(200);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -82,6 +111,7 @@ export async function openReport(url: string): Promise<{ url: string }> {
   const page = (target && (await target.page())) || (await browser.newPage());
   // Bring to front BEFORE navigating: in a hidden tab the editor does not boot
   // (observed 2026-11-03: it ends on the home page with the model empty).
+  if (target) await settleSaves(page, 1500);
   await page.bringToFront();
   await page.goto(url, { waitUntil: 'networkidle2', timeout: 90_000 });
   await waitReady(page);
@@ -150,6 +180,7 @@ export async function copyReport(source: string, name?: string): Promise<{ sourc
 /** Reloads the report tab: renders components created via the API and drops any unsaved invalid state. */
 export async function reloadReport(): Promise<{ url: string; components: number }> {
   const page = await getReportPage();
+  await settleSaves(page);
   await page.bringToFront();
   await page.reload({ waitUntil: 'networkidle2', timeout: 90_000 });
   await waitReady(page);
@@ -400,8 +431,12 @@ export async function applySpec(specOrFile: string | ReportSpec, opts: { dryRun?
     }
   }
 
+  let prevPage: string | undefined;
   for (const c of components) {
     const pageId = c.page === 'active' ? undefined : c.page.startsWith('name:') ? pageIds[c.page] : c.page;
+    // Let the previous page's last save go out before writing to another page (see settleSaves).
+    if (!opts.dryRun && prevPage !== undefined && pageId !== prevPage) await settleSaves(page);
+    prevPage = pageId;
     const existingId = c.id ?? state.keys[c.key];
     const exists = existingId ? await evaluateOn(page, T, componentExistsScript, existingId) : false;
     if (opts.dryRun) {

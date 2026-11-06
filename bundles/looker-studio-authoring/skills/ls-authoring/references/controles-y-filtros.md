@@ -23,11 +23,11 @@ labels=["control:<opción>"]`, CLI `templates seed-ui "control:<opción>"`) y de
 | Filtro avanzado | `dimension-filter@filtro-avanzado` | |
 | Control deslizante | `dimension-filter@control-deslizante` | Campo numérico |
 | Casilla | `dimension-filter@casilla` | Campo **booleano del origen**; si no, reason 116. Verificado en modo vista: filtra |
-| Filtro predefinido | `button@filtro-predefinido` | La condición es su campo de control: un **booleano del origen**. Sin campo, reason 265; no booleano, 116. Verificado: filtra |
+| Filtro predefinido | `button@filtro-predefinido` | La condición es su campo de control: un **booleano del origen**. Sin campo, reason 265; no booleano, 116. Verificado: filtra. Etiqueta con `style={"text":"..."}` |
 | Filtro por periodo | `simple-daterangepicker@filtro-por-periodo` | Fija el periodo con `dateRangeDays` |
 | Control de datos | `dataset-picker@control-de-datos` | Solo tiene sentido con conectores como GA o Ads |
 | Control de dimensiones | `dimension-control@control-de-dimensiones` | |
-| Botón | `button@boton` | |
+| Botón | `button@boton` | Etiqueta con `style={"text":"..."}` |
 
 El campo del control se vincula como en un gráfico, con `dimensions=[campo]`. El booleano se crea con
 `add_source_field` (ver `campos.md`).

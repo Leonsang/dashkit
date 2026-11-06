@@ -169,8 +169,20 @@ export function auditUx(f: UxFacts, layoutIssues: Array<{ code: string; componen
   // per-component overrides (theme consistency) and their own contrast
   const fonts = new Set<string>();
   if (t?.font) fonts.add(t.font);
+  // Table headers are painted on a ~8% tint of the accent with the accent's text colour (observed
+  // 2026-11-06): white accent text gives an unreadable header unless headerFontColor is set.
+  const tint = (hex: string, base: string, a: number) => {
+    const x = rgb(hex), y = rgb(base);
+    if (!x || !y) return null;
+    return '#' + x.map((v, i) => Math.round(y[i]! + (v - y[i]!) * a).toString(16).padStart(2, '0')).join('');
+  };
+  const headerBack = t?.accent ? tint(t.accent, t.fill && t.fill !== 'transparent' ? t.fill : PAGE_BG, 0.08) : null;
+  const headerRatio = headerBack && t?.accentText ? contrast(t.accentText, headerBack) : null;
   for (const c of f.components) {
-    const keys = Object.keys(c.overrides);
+    if (/table/.test(c.type) && headerRatio !== null && headerRatio < 4.5 && !c.overrides.headerFontColor)
+      issues.push({ severity: 'error', area: 'contraste', componentId: c.id, rule: 'WCAG 1.4.3', message: `${c.type}: la cabecera usa el texto de acento (${t!.accentText}) sobre un tinte del acento (~${headerBack}) = ${headerRatio}:1. patch_component style={"headerFontColor":{"color":"${t!.text ?? '#202124'}","opacity":1,"themeRef":{"index":1}}} o stripThemeStyles=true.` });
+    // A value tied to a theme colour (themeRef) follows the theme: not an override.
+    const keys = Object.keys(c.overrides).filter((k) => !((c.overrides[k] as { themeRef?: unknown } | null)?.themeRef));
     if (keys.length) issues.push({ severity: 'info', area: 'tema', componentId: c.id, rule: 'diseno-layout §6', message: `${c.type} sobrescribe el tema en ${keys.length} claves (${keys.slice(0, 5).join(', ')}${keys.length > 5 ? '…' : ''}).` });
     for (const [k, v] of Object.entries(c.overrides)) {
       if (/fontfamily/i.test(k) && typeof v === 'string') fonts.add(v);

@@ -16,7 +16,7 @@ import {
   setStyle,
   setText,
   updateBlend
-} from "./chunk-2NVG7DVM.js";
+} from "./chunk-CRZZ7AX2.js";
 import "./chunk-5J4RMU5E.js";
 import "./chunk-Y34SSGZY.js";
 import "./chunk-MZHUAOKZ.js";
