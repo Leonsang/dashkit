@@ -27,11 +27,12 @@ import {
   navDispatchScript,
   navPagesScript,
   selectedIdsScript,
+  setConditionalFormatScript,
   setControlParameterScript,
   setDisplayKeysScript,
   setTextScript,
   updateBlendScript
-} from "./chunk-CFG575DG.js";
+} from "./chunk-52DVBUYO.js";
 import {
   CDPSessionEvent,
   CdpBrowser,
@@ -3006,7 +3007,8 @@ function resolveSpec(spec) {
             ...it.slots ? { slots: it.slots } : {},
             ...it.text !== void 0 ? { text: it.text } : {},
             ...it.parameter ? { parameter: it.parameter } : {},
-            ...it.style ? { style: it.style } : {}
+            ...it.style ? { style: it.style } : {},
+            ...it.conditional ? { conditional: it.conditional } : {}
           });
         });
       } else {
@@ -3030,7 +3032,8 @@ function resolveSpec(spec) {
           ...c.slots ? { slots: c.slots } : {},
           ...c.text !== void 0 ? { text: c.text } : {},
           ...c.parameter ? { parameter: c.parameter } : {},
-          ...c.style ? { style: c.style } : {}
+          ...c.style ? { style: c.style } : {},
+          ...c.conditional ? { conditional: c.conditional } : {}
         });
       }
     }
@@ -4045,7 +4048,7 @@ async function addSourceField(opts) {
   });
   const open = async () => {
     if (!await clickText2("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) {
-      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-35MGXMIH.js");
+      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-WE273QKI.js");
       await selectSourceChart2(page, opts.source && opts.source.startsWith("@") ? opts.source : void 0);
       if (!await clickText2("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) throw new Error('No se encontro "Anadir un campo" en el panel Datos.');
     }
@@ -4062,7 +4065,7 @@ async function addSourceField(opts) {
     let src = await editorSource();
     const byField = !!opts.source && opts.source.startsWith("@");
     if (byField) {
-      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-35MGXMIH.js");
+      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-WE273QKI.js");
       await clickText2("button", /^(Cancelar|Cancel)$/);
       await close();
       await selectSourceChart2(page, opts.source);
@@ -4313,7 +4316,7 @@ async function createComponent(o) {
   const hasFields = !!(o.dimensions?.length || o.metrics?.length || o.slots && Object.keys(o.slots).length);
   const NO_DIMS = ["gauge-viz", "bulletchart", "kpi-metric"];
   const t0 = Date.now();
-  const { ensureSeedScript } = await import("./scripts4-YURWRHQ6.js");
+  const { ensureSeedScript } = await import("./scripts4-JLIDR5RP.js");
   const seed = await evaluateOn(page, T2, ensureSeedScript, o.pageId);
   if (seed.seedId) await sleep2(1500);
   const res = await evaluateOn(page, T2, createComponentScript, {
@@ -4506,17 +4509,22 @@ async function patchIfNeeded(page, id, c) {
   }
   if (c.text !== void 0) {
     const t = typeof c.text === "string" ? { text: c.text } : c.text;
-    const { setText: setText2 } = await import("./ops4-35MGXMIH.js");
+    const { setText: setText2 } = await import("./ops4-WE273QKI.js");
     await setText2(id, t.text, { ...t.size ? { size: t.size } : {}, ...t.bold ? { bold: true } : {}, ...t.color ? { color: t.color } : {} });
     changes.push("text");
   }
   if (c.style) {
-    const { setStyle: setStyle2 } = await import("./ops4-35MGXMIH.js");
+    const { setStyle: setStyle2 } = await import("./ops4-WE273QKI.js");
     await setStyle2(id, c.style);
     changes.push("style");
   }
+  if (c.conditional) {
+    const { setConditionalFormat: setConditionalFormat2 } = await import("./ops4-WE273QKI.js");
+    await setConditionalFormat2(id, c.conditional);
+    changes.push(`conditional:${c.conditional.length}`);
+  }
   if (c.parameter) {
-    const { setControlParameter: setControlParameter2 } = await import("./ops4-35MGXMIH.js");
+    const { setControlParameter: setControlParameter2 } = await import("./ops4-WE273QKI.js");
     await setControlParameter2(id, c.parameter);
     changes.push(`parameter:${c.parameter}`);
   }
@@ -5189,6 +5197,13 @@ async function setText(componentId, text, opts = {}) {
   await sleep3(2e3);
   return { ok: true, componentId };
 }
+async function setConditionalFormat(componentId, rules, append = false) {
+  const { page } = await requireEditMode();
+  const r = await evaluateOn(page, T3, setConditionalFormatScript, { componentId, rules, append });
+  if (!r.ok) throw new Error(r.error);
+  await sleep3(1500);
+  return { ok: true, componentId, rules: r.rules };
+}
 async function setStyle(componentId, keys) {
   const { page } = await requireEditMode();
   const r = await evaluateOn(page, T3, setDisplayKeysScript, { componentId, keys });
@@ -5235,6 +5250,7 @@ export {
   arrangeComponents,
   setControlParameter,
   setText,
+  setConditionalFormat,
   setStyle,
   readTheme,
   applyTheme,

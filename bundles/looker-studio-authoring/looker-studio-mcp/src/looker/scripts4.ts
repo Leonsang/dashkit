@@ -534,3 +534,113 @@ export function editBlendScript(args: BlendEdit): { ok: boolean; error?: string;
     return { ok: false, error: String(e && e.message) };
   }
 }
+
+// ---------------------------------------------------------------------------
+// conditional formatting (tables, pivot tables, scorecards): display key conditionalFormat = {rule: [...]}
+// Shapes taken from rules made in the editor (2026-11-06):
+//  single colour: conditionDefinition.matchCondition {input.selector.step [cell, field], type 1..6, value}
+//                 format.single.property [{key: 'background-color' | 'color', value.colorValue}]
+//  colour scale:  conditionDefinition.scale {input, anchor[3] (valueSemantic 2: 0..1 of the range)}
+//                 format.scale.property [{key, value.anchor[3] colorValue}]
+//  target: step [row] (whole row) or [cell, field] (that column). scope is always 'row'.
+// ---------------------------------------------------------------------------
+
+export interface CfRule {
+  /** Field shown in the chart: display name ("Ingresos") or concept id (qt_...). */
+  field: string;
+  /** Single-colour rule: EQ, NE, GT, GE, LT, LE. */
+  op?: string;
+  value?: string | number;
+  /** "row" or a field of the chart (its column). Default: the rule's own field. */
+  target?: string;
+  background?: string;
+  color?: string;
+  /** Colour scale over the field's range: three colours for min, middle and max. */
+  scale?: string[];
+}
+
+export function setConditionalFormatScript(args: { componentId: string; rules: CfRule[]; append?: boolean }): { ok: boolean; error?: string; rules?: number } {
+  const w = window as any;
+  try {
+    const inj = w.angular.element(document.body).injector();
+    const report = inj.get('legoUndoRedoService').report;
+    const all = [...report.pages.flatMap((p: any) => p.components), ...report.components];
+    const comp = all.find((c: any) => c.getId() === args.componentId);
+    if (!comp) return { ok: false, error: `Componente ${args.componentId} no encontrado.` };
+    const keys = comp.config.config.datasource.keys;
+    const live: string[] = [...((keys.dimensions && keys.dimensions.value && keys.dimensions.value.primary) || []), ...((keys.metrics && keys.metrics.value && keys.metrics.value.primary) || [])];
+    let schema: any = {};
+    try { schema = comp.getSchema().qe.concepts || {}; } catch { /* blended or not loaded: display names only */ }
+    const label = (n: string) => {
+      const d = comp.config.conceptDefs[n];
+      const dn = d && d.queryTimeTransformation && d.queryTimeTransformation.displayTransformation && d.queryTimeTransformation.displayTransformation.displayName;
+      if (dn) return String(dn);
+      const sf = d && d.queryTimeTransformation && d.queryTimeTransformation.dataTransformation && d.queryTimeTransformation.dataTransformation.sourceFieldName;
+      const s = sf && schema[sf];
+      return String((s && s.displayName) || sf || n);
+    };
+    const concept = (ref: string) => {
+      const n = live.find((x) => x === ref) || live.find((x) => label(x).toLowerCase() === ref.toLowerCase());
+      if (!n) throw new Error(`"${ref}" no es un campo del grafico (${live.map(label).join(', ')}).`);
+      const d = JSON.parse(JSON.stringify(comp.config.conceptDefs[n]));
+      const qtt = d.queryTimeTransformation || { dataTransformation: {} };
+      qtt.displayTransformation = Object.assign({}, qtt.displayTransformation || {}, { displayName: label(n) });
+      return { id: d.id || `t0.${n}`, name: n, namespace: d.namespace || 't0', queryTimeTransformation: qtt };
+    };
+    const colour = (c: string) => {
+      const m = /^serie:(\d+)$/i.exec(c);
+      if (m) {
+        // themeRef indexes: 0 fill, 1 font, 2 accent, 3 accent font, 4.. series (observed: series 2 = index 5).
+        let hex = '#000000';
+        try {
+          const th = (report.config.resource && report.config.resource.theme) || [];
+          const list = Array.isArray(th) ? th : Object.values(th);
+          const s = list.map((t: any) => t && t.content && t.content.themeSeriesColor).find(Boolean);
+          if (s && s[Number(m[1]) - 1]) hex = s[Number(m[1]) - 1].color;
+        } catch { /* default */ }
+        return { color: hex, themeRef: { index: Number(m[1]) + 3 } };
+      }
+      if (!/^#[0-9a-f]{6}$/i.test(c)) throw new Error(`Color no valido: ${c} (usa #rrggbb o serie:N).`);
+      return { color: c.toUpperCase() };
+    };
+    const OPS: Record<string, number> = { EQ: 1, NE: 2, GT: 3, GE: 4, LT: 5, LE: 6 };
+    const rules = args.rules.map((r) => {
+      const f = concept(r.field);
+      const target = !r.target || r.target === r.field ? { step: [{ string: 'cell' }, { field: f }] }
+        : r.target === 'row' ? { step: [{ string: 'row' }] } : { step: [{ string: 'cell' }, { field: concept(r.target) }] };
+      if (r.scale) {
+        const cs = r.scale.length === 3 ? r.scale : r.scale.length === 2 ? [r.scale[0]!, '', r.scale[1]!] : null;
+        if (!cs) throw new Error('scale lleva 2 o 3 colores (minimo, [medio,] maximo).');
+        const anchors = cs[1] ? [0, 0.5, 1] : [0, 1];
+        const cols = cs.filter(Boolean);
+        return {
+          conditionDefinition: { scale: { input: { selector: { step: [{ string: 'cell' }, { field: f }] } }, anchor: anchors.map((a) => ({ stringValue: [], numberValue: [a], valueSemantic: 2 })) } },
+          target: { target },
+          format: { scale: { property: [{ key: 'background-color', value: { anchor: cols.map((c) => ({ colorValue: colour(c) })) } }] } },
+          scope: 'row',
+        };
+      }
+      const op = OPS[String(r.op || '').toUpperCase()];
+      if (!op) throw new Error(`op no valida: ${r.op} (EQ, NE, GT, GE, LT, LE).`);
+      if (r.value === undefined) throw new Error('Falta value.');
+      if (!r.background && !r.color) throw new Error('Indica background o color (o ambos).');
+      const value = typeof r.value === 'number' ? { stringValue: [], numberValue: [r.value] } : { stringValue: [String(r.value)], numberValue: [] };
+      const prop: any[] = [];
+      if (r.color) prop.push({ key: 'color', value: { colorValue: colour(r.color) } });
+      if (r.background) prop.push({ key: 'background-color', value: { colorValue: colour(r.background) } });
+      return {
+        conditionDefinition: { matchCondition: { input: { selector: { step: [{ string: 'cell' }, { field: f }] } }, type: op, value } },
+        target: { target },
+        format: { single: { property: prop } },
+        scope: 'row',
+      };
+    });
+    const cur = comp.config.config.display.keys.conditionalFormat;
+    const prev = args.append && cur && cur.value && Array.isArray(cur.value.rule) ? cur.value.rule : [];
+    comp.setDisplayKeyValue('conditionalFormat', { rule: [...prev, ...rules] });
+    inj.get('wrapperSaveService').save([comp]);
+    return { ok: true, rules: prev.length + rules.length };
+  } catch (e: any) {
+    return { ok: false, error: String(e && e.message) };
+  }
+}

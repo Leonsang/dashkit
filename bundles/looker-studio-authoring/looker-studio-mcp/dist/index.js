@@ -8,7 +8,7 @@ import {
   getReportLayout,
   sanitizeLearning,
   writesAllowed
-} from "./chunks/chunk-CYFVTT56.js";
+} from "./chunks/chunk-JM3UDF2W.js";
 import {
   addFilter,
   addPage,
@@ -52,6 +52,7 @@ import {
   reportSettings,
   seedTemplatesFromUi,
   setComponentBoxModel,
+  setConditionalFormat,
   setControlParameter,
   setPageVisibility,
   setStyle,
@@ -64,10 +65,10 @@ import {
   updateParameter,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-DO44F44M.js";
+} from "./chunks/chunk-DJCKTACB.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
-import "./chunks/chunk-CFG575DG.js";
+import "./chunks/chunk-52DVBUYO.js";
 import "./chunks/chunk-FAVAKK4W.js";
 import "./chunks/chunk-GIAQTVDD.js";
 import "./chunks/chunk-BGDW2RS3.js";
@@ -36888,7 +36889,8 @@ var WRITE_TOOLS = /* @__PURE__ */ new Set([
   "move_page",
   "set_page_visibility",
   "duplicate_page",
-  "arrange_components"
+  "arrange_components",
+  "set_conditional_format"
 ]);
 var DESTRUCTIVE_TOOLS = /* @__PURE__ */ new Set(["delete_component", "delete_pages", "delete_blend", "delete_parameter"]);
 {
@@ -37463,6 +37465,25 @@ server.registerTool(
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true }
   },
   async (args) => run(() => addParameter(args))
+);
+var CfRuleSchema = external_exports.object({
+  field: external_exports.string().min(1).describe("Campo del grafico: nombre visible o id qt_"),
+  op: external_exports.enum(["EQ", "NE", "GT", "GE", "LT", "LE"]).optional(),
+  value: external_exports.union([external_exports.string(), external_exports.number()]).optional(),
+  target: external_exports.string().optional().describe('"row" (fila completa) o un campo del grafico (su columna). Por defecto, la columna del campo'),
+  background: external_exports.string().optional().describe("#rrggbb o serie:N (color N de la paleta del tema)"),
+  color: external_exports.string().optional().describe("Color del texto: #rrggbb o serie:N"),
+  scale: external_exports.array(external_exports.string()).min(2).max(3).optional().describe("Escala de colores: [minimo, medio, maximo] o [minimo, maximo]")
+}).strict();
+server.registerTool(
+  "set_conditional_format",
+  {
+    title: "Formato condicional",
+    description: 'Fija las reglas de formato condicional de una tabla, tabla dinamica o scorecard (Estilo > Formato condicional). Cada regla: field + op (EQ, NE, GT, GE, LT, LE) + value + background y/o color, o field + scale [colores] (escala sobre el rango del campo). target: "row" o la columna de otro campo. Sustituye las reglas que haya; append=true las anade. rules=[] las quita.',
+    inputSchema: { componentId: external_exports.string().min(1), rules: external_exports.array(CfRuleSchema), append: external_exports.boolean().optional() },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true }
+  },
+  async ({ componentId, rules, append }) => run(() => setConditionalFormat(componentId, rules, append))
 );
 server.registerTool(
   "update_parameter",

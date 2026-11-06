@@ -29,7 +29,9 @@ import {
   navPagesScript,
   selectedIdsScript,
   setControlParameterScript,
+  setConditionalFormatScript,
   setDisplayKeysScript,
+  type CfRule,
   setTextScript,
   updateBlendScript,
   type BlendInfo,
@@ -820,6 +822,14 @@ export async function setText(componentId: string, text: string, opts: { html?: 
 }
 
 /** Sets style (display) keys of a component, as the Style panel does: e.g. {hideMetric: false} on a scorecard. */
+export async function setConditionalFormat(componentId: string, rules: CfRule[], append = false) {
+  const { page } = await requireEditMode();
+  const r = await evaluateOn(page, T, setConditionalFormatScript, { componentId, rules, append });
+  if (!r.ok) throw new Error(r.error);
+  await sleep(1500);
+  return { ok: true, componentId, rules: r.rules };
+}
+
 export async function setStyle(componentId: string, keys: Record<string, unknown>) {
   const { page } = await requireEditMode();
   const r = await evaluateOn(page, T, setDisplayKeysScript, { componentId, keys });

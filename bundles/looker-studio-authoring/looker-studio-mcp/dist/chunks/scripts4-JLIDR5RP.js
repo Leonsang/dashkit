@@ -11,11 +11,12 @@ import {
   navDispatchScript,
   navPagesScript,
   selectedIdsScript,
+  setConditionalFormatScript,
   setControlParameterScript,
   setDisplayKeysScript,
   setTextScript,
   updateBlendScript
-} from "./chunk-CFG575DG.js";
+} from "./chunk-52DVBUYO.js";
 import "./chunk-5QDPZ4I5.js";
 export {
   arrangeScript,
@@ -29,6 +30,7 @@ export {
   navDispatchScript,
   navPagesScript,
   selectedIdsScript,
+  setConditionalFormatScript,
   setControlParameterScript,
   setDisplayKeysScript,
   setTextScript,

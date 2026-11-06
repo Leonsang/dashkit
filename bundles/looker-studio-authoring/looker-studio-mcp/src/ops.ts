@@ -513,6 +513,11 @@ async function patchIfNeeded(page: Page, id: string, c: ResolvedComponent): Prom
     await setStyle(id, c.style);
     changes.push('style');
   }
+  if (c.conditional) {
+    const { setConditionalFormat } = await import('./ops4.js');
+    await setConditionalFormat(id, c.conditional);
+    changes.push(`conditional:${c.conditional.length}`);
+  }
   if (c.parameter) {
     const { setControlParameter } = await import('./ops4.js');
     await setControlParameter(id, c.parameter);

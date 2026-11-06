@@ -106,6 +106,30 @@ manda.
 acento, que en casi todos los temas es blanco: no se lee. `stripThemeStyles=true` en tablas fija la cabecera al
 color de texto del tema, y `audit_ux` avisa de las tablas que no lo tienen.
 
+## Formato condicional: set_conditional_format
+
+Lo que hace *Estilo > Formato condicional* en tablas, tablas dinámicas y scorecards:
+
+```json
+{"componentId": "cd-...", "rules": [
+  {"field": "Cumplimiento", "op": "LT", "value": 0.8, "color": "#C5221F"},
+  {"field": "Cumplimiento", "op": "GE", "value": 1, "color": "#137333", "background": "#E6F4EA"},
+  {"field": "Ingresos", "op": "GT", "value": 700, "target": "row", "background": "#FCE8E6"},
+  {"field": "Valoración", "scale": ["#DB3737", "#F5B503", "#0E9D58"]}]}
+```
+
+CLI: `format <id> reglas.json` (o el JSON en línea), `--append` para añadir. En el spec, `conditional`.
+
+- **`field`:** un campo del gráfico, por su nombre visible (el `as` de la métrica) o su id `qt_`.
+- **Regla de color único:** `op` (`EQ`, `NE`, `GT`, `GE`, `LT`, `LE`) y `value`; un porcentaje se compara como
+  fracción (`0.8` es 80 %). `background` y/o `color` (texto).
+- **Escala:** `scale` con 2 o 3 colores (mínimo, [medio,] máximo) sobre el rango del campo.
+- **`target`:** `"row"` (fila completa) o la columna de otro campo; por defecto, la del propio campo.
+- **Colores:** `#rrggbb` o `serie:N` (el color N de la paleta del tema, ligado a él).
+- Sustituye las reglas del componente; `rules=[]` las quita.
+- **Mapas de calor:** con alguna regla, el editor deja de pintar los mapas de calor de las columnas. Usa una
+  `scale` donde quieras mantener el degradado.
+
 ## Capas y nivel de informe: arrange_components
 
 `arrange_components componentIds op` (CLI `arrange <id...> --to <op>`):
@@ -127,7 +151,6 @@ Solo si el usuario lo pide. Necesita `LS_ALLOW_DELETE=1` además de `LS_ALLOW_WR
 ## Lo que no se puede (todavía)
 
 - **Agrupar y alinear:** no hay herramienta. Calcula las cajas y aplícalas con `set_component_box_model`.
-- **Estilo por serie, ejes, etiquetas de datos o formato condicional:** sin opciones con nombre. Lo que
-  manda es el tema (`paginas-temas-y-ajustes.md`); una clave suelta del panel Estilo se cambia con
-  `style={...}` si se conoce su nombre (`get_component_config` > `config.display.keys`). El formato
-  condicional es manual.
+- **Estilo por serie, ejes o etiquetas de datos:** sin opciones con nombre. Lo que manda es el tema
+  (`paginas-temas-y-ajustes.md`); una clave suelta del panel Estilo se cambia con `style={...}` si se conoce
+  su nombre (`get_component_config` > `config.display.keys`).

@@ -62,7 +62,7 @@ guías está marcada como [OFICIAL] o [CONVENCIÓN]; respeta la diferencia.
     `delete_pages` (solo si el usuario lo pide).
   - `add_filter`, `list_filters`, `update_filter`, `detach_filter`, `apply_theme`, `use_theme`
     y `report_settings`.
-  - `arrange_components`: orden de capas y nivel de informe (un control de
+  - `arrange_components`, `set_conditional_format`: orden de capas y nivel de informe (un control de
     periodo para todas las páginas).
 - **Combinaciones y parámetros:**
   - `create_blend` combina de 2 a 5 orígenes por las dimensiones que comparten

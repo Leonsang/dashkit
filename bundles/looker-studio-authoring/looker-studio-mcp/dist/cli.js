@@ -5,7 +5,7 @@ import {
   getComponentConfig,
   getReportLayout,
   sanitizeLearning
-} from "./chunks/chunk-CYFVTT56.js";
+} from "./chunks/chunk-JM3UDF2W.js";
 import {
   addFilter,
   addPage,
@@ -50,6 +50,7 @@ import {
   reportSettings,
   seedTemplatesFromUi,
   setComponentBoxModel,
+  setConditionalFormat,
   setControlParameter,
   setPageVisibility,
   setStyle,
@@ -62,10 +63,10 @@ import {
   updateParameter,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-DO44F44M.js";
+} from "./chunks/chunk-DJCKTACB.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
-import "./chunks/chunk-CFG575DG.js";
+import "./chunks/chunk-52DVBUYO.js";
 import "./chunks/chunk-FAVAKK4W.js";
 import "./chunks/chunk-GIAQTVDD.js";
 import "./chunks/chunk-BGDW2RS3.js";
@@ -107,6 +108,7 @@ Paginas y tema
   pages move <id> <indice> | pages delete <id...> | pages duplicate <id> [nombre]
   pages hide <id> [--nav on|off] [--viewer on|off]
   arrange <id...> --to front|back|forward|backward|report|page [--page <id>]
+  format <id> <reglas.json|json> [--append]   Formato condicional: [{field, op, value, background, color, target}] o {field, scale:[...]}
 
 Combinaciones y parametros
   blends [list]                    Combinaciones: origenes, uniones, claves, campos, graficos
@@ -259,6 +261,11 @@ async function main() {
         return setPageVisibility(need(pos[1], "pageId"), { ...nav !== void 0 ? { hiddenFromNav: nav } : { hiddenFromNav: true }, ...viewer !== void 0 ? { hiddenFromViewer: viewer } : {} });
       }
       return listPages();
+    case "format": {
+      const arg = need(pos[1], "las reglas (JSON o archivo)");
+      const rules = JSON.parse(existsSync(arg) ? readFileSync(arg, "utf8") : arg);
+      return setConditionalFormat(need(pos[0], "componentId"), Array.isArray(rules) ? rules : [rules], !!flags.append);
+    }
     case "arrange": {
       const to = need(typeof flags.to === "string" ? flags.to : void 0, "--to front|back|forward|backward|report|page");
       if (!["front", "back", "forward", "backward", "report", "page"].includes(to)) throw new Error(`--to ${to} no valido`);

@@ -27,7 +27,7 @@ import {
   reloadReport,
 } from './ops.js';
 import { loadSpec, type ReportSpec } from './spec.js';
-import { addParameter, arrangeComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
+import { addParameter, arrangeComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
 import { renamePage, reportSettings } from './ops3.js';
 import { addFilter, addPage, addSourceField, detachFilter, updateFilter, applyTheme, listFilters, listPages, readTheme, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
 
@@ -52,7 +52,7 @@ const WRITE_TOOLS = new Set([
   'set_component_box_model', 'bind_fields_to_component', 'create_component', 'apply_report_spec', 'patch_component',
   'apply_theme', 'use_theme', 'add_page', 'rename_page', 'synthesize_templates', 'seed_templates_from_menu', 'add_filter',
   'detach_filter', 'update_filter', 'create_blend', 'update_blend', 'add_parameter', 'update_parameter', 'move_page', 'set_page_visibility', 'duplicate_page',
-  'arrange_components',
+  'arrange_components', 'set_conditional_format',
 ]);
 const DESTRUCTIVE_TOOLS = new Set(['delete_component', 'delete_pages', 'delete_blend', 'delete_parameter']);
 {
@@ -750,6 +750,30 @@ server.registerTool(
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
   },
   async (args) => run(() => addParameter(args as never)),
+);
+
+const CfRuleSchema = z.object({
+  field: z.string().min(1).describe('Campo del grafico: nombre visible o id qt_'),
+  op: z.enum(['EQ', 'NE', 'GT', 'GE', 'LT', 'LE']).optional(),
+  value: z.union([z.string(), z.number()]).optional(),
+  target: z.string().optional().describe('"row" (fila completa) o un campo del grafico (su columna). Por defecto, la columna del campo'),
+  background: z.string().optional().describe('#rrggbb o serie:N (color N de la paleta del tema)'),
+  color: z.string().optional().describe('Color del texto: #rrggbb o serie:N'),
+  scale: z.array(z.string()).min(2).max(3).optional().describe('Escala de colores: [minimo, medio, maximo] o [minimo, maximo]'),
+}).strict();
+
+server.registerTool(
+  'set_conditional_format',
+  {
+    title: 'Formato condicional',
+    description:
+      'Fija las reglas de formato condicional de una tabla, tabla dinamica o scorecard (Estilo > Formato condicional). Cada regla: ' +
+      'field + op (EQ, NE, GT, GE, LT, LE) + value + background y/o color, o field + scale [colores] (escala sobre el rango del campo). ' +
+      'target: "row" o la columna de otro campo. Sustituye las reglas que haya; append=true las anade. rules=[] las quita.',
+    inputSchema: { componentId: z.string().min(1), rules: z.array(CfRuleSchema), append: z.boolean().optional() },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  },
+  async ({ componentId, rules, append }) => run(() => setConditionalFormat(componentId, rules as never, append)),
 );
 
 server.registerTool(

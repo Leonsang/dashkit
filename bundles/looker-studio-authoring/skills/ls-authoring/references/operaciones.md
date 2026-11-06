@@ -48,6 +48,7 @@ motor y no lleva el control de `LS_ALLOW_WRITE`.
 | `update_blend` | **blendId**, name, joinType, addTable, removeTable, setKeys | Cambia una combinacion existente: nombre, tipo de todas sus uniones (joinType), una tabla mas (addTable: dataset, dimensions, metrics, keys y joinType; por defecto une por las dimensiones que ya tiene la combinacion), quitar una tabla (removeTable: posicion 2..n) y las claves de la union que anade la tabla n (setKeys {table, keys}). | `combinaciones-y-parametros.md` |
 | `delete_blend` | **blendId** | Borra una combinacion (blend) que ningun grafico usa. | `combinaciones-y-parametros.md` |
 | `add_parameter` | **name**, type, allowed, values, min, max, default, source, id | Crea un parametro en un origen con el formulario del editor (panel Datos > Anadir un parametro). | `combinaciones-y-parametros.md` |
+| `set_conditional_format` | **componentId**, **rules**, append | Fija las reglas de formato condicional de una tabla, tabla dinamica o scorecard (Estilo > Formato condicional). | `componentes.md` |
 | `update_parameter` | **name**, newName, values, min, max, default, source | Cambia un parametro existente en su formulario (icono fx del parametro en el panel Datos): nombre visible (newName), valores de la lista (values, sustituye todas las filas), rango (min, max) y valor por defecto. | `combinaciones-y-parametros.md` |
 | `delete_parameter` | **name**, source | Quita un parametro de su origen (Quitar en su fila de la lista de campos del origen). | `combinaciones-y-parametros.md` |
 | `move_page` | **pageId**, **index** | Mueve una pagina a la posicion index (0 = primera) en la navegacion del informe. | `paginas-temas-y-ajustes.md` |
@@ -87,6 +88,7 @@ Cada comando de la CLI tiene su herramienta MCP. Lo que cambia, en la última co
 | `pages duplicate <id> [nombre]` | `duplicate_page` | — |
 | `pages hide <id> [--nav on\|off] [--viewer on\|off]` | `set_page_visibility` | MCP: `hiddenFromNav`, `hiddenFromViewer` |
 | `arrange <id...> --to front\|back\|forward\|backward\|report\|page` | `arrange_components` | MCP: `op`, `pageId` |
+| `format <id> <reglas.json\|json> [--append]` | `set_conditional_format` | — |
 | `blends [list]` | `list_blends` | — |
 | `blends create <spec.json\|json>` | `create_blend` | Mismo objeto que el MCP |
 | `blends update <blendId> [--name] [--join] [--add-table] [--remove-table] [--keys]` | `update_blend` | MCP: `joinType`, `addTable`, `removeTable`, `setKeys {table, keys}`; CLI `--keys 2:pais,anio_mes=mes` |

@@ -29,7 +29,7 @@ import {
 import { reportSettings } from './ops3.js';
 import { addFilter, addPage, addSourceField, applyTheme, detachFilter, updateFilter, exportTheme, importTheme, listFilters, listPages, readTheme, renamePage, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
 import { readFileSync, existsSync } from 'node:fs';
-import { addParameter, arrangeComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
+import { addParameter, arrangeComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
 
 const HELP = `ls-studio <comando> [opciones]
 
@@ -63,6 +63,7 @@ Paginas y tema
   pages move <id> <indice> | pages delete <id...> | pages duplicate <id> [nombre]
   pages hide <id> [--nav on|off] [--viewer on|off]
   arrange <id...> --to front|back|forward|backward|report|page [--page <id>]
+  format <id> <reglas.json|json> [--append]   Formato condicional: [{field, op, value, background, color, target}] o {field, scale:[...]}
 
 Combinaciones y parametros
   blends [list]                    Combinaciones: origenes, uniones, claves, campos, graficos
@@ -218,6 +219,12 @@ async function main(): Promise<unknown> {
         return setPageVisibility(need(pos[1], 'pageId'), { ...(nav !== undefined ? { hiddenFromNav: nav } : { hiddenFromNav: true }), ...(viewer !== undefined ? { hiddenFromViewer: viewer } : {}) });
       }
       return listPages();
+    case 'format': {
+      // format <id> <rules.json|json> [--append]
+      const arg = need(pos[1], 'las reglas (JSON o archivo)');
+      const rules = JSON.parse(existsSync(arg) ? readFileSync(arg, 'utf8') : arg);
+      return setConditionalFormat(need(pos[0], 'componentId'), Array.isArray(rules) ? rules : [rules], !!flags.append);
+    }
     case 'arrange': {
       const to = need(typeof flags.to === 'string' ? flags.to : undefined, '--to front|back|forward|backward|report|page');
       if (!['front', 'back', 'forward', 'backward', 'report', 'page'].includes(to)) throw new Error(`--to ${to} no valido`);

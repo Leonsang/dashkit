@@ -17,6 +17,7 @@
  * dataset: a data source id, or "@<field>" = the data source that has that field.
  * Lint rules come from the skills (diseno-layout.md, kpi-scorecards.md, rendimiento.md).
  */
+import type { CfRule } from './looker/scripts4.js';
 import { readFileSync } from 'node:fs';
 
 export interface SpecComponent {
@@ -48,6 +49,8 @@ export interface SpecComponent {
   parameter?: string;
   /** Style (display) keys, e.g. {"hideMetric": false} on a scorecard. */
   style?: Record<string, unknown>;
+  /** Conditional formatting rules (they replace the component's rules). See set_conditional_format. */
+  conditional?: CfRule[];
 }
 
 export interface SpecRow {
@@ -92,6 +95,7 @@ export interface ResolvedComponent extends Required<Pick<SpecComponent, 'key' | 
   text?: SpecComponent['text'];
   parameter?: string;
   style?: Record<string, unknown>;
+  conditional?: CfRule[];
 }
 
 export interface LintIssue {
@@ -148,6 +152,7 @@ export function resolveSpec(spec: ReportSpec): ResolvedComponent[] {
             ...(it.text !== undefined ? { text: it.text } : {}),
             ...(it.parameter ? { parameter: it.parameter } : {}),
             ...(it.style ? { style: it.style } : {}),
+            ...(it.conditional ? { conditional: it.conditional } : {}),
           });
         });
       } else {
@@ -163,6 +168,7 @@ export function resolveSpec(spec: ReportSpec): ResolvedComponent[] {
           ...(c.text !== undefined ? { text: c.text } : {}),
           ...(c.parameter ? { parameter: c.parameter } : {}),
           ...(c.style ? { style: c.style } : {}),
+          ...(c.conditional ? { conditional: c.conditional } : {}),
         });
       }
     }
