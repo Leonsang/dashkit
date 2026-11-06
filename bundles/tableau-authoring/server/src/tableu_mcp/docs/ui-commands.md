@@ -891,3 +891,261 @@ Desactivados: Quick Table Calculation > YTD Total, Quick Table Calculation > Com
 
 Desactivados: Trend Lines > Edit All Trend Lines..., Trend Lines > Describe Trend Model..., Drop Lines > Edit Drop Lines...
 
+# Diálogos: qué escribe cada control
+
+Cada fila abre el diálogo sobre el libro de prueba, cambia solo ese control (un clic, o un valor escrito en el campo), pulsa OK si el diálogo lo tiene y compara el documento.
+
+## Edit Axis
+
+Se abre con: Barras · axis:bottom · Edit Axis...
+
+| control | qué escribe | comando interno |
+|---|---|---|
+| Uniform axis range for all rows or columns | `style-rule/encoding@range-type=uniform` | `tabdoc:set-both-axis-extents-type axis-extents-type="axis-extent-uniform" axis-o` |
+| Independent axis ranges for each row or column | `style-rule/encoding@range-type=independent` | `tabdoc:set-both-axis-extents-type axis-extents-type="axis-extent-independent" ax` |
+| Custom | `style-rule/encoding@max=1228.5`, `style-rule/encoding@min=0.0`, `style-rule/encoding@range-type=fixed` | `tabdoc:set-both-axis-extents-type axis-extents-type="axis-extent-fixed" axis-ori` |
+| Custom > #0=1000 | `style-rule/encoding@max=1228.5`, `style-rule/encoding@min=1000.0`, `style-rule/encoding@range-type=fixed` | `tabdoc:set-both-axis-extents-type axis-extents-type="axis-extent-fixed" axis-ori`<br>`tabdoc:set-axis-range-start axis-orientation="o-horiz" duplicate-index="0" fn="[` |
+| Custom > #1=1000 | `style-rule/encoding@max=1000.0`, `style-rule/encoding@min=0.0`, `style-rule/encoding@range-type=fixed` | `tabdoc:set-both-axis-extents-type axis-extents-type="axis-extent-fixed" axis-ori`<br>`tabdoc:set-axis-range-end axis-orientation="o-horiz" duplicate-index="0" fn="[fe` |
+| Include zero | `style-rule/encoding@domain-expand=false` | `tabdoc:set-axis-include-zero axis-orientation="o-horiz" duplicate-index="0" fn="` |
+| Reversed | `style-rule/encoding@reverse=true` | `tabdoc:set-axis-reversed axis-orientation="o-horiz" duplicate-index="0" fn="[fed` |
+| Logarithmic | `style-rule/encoding@scale=log` | `tabdoc:set-axis-scale-type axis-orientation="o-horiz" duplicate-index="0" fn="[f` |
+| Title=Texto de prueba | `style-rule/format@attr=title`, `style-rule/format@class=0`, `style-rule/format@field=[sum:Importe:qk]`, `style-rule/format@scope=cols`, `style-rule/format@value=Texto de prueba` | `tabdoc:set-axis-title axis-orientation="o-horiz" axis-title="Texto de prueba" du` |
+| Automatic | `style-rule/format@attr=auto-subtitle`, `style-rule/format@class=0`, `style-rule/format@field=[sum:Importe:qk]`, `style-rule/format@scope=cols`, `style-rule/format@value=false` | `tabdoc:set-axis-use-automatic-subtitle axis-orientation="o-horiz" duplicate-inde` |
+| Tick Marks > Fixed | `style-rule/encoding@major-origin=0.0`, `style-rule/encoding@major-spacing=1000.0` | `tabdoc:set-major-tick-mark-state axis-orientation="o-horiz" duplicate-index="0" ` |
+| Tick Marks > None | `style-rule/encoding@major-origin=0.0`, `style-rule/encoding@major-show=false`, `style-rule/encoding@major-spacing=1000.0` | `tabdoc:set-major-tick-mark-state axis-orientation="o-horiz" duplicate-index="0" ` |
+
+Listas desplegables sin medir: : Automatic, Title : Custom
+
+## Date Properties
+
+Se abre con: Barras · Data > Ventas > Date Properties...
+
+| control | qué escribe | comando interno |
+|---|---|---|
+
+Listas desplegables sin medir: Date format:, Default calendar:, Fiscal year start:, Week start:
+
+## Edit Aliases
+
+Se abre con: Barras · Data > Ventas > Edit Aliases... > Measure Names...
+
+| control | qué escribe | comando interno |
+|---|---|---|
+
+## Edit Tooltip
+
+Se abre con: Barras · Worksheet > Tooltip...
+
+| control | qué escribe | comando interno |
+|---|---|---|
+| #0=Texto de prueba | `formatted-text/run@bold=true`, `formatted-text/run@fontcolor=#757575`, `formatted-text/run@fontname=Texto de prueba` | — |
+| #1=1000 | `formatted-text/run@bold=true`, `formatted-text/run@fontcolor=#757575` | — |
+| #0 | sin cambio en el documento | — |
+| #1 | sin cambio en el documento | — |
+| #2 | sin cambio en el documento | — |
+| RichTextDialog_TextEdit=Texto de prueba | `formatted-text/run@bold=true` | — |
+| Show tooltips | `table/tooltip-style@tooltip-mode=none` | — |
+| Include command buttons | `formatted-text/run@bold=true`, `formatted-text/run@fontcolor=#757575`, `pane/customized-tooltip@show-buttons=false` | — |
+| Allow selection by category | `panes/pane@selection-relaxation-option=selection-relaxation-disallow` − `panes/pane@selection-relaxation-option=selection-relaxation-allow` | — |
+
+## Accessibility
+
+Se abre con: Barras · Worksheet > Accessibility
+
+| control | qué escribe | comando interno |
+|---|---|---|
+| Visualization Alt Text=Texto de prueba |  | `tabdoc:set-or-clear-accessibility-options accessibility-options={"viz-alt-text-u` |
+| Use mark tooltip for alt text on marks. | `worksheet/layout-options@tooltip-mark-announcement=true` | `tabdoc:set-or-clear-accessibility-options accessibility-options={"viz-alt-text-u` |
+| Sample mark alt text description=Texto de prueba | sin cambio en el documento | — |
+
+Listas desplegables sin medir: Filter Alt Text :
+
+## Table Options
+
+Se abre con: Barras · Analysis > Table Layout > Advanced...
+
+| control | qué escribe | comando interno |
+|---|---|---|
+| Constrain aspect ratio | `style-rule/format@value=0` | `tabdoc:apply-table-options table-options-pres-model={"keep-aspect-ratio": false,` |
+| Aspect=1000 | `style-rule/format@value=1000` | `tabdoc:apply-table-options table-options-pres-model={"keep-aspect-ratio": true,"` |
+| Manual | `panes/pane@decimalplaces=0` | `tabdoc:apply-table-options table-options-pres-model={"keep-aspect-ratio": true,"` |
+| Show innermost level at bottom of view when there is a
+vertical axis | `style-rule/format@attr=hnaxis`, `style-rule/format@value=false` | `tabdoc:apply-table-options table-options-pres-model={"keep-aspect-ratio": true,"` |
+| Vertical | `style-rule/format@attr=hnlabel`, `style-rule/format@value=vertical` | `tabdoc:apply-table-options table-options-pres-model={"keep-aspect-ratio": true,"` |
+
+## Add Reference Line, Band, or Box
+
+Se abre con: Barras · axis:bottom · Add Reference Line
+
+| control | qué escribe | comando interno |
+|---|---|---|
+| Line | `pane/reference-line@axis-column=[sum:Importe:qk]`, `pane/reference-line@enable-instant-analytics=true`, `pane/reference-line@formula=average` | — |
+| Band | `pane/reference-line@formula=max`, `pane/reference-line@formula=min`, `pane/reference-line@paired-id=refline0`, `pane/reference-line@paired-id=refline1`, `pane/reference-line@symmetric=false` | — |
+| Distribution | `pane/reference-line@fill-above=false`, `pane/reference-line@fill-below=false`, `pane/reference-line@percentage-bands=true`, `pane/reference-line@symmetric=false`, `reference-line/reference-line-value@percentage=60`, `reference-line/reference-line-value@percentage=80` | — |
+| Box Plot | `pane/reference-line@boxplot-mark-exclusion=false`, `pane/reference-line@boxplot-whisker-type=standard`, `pane/reference-line@scope=per-cell`, `pane/reference-line@symmetric=false` | — |
+| Entire Table | `pane/reference-line@scope=per-table` | — |
+| Per Cell | `pane/reference-line@scope=per-cell` | — |
+| Show recalculated line for highlighted or selected data points | `pane/reference-line@enable-instant-analytics=false` | — |
+
+Listas desplegables sin medir: Fill Above:, Fill Below:, Label:, Line:, Tooltip:
+
+## Edit Alias
+
+Se abre con: Barras · axis:left · Edit Alias...
+
+| control | qué escribe | comando interno |
+|---|---|---|
+| Name:=Texto de prueba | `aliases/alias@key="Este"`, `aliases/alias@value=Texto de prueba`, `datasource/column@datatype=string`, `datasource/column@name`, `datasource/column@role=dimension`, `datasource/column@type=nominal` | `tabdoc:try-set-aliases new-aliases-pres-model={"uid": 4,"alias-list":[{"item-ind`<br>`tabdoc:commit-single-alias-changes uid="4"` |
+
+## Edit Title
+
+Se abre con: Barras · title · Edit Title...
+
+| control | qué escribe | comando interno |
+|---|---|---|
+| #0=Texto de prueba | `formatted-text/run@fontname=Texto de prueba` | — |
+| #1=1000 | `formatted-text/run@fontsize=10` | — |
+| #0 | sin cambio en el documento | — |
+| #1 | sin cambio en el documento | — |
+| #2 | sin cambio en el documento | — |
+| RichTextDialog_TextEdit=Texto de prueba |  | — |
+
+## Filter
+
+Se abre con: Barras · shelf:cols · Filter...
+
+| control | qué escribe | comando interno |
+|---|---|---|
+| Range of values | `view/filter@class=quantitative`, `view/filter@column=[sum:Importe:qk]`, `view/filter@included-values=in-range` | `tabdoc:format-datavalue-ui data-value="r:::1044" global-field-name="[federated.t`<br>`tabdoc:format-datavalue-ui data-value="r:::1170" global-field-name="[federated.t` |
+| At least | `view/filter@class=quantitative`, `view/filter@column=[sum:Importe:qk]`, `view/filter@included-values=in-range` | `tabdoc:format-datavalue-ui data-value="r:::1170" global-field-name="[federated.t`<br>`tabdoc:format-datavalue-ui data-value="r:::1044" global-field-name="[federated.t` |
+| Special | `view/filter@included-values=all` | `tabdoc:apply-quantitative-filter-range commit-edits="true" quantitative-filter={` |
+| At most | `view/filter@class=quantitative`, `view/filter@column=[sum:Importe:qk]`, `view/filter@included-values=in-range` | `tabdoc:format-datavalue-ui data-value="r:::1044" global-field-name="[federated.t`<br>`tabdoc:format-datavalue-ui data-value="r:::1044" global-field-name="[federated.t` |
+| #0=1000 | `view/filter@class=quantitative`, `view/filter@column=[sum:Importe:qk]`, `view/filter@included-values=in-range` | `tabdoc:validate-data-value data-type="real" global-field-name="[federated.tszse2`<br>`tabdoc:format-datavalue-ui data-value="r:4:0:1000" global-field-name="[federated` |
+| #1=1000 | `view/filter@class=quantitative`, `view/filter@column=[sum:Importe:qk]`, `view/filter@included-values=in-range` | `tabdoc:validate-data-value data-type="real" global-field-name="[federated.tszse2`<br>`tabdoc:format-datavalue-ui data-value="r:::1044" global-field-name="[federated.t` |
+| Include Null Values | `view/filter@included-values=in-range-or-null` | `tabdoc:apply-quantitative-filter-range commit-edits="true" quantitative-filter={` |
+
+## Apply Filter to Worksheets
+
+Se abre con: Barras · shelf:cols · Apply to Worksheets > Selected Worksheets...
+
+| control | qué escribe | comando interno |
+|---|---|---|
+| Filter will be applied to 0 worksheets.=Texto de prueba | sin cambio en el documento | — |
+| Select all worksheets | `view/filter@filter-group=3` | `tabdoc:change-shared-filter fn="[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Im` |
+| #1 | `view/filter@class=quantitative`, `view/filter@column=[sum:Importe:qk]`, `view/filter@included-values=in-range` | `tabdoc:change-shared-filter fn="[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Im` |
+| #2 | `view/filter@class=quantitative`, `view/filter@column=[sum:Importe:qk]`, `view/filter@included-values=in-range` | `tabdoc:change-shared-filter fn="[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Im` |
+| #3 | `view/filter@class=quantitative`, `view/filter@column=[sum:Importe:qk]`, `view/filter@included-values=in-range` | `tabdoc:change-shared-filter fn="[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Im` |
+| Show only selected worksheets | sin cambio en el documento | — |
+
+## Sort
+
+Se abre con: Barras · shelf:rows · Sort...
+
+| control | qué escribe | comando interno |
+|---|---|---|
+| Descending | `view/natural-sort@column=[none:Region:nk]`, `view/natural-sort@direction=DESC` | `tabdoc:sort-dialog-sort aggregation="sum" global-field-name="[federated.tszse28g`<br>`tabdoc:sort aggregation="sum" global-field-name="[federated.tszse28gx02x3fnwag3q` |
+
+Listas desplegables sin medir: Sort By
+
+## Create Group
+
+Se abre con: Barras · field:Fecha · Create > Group...
+
+| control | qué escribe | comando interno |
+|---|---|---|
+| #0=Texto de prueba | `datasource/column@datatype=date` | `tabui:set-worksheet-sidepane-mode mode="data"` |
+| Show Add Location | `column/calculation@class=categorical-bin`, `column/calculation@column=[Fecha]`, `column/calculation@new-bin=true` | `tabui:set-worksheet-sidepane-mode mode="data"` |
+| Include 'Other' | `column/calculation@default="Other"` | `tabui:set-worksheet-sidepane-mode mode="data"` |
+
+## Create Set
+
+Se abre con: Barras · field:Fecha · Create > Set...
+
+| control | qué escribe | comando interno |
+|---|---|---|
+| Name:=Texto de prueba | sin cambio en el documento | `tabdoc:validate-categorical-filter-name categorical-filter-cache-info={"uuid": "` |
+| Custom value list | `group/groupfilter@function=level-members`, `group/groupfilter@level=[Fecha]`, `group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-manual-selection-all-when-empty=true`, `group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-manual-selection-is-empty=true`, `group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-manual-selection=true` | `tabdoc:categorical-filter-set-range-type-deferred categorical-filter-cache-info=`<br>`tabdoc:apply-categorical-filter-updates categorical-filter-cache-info={"uuid": "` |
+| Use all | `group/groupfilter@function=level-members`, `group/groupfilter@level=[Fecha]`, `group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-enumeration=all` | `tabdoc:categorical-filter-set-range-type-deferred categorical-filter-cache-info=`<br>`tabdoc:apply-categorical-filter-updates categorical-filter-cache-info={"uuid": "` |
+| #0=Texto de prueba | `group/groupfilter@function=empty-level`, `group/groupfilter@member=[Fecha]`, `group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-domain=database`, `group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-enumeration=inclusive` | `tabdoc:categorical-filter-search categorical-filter-cache-info={"uuid": "{DE1B32`<br>`tabdoc:apply-categorical-filter-updates categorical-filter-cache-info={"uuid": "` |
+| #1=Texto de prueba | `group/groupfilter@function=empty-level`, `group/groupfilter@member=[Fecha]`, `group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-domain=database`, `group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-enumeration=inclusive` | `tabdoc:categorical-filter-search categorical-filter-cache-info={"uuid": "{5E862E`<br>`tabdoc:apply-categorical-filter-updates categorical-filter-cache-info={"uuid": "` |
+| Exclude | `group/groupfilter@function=except`, `group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-domain=database`, `group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-enumeration=exclusive`, `groupfilter/groupfilter@function=empty-level`, `groupfilter/groupfilter@function=level-members`, `groupfilter/groupfilter@level=[Fecha]` | `tabdoc:categorical-filter-set-selection-exclusive-deferred categorical-filter-ca`<br>`tabdoc:apply-categorical-filter-updates categorical-filter-cache-info={"uuid": "` |
+| Condition > By field: | `datasource/column@datatype=real`, `datasource/column@name`, `datasource/column@role=measure`, `datasource/column@type=quantitative`, `group/groupfilter@expression=SUM([Importe]) == 0.`, `group/groupfilter@function=filter` | `tabdoc:apply-categorical-filter-updates categorical-filter-cache-info={"uuid": "`<br>`tabui:set-worksheet-sidepane-mode mode="data"` |
+| Condition > By formula: | sin cambio en el documento | `tabdoc:validate-categorical-filter-condition-formula categorical-filter-cache-in` |
+| Top > By field: | `group/groupfilter@count=10`, `group/groupfilter@end=top`, `group/groupfilter@function=end`, `group/groupfilter@units=records`, `group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-marker=end`, `group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-top-by-field=true` | `tabdoc:validate-categorical-filter-limit-formula categorical-filter-cache-info={`<br>`tabdoc:validate-categorical-filter-limit-count categorical-filter-cache-info={"u` |
+| Top > By formula: | `group/groupfilter@function=level-members`, `group/groupfilter@level=[Fecha]`, `group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-enumeration=all` | `tabdoc:validate-categorical-filter-limit-formula categorical-filter-cache-info={`<br>`tabdoc:validate-categorical-filter-limit-count categorical-filter-cache-info={"u` |
+
+## Create Parameter
+
+Se abre con: Barras · field:Fecha · Create > Parameter...
+
+| control | qué escribe | comando interno |
+|---|---|---|
+| Name=Texto de prueba | `column/calculation@class=tableau`, `column/calculation@formula=#2025-01-01#`, `datasource/aliases@enabled=yes`, `datasource/column@caption`, `datasource/column@datatype=date`, `datasource/column@name` | `tabdoc:parameter-edit-name actual-parameter-display-name="Texto de prueba" contr`<br>`tabdoc:parameter-close-dialog commit-edits="true" controller-id="14"` |
+| All | `column/calculation@class=tableau`, `column/calculation@formula=#2025-01-01#`, `datasource/column@caption`, `datasource/column@datatype=date`, `datasource/column@name`, `datasource/column@param-domain-type=any` | `tabdoc:parameter-edit-domain controller-id="15" parameter-domain-type="any"`<br>`tabdoc:parameter-close-dialog commit-edits="true" controller-id="15"` |
+| All > Current value=Texto de prueba | sin cambio en el documento | `tabdoc:parameter-edit-domain controller-id="17" parameter-domain-type="any"`<br>`tabdoc:parameter-edit-value controller-id="17" value-string="Texto de prueba"` |
+| Range | `column/calculation@class=tableau`, `column/calculation@formula=#2025-01-01#`, `column/range@max=#2025-12-24#`, `column/range@min=#2025-01-01#`, `datasource/column@caption`, `datasource/column@datatype=date` | `tabdoc:parameter-edit-domain controller-id="18" parameter-domain-type="range"`<br>`tabdoc:parameter-close-dialog commit-edits="true" controller-id="18"` |
+| Range > Current value=Texto de prueba | sin cambio en el documento | `tabdoc:parameter-edit-domain controller-id="20" parameter-domain-type="range"`<br>`tabdoc:parameter-edit-value controller-id="20" value-string="Texto de prueba"` |
+| Range > Minimum=Texto de prueba | sin cambio en el documento | `tabdoc:parameter-edit-domain controller-id="21" parameter-domain-type="range"`<br>`tabdoc:parameter-edit-min-range-value controller-id="21" value-string="Texto de ` |
+| Range > Maximum=Texto de prueba | sin cambio en el documento | `tabdoc:parameter-edit-domain controller-id="22" parameter-domain-type="range"`<br>`tabdoc:parameter-edit-max-range-value controller-id="22" value-string="Texto de ` |
+| When workbook opens | `column/calculation@class=tableau`, `column/calculation@formula=#2025-01-01#`, `datasource/column@caption`, `datasource/column@datatype=date`, `datasource/column@name`, `datasource/column@param-domain-type=list` | `tabdoc:parameter-set-domain-to-refreshable controller-id="23"`<br>`tabdoc:parameter-close-dialog commit-edits="true" controller-id="23"` |
+
+Listas desplegables sin medir: Add values from, Current value : 1/1/2025, Data type : Date, Display format : 1/1/2025, Value when workbook opens : Current value
+
+## Create Custom Date
+
+Se abre con: Barras · field:Fecha · Create > Custom date...
+
+| control | qué escribe | comando interno |
+|---|---|---|
+| #0=Texto de prueba | sin cambio en el documento | — |
+
+## Edit Comment
+
+Se abre con: Barras · field:Fecha · Default Properties > Comment...
+
+| control | qué escribe | comando interno |
+|---|---|---|
+| #0=Texto de prueba | `formatted-text/run@fontname=Texto de prueba` | — |
+| #1=1000 |  | — |
+| #0 |  | — |
+| #1 | sin cambio en el documento | — |
+| #2 | sin cambio en el documento | — |
+| RichTextDialog_TextEdit=Texto de prueba |  | — |
+
+## Edit Colors
+
+Se abre con: Barras · field:Fecha · Default Properties > Color...
+
+| control | qué escribe | comando interno |
+|---|---|---|
+
+## Edit Shape
+
+Se abre con: Barras · field:Fecha · Default Properties > Shape...
+
+| control | qué escribe | comando interno |
+|---|---|---|
+
+## Default Date Format
+
+Se abre con: Barras · field:Fecha · Default Properties > Date Format...
+
+| control | qué escribe | comando interno |
+|---|---|---|
+
+## Create Hierarchy
+
+Se abre con: Barras · field:Fecha · Hierarchy > Create Hierarchy...
+
+| control | qué escribe | comando interno |
+|---|---|---|
+| Name:=Texto de prueba | `drill-paths/drill-path@name` | `tabui:set-worksheet-sidepane-mode mode="data"` |
+
+## Custom Split
+
+Se abre con: Barras · field:Region · Transform > Split
+
+| control | qué escribe | comando interno |
+|---|---|---|
+| #0=Texto de prueba | error: Desktop did not answer: timed out | — |
+

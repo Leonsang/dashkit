@@ -31313,5 +31313,5400 @@
     }
    }
   }
+ },
+ "dialogs": {
+  "Edit Axis": {
+   "source": "Barras · axis:bottom · Edit Axis...",
+   "effects": {
+    "Uniform axis range for all rows or columns": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True"
+      }
+     ],
+     "commands": [
+      "tabdoc:set-both-axis-extents-type axis-extents-type=\"axis-extent-uniform\" axis-orientation=\"o-horiz\" duplicate-index=\"0\" fn=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" visual-id-pres-model={\"worksheet\": \"Barras\"}"
+     ],
+     "closed": [
+      "Edit Axis [Importe]"
+     ],
+     "changed": true,
+     "added": [
+      "style-rule/encoding",
+      "style-rule/encoding@attr=space",
+      "style-rule/encoding@class=0",
+      "style-rule/encoding@field-type=quantitative",
+      "style-rule/encoding@field=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "style-rule/encoding@range-type=uniform",
+      "style-rule/encoding@scope=cols",
+      "style-rule/encoding@type=space",
+      "style/style-rule",
+      "style/style-rule@element=axis"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,7 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"axis\">",
+      "+            <encoding attr=\"space\" class=\"0\" field=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" field-type=\"quantitative\" range-type=\"uniform\" scope=\"cols\" type=\"space\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>"
+     ],
+     "diffLines": 9
+    },
+    "Independent axis ranges for each row or column": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True"
+      }
+     ],
+     "commands": [
+      "tabdoc:set-both-axis-extents-type axis-extents-type=\"axis-extent-independent\" axis-orientation=\"o-horiz\" duplicate-index=\"0\" fn=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" visual-id-pres-model={\"worksheet\": \"Barras\"}"
+     ],
+     "closed": [
+      "Edit Axis [Importe]"
+     ],
+     "changed": true,
+     "added": [
+      "style-rule/encoding",
+      "style-rule/encoding@attr=space",
+      "style-rule/encoding@class=0",
+      "style-rule/encoding@field-type=quantitative",
+      "style-rule/encoding@field=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "style-rule/encoding@range-type=independent",
+      "style-rule/encoding@scope=cols",
+      "style-rule/encoding@type=space",
+      "style/style-rule",
+      "style/style-rule@element=axis"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,7 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"axis\">",
+      "+            <encoding attr=\"space\" class=\"0\" field=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" field-type=\"quantitative\" range-type=\"independent\" scope=\"cols\" type=\"space\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>"
+     ],
+     "diffLines": 9
+    },
+    "Custom": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True"
+      }
+     ],
+     "commands": [
+      "tabdoc:set-both-axis-extents-type axis-extents-type=\"axis-extent-fixed\" axis-orientation=\"o-horiz\" duplicate-index=\"0\" fn=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" visual-id-pres-model={\"worksheet\": \"Barras\"}"
+     ],
+     "closed": [
+      "Edit Axis [Importe]"
+     ],
+     "changed": true,
+     "added": [
+      "style-rule/encoding",
+      "style-rule/encoding@attr=space",
+      "style-rule/encoding@class=0",
+      "style-rule/encoding@field-type=quantitative",
+      "style-rule/encoding@field=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "style-rule/encoding@max=1228.5",
+      "style-rule/encoding@min=0.0",
+      "style-rule/encoding@range-type=fixed",
+      "style-rule/encoding@scope=cols",
+      "style-rule/encoding@type=space",
+      "style/style-rule",
+      "style/style-rule@element=axis"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,7 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"axis\">",
+      "+            <encoding attr=\"space\" class=\"0\" field=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" field-type=\"quantitative\" max=\"1228.5\" min=\"0.0\" range-type=\"fixed\" scope=\"cols\" type=\"space\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>"
+     ],
+     "diffLines": 9
+    },
+    "Custom > #0=1000": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True"
+      },
+      {
+       "acted": true,
+       "before": "0",
+       "after": "1000"
+      }
+     ],
+     "commands": [
+      "tabdoc:set-both-axis-extents-type axis-extents-type=\"axis-extent-fixed\" axis-orientation=\"o-horiz\" duplicate-index=\"0\" fn=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" visual-id-pres-model={\"worksheet\": \"Barras\"}",
+      "tabdoc:set-axis-range-start axis-orientation=\"o-horiz\" duplicate-index=\"0\" fn=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" min-value=\"1000\" visual-id-pres-model={\"worksheet\": \"Barras\"}"
+     ],
+     "closed": [
+      "Edit Axis [Importe]"
+     ],
+     "changed": true,
+     "added": [
+      "style-rule/encoding",
+      "style-rule/encoding@attr=space",
+      "style-rule/encoding@class=0",
+      "style-rule/encoding@field-type=quantitative",
+      "style-rule/encoding@field=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "style-rule/encoding@max=1228.5",
+      "style-rule/encoding@min=1000.0",
+      "style-rule/encoding@range-type=fixed",
+      "style-rule/encoding@scope=cols",
+      "style-rule/encoding@type=space",
+      "style/style-rule",
+      "style/style-rule@element=axis"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,7 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"axis\">",
+      "+            <encoding attr=\"space\" class=\"0\" field=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" field-type=\"quantitative\" max=\"1228.5\" min=\"1000.0\" range-type=\"fixed\" scope=\"cols\" type=\"space\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>"
+     ],
+     "diffLines": 9
+    },
+    "Custom > #1=1000": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True"
+      },
+      {
+       "acted": true,
+       "before": "1,228.5",
+       "after": "1000"
+      }
+     ],
+     "commands": [
+      "tabdoc:set-both-axis-extents-type axis-extents-type=\"axis-extent-fixed\" axis-orientation=\"o-horiz\" duplicate-index=\"0\" fn=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" visual-id-pres-model={\"worksheet\": \"Barras\"}",
+      "tabdoc:set-axis-range-end axis-orientation=\"o-horiz\" duplicate-index=\"0\" fn=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" max-value=\"1000\" visual-id-pres-model={\"worksheet\": \"Barras\"}"
+     ],
+     "closed": [
+      "Edit Axis [Importe]"
+     ],
+     "changed": true,
+     "added": [
+      "style-rule/encoding",
+      "style-rule/encoding@attr=space",
+      "style-rule/encoding@class=0",
+      "style-rule/encoding@field-type=quantitative",
+      "style-rule/encoding@field=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "style-rule/encoding@max=1000.0",
+      "style-rule/encoding@min=0.0",
+      "style-rule/encoding@range-type=fixed",
+      "style-rule/encoding@scope=cols",
+      "style-rule/encoding@type=space",
+      "style/style-rule",
+      "style/style-rule@element=axis"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,7 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"axis\">",
+      "+            <encoding attr=\"space\" class=\"0\" field=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" field-type=\"quantitative\" max=\"1000.0\" min=\"0.0\" range-type=\"fixed\" scope=\"cols\" type=\"space\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>"
+     ],
+     "diffLines": 9
+    },
+    "Include zero": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "On",
+       "after": "Off"
+      }
+     ],
+     "commands": [
+      "tabdoc:set-axis-include-zero axis-orientation=\"o-horiz\" duplicate-index=\"0\" fn=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" should-include-zero=\"false\" visual-id-pres-model={\"worksheet\": \"Barras\"}"
+     ],
+     "closed": [
+      "Edit Axis [Importe]"
+     ],
+     "changed": true,
+     "added": [
+      "style-rule/encoding",
+      "style-rule/encoding@attr=space",
+      "style-rule/encoding@class=0",
+      "style-rule/encoding@domain-expand=false",
+      "style-rule/encoding@field-type=quantitative",
+      "style-rule/encoding@field=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "style-rule/encoding@scope=cols",
+      "style-rule/encoding@type=space",
+      "style/style-rule",
+      "style/style-rule@element=axis"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,7 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"axis\">",
+      "+            <encoding attr=\"space\" class=\"0\" domain-expand=\"false\" field=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" field-type=\"quantitative\" scope=\"cols\" type=\"space\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>"
+     ],
+     "diffLines": 9
+    },
+    "Reversed": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On"
+      }
+     ],
+     "commands": [
+      "tabdoc:set-axis-reversed axis-orientation=\"o-horiz\" duplicate-index=\"0\" fn=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" should-reverse-axis=\"true\" visual-id-pres-model={\"worksheet\": \"Barras\"}"
+     ],
+     "closed": [
+      "Edit Axis [Importe]"
+     ],
+     "changed": true,
+     "added": [
+      "style-rule/encoding",
+      "style-rule/encoding@attr=space",
+      "style-rule/encoding@class=0",
+      "style-rule/encoding@field-type=quantitative",
+      "style-rule/encoding@field=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "style-rule/encoding@reverse=true",
+      "style-rule/encoding@scope=cols",
+      "style-rule/encoding@type=space",
+      "style/style-rule",
+      "style/style-rule@element=axis"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,7 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"axis\">",
+      "+            <encoding attr=\"space\" class=\"0\" field=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" field-type=\"quantitative\" reverse=\"true\" scope=\"cols\" type=\"space\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>"
+     ],
+     "diffLines": 9
+    },
+    "Logarithmic": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On"
+      }
+     ],
+     "commands": [
+      "tabdoc:set-axis-scale-type axis-orientation=\"o-horiz\" duplicate-index=\"0\" fn=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" scale-type=\"log\" visual-id-pres-model={\"worksheet\": \"Barras\"}"
+     ],
+     "closed": [
+      "Edit Axis [Importe]"
+     ],
+     "changed": true,
+     "added": [
+      "style-rule/encoding",
+      "style-rule/encoding@attr=space",
+      "style-rule/encoding@class=0",
+      "style-rule/encoding@field-type=quantitative",
+      "style-rule/encoding@field=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "style-rule/encoding@scale=log",
+      "style-rule/encoding@scope=cols",
+      "style-rule/encoding@type=space",
+      "style/style-rule",
+      "style/style-rule@element=axis"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,7 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"axis\">",
+      "+            <encoding attr=\"space\" class=\"0\" field=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" field-type=\"quantitative\" scale=\"log\" scope=\"cols\" type=\"space\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>"
+     ],
+     "diffLines": 9
+    },
+    "Title=Texto de prueba": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Importe",
+       "after": "Texto de prueba"
+      }
+     ],
+     "commands": [
+      "tabdoc:set-axis-title axis-orientation=\"o-horiz\" axis-title=\"Texto de prueba\" duplicate-index=\"0\" fn=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" visual-id-pres-model={\"worksheet\": \"Barras\"}"
+     ],
+     "closed": [
+      "Edit Axis [Importe]"
+     ],
+     "changed": true,
+     "added": [
+      "style-rule/format",
+      "style-rule/format@attr=title",
+      "style-rule/format@class=0",
+      "style-rule/format@field=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "style-rule/format@scope=cols",
+      "style-rule/format@value=Texto de prueba",
+      "style/style-rule",
+      "style/style-rule@element=axis"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,7 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"axis\">",
+      "+            <format attr=\"title\" class=\"0\" field=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" scope=\"cols\" value=\"Texto de prueba\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>"
+     ],
+     "diffLines": 9
+    },
+    "Automatic": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "On",
+       "after": "Off"
+      }
+     ],
+     "commands": [
+      "tabdoc:set-axis-use-automatic-subtitle axis-orientation=\"o-horiz\" duplicate-index=\"0\" fn=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" use-automatic-subtitle=\"false\" visual-id-pres-model={\"worksheet\": \"Barras\"}"
+     ],
+     "closed": [
+      "Edit Axis [Importe]"
+     ],
+     "changed": true,
+     "added": [
+      "style-rule/format",
+      "style-rule/format@attr=auto-subtitle",
+      "style-rule/format@class=0",
+      "style-rule/format@field=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "style-rule/format@scope=cols",
+      "style-rule/format@value=false",
+      "style/style-rule",
+      "style/style-rule@element=axis"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,7 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"axis\">",
+      "+            <format attr=\"auto-subtitle\" class=\"0\" field=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" scope=\"cols\" value=\"false\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>"
+     ],
+     "diffLines": 9
+    },
+    "Tick Marks > Fixed": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True"
+      },
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True"
+      }
+     ],
+     "commands": [
+      "tabdoc:set-major-tick-mark-state axis-orientation=\"o-horiz\" duplicate-index=\"0\" fn=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" tick-mark-state=\"ticks-manual\" visual-id-pres-model={\"worksheet\": \"Barras\"}"
+     ],
+     "closed": [
+      "Edit Axis [Importe]"
+     ],
+     "changed": true,
+     "added": [
+      "style-rule/encoding",
+      "style-rule/encoding@attr=space",
+      "style-rule/encoding@class=0",
+      "style-rule/encoding@field-type=quantitative",
+      "style-rule/encoding@field=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "style-rule/encoding@major-origin=0.0",
+      "style-rule/encoding@major-spacing=1000.0",
+      "style-rule/encoding@scope=cols",
+      "style-rule/encoding@type=space",
+      "style/style-rule",
+      "style/style-rule@element=axis"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,7 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"axis\">",
+      "+            <encoding attr=\"space\" class=\"0\" field=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" field-type=\"quantitative\" major-origin=\"0.0\" major-spacing=\"1000.0\" scope=\"cols\" type=\"space\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>"
+     ],
+     "diffLines": 9
+    },
+    "Tick Marks > None": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True"
+      },
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True"
+      }
+     ],
+     "commands": [
+      "tabdoc:set-major-tick-mark-state axis-orientation=\"o-horiz\" duplicate-index=\"0\" fn=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" tick-mark-state=\"ticks-None\" visual-id-pres-model={\"worksheet\": \"Barras\"}"
+     ],
+     "closed": [
+      "Edit Axis [Importe]"
+     ],
+     "changed": true,
+     "added": [
+      "style-rule/encoding",
+      "style-rule/encoding@attr=space",
+      "style-rule/encoding@class=0",
+      "style-rule/encoding@field-type=quantitative",
+      "style-rule/encoding@field=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "style-rule/encoding@major-origin=0.0",
+      "style-rule/encoding@major-show=false",
+      "style-rule/encoding@major-spacing=1000.0",
+      "style-rule/encoding@scope=cols",
+      "style-rule/encoding@type=space",
+      "style/style-rule",
+      "style/style-rule@element=axis"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,7 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"axis\">",
+      "+            <encoding attr=\"space\" class=\"0\" field=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" field-type=\"quantitative\" major-origin=\"0.0\" major-show=\"false\" major-spacing=\"1000.0\" scope=\"cols\" type=\"space\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>"
+     ],
+     "diffLines": 9
+    }
+   },
+   "controls": [
+    {
+     "type": "TabItem",
+     "name": "General",
+     "index": 0,
+     "enabled": true,
+     "state": "True",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "TabItem",
+     "name": "Tick Marks",
+     "index": 0,
+     "enabled": true,
+     "state": "False",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "RadioButton",
+     "name": "Automatic",
+     "index": 0,
+     "enabled": true,
+     "state": "True",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "RadioButton",
+     "name": "Uniform axis range for all rows or columns",
+     "index": 0,
+     "enabled": true,
+     "state": "False",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "RadioButton",
+     "name": "Independent axis ranges for each row or column",
+     "index": 0,
+     "enabled": true,
+     "state": "False",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "RadioButton",
+     "name": "Custom",
+     "index": 0,
+     "enabled": true,
+     "state": "False",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "Include zero",
+     "index": 0,
+     "enabled": true,
+     "state": "On",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": ": Automatic",
+     "index": 0,
+     "enabled": false,
+     "state": null,
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": ": Automatic",
+     "index": 1,
+     "enabled": false,
+     "state": null,
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "Edit",
+     "name": "",
+     "index": 0,
+     "enabled": false,
+     "state": null,
+     "value": "0",
+     "visible": true
+    },
+    {
+     "type": "Edit",
+     "name": "",
+     "index": 1,
+     "enabled": false,
+     "state": null,
+     "value": "1,228.5",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "Reversed",
+     "index": 0,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "Logarithmic",
+     "index": 0,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "RadioButton",
+     "name": "Positive",
+     "index": 0,
+     "enabled": false,
+     "state": "True",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "RadioButton",
+     "name": "Symmetric",
+     "index": 0,
+     "enabled": false,
+     "state": "False",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "Title : Custom",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "Edit",
+     "name": "Title",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Importe",
+     "visible": true
+    },
+    {
+     "type": "Edit",
+     "name": "Subtitle",
+     "index": 0,
+     "enabled": false,
+     "state": null,
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "Automatic",
+     "index": 0,
+     "enabled": true,
+     "state": "On",
+     "value": "",
+     "visible": true
+    }
+   ],
+   "tabs": {
+    "Tick Marks": [
+     {
+      "type": "TabItem",
+      "name": "General",
+      "index": 0,
+      "enabled": true,
+      "state": "False",
+      "value": "",
+      "visible": true
+     },
+     {
+      "type": "TabItem",
+      "name": "Tick Marks",
+      "index": 0,
+      "enabled": true,
+      "state": "True",
+      "value": "",
+      "visible": true
+     },
+     {
+      "type": "RadioButton",
+      "name": "Automatic",
+      "index": 0,
+      "enabled": true,
+      "state": "True",
+      "value": "",
+      "visible": true
+     },
+     {
+      "type": "RadioButton",
+      "name": "Fixed",
+      "index": 0,
+      "enabled": true,
+      "state": "False",
+      "value": "",
+      "visible": true
+     },
+     {
+      "type": "RadioButton",
+      "name": "None",
+      "index": 0,
+      "enabled": true,
+      "state": "False",
+      "value": "",
+      "visible": true
+     },
+     {
+      "type": "Edit",
+      "name": "Tick origin",
+      "index": 0,
+      "enabled": false,
+      "state": null,
+      "value": "0",
+      "visible": true
+     },
+     {
+      "type": "Edit",
+      "name": "Tick interval",
+      "index": 0,
+      "enabled": false,
+      "state": null,
+      "value": "1,000",
+      "visible": true
+     },
+     {
+      "type": "RadioButton",
+      "name": "Automatic",
+      "index": 1,
+      "enabled": true,
+      "state": "True",
+      "value": "",
+      "visible": true
+     },
+     {
+      "type": "RadioButton",
+      "name": "Fixed",
+      "index": 1,
+      "enabled": true,
+      "state": "False",
+      "value": "",
+      "visible": true
+     },
+     {
+      "type": "RadioButton",
+      "name": "None",
+      "index": 1,
+      "enabled": true,
+      "state": "False",
+      "value": "",
+      "visible": true
+     },
+     {
+      "type": "Edit",
+      "name": "Tick origin",
+      "index": 1,
+      "enabled": false,
+      "state": null,
+      "value": "0",
+      "visible": true
+     },
+     {
+      "type": "Edit",
+      "name": "Tick interval",
+      "index": 1,
+      "enabled": false,
+      "state": null,
+      "value": "100",
+      "visible": true
+     }
+    ]
+   }
+  },
+  "Date Properties": {
+   "source": "Barras · Data > Ventas > Date Properties...",
+   "effects": {},
+   "controls": [
+    {
+     "type": "ComboBox",
+     "name": "Default calendar:",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Standard Gregorian",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "Week start:",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Sunday",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "Fiscal year start:",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "January",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "Date format:",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Automatic",
+     "visible": true
+    },
+    {
+     "type": "Button",
+     "name": "OK",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    }
+   ]
+  },
+  "Edit Aliases": {
+   "source": "Barras · Data > Ventas > Edit Aliases... > Measure Names...",
+   "effects": {},
+   "controls": [
+    {
+     "type": "Button",
+     "name": "OK",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    }
+   ]
+  },
+  "Edit Tooltip": {
+   "source": "Barras · Worksheet > Tooltip...",
+   "effects": {
+    "#0=Texto de prueba": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Tableau Book",
+       "after": "Texto de prueba",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "customized-tooltip/formatted-text",
+      "formatted-text/run",
+      "formatted-text/run@bold=true",
+      "formatted-text/run@fontcolor=#757575",
+      "formatted-text/run@fontname=Texto de prueba",
+      "pane/customized-tooltip",
+      "style-rule/format",
+      "style-rule/format@attr=background-color",
+      "style-rule/format@value=#ffffff",
+      "style/style-rule",
+      "style/style-rule@element=tooltip"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,7 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"tooltip\">",
+      "+            <format attr=\"background-color\" value=\"#ffffff\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>",
+      "@@ -178,2 +182,13 @@",
+      "             <mark class=\"Bar\"/>",
+      "+            <customized-tooltip>",
+      "+              <formatted-text>",
+      "+                <run fontcolor=\"#757575\" fontname=\"Texto de prueba\">Æ\t</run>",
+      "+                <run fontcolor=\"#757575\">Region:\t</run>",
+      "+                <run bold=\"true\">&lt;[federated.tszse28gx02x3fnwag3qym7mmnuk].[none:Region:nk]&gt;</run>",
+      "+                <run>Æ",
+      "+</run>",
+      "+                <run fontcolor=\"#757575\">Importe:\t</run>",
+      "+                <run bold=\"true\">&lt;[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]&gt;</run>",
+      "+              </formatted-text>",
+      "+            </customized-tooltip>",
+      "           </pane>"
+     ],
+     "diffLines": 23
+    },
+    "#1=1000": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "10",
+       "after": "10",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "customized-tooltip/formatted-text",
+      "formatted-text/run",
+      "formatted-text/run@bold=true",
+      "formatted-text/run@fontcolor=#757575",
+      "pane/customized-tooltip",
+      "style-rule/format",
+      "style-rule/format@attr=background-color",
+      "style-rule/format@value=#ffffff",
+      "style/style-rule",
+      "style/style-rule@element=tooltip"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,7 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"tooltip\">",
+      "+            <format attr=\"background-color\" value=\"#ffffff\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>",
+      "@@ -178,2 +182,12 @@",
+      "             <mark class=\"Bar\"/>",
+      "+            <customized-tooltip>",
+      "+              <formatted-text>",
+      "+                <run fontcolor=\"#757575\">\tRegion:\t</run>",
+      "+                <run bold=\"true\">&lt;[federated.tszse28gx02x3fnwag3qym7mmnuk].[none:Region:nk]&gt;</run>",
+      "+                <run>Æ",
+      "+</run>",
+      "+                <run fontcolor=\"#757575\">Importe:\t</run>",
+      "+                <run bold=\"true\">&lt;[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]&gt;</run>",
+      "+              </formatted-text>",
+      "+            </customized-tooltip>",
+      "           </pane>"
+     ],
+     "diffLines": 22
+    },
+    "#0": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": false
+    },
+    "#1": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": false
+    },
+    "#2": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": false
+    },
+    "RichTextDialog_TextEdit=Texto de prueba": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Region:\t<Region>\nImporte:\t<SUM(Importe)>",
+       "after": "Texto de prueba\t\t",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "customized-tooltip/formatted-text",
+      "formatted-text/run",
+      "formatted-text/run@bold=true",
+      "pane/customized-tooltip",
+      "style-rule/format",
+      "style-rule/format@attr=background-color",
+      "style-rule/format@value=#ffffff",
+      "style/style-rule",
+      "style/style-rule@element=tooltip"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,7 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"tooltip\">",
+      "+            <format attr=\"background-color\" value=\"#ffffff\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>",
+      "@@ -178,2 +182,7 @@",
+      "             <mark class=\"Bar\"/>",
+      "+            <customized-tooltip>",
+      "+              <formatted-text>",
+      "+                <run bold=\"true\">Texto de prueba\t\t</run>",
+      "+              </formatted-text>",
+      "+            </customized-tooltip>",
+      "           </pane>"
+     ],
+     "diffLines": 17
+    },
+    "Show tooltips": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "On",
+       "after": "Off",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "style-rule/format",
+      "style-rule/format@attr=background-color",
+      "style-rule/format@value=#ffffff",
+      "style/style-rule",
+      "style/style-rule@element=tooltip",
+      "table/tooltip-style",
+      "table/tooltip-style@tooltip-mode=none"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,7 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"tooltip\">",
+      "+            <format attr=\"background-color\" value=\"#ffffff\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>",
+      "@@ -182,2 +186,3 @@",
+      "         <cols>[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]</cols>",
+      "+        <tooltip-style tooltip-mode=\"none\"/>",
+      "       </table>"
+     ],
+     "diffLines": 13
+    },
+    "Include command buttons": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "On",
+       "after": "Off",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "customized-tooltip/formatted-text",
+      "formatted-text/run",
+      "formatted-text/run@bold=true",
+      "formatted-text/run@fontcolor=#757575",
+      "pane/customized-tooltip",
+      "pane/customized-tooltip@show-buttons=false",
+      "style-rule/format",
+      "style-rule/format@attr=background-color",
+      "style-rule/format@value=#ffffff",
+      "style/style-rule",
+      "style/style-rule@element=tooltip"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,7 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"tooltip\">",
+      "+            <format attr=\"background-color\" value=\"#ffffff\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>",
+      "@@ -178,2 +182,12 @@",
+      "             <mark class=\"Bar\"/>",
+      "+            <customized-tooltip show-buttons=\"false\">",
+      "+              <formatted-text>",
+      "+                <run fontcolor=\"#757575\">Region:\t</run>",
+      "+                <run bold=\"true\">&lt;[federated.tszse28gx02x3fnwag3qym7mmnuk].[none:Region:nk]&gt;</run>",
+      "+                <run>Æ",
+      "+</run>",
+      "+                <run fontcolor=\"#757575\">Importe:\t</run>",
+      "+                <run bold=\"true\">&lt;[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]&gt;</run>",
+      "+              </formatted-text>",
+      "+            </customized-tooltip>",
+      "           </pane>"
+     ],
+     "diffLines": 22
+    },
+    "Allow selection by category": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "On",
+       "after": "Off",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "panes/pane@selection-relaxation-option=selection-relaxation-disallow",
+      "style-rule/format",
+      "style-rule/format@attr=background-color",
+      "style-rule/format@value=#ffffff",
+      "style/style-rule",
+      "style/style-rule@element=tooltip"
+     ],
+     "removed": [
+      "panes/pane@selection-relaxation-option=selection-relaxation-allow"
+     ],
+     "diff": [
+      "@@ -171,5 +171,9 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"tooltip\">",
+      "+            <format attr=\"background-color\" value=\"#ffffff\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>",
+      "-          <pane selection-relaxation-option=\"selection-relaxation-allow\">",
+      "+          <pane selection-relaxation-option=\"selection-relaxation-disallow\">",
+      "             <view>"
+     ],
+     "diffLines": 12
+    }
+   },
+   "controls": [
+    {
+     "type": "ComboBox",
+     "name": "",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Tableau Book",
+     "visible": true
+    },
+    {
+     "type": "Edit",
+     "name": "",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Tableau Book",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "",
+     "index": 1,
+     "enabled": true,
+     "state": null,
+     "value": "10",
+     "visible": true
+    },
+    {
+     "type": "Edit",
+     "name": "",
+     "index": 1,
+     "enabled": true,
+     "state": null,
+     "value": "10",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "",
+     "index": 0,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "",
+     "index": 1,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "",
+     "index": 2,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "Edit",
+     "name": "RichTextDialog_TextEdit",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Region:\t<Region>\nImporte:\t<SUM(Importe)>",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "Show tooltips",
+     "index": 0,
+     "enabled": true,
+     "state": "On",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "",
+     "index": 2,
+     "enabled": true,
+     "state": null,
+     "value": "Responsive - Show tooltips instantly",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "Include command buttons",
+     "index": 0,
+     "enabled": true,
+     "state": "On",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "Allow selection by category",
+     "index": 0,
+     "enabled": true,
+     "state": "On",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "Button",
+     "name": "OK",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    }
+   ]
+  },
+  "Accessibility": {
+   "source": "Barras · Worksheet > Accessibility",
+   "effects": {
+    "Visualization Alt Text=Texto de prueba": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Bar chart of Importe Region",
+       "after": "Texto de prueba",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:set-or-clear-accessibility-options accessibility-options={\"viz-alt-text-user-specified\": \"Texto de prueba\",\"use-tooltip-for-mark-alt-text\": false}"
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "alt-text/formatted-text",
+      "document-format-change-manifest/AccessibilityEditableAltText",
+      "formatted-text/run",
+      "layout-options/alt-text",
+      "worksheet/layout-options"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -2,2 +2,3 @@",
+      "   <document-format-change-manifest>",
+      "+    <AccessibilityEditableAltText/>",
+      "     <AnimationOnByDefault/>",
+      "@@ -158,2 +159,9 @@",
+      "     <worksheet name=\"Barras\">",
+      "+      <layout-options>",
+      "+        <alt-text>",
+      "+          <formatted-text>",
+      "+            <run>Texto de prueba</run>",
+      "+          </formatted-text>",
+      "+        </alt-text>",
+      "+      </layout-options>",
+      "       <table>"
+     ],
+     "diffLines": 14
+    },
+    "Use mark tooltip for alt text on marks.": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:set-or-clear-accessibility-options accessibility-options={\"viz-alt-text-user-specified\": \"\",\"use-tooltip-for-mark-alt-text\": true}"
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "document-format-change-manifest/VizKeyboardNavigationSP5_TooltipAnnouncementOption",
+      "worksheet/layout-options",
+      "worksheet/layout-options@tooltip-mark-announcement=true"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -9,2 +9,3 @@",
+      "     <SheetIdentifierTracking/>",
+      "+    <VizKeyboardNavigationSP5_TooltipAnnouncementOption/>",
+      "     <WindowsPersistSimpleIdentifiers/>",
+      "@@ -158,2 +159,3 @@",
+      "     <worksheet name=\"Barras\">",
+      "+      <layout-options tooltip-mark-announcement=\"true\"/>",
+      "       <table>"
+     ],
+     "diffLines": 8
+    },
+    "Sample mark alt text description=Texto de prueba": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Region: Sur; Importe: 1086.0;",
+       "after": "Region: Sur; Importe: 1086.0;",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": false
+    }
+   },
+   "controls": [
+    {
+     "type": "Edit",
+     "name": "Visualization Alt Text",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Bar chart of Importe Region",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "Filter Alt Text :",
+     "index": 0,
+     "enabled": false,
+     "state": null,
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "Edit",
+     "name": "",
+     "index": 0,
+     "enabled": false,
+     "state": null,
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "Use mark tooltip for alt text on marks.",
+     "index": 0,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "Edit",
+     "name": "Sample mark alt text description",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Region: Sur; Importe: 1086.0;",
+     "visible": true
+    },
+    {
+     "type": "Button",
+     "name": "OK",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    }
+   ]
+  },
+  "Table Options": {
+   "source": "Barras · Analysis > Table Layout > Advanced...",
+   "effects": {
+    "Constrain aspect ratio": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "On",
+       "after": "Off",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:apply-table-options table-options-pres-model={\"keep-aspect-ratio\": false,\"aspect-ratio\": 0,\"row-levels\": 50,\"row-inner-levels\": 50,\"row-width\": 4,\"column-levels\": 6,\"show-innermost-level\": true,\"axis-orientation\": \"o-horiz\",\"decimal-mode\": \"automatic\",\"decimal-places\": 0,\"worksheet\": \"\"}"
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "pane/style",
+      "style-rule/format",
+      "style-rule/format@attr=aspect",
+      "style-rule/format@attr=border-color",
+      "style-rule/format@attr=border-width",
+      "style-rule/format@value=#b0b0b0",
+      "style-rule/format@value=0",
+      "style-rule/format@value=1",
+      "style/style-rule",
+      "style/style-rule@element=axis",
+      "style/style-rule@element=pane"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,8 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"axis\">",
+      "+            <format attr=\"border-color\" value=\"#b0b0b0\"/>",
+      "+            <format attr=\"border-width\" value=\"1\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>",
+      "@@ -178,2 +183,7 @@",
+      "             <mark class=\"Bar\"/>",
+      "+            <style>",
+      "+              <style-rule element=\"pane\">",
+      "+                <format attr=\"aspect\" value=\"0\"/>",
+      "+              </style-rule>",
+      "+            </style>",
+      "           </pane>"
+     ],
+     "diffLines": 18
+    },
+    "Aspect=1000": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "1",
+       "after": "1000",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:apply-table-options table-options-pres-model={\"keep-aspect-ratio\": true,\"aspect-ratio\": 1000,\"row-levels\": 50,\"row-inner-levels\": 50,\"row-width\": 4,\"column-levels\": 6,\"show-innermost-level\": true,\"axis-orientation\": \"o-horiz\",\"decimal-mode\": \"automatic\",\"decimal-places\": 0,\"worksheet\": \"\"}"
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "pane/style",
+      "style-rule/format",
+      "style-rule/format@attr=aspect",
+      "style-rule/format@attr=border-color",
+      "style-rule/format@attr=border-width",
+      "style-rule/format@value=#b0b0b0",
+      "style-rule/format@value=1",
+      "style-rule/format@value=1000",
+      "style/style-rule",
+      "style/style-rule@element=axis",
+      "style/style-rule@element=pane"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,8 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"axis\">",
+      "+            <format attr=\"border-color\" value=\"#b0b0b0\"/>",
+      "+            <format attr=\"border-width\" value=\"1\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>",
+      "@@ -178,2 +183,7 @@",
+      "             <mark class=\"Bar\"/>",
+      "+            <style>",
+      "+              <style-rule element=\"pane\">",
+      "+                <format attr=\"aspect\" value=\"1000\"/>",
+      "+              </style-rule>",
+      "+            </style>",
+      "           </pane>"
+     ],
+     "diffLines": 18
+    },
+    "Manual": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:apply-table-options table-options-pres-model={\"keep-aspect-ratio\": true,\"aspect-ratio\": 1,\"row-levels\": 50,\"row-inner-levels\": 50,\"row-width\": 4,\"column-levels\": 6,\"show-innermost-level\": true,\"axis-orientation\": \"o-horiz\",\"decimal-mode\": \"manual\",\"decimal-places\": 0,\"worksheet\": \"\"}"
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "pane/style",
+      "panes/pane@decimalplaces=0",
+      "style-rule/format",
+      "style-rule/format@attr=aspect",
+      "style-rule/format@attr=border-color",
+      "style-rule/format@attr=border-width",
+      "style-rule/format@value=#b0b0b0",
+      "style-rule/format@value=1",
+      "style/style-rule",
+      "style/style-rule@element=axis",
+      "style/style-rule@element=pane"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,5 +171,10 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"axis\">",
+      "+            <format attr=\"border-color\" value=\"#b0b0b0\"/>",
+      "+            <format attr=\"border-width\" value=\"1\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>",
+      "-          <pane selection-relaxation-option=\"selection-relaxation-allow\">",
+      "+          <pane decimalplaces=\"0\" selection-relaxation-option=\"selection-relaxation-allow\">",
+      "             <view>",
+      "@@ -178,2 +183,7 @@",
+      "             <mark class=\"Bar\"/>",
+      "+            <style>",
+      "+              <style-rule element=\"pane\">",
+      "+                <format attr=\"aspect\" value=\"1\"/>",
+      "+              </style-rule>",
+      "+            </style>",
+      "           </pane>"
+     ],
+     "diffLines": 21
+    },
+    "Show innermost level at bottom of view when there is a\nvertical axis": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "On",
+       "after": "Off",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:apply-table-options table-options-pres-model={\"keep-aspect-ratio\": true,\"aspect-ratio\": 1,\"row-levels\": 50,\"row-inner-levels\": 50,\"row-width\": 4,\"column-levels\": 6,\"show-innermost-level\": false,\"axis-orientation\": \"o-horiz\",\"decimal-mode\": \"automatic\",\"decimal-places\": 0,\"worksheet\": \"\"}"
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "pane/style",
+      "style-rule/format",
+      "style-rule/format@attr=aspect",
+      "style-rule/format@attr=border-color",
+      "style-rule/format@attr=border-width",
+      "style-rule/format@attr=hnaxis",
+      "style-rule/format@value=#b0b0b0",
+      "style-rule/format@value=1",
+      "style-rule/format@value=false",
+      "style/style-rule",
+      "style/style-rule@element=axis",
+      "style/style-rule@element=pane"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,9 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"axis\">",
+      "+            <format attr=\"border-color\" value=\"#b0b0b0\"/>",
+      "+            <format attr=\"border-width\" value=\"1\"/>",
+      "+            <format attr=\"hnaxis\" value=\"false\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>",
+      "@@ -178,2 +184,7 @@",
+      "             <mark class=\"Bar\"/>",
+      "+            <style>",
+      "+              <style-rule element=\"pane\">",
+      "+                <format attr=\"aspect\" value=\"1\"/>",
+      "+              </style-rule>",
+      "+            </style>",
+      "           </pane>"
+     ],
+     "diffLines": 19
+    },
+    "Vertical": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:apply-table-options table-options-pres-model={\"keep-aspect-ratio\": true,\"aspect-ratio\": 1,\"row-levels\": 50,\"row-inner-levels\": 50,\"row-width\": 4,\"column-levels\": 6,\"show-innermost-level\": true,\"axis-orientation\": \"o-vert\",\"decimal-mode\": \"automatic\",\"decimal-places\": 0,\"worksheet\": \"\"}"
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "pane/style",
+      "style-rule/format",
+      "style-rule/format@attr=aspect",
+      "style-rule/format@attr=border-color",
+      "style-rule/format@attr=border-width",
+      "style-rule/format@attr=hnlabel",
+      "style-rule/format@value=#b0b0b0",
+      "style-rule/format@value=1",
+      "style-rule/format@value=vertical",
+      "style/style-rule",
+      "style/style-rule@element=axis",
+      "style/style-rule@element=pane"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,9 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"axis\">",
+      "+            <format attr=\"border-color\" value=\"#b0b0b0\"/>",
+      "+            <format attr=\"border-width\" value=\"1\"/>",
+      "+            <format attr=\"hnlabel\" value=\"vertical\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>",
+      "@@ -178,2 +184,7 @@",
+      "             <mark class=\"Bar\"/>",
+      "+            <style>",
+      "+              <style-rule element=\"pane\">",
+      "+                <format attr=\"aspect\" value=\"1\"/>",
+      "+              </style-rule>",
+      "+            </style>",
+      "           </pane>"
+     ],
+     "diffLines": 19
+    }
+   },
+   "controls": [
+    {
+     "type": "CheckBox",
+     "name": "Constrain aspect ratio",
+     "index": 0,
+     "enabled": true,
+     "state": "On",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "Edit",
+     "name": "Aspect",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "1",
+     "visible": true
+    },
+    {
+     "type": "RadioButton",
+     "name": "Automatic",
+     "index": 0,
+     "enabled": true,
+     "state": "True",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "RadioButton",
+     "name": "Manual",
+     "index": 0,
+     "enabled": true,
+     "state": "False",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "Show innermost level at bottom of view when there is a\nvertical axis",
+     "index": 0,
+     "enabled": true,
+     "state": "On",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "RadioButton",
+     "name": "Horizontal",
+     "index": 0,
+     "enabled": true,
+     "state": "True",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "RadioButton",
+     "name": "Vertical",
+     "index": 0,
+     "enabled": true,
+     "state": "False",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "Button",
+     "name": "OK",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    }
+   ]
+  },
+  "Add Reference Line, Band, or Box": {
+   "source": "Barras · axis:bottom · Add Reference Line",
+   "effects": {
+    "Line": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "On",
+       "after": "On",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "pane/reference-line",
+      "pane/reference-line@axis-column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "pane/reference-line@enable-instant-analytics=true",
+      "pane/reference-line@formula=average",
+      "pane/reference-line@id",
+      "pane/reference-line@label-type=automatic",
+      "pane/reference-line@probability=95",
+      "pane/reference-line@scope=per-pane",
+      "pane/reference-line@value-column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "pane/reference-line@z-order=1",
+      "style-rule/format",
+      "style-rule/format@attr=fill-above",
+      "style-rule/format@attr=fill-below",
+      "style-rule/format@id",
+      "style-rule/format@value=#00000000",
+      "style/style-rule",
+      "style/style-rule@element=refline"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,8 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"refline\">",
+      "+            <format attr=\"fill-above\" id=\"refline0\" value=\"#00000000\"/>",
+      "+            <format attr=\"fill-below\" id=\"refline0\" value=\"#00000000\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>",
+      "@@ -178,2 +183,3 @@",
+      "             <mark class=\"Bar\"/>",
+      "+            <reference-line axis-column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" enable-instant-analytics=\"true\" formula=\"average\" id=\"refline0\" label-type=\"automatic\" probability=\"95\" scope=\"per-pane\" value-column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" z-order=\"1\"/>",
+      "           </pane>"
+     ],
+     "diffLines": 14
+    },
+    "Band": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "pane/reference-line",
+      "pane/reference-line@axis-column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "pane/reference-line@enable-instant-analytics=true",
+      "pane/reference-line@formula=max",
+      "pane/reference-line@formula=min",
+      "pane/reference-line@id",
+      "pane/reference-line@label-type=automatic",
+      "pane/reference-line@paired-id=refline0",
+      "pane/reference-line@paired-id=refline1",
+      "pane/reference-line@scope=per-pane",
+      "pane/reference-line@symmetric=false",
+      "pane/reference-line@value-column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "pane/reference-line@z-order=1"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -178,2 +178,4 @@",
+      "             <mark class=\"Bar\"/>",
+      "+            <reference-line axis-column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" enable-instant-analytics=\"true\" formula=\"min\" id=\"refline0\" label-type=\"automatic\" paired-id=\"refline1\" scope=\"per-pane\" symmetric=\"false\" value-column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" z-order=\"1\"/>",
+      "+            <reference-line axis-column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" enable-instant-analytics=\"true\" formula=\"max\" id=\"refline1\" label-type=\"automatic\" paired-id=\"refline0\" scope=\"per-pane\" symmetric=\"false\" value-column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" z-order=\"1\"/>",
+      "           </pane>"
+     ],
+     "diffLines": 5
+    },
+    "Distribution": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "pane/reference-line",
+      "pane/reference-line@axis-column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "pane/reference-line@enable-instant-analytics=true",
+      "pane/reference-line@fill-above=false",
+      "pane/reference-line@fill-below=false",
+      "pane/reference-line@formula=average",
+      "pane/reference-line@id",
+      "pane/reference-line@label-type=automatic",
+      "pane/reference-line@percentage-bands=true",
+      "pane/reference-line@probability=95",
+      "pane/reference-line@scope=per-pane",
+      "pane/reference-line@symmetric=false",
+      "pane/reference-line@value-column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "pane/reference-line@z-order=1",
+      "reference-line/reference-line-value",
+      "reference-line/reference-line-value@percentage=60",
+      "reference-line/reference-line-value@percentage=80",
+      "style-rule/format",
+      "style-rule/format@attr=reverse-palette",
+      "style-rule/format@id",
+      "style-rule/format@value=false",
+      "style/style-rule",
+      "style/style-rule@element=refband"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,7 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"refband\">",
+      "+            <format attr=\"reverse-palette\" id=\"refline0\" value=\"false\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>",
+      "@@ -178,2 +182,6 @@",
+      "             <mark class=\"Bar\"/>",
+      "+            <reference-line axis-column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" enable-instant-analytics=\"true\" fill-above=\"false\" fill-below=\"false\" formula=\"average\" id=\"refline0\" label-type=\"automatic\" percentage-bands=\"true\" probability=\"95\" scope=\"per-pane\" symmetric=\"false\" value-column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" z-order=\"1\">",
+      "+              <reference-line-value percentage=\"60\"/>",
+      "+              <reference-line-value percentage=\"80\"/>",
+      "+            </reference-line>",
+      "           </pane>"
+     ],
+     "diffLines": 16
+    },
+    "Box Plot": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "pane/reference-line",
+      "pane/reference-line@axis-column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "pane/reference-line@boxplot-mark-exclusion=false",
+      "pane/reference-line@boxplot-whisker-type=standard",
+      "pane/reference-line@enable-instant-analytics=true",
+      "pane/reference-line@formula=average",
+      "pane/reference-line@id",
+      "pane/reference-line@label-type=automatic",
+      "pane/reference-line@probability=95",
+      "pane/reference-line@scope=per-cell",
+      "pane/reference-line@symmetric=false",
+      "pane/reference-line@value-column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "pane/reference-line@z-order=1"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -178,2 +178,3 @@",
+      "             <mark class=\"Bar\"/>",
+      "+            <reference-line axis-column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" boxplot-mark-exclusion=\"false\" boxplot-whisker-type=\"standard\" enable-instant-analytics=\"true\" formula=\"average\" id=\"refline0\" label-type=\"automatic\" probability=\"95\" scope=\"per-cell\" symmetric=\"false\" value-column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" z-order=\"1\"/>",
+      "           </pane>"
+     ],
+     "diffLines": 4
+    },
+    "Entire Table": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "pane/reference-line",
+      "pane/reference-line@axis-column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "pane/reference-line@enable-instant-analytics=true",
+      "pane/reference-line@formula=average",
+      "pane/reference-line@id",
+      "pane/reference-line@label-type=automatic",
+      "pane/reference-line@probability=95",
+      "pane/reference-line@scope=per-table",
+      "pane/reference-line@value-column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "pane/reference-line@z-order=1",
+      "style-rule/format",
+      "style-rule/format@attr=fill-above",
+      "style-rule/format@attr=fill-below",
+      "style-rule/format@id",
+      "style-rule/format@value=#00000000",
+      "style/style-rule",
+      "style/style-rule@element=refline"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,8 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"refline\">",
+      "+            <format attr=\"fill-above\" id=\"refline0\" value=\"#00000000\"/>",
+      "+            <format attr=\"fill-below\" id=\"refline0\" value=\"#00000000\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>",
+      "@@ -178,2 +183,3 @@",
+      "             <mark class=\"Bar\"/>",
+      "+            <reference-line axis-column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" enable-instant-analytics=\"true\" formula=\"average\" id=\"refline0\" label-type=\"automatic\" probability=\"95\" scope=\"per-table\" value-column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" z-order=\"1\"/>",
+      "           </pane>"
+     ],
+     "diffLines": 14
+    },
+    "Per Cell": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "pane/reference-line",
+      "pane/reference-line@axis-column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "pane/reference-line@enable-instant-analytics=true",
+      "pane/reference-line@formula=average",
+      "pane/reference-line@id",
+      "pane/reference-line@label-type=automatic",
+      "pane/reference-line@probability=95",
+      "pane/reference-line@scope=per-cell",
+      "pane/reference-line@value-column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "pane/reference-line@z-order=1",
+      "style-rule/format",
+      "style-rule/format@attr=fill-above",
+      "style-rule/format@attr=fill-below",
+      "style-rule/format@id",
+      "style-rule/format@value=#00000000",
+      "style/style-rule",
+      "style/style-rule@element=refline"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,8 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"refline\">",
+      "+            <format attr=\"fill-above\" id=\"refline0\" value=\"#00000000\"/>",
+      "+            <format attr=\"fill-below\" id=\"refline0\" value=\"#00000000\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>",
+      "@@ -178,2 +183,3 @@",
+      "             <mark class=\"Bar\"/>",
+      "+            <reference-line axis-column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" enable-instant-analytics=\"true\" formula=\"average\" id=\"refline0\" label-type=\"automatic\" probability=\"95\" scope=\"per-cell\" value-column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" z-order=\"1\"/>",
+      "           </pane>"
+     ],
+     "diffLines": 14
+    },
+    "Show recalculated line for highlighted or selected data points": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "On",
+       "after": "Off",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "pane/reference-line",
+      "pane/reference-line@axis-column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "pane/reference-line@enable-instant-analytics=false",
+      "pane/reference-line@formula=average",
+      "pane/reference-line@id",
+      "pane/reference-line@label-type=automatic",
+      "pane/reference-line@probability=95",
+      "pane/reference-line@scope=per-pane",
+      "pane/reference-line@value-column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "pane/reference-line@z-order=1",
+      "style-rule/format",
+      "style-rule/format@attr=fill-above",
+      "style-rule/format@attr=fill-below",
+      "style-rule/format@id",
+      "style-rule/format@value=#00000000",
+      "style/style-rule",
+      "style/style-rule@element=refline"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -171,3 +171,8 @@",
+      "         </view>",
+      "-        <style/>",
+      "+        <style>",
+      "+          <style-rule element=\"refline\">",
+      "+            <format attr=\"fill-above\" id=\"refline0\" value=\"#00000000\"/>",
+      "+            <format attr=\"fill-below\" id=\"refline0\" value=\"#00000000\"/>",
+      "+          </style-rule>",
+      "+        </style>",
+      "         <panes>",
+      "@@ -178,2 +183,3 @@",
+      "             <mark class=\"Bar\"/>",
+      "+            <reference-line axis-column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" enable-instant-analytics=\"false\" formula=\"average\" id=\"refline0\" label-type=\"automatic\" probability=\"95\" scope=\"per-pane\" value-column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" z-order=\"1\"/>",
+      "           </pane>"
+     ],
+     "diffLines": 14
+    }
+   },
+   "controls": [
+    {
+     "type": "CheckBox",
+     "name": "Line",
+     "index": 0,
+     "enabled": true,
+     "state": "On",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "Band",
+     "index": 0,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "Distribution",
+     "index": 0,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "Box Plot",
+     "index": 0,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "RadioButton",
+     "name": "Entire Table",
+     "index": 0,
+     "enabled": true,
+     "state": "False",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "RadioButton",
+     "name": "Per Pane",
+     "index": 0,
+     "enabled": true,
+     "state": "True",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "RadioButton",
+     "name": "Per Cell",
+     "index": 0,
+     "enabled": true,
+     "state": "False",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "Show recalculated line for highlighted or selected data points",
+     "index": 0,
+     "enabled": true,
+     "state": "On",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "Fill Below:",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "Line:",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "Fill Above:",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "Label:",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Computation",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "Tooltip:",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Automatic",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "SUM(Importe)",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "",
+     "index": 1,
+     "enabled": true,
+     "state": null,
+     "value": "Average",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "",
+     "index": 2,
+     "enabled": true,
+     "state": null,
+     "value": "Line only",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "",
+     "index": 3,
+     "enabled": false,
+     "state": null,
+     "value": "95",
+     "visible": true
+    },
+    {
+     "type": "Button",
+     "name": "OK",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    }
+   ]
+  },
+  "Edit Alias": {
+   "source": "Barras · axis:left · Edit Alias...",
+   "effects": {
+    "Name:=Texto de prueba": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Este",
+       "after": "Texto de prueba",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:try-set-aliases new-aliases-pres-model={\"uid\": 4,\"alias-list\":[{\"item-index\": 1,\"name\": \"Este\",\"has-alias\": true,\"alias\": \"Texto de prueba\"}]}",
+      "tabdoc:commit-single-alias-changes uid=\"4\""
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "aliases/alias",
+      "aliases/alias@key=\"Este\"",
+      "aliases/alias@value=Texto de prueba",
+      "column/aliases",
+      "datasource/column",
+      "datasource/column@datatype=string",
+      "datasource/column@name",
+      "datasource/column@role=dimension",
+      "datasource/column@type=nominal"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -131,2 +131,7 @@",
+      "       <aliases enabled=\"yes\"/>",
+      "+      <column datatype=\"string\" name=\"[Region]\" role=\"dimension\" type=\"nominal\">",
+      "+        <aliases>",
+      "+          <alias key=\"&quot;Este&quot;\" value=\"Texto de prueba\"/>",
+      "+        </aliases>",
+      "+      </column>",
+      "       <column caption=\"Ventas\" datatype=\"table\" name=\"[__tableau_internal_object_id__].[Ventas_7392187AA6C04CF0BB957AF8E7CDA530]\" role=\"measure\" type=\"quantitative\"/>",
+      "@@ -165,3 +170,7 @@",
+      "             <column datatype=\"real\" name=\"[Importe]\" role=\"measure\" type=\"quantitative\"/>",
+      "-            <column datatype=\"string\" name=\"[Region]\" role=\"dimension\" type=\"nominal\"/>",
+      "+            <column datatype=\"string\" name=\"[Region]\" role=\"dimension\" type=\"nominal\">",
+      "+              <aliases>",
+      "+                <alias key=\"&quot;Este&quot;\" value=\"Texto de prueba\"/>",
+      "+              </aliases>",
+      "+            </column>",
+      "             <column-instance column=\"[Region]\" derivation=\"None\" name=\"[none:Region:nk]\" pivot=\"key\" type=\"nominal\"/>",
+      "@@ -193,3 +202,7 @@",
+      "             <column datatype=\"real\" name=\"[Importe]\" role=\"measure\" type=\"quantitative\"/>",
+      "-            <column datatype=\"string\" name=\"[Region]\" role=\"dimension\" type=\"nominal\"/>",
+      "+            <column datatype=\"string\" name=\"[Region]\" role=\"dimension\" type=\"nominal\">",
+      "+              <aliases>",
+      "+                <alias key=\"&quot;Este&quot;\" value=\"Texto de prueba\"/>",
+      "+              </aliases>",
+      "+            </column>",
+      "             <column-instance column=\"[Region]\" derivation=\"None\" name=\"[none:Region:nk]\" pivot=\"key\" type=\"nominal\"/>",
+      "@@ -257,3 +270,7 @@",
+      "             <column datatype=\"real\" name=\"[Importe]\" role=\"measure\" type=\"quantitative\"/>",
+      "-            <column datatype=\"string\" name=\"[Region]\" role=\"dimension\" type=\"nominal\"/>",
+      "+            <column datatype=\"string\" name=\"[Region]\" role=\"dimension\" type=\"nominal\">",
+      "+              <aliases>",
+      "+                <alias key=\"&quot;Este&quot;\" value=\"Texto de prueba\"/>",
+      "+              </aliases>",
+      "+            </column>",
+      "             <column-instance column=\"[Canal]\" derivation=\"None\" name=\"[none:Canal:nk]\" pivot=\"key\" type=\"nominal\"/>"
+     ],
+     "diffLines": 35
+    }
+   },
+   "controls": [
+    {
+     "type": "Edit",
+     "name": "Name:",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Este",
+     "visible": true
+    },
+    {
+     "type": "Button",
+     "name": "OK",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    }
+   ]
+  },
+  "Edit Title": {
+   "source": "Barras · title · Edit Title...",
+   "effects": {
+    "#0=Texto de prueba": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Tableau Light",
+       "after": "Texto de prueba",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "formatted-text/run",
+      "formatted-text/run@fontname=Texto de prueba",
+      "layout-options/title",
+      "title/formatted-text",
+      "worksheet/layout-options"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -163,2 +163,10 @@",
+      "     <worksheet name=\"Barras\">",
+      "+      <layout-options>",
+      "+        <title>",
+      "+          <formatted-text>",
+      "+            <run fontname=\"Texto de prueba\">Æ\t</run>",
+      "+            <run>&lt;Sheet Name&gt;</run>",
+      "+          </formatted-text>",
+      "+        </title>",
+      "+      </layout-options>",
+      "       <table>"
+     ],
+     "diffLines": 11
+    },
+    "#1=1000": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "15",
+       "after": "10",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "formatted-text/run",
+      "formatted-text/run@fontsize=10",
+      "layout-options/title",
+      "title/formatted-text",
+      "worksheet/layout-options"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -163,2 +163,10 @@",
+      "     <worksheet name=\"Barras\">",
+      "+      <layout-options>",
+      "+        <title>",
+      "+          <formatted-text>",
+      "+            <run fontsize=\"10\">Æ\t</run>",
+      "+            <run>&lt;Sheet Name&gt;</run>",
+      "+          </formatted-text>",
+      "+        </title>",
+      "+      </layout-options>",
+      "       <table>"
+     ],
+     "diffLines": 11
+    },
+    "#0": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": false
+    },
+    "#1": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": false
+    },
+    "#2": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": false
+    },
+    "RichTextDialog_TextEdit=Texto de prueba": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "<Sheet Name>",
+       "after": "Texto de prueba",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "formatted-text/run",
+      "layout-options/title",
+      "title/formatted-text",
+      "worksheet/layout-options"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -163,2 +163,9 @@",
+      "     <worksheet name=\"Barras\">",
+      "+      <layout-options>",
+      "+        <title>",
+      "+          <formatted-text>",
+      "+            <run>Texto de prueba</run>",
+      "+          </formatted-text>",
+      "+        </title>",
+      "+      </layout-options>",
+      "       <table>"
+     ],
+     "diffLines": 10
+    }
+   },
+   "controls": [
+    {
+     "type": "ComboBox",
+     "name": "",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Tableau Light",
+     "visible": true
+    },
+    {
+     "type": "Edit",
+     "name": "",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Tableau Light",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "",
+     "index": 1,
+     "enabled": true,
+     "state": null,
+     "value": "15",
+     "visible": true
+    },
+    {
+     "type": "Edit",
+     "name": "",
+     "index": 1,
+     "enabled": true,
+     "state": null,
+     "value": "15",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "",
+     "index": 0,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "",
+     "index": 1,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "",
+     "index": 2,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "Edit",
+     "name": "RichTextDialog_TextEdit",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "<Sheet Name>",
+     "visible": true
+    },
+    {
+     "type": "Button",
+     "name": "OK",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    }
+   ]
+  },
+  "Filter": {
+   "source": "Barras · shelf:cols · Filter...",
+   "effects": {
+    "Range of values": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "On",
+       "after": "On",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:format-datavalue-ui data-value=\"r:::1044\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\"",
+      "tabdoc:format-datavalue-ui data-value=\"r:::1170\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\"",
+      "tabdoc:format-datavalue-ui data-value=\"r:::1044\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" is-for-input=\"false\" show-date=\"true\" show-time=\"false\"",
+      "tabdoc:format-datavalue-ui data-value=\"r:::1170\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" is-for-input=\"false\" show-date=\"true\" show-time=\"false\"",
+      "tabdoc:apply-quantitative-filter-range commit-edits=\"true\" quantitative-filter={\"quantitative-filter-kind\": \"visual\",\"filter-store-id\": 6,\"worksheet\": \"Barras\",\"column-name\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\",\"column-caption\": \"Importe\",\"data-type\": \"real\",\"filter-domain-type-captions\":[{\"filter-domain-type\": \"relevant\",\"caption\": \"Only Relevant Values\"},{\"filter-domain-t"
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "filter/max",
+      "filter/min",
+      "slices/column",
+      "view/filter",
+      "view/filter@class=quantitative",
+      "view/filter@column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "view/filter@included-values=in-range",
+      "view/slices"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -178,2 +178,9 @@",
+      "           </datasource-dependencies>",
+      "+          <filter class=\"quantitative\" column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" included-values=\"in-range\">",
+      "+            <min>1044.0</min>",
+      "+            <max>1170.0</max>",
+      "+          </filter>",
+      "+          <slices>",
+      "+            <column>[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]</column>",
+      "+          </slices>",
+      "           <aggregation value=\"true\"/>"
+     ],
+     "diffLines": 10
+    },
+    "At least": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:format-datavalue-ui data-value=\"r:::1170\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\"",
+      "tabdoc:format-datavalue-ui data-value=\"r:::1044\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\"",
+      "tabdoc:format-datavalue-ui data-value=\"r:::1170\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\"",
+      "tabdoc:format-datavalue-ui data-value=\"r:::1044\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" is-for-input=\"false\" show-date=\"true\" show-time=\"false\"",
+      "tabdoc:format-datavalue-ui data-value=\"r:::1170\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" is-for-input=\"false\" show-date=\"true\" show-time=\"false\"",
+      "tabdoc:apply-quantitative-filter-range commit-edits=\"true\" quantitative-filter={\"quantitative-filter-kind\": \"visual\",\"filter-store-id\": 7,\"worksheet\": \"Barras\",\"column-name\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\",\"column-caption\": \"Importe\",\"data-type\": \"real\",\"filter-domain-type-captions\":[{\"filter-domain-type\": \"relevant\",\"caption\": \"Only Relevant Values\"},{\"filter-domain-t"
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "filter/min",
+      "slices/column",
+      "view/filter",
+      "view/filter@class=quantitative",
+      "view/filter@column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "view/filter@included-values=in-range",
+      "view/slices"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -178,2 +178,8 @@",
+      "           </datasource-dependencies>",
+      "+          <filter class=\"quantitative\" column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" included-values=\"in-range\">",
+      "+            <min>1044.0</min>",
+      "+          </filter>",
+      "+          <slices>",
+      "+            <column>[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]</column>",
+      "+          </slices>",
+      "           <aggregation value=\"true\"/>"
+     ],
+     "diffLines": 9
+    },
+    "Special": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:apply-quantitative-filter-range commit-edits=\"true\" quantitative-filter={\"quantitative-filter-kind\": \"visual\",\"filter-store-id\": 8,\"worksheet\": \"Barras\",\"column-name\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\",\"column-caption\": \"Importe\",\"data-type\": \"real\",\"filter-domain-type-captions\":[{\"filter-domain-type\": \"relevant\",\"caption\": \"Only Relevant Values\"},{\"filter-domain-t"
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "slices/column",
+      "view/filter",
+      "view/filter@class=quantitative",
+      "view/filter@column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "view/filter@included-values=all",
+      "view/slices"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -178,2 +178,6 @@",
+      "           </datasource-dependencies>",
+      "+          <filter class=\"quantitative\" column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" included-values=\"all\"/>",
+      "+          <slices>",
+      "+            <column>[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]</column>",
+      "+          </slices>",
+      "           <aggregation value=\"true\"/>"
+     ],
+     "diffLines": 7
+    },
+    "At most": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:format-datavalue-ui data-value=\"r:::1044\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\"",
+      "tabdoc:format-datavalue-ui data-value=\"r:::1044\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\"",
+      "tabdoc:format-datavalue-ui data-value=\"r:::1170\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\"",
+      "tabdoc:format-datavalue-ui data-value=\"r:::1044\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" is-for-input=\"false\" show-date=\"true\" show-time=\"false\"",
+      "tabdoc:format-datavalue-ui data-value=\"r:::1170\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" is-for-input=\"false\" show-date=\"true\" show-time=\"false\"",
+      "tabdoc:apply-quantitative-filter-range commit-edits=\"true\" quantitative-filter={\"quantitative-filter-kind\": \"visual\",\"filter-store-id\": 9,\"worksheet\": \"Barras\",\"column-name\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\",\"column-caption\": \"Importe\",\"data-type\": \"real\",\"filter-domain-type-captions\":[{\"filter-domain-type\": \"relevant\",\"caption\": \"Only Relevant Values\"},{\"filter-domain-t"
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "filter/max",
+      "slices/column",
+      "view/filter",
+      "view/filter@class=quantitative",
+      "view/filter@column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "view/filter@included-values=in-range",
+      "view/slices"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -178,2 +178,8 @@",
+      "           </datasource-dependencies>",
+      "+          <filter class=\"quantitative\" column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" included-values=\"in-range\">",
+      "+            <max>1170.0</max>",
+      "+          </filter>",
+      "+          <slices>",
+      "+            <column>[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]</column>",
+      "+          </slices>",
+      "           <aggregation value=\"true\"/>"
+     ],
+     "diffLines": 9
+    },
+    "#0=1000": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "1,044",
+       "after": "1,000",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:validate-data-value data-type=\"real\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" raw-data-value-string=\"1000\"",
+      "tabdoc:format-datavalue-ui data-value=\"r:4:0:1000\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\"",
+      "tabdoc:format-datavalue-ui data-value=\"r:::1170\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\"",
+      "tabdoc:format-datavalue-ui data-value=\"r:4:0:1000\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" is-for-input=\"false\" show-date=\"true\" show-time=\"false\"",
+      "tabdoc:format-datavalue-ui data-value=\"r:::1170\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" is-for-input=\"false\" show-date=\"true\" show-time=\"false\"",
+      "tabdoc:format-datavalue-ui data-value=\"r:4:0:1000\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" is-for-input=\"false\" show-date=\"true\" show-time=\"false\"",
+      "tabdoc:format-datavalue-ui data-value=\"r:::1170\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" is-for-input=\"false\" show-date=\"true\" show-time=\"false\"",
+      "tabdoc:apply-quantitative-filter-range commit-edits=\"true\" quantitative-filter={\"quantitative-filter-kind\": \"visual\",\"filter-store-id\": 10,\"worksheet\": \"Barras\",\"column-name\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\",\"column-caption\": \"Importe\",\"data-type\": \"real\",\"filter-domain-type-captions\":[{\"filter-domain-type\": \"relevant\",\"caption\": \"Only Relevant Values\"},{\"filter-domain-"
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "filter/max",
+      "filter/min",
+      "slices/column",
+      "view/filter",
+      "view/filter@class=quantitative",
+      "view/filter@column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "view/filter@included-values=in-range",
+      "view/slices"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -178,2 +178,9 @@",
+      "           </datasource-dependencies>",
+      "+          <filter class=\"quantitative\" column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" included-values=\"in-range\">",
+      "+            <min>1000.0</min>",
+      "+            <max>1170.0</max>",
+      "+          </filter>",
+      "+          <slices>",
+      "+            <column>[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]</column>",
+      "+          </slices>",
+      "           <aggregation value=\"true\"/>"
+     ],
+     "diffLines": 10
+    },
+    "#1=1000": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "1,170",
+       "after": "1,000",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:validate-data-value data-type=\"real\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" raw-data-value-string=\"1000\"",
+      "tabdoc:format-datavalue-ui data-value=\"r:::1044\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\"",
+      "tabdoc:format-datavalue-ui data-value=\"r:4:0:1000\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\"",
+      "tabdoc:format-datavalue-ui data-value=\"r:4:0:1000\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" is-for-input=\"false\" show-date=\"true\" show-time=\"false\"",
+      "tabdoc:format-datavalue-ui data-value=\"r:::1170\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" is-for-input=\"false\" show-date=\"true\" show-time=\"false\"",
+      "tabdoc:format-datavalue-ui data-value=\"r:4:0:1000\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" is-for-input=\"false\" show-date=\"true\" show-time=\"false\"",
+      "tabdoc:format-datavalue-ui data-value=\"r:::1170\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" is-for-input=\"false\" show-date=\"true\" show-time=\"false\"",
+      "tabdoc:apply-quantitative-filter-range commit-edits=\"true\" quantitative-filter={\"quantitative-filter-kind\": \"visual\",\"filter-store-id\": 11,\"worksheet\": \"Barras\",\"column-name\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\",\"column-caption\": \"Importe\",\"data-type\": \"real\",\"filter-domain-type-captions\":[{\"filter-domain-type\": \"relevant\",\"caption\": \"Only Relevant Values\"},{\"filter-domain-"
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "filter/max",
+      "filter/min",
+      "slices/column",
+      "view/filter",
+      "view/filter@class=quantitative",
+      "view/filter@column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "view/filter@included-values=in-range",
+      "view/slices"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -178,2 +178,9 @@",
+      "           </datasource-dependencies>",
+      "+          <filter class=\"quantitative\" column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" included-values=\"in-range\">",
+      "+            <min>1000.0</min>",
+      "+            <max>1044.0</max>",
+      "+          </filter>",
+      "+          <slices>",
+      "+            <column>[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]</column>",
+      "+          </slices>",
+      "           <aggregation value=\"true\"/>"
+     ],
+     "diffLines": 10
+    },
+    "Include Null Values": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:apply-quantitative-filter-range commit-edits=\"true\" quantitative-filter={\"quantitative-filter-kind\": \"visual\",\"filter-store-id\": 12,\"worksheet\": \"Barras\",\"column-name\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\",\"column-caption\": \"Importe\",\"data-type\": \"real\",\"filter-domain-type-captions\":[{\"filter-domain-type\": \"relevant\",\"caption\": \"Only Relevant Values\"},{\"filter-domain-"
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "filter/max",
+      "filter/min",
+      "slices/column",
+      "view/filter",
+      "view/filter@class=quantitative",
+      "view/filter@column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "view/filter@included-values=in-range-or-null",
+      "view/slices"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -178,2 +178,9 @@",
+      "           </datasource-dependencies>",
+      "+          <filter class=\"quantitative\" column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" included-values=\"in-range-or-null\">",
+      "+            <min>1044.0</min>",
+      "+            <max>1170.0</max>",
+      "+          </filter>",
+      "+          <slices>",
+      "+            <column>[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]</column>",
+      "+          </slices>",
+      "           <aggregation value=\"true\"/>"
+     ],
+     "diffLines": 10
+    }
+   },
+   "controls": [
+    {
+     "type": "CheckBox",
+     "name": "Range of values",
+     "index": 0,
+     "enabled": true,
+     "state": "On",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "At least",
+     "index": 0,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "Special",
+     "index": 0,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "At most",
+     "index": 0,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "Edit",
+     "name": "",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "1,044",
+     "visible": true
+    },
+    {
+     "type": "Edit",
+     "name": "",
+     "index": 1,
+     "enabled": true,
+     "state": null,
+     "value": "1,170",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Only Relevant Values",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "Include Null Values",
+     "index": 0,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "Button",
+     "name": "OK",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    }
+   ]
+  },
+  "Apply Filter to Worksheets": {
+   "source": "Barras · shelf:cols · Apply to Worksheets > Selected Worksheets...",
+   "effects": {
+    "Filter will be applied to 0 worksheets.=Texto de prueba": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "",
+       "after": "Texto de prueba"
+      }
+     ],
+     "commands": [],
+     "closed": [
+      "Apply Filter to Worksheets [SUM(Importe)]"
+     ],
+     "changed": false
+    },
+    "Select all worksheets": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:change-shared-filter fn=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" sheets=[\"*****\"] worksheet=\"Barras\""
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "slices/column",
+      "view/filter",
+      "view/filter@class=quantitative",
+      "view/filter@column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "view/filter@filter-group=3",
+      "view/filter@included-values=in-range",
+      "view/slices"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -178,2 +178,6 @@",
+      "           </datasource-dependencies>",
+      "+          <filter class=\"quantitative\" column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" included-values=\"in-range\"/>",
+      "+          <slices>",
+      "+            <column>[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]</column>",
+      "+          </slices>",
+      "           <aggregation value=\"true\"/>",
+      "@@ -211,2 +215,6 @@",
+      "           </datasource-dependencies>",
+      "+          <filter class=\"quantitative\" column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" filter-group=\"3\" included-values=\"in-range\"/>",
+      "+          <slices>",
+      "+            <column>[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]</column>",
+      "+          </slices>",
+      "           <aggregation value=\"true\"/>",
+      "@@ -243,2 +251,6 @@",
+      "           </datasource-dependencies>",
+      "+          <filter class=\"quantitative\" column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" filter-group=\"3\" included-values=\"in-range\"/>",
+      "+          <slices>",
+      "+            <column>[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]</column>",
+      "+          </slices>",
+      "           <aggregation value=\"true\"/>",
+      "@@ -279,2 +291,6 @@",
+      "           </datasource-dependencies>",
+      "+          <filter class=\"quantitative\" column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" filter-group=\"3\" included-values=\"in-range\"/>",
+      "+          <slices>",
+      "+            <column>[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]</column>",
+      "+          </slices>",
+      "           <aggregation value=\"true\"/>"
+     ],
+     "diffLines": 28
+    },
+    "#1": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:change-shared-filter fn=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" sheets=[\"*****\"] worksheet=\"Barras\""
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "slices/column",
+      "view/filter",
+      "view/filter@class=quantitative",
+      "view/filter@column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "view/filter@included-values=in-range",
+      "view/slices"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -178,2 +178,6 @@",
+      "           </datasource-dependencies>",
+      "+          <filter class=\"quantitative\" column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" included-values=\"in-range\"/>",
+      "+          <slices>",
+      "+            <column>[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]</column>",
+      "+          </slices>",
+      "           <aggregation value=\"true\"/>",
+      "@@ -243,2 +247,6 @@",
+      "           </datasource-dependencies>",
+      "+          <filter class=\"quantitative\" column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" included-values=\"in-range\"/>",
+      "+          <slices>",
+      "+            <column>[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]</column>",
+      "+          </slices>",
+      "           <aggregation value=\"true\"/>"
+     ],
+     "diffLines": 14
+    },
+    "#2": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:change-shared-filter fn=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" sheets=[\"*****\"] worksheet=\"Barras\""
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "slices/column",
+      "view/filter",
+      "view/filter@class=quantitative",
+      "view/filter@column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "view/filter@included-values=in-range",
+      "view/slices"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -178,2 +178,6 @@",
+      "           </datasource-dependencies>",
+      "+          <filter class=\"quantitative\" column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" included-values=\"in-range\"/>",
+      "+          <slices>",
+      "+            <column>[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]</column>",
+      "+          </slices>",
+      "           <aggregation value=\"true\"/>",
+      "@@ -279,2 +283,6 @@",
+      "           </datasource-dependencies>",
+      "+          <filter class=\"quantitative\" column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" included-values=\"in-range\"/>",
+      "+          <slices>",
+      "+            <column>[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]</column>",
+      "+          </slices>",
+      "           <aggregation value=\"true\"/>"
+     ],
+     "diffLines": 14
+    },
+    "#3": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:change-shared-filter fn=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" sheets=[\"*****\"] worksheet=\"Barras\""
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "slices/column",
+      "view/filter",
+      "view/filter@class=quantitative",
+      "view/filter@column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]",
+      "view/filter@included-values=in-range",
+      "view/slices"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -178,2 +178,6 @@",
+      "           </datasource-dependencies>",
+      "+          <filter class=\"quantitative\" column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" included-values=\"in-range\"/>",
+      "+          <slices>",
+      "+            <column>[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]</column>",
+      "+          </slices>",
+      "           <aggregation value=\"true\"/>",
+      "@@ -211,2 +215,6 @@",
+      "           </datasource-dependencies>",
+      "+          <filter class=\"quantitative\" column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]\" included-values=\"in-range\"/>",
+      "+          <slices>",
+      "+            <column>[federated.tszse28gx02x3fnwag3qym7mmnuk].[sum:Importe:qk]</column>",
+      "+          </slices>",
+      "           <aggregation value=\"true\"/>"
+     ],
+     "diffLines": 14
+    },
+    "Show only selected worksheets": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On"
+      }
+     ],
+     "commands": [],
+     "closed": [
+      "Apply Filter to Worksheets [SUM(Importe)]"
+     ],
+     "changed": false
+    }
+   },
+   "controls": [
+    {
+     "type": "Edit",
+     "name": "Filter will be applied to 0 worksheets.",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "Select all worksheets",
+     "index": 0,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "",
+     "index": 0,
+     "enabled": false,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "",
+     "index": 1,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "",
+     "index": 2,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "",
+     "index": 3,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "Show only selected worksheets",
+     "index": 0,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "Button",
+     "name": "OK",
+     "index": 0,
+     "enabled": false,
+     "state": null,
+     "value": "",
+     "visible": true
+    }
+   ]
+  },
+  "Sort": {
+   "source": "Barras · shelf:rows · Sort...",
+   "effects": {
+    "Descending": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True"
+      }
+     ],
+     "commands": [
+      "tabdoc:sort-dialog-sort aggregation=\"sum\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[none:Region:nk]\" keep-field-filters=\"true\" set-default=\"false\" shelf-type=\"rows-shelf\" sort-by=\"data-source-order\" sort-measure-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[Importe]\" sort-order=\"desc\" sort-partitioning=\"none\" sort-range-list=[] visual-id-pres-model={\"worksheet\": \"Barras\"} work",
+      "tabdoc:sort aggregation=\"sum\" global-field-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[none:Region:nk]\" keep-field-filters=\"true\" set-default=\"false\" sort-by=\"data-source-order\" sort-measure-name=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[Importe]\" sort-order=\"desc\" sort-range-list=[]"
+     ],
+     "closed": [
+      "Sort [Region]"
+     ],
+     "changed": true,
+     "added": [
+      "document-format-change-manifest/SortTagCleanup",
+      "view/natural-sort",
+      "view/natural-sort@column=[federated.tszse28gx02x3fnwag3qym7mmnuk].[none:Region:nk]",
+      "view/natural-sort@direction=DESC"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -9,2 +9,3 @@",
+      "     <SheetIdentifierTracking/>",
+      "+    <SortTagCleanup/>",
+      "     <WindowsPersistSimpleIdentifiers/>",
+      "@@ -178,2 +179,3 @@",
+      "           </datasource-dependencies>",
+      "+          <natural-sort column=\"[federated.tszse28gx02x3fnwag3qym7mmnuk].[none:Region:nk]\" direction=\"DESC\"/>",
+      "           <aggregation value=\"true\"/>"
+     ],
+     "diffLines": 8
+    }
+   },
+   "controls": [
+    {
+     "type": "ComboBox",
+     "name": "Sort By",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Data source order",
+     "visible": true
+    },
+    {
+     "type": "RadioButton",
+     "name": "Ascending",
+     "index": 0,
+     "enabled": true,
+     "state": "True",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "RadioButton",
+     "name": "Descending",
+     "index": 0,
+     "enabled": true,
+     "state": "False",
+     "value": "",
+     "visible": true
+    }
+   ]
+  },
+  "Create Group": {
+   "source": "Barras · field:Fecha · Create > Group...",
+   "effects": {
+    "#0=Texto de prueba": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Fecha (group)",
+       "after": "Texto de prueba",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabui:set-worksheet-sidepane-mode mode=\"data\""
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "column/calculation",
+      "column/calculation@class=categorical-bin",
+      "column/calculation@column=[Fecha]",
+      "column/calculation@new-bin=true",
+      "datasource/column",
+      "datasource/column@datatype=date",
+      "datasource/column@datatype=string",
+      "datasource/column@name",
+      "datasource/column@role=dimension",
+      "datasource/column@type=ordinal"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -131,2 +131,3 @@",
+      "       <aliases enabled=\"yes\"/>",
+      "+      <column datatype=\"date\" name=\"[Fecha]\" role=\"dimension\" type=\"ordinal\"/>",
+      "       <column datatype=\"string\" name=\"[Region]\" role=\"dimension\" type=\"nominal\">",
+      "@@ -135,2 +136,5 @@",
+      "         </aliases>",
+      "+      </column>",
+      "+      <column datatype=\"string\" name=\"[Texto de prueba]\" role=\"dimension\" type=\"ordinal\">",
+      "+        <calculation class=\"categorical-bin\" column=\"[Fecha]\" new-bin=\"true\"/>",
+      "       </column>"
+     ],
+     "diffLines": 10
+    },
+    "Show Add Location": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "On",
+       "after": "Off",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabui:set-worksheet-sidepane-mode mode=\"data\""
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "column/calculation",
+      "column/calculation@class=categorical-bin",
+      "column/calculation@column=[Fecha]",
+      "column/calculation@new-bin=true",
+      "datasource/column",
+      "datasource/column@datatype=string",
+      "datasource/column@name",
+      "datasource/column@role=dimension",
+      "datasource/column@type=ordinal"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -131,2 +131,5 @@",
+      "       <aliases enabled=\"yes\"/>",
+      "+      <column datatype=\"string\" name=\"[Fecha (group)]\" role=\"dimension\" type=\"ordinal\">",
+      "+        <calculation class=\"categorical-bin\" column=\"[Fecha]\" new-bin=\"true\"/>",
+      "+      </column>",
+      "       <column datatype=\"date\" name=\"[Fecha]\" role=\"dimension\" type=\"ordinal\"/>"
+     ],
+     "diffLines": 6
+    },
+    "Include 'Other'": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabui:set-worksheet-sidepane-mode mode=\"data\""
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "column/calculation",
+      "column/calculation@class=categorical-bin",
+      "column/calculation@column=[Fecha]",
+      "column/calculation@default=\"Other\"",
+      "column/calculation@new-bin=true",
+      "datasource/column",
+      "datasource/column@datatype=string",
+      "datasource/column@name",
+      "datasource/column@role=dimension",
+      "datasource/column@type=ordinal"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -131,2 +131,5 @@",
+      "       <aliases enabled=\"yes\"/>",
+      "+      <column datatype=\"string\" name=\"[Fecha (group) 1]\" role=\"dimension\" type=\"ordinal\">",
+      "+        <calculation class=\"categorical-bin\" column=\"[Fecha]\" default=\"&quot;Other&quot;\" new-bin=\"true\"/>",
+      "+      </column>",
+      "       <column datatype=\"string\" name=\"[Fecha (group)]\" role=\"dimension\" type=\"nominal\">"
+     ],
+     "diffLines": 6
+    }
+   },
+   "controls": [
+    {
+     "type": "Edit",
+     "name": "",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Fecha (group)",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "",
+     "index": 0,
+     "enabled": false,
+     "state": null,
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "Show Add Location",
+     "index": 0,
+     "enabled": true,
+     "state": "On",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "Include 'Other'",
+     "index": 0,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "Button",
+     "name": "OK",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    }
+   ]
+  },
+  "Create Set": {
+   "source": "Barras · field:Fecha · Create > Set...",
+   "effects": {
+    "Name:=Texto de prueba": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Fecha Set",
+       "after": "Texto de prueba",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:validate-categorical-filter-name categorical-filter-cache-info={\"uuid\": \"{930F3002-EF6D-458C-ACE7-B1C2BF5B1FF8}\",\"timeout-s\": \"-1\",\"defer-domain\": false,\"fn\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[Fecha]\",\"categorical-filter-kind\": \"group-create\",\"has-apply\": true,\"use-initial-domain-type\": false,\"filter-domain-type\": \"all\",\"worksheet\": \"Barras\",\"create-group-from-filter\": false,\"relat"
+     ],
+     "closed": [
+      "Create Set",
+      "Tableau"
+     ],
+     "changed": false
+    },
+    "Custom value list": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:categorical-filter-set-range-type-deferred categorical-filter-cache-info={\"uuid\": \"{D581DDC3-CFDB-4279-AFB5-B688BBBE08BC}\",\"timeout-s\": \"-1\",\"defer-domain\": false,\"fn\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[Fecha]\",\"categorical-filter-kind\": \"group-create\",\"has-apply\": true,\"use-initial-domain-type\": false,\"filter-domain-type\": \"all\",\"worksheet\": \"Barras\",\"create-group-from-filter\": fa",
+      "tabdoc:apply-categorical-filter-updates categorical-filter-cache-info={\"uuid\": \"{D581DDC3-CFDB-4279-AFB5-B688BBBE08BC}\",\"timeout-s\": \"-1\",\"defer-domain\": false,\"fn\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[Fecha]\",\"categorical-filter-kind\": \"group-create\",\"has-apply\": true,\"use-initial-domain-type\": false,\"filter-domain-type\": \"all\",\"worksheet\": \"Barras\",\"create-group-from-filter\": false,\"relat",
+      "tabui:set-worksheet-sidepane-mode mode=\"data\""
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "datasource/group",
+      "datasource/group@caption",
+      "datasource/group@name",
+      "datasource/group@name-style=unqualified",
+      "datasource/group@{http://www.tableausoftware.com/xml/user}ui-builder=filter-group",
+      "group/groupfilter",
+      "group/groupfilter@function=level-members",
+      "group/groupfilter@level=[Fecha]",
+      "group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-manual-selection-all-when-empty=true",
+      "group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-manual-selection-is-empty=true",
+      "group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-manual-selection=true",
+      "group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-marker=enumerate"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -147,2 +147,5 @@",
+      "       <column caption=\"Ventas\" datatype=\"table\" name=\"[__tableau_internal_object_id__].[Ventas_7392187AA6C04CF0BB957AF8E7CDA530]\" role=\"measure\" type=\"quantitative\"/>",
+      "+      <group caption=\"Fecha Set\" name=\"[Fecha Set]\" name-style=\"unqualified\" user:ui-builder=\"filter-group\">",
+      "+        <groupfilter function=\"level-members\" level=\"[Fecha]\" user:ui-manual-selection=\"true\" user:ui-manual-selection-all-when-empty=\"true\" user:ui-manual-selection-is-empty=\"true\" user:ui-marker=\"enumerate\"/>",
+      "+      </group>",
+      "       <layout dim-ordering=\"alphabetic\" measure-ordering=\"alphabetic\" show-structure=\"true\"/>"
+     ],
+     "diffLines": 6
+    },
+    "Use all": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:categorical-filter-set-range-type-deferred categorical-filter-cache-info={\"uuid\": \"{15175570-7CA7-4673-9826-6448CEE584A9}\",\"timeout-s\": \"-1\",\"defer-domain\": false,\"fn\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[Fecha]\",\"categorical-filter-kind\": \"group-create\",\"has-apply\": true,\"use-initial-domain-type\": false,\"filter-domain-type\": \"all\",\"worksheet\": \"Barras\",\"create-group-from-filter\": fa",
+      "tabdoc:apply-categorical-filter-updates categorical-filter-cache-info={\"uuid\": \"{15175570-7CA7-4673-9826-6448CEE584A9}\",\"timeout-s\": \"-1\",\"defer-domain\": false,\"fn\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[Fecha]\",\"categorical-filter-kind\": \"group-create\",\"has-apply\": true,\"use-initial-domain-type\": false,\"filter-domain-type\": \"all\",\"worksheet\": \"Barras\",\"create-group-from-filter\": false,\"relat",
+      "tabui:set-worksheet-sidepane-mode mode=\"data\""
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "datasource/group",
+      "datasource/group@caption",
+      "datasource/group@name",
+      "datasource/group@name-style=unqualified",
+      "datasource/group@{http://www.tableausoftware.com/xml/user}ui-builder=filter-group",
+      "group/groupfilter",
+      "group/groupfilter@function=level-members",
+      "group/groupfilter@level=[Fecha]",
+      "group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-enumeration=all",
+      "group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-marker=enumerate"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -147,2 +147,5 @@",
+      "       <column caption=\"Ventas\" datatype=\"table\" name=\"[__tableau_internal_object_id__].[Ventas_7392187AA6C04CF0BB957AF8E7CDA530]\" role=\"measure\" type=\"quantitative\"/>",
+      "+      <group caption=\"Fecha Set 2\" name=\"[Fecha Set 2]\" name-style=\"unqualified\" user:ui-builder=\"filter-group\">",
+      "+        <groupfilter function=\"level-members\" level=\"[Fecha]\" user:ui-enumeration=\"all\" user:ui-marker=\"enumerate\"/>",
+      "+      </group>",
+      "       <group caption=\"Fecha Set\" name=\"[Fecha Set]\" name-style=\"unqualified\" user:ui-builder=\"filter-group\">"
+     ],
+     "diffLines": 6
+    },
+    "#0=Texto de prueba": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "",
+       "after": "",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:categorical-filter-search categorical-filter-cache-info={\"uuid\": \"{DE1B3291-88D1-49AC-8827-E27B56826907}\",\"timeout-s\": \"-1\",\"defer-domain\": false,\"fn\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[Fecha]\",\"categorical-filter-kind\": \"group-create\",\"has-apply\": true,\"use-initial-domain-type\": false,\"filter-domain-type\": \"all\",\"worksheet\": \"Barras\",\"create-group-from-filter\": false,\"relational-p",
+      "tabdoc:apply-categorical-filter-updates categorical-filter-cache-info={\"uuid\": \"{DE1B3291-88D1-49AC-8827-E27B56826907}\",\"timeout-s\": \"-1\",\"defer-domain\": false,\"fn\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[Fecha]\",\"categorical-filter-kind\": \"group-create\",\"has-apply\": true,\"use-initial-domain-type\": false,\"filter-domain-type\": \"all\",\"worksheet\": \"Barras\",\"create-group-from-filter\": false,\"relat",
+      "tabui:set-worksheet-sidepane-mode mode=\"data\""
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "datasource/group",
+      "datasource/group@caption",
+      "datasource/group@name",
+      "datasource/group@name-style=unqualified",
+      "datasource/group@{http://www.tableausoftware.com/xml/user}ui-builder=filter-group",
+      "group/groupfilter",
+      "group/groupfilter@function=empty-level",
+      "group/groupfilter@member=[Fecha]",
+      "group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-domain=database",
+      "group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-enumeration=inclusive",
+      "group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-marker=enumerate"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -149,2 +149,5 @@",
+      "         <groupfilter function=\"level-members\" level=\"[Fecha]\" user:ui-enumeration=\"all\" user:ui-marker=\"enumerate\"/>",
+      "+      </group>",
+      "+      <group caption=\"Fecha Set 3\" name=\"[Fecha Set 3]\" name-style=\"unqualified\" user:ui-builder=\"filter-group\">",
+      "+        <groupfilter function=\"empty-level\" member=\"[Fecha]\" user:ui-domain=\"database\" user:ui-enumeration=\"inclusive\" user:ui-marker=\"enumerate\"/>",
+      "       </group>"
+     ],
+     "diffLines": 6
+    },
+    "#1=Texto de prueba": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "",
+       "after": "Texto de prueba",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:categorical-filter-search categorical-filter-cache-info={\"uuid\": \"{5E862E52-C3EC-465E-8775-CD8ECBC1DB65}\",\"timeout-s\": \"-1\",\"defer-domain\": false,\"fn\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[Fecha]\",\"categorical-filter-kind\": \"group-create\",\"has-apply\": true,\"use-initial-domain-type\": false,\"filter-domain-type\": \"all\",\"worksheet\": \"Barras\",\"create-group-from-filter\": false,\"relational-p",
+      "tabdoc:apply-categorical-filter-updates categorical-filter-cache-info={\"uuid\": \"{5E862E52-C3EC-465E-8775-CD8ECBC1DB65}\",\"timeout-s\": \"-1\",\"defer-domain\": false,\"fn\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[Fecha]\",\"categorical-filter-kind\": \"group-create\",\"has-apply\": true,\"use-initial-domain-type\": false,\"filter-domain-type\": \"all\",\"worksheet\": \"Barras\",\"create-group-from-filter\": false,\"relat",
+      "tabui:set-worksheet-sidepane-mode mode=\"data\""
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "datasource/group",
+      "datasource/group@caption",
+      "datasource/group@name",
+      "datasource/group@name-style=unqualified",
+      "datasource/group@{http://www.tableausoftware.com/xml/user}ui-builder=filter-group",
+      "group/groupfilter",
+      "group/groupfilter@function=empty-level",
+      "group/groupfilter@member=[Fecha]",
+      "group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-domain=database",
+      "group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-enumeration=inclusive",
+      "group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-marker=enumerate"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -151,2 +151,5 @@",
+      "       <group caption=\"Fecha Set 3\" name=\"[Fecha Set 3]\" name-style=\"unqualified\" user:ui-builder=\"filter-group\">",
+      "+        <groupfilter function=\"empty-level\" member=\"[Fecha]\" user:ui-domain=\"database\" user:ui-enumeration=\"inclusive\" user:ui-marker=\"enumerate\"/>",
+      "+      </group>",
+      "+      <group caption=\"Fecha Set 4\" name=\"[Fecha Set 4]\" name-style=\"unqualified\" user:ui-builder=\"filter-group\">",
+      "         <groupfilter function=\"empty-level\" member=\"[Fecha]\" user:ui-domain=\"database\" user:ui-enumeration=\"inclusive\" user:ui-marker=\"enumerate\"/>"
+     ],
+     "diffLines": 6
+    },
+    "Exclude": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:categorical-filter-set-selection-exclusive-deferred categorical-filter-cache-info={\"uuid\": \"{3DCC1652-855C-4159-90FE-E81A16242B20}\",\"timeout-s\": \"-1\",\"defer-domain\": false,\"fn\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[Fecha]\",\"categorical-filter-kind\": \"group-create\",\"has-apply\": true,\"use-initial-domain-type\": false,\"filter-domain-type\": \"all\",\"worksheet\": \"Barras\",\"create-group-from-fi",
+      "tabdoc:apply-categorical-filter-updates categorical-filter-cache-info={\"uuid\": \"{3DCC1652-855C-4159-90FE-E81A16242B20}\",\"timeout-s\": \"-1\",\"defer-domain\": false,\"fn\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[Fecha]\",\"categorical-filter-kind\": \"group-create\",\"has-apply\": true,\"use-initial-domain-type\": false,\"filter-domain-type\": \"all\",\"worksheet\": \"Barras\",\"create-group-from-filter\": false,\"relat",
+      "tabui:set-worksheet-sidepane-mode mode=\"data\""
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "datasource/group",
+      "datasource/group@caption",
+      "datasource/group@name",
+      "datasource/group@name-style=unqualified",
+      "datasource/group@{http://www.tableausoftware.com/xml/user}ui-builder=filter-group",
+      "group/groupfilter",
+      "group/groupfilter@function=except",
+      "group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-domain=database",
+      "group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-enumeration=exclusive",
+      "group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-marker=enumerate",
+      "groupfilter/groupfilter",
+      "groupfilter/groupfilter@function=empty-level",
+      "groupfilter/groupfilter@function=level-members",
+      "groupfilter/groupfilter@level=[Fecha]",
+      "groupfilter/groupfilter@member=[Fecha]"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -155,2 +155,8 @@",
+      "         <groupfilter function=\"empty-level\" member=\"[Fecha]\" user:ui-domain=\"database\" user:ui-enumeration=\"inclusive\" user:ui-marker=\"enumerate\"/>",
+      "+      </group>",
+      "+      <group caption=\"Fecha Set 5\" name=\"[Fecha Set 5]\" name-style=\"unqualified\" user:ui-builder=\"filter-group\">",
+      "+        <groupfilter function=\"except\" user:ui-domain=\"database\" user:ui-enumeration=\"exclusive\" user:ui-marker=\"enumerate\">",
+      "+          <groupfilter function=\"level-members\" level=\"[Fecha]\"/>",
+      "+          <groupfilter function=\"empty-level\" member=\"[Fecha]\"/>",
+      "+        </groupfilter>",
+      "       </group>"
+     ],
+     "diffLines": 9
+    },
+    "Condition > By field:": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True"
+      },
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:apply-categorical-filter-updates categorical-filter-cache-info={\"uuid\": \"{5BDBCBF7-B7F4-4267-9312-6CFF8680ABA2}\",\"timeout-s\": \"-1\",\"defer-domain\": false,\"fn\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[Fecha]\",\"categorical-filter-kind\": \"group-create\",\"has-apply\": true,\"use-initial-domain-type\": false,\"filter-domain-type\": \"all\",\"worksheet\": \"Barras\",\"create-group-from-filter\": false,\"relat",
+      "tabui:set-worksheet-sidepane-mode mode=\"data\""
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "datasource/column",
+      "datasource/column@datatype=real",
+      "datasource/column@name",
+      "datasource/column@role=measure",
+      "datasource/column@type=quantitative",
+      "datasource/group",
+      "datasource/group@caption",
+      "datasource/group@name",
+      "datasource/group@name-style=unqualified",
+      "datasource/group@{http://www.tableausoftware.com/xml/user}ui-builder=filter-group",
+      "group/groupfilter",
+      "group/groupfilter@expression=SUM([Importe]) == 0.",
+      "group/groupfilter@function=filter",
+      "group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-filter-by-field=true",
+      "group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-marker=filter-by",
+      "groupfilter/groupfilter",
+      "groupfilter/groupfilter@function=level-members",
+      "groupfilter/groupfilter@level=[Fecha]",
+      "groupfilter/groupfilter@{http://www.tableausoftware.com/xml/user}ui-enumeration=all",
+      "groupfilter/groupfilter@{http://www.tableausoftware.com/xml/user}ui-marker=enumerate"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -138,2 +138,3 @@",
+      "       <column datatype=\"date\" name=\"[Fecha]\" role=\"dimension\" type=\"ordinal\"/>",
+      "+      <column datatype=\"real\" name=\"[Importe]\" role=\"measure\" type=\"quantitative\"/>",
+      "       <column datatype=\"string\" name=\"[Region]\" role=\"dimension\" type=\"nominal\">",
+      "@@ -160,2 +161,7 @@",
+      "           <groupfilter function=\"empty-level\" member=\"[Fecha]\"/>",
+      "+        </groupfilter>",
+      "+      </group>",
+      "+      <group caption=\"Fecha Set 6\" name=\"[Fecha Set 6]\" name-style=\"unqualified\" user:ui-builder=\"filter-group\">",
+      "+        <groupfilter expression=\"SUM([Importe]) == 0.\" function=\"filter\" user:ui-filter-by-field=\"true\" user:ui-marker=\"filter-by\">",
+      "+          <groupfilter function=\"level-members\" level=\"[Fecha]\" user:ui-enumeration=\"all\" user:ui-marker=\"enumerate\"/>",
+      "         </groupfilter>"
+     ],
+     "diffLines": 12
+    },
+    "Condition > By formula:": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True"
+      },
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:validate-categorical-filter-condition-formula categorical-filter-cache-info={\"uuid\": \"{AFB790B1-96D9-4534-8CF3-D4B7AA1ADCF5}\",\"timeout-s\": \"-1\",\"defer-domain\": false,\"fn\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[Fecha]\",\"categorical-filter-kind\": \"group-create\",\"has-apply\": true,\"use-initial-domain-type\": false,\"filter-domain-type\": \"all\",\"worksheet\": \"Barras\",\"create-group-from-filter\":"
+     ],
+     "closed": [
+      "Create Set",
+      "Tableau"
+     ],
+     "changed": false
+    },
+    "Top > By field:": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True"
+      },
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:validate-categorical-filter-limit-formula categorical-filter-cache-info={\"uuid\": \"{5F10D261-9DF6-4FC8-B4B5-ECC742EEB68F}\",\"timeout-s\": \"-1\",\"defer-domain\": false,\"fn\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[Fecha]\",\"categorical-filter-kind\": \"group-create\",\"has-apply\": true,\"use-initial-domain-type\": false,\"filter-domain-type\": \"all\",\"worksheet\": \"Barras\",\"create-group-from-filter\": fal",
+      "tabdoc:validate-categorical-filter-limit-count categorical-filter-cache-info={\"uuid\": \"{5F10D261-9DF6-4FC8-B4B5-ECC742EEB68F}\",\"timeout-s\": \"-1\",\"defer-domain\": false,\"fn\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[Fecha]\",\"categorical-filter-kind\": \"group-create\",\"has-apply\": true,\"use-initial-domain-type\": false,\"filter-domain-type\": \"all\",\"worksheet\": \"Barras\",\"create-group-from-filter\": false",
+      "tabdoc:apply-categorical-filter-updates categorical-filter-cache-info={\"uuid\": \"{5F10D261-9DF6-4FC8-B4B5-ECC742EEB68F}\",\"timeout-s\": \"-1\",\"defer-domain\": false,\"fn\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[Fecha]\",\"categorical-filter-kind\": \"group-create\",\"has-apply\": true,\"use-initial-domain-type\": false,\"filter-domain-type\": \"all\",\"worksheet\": \"Barras\",\"create-group-from-filter\": false,\"relat",
+      "tabui:set-worksheet-sidepane-mode mode=\"data\""
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "datasource/group",
+      "datasource/group@caption",
+      "datasource/group@name",
+      "datasource/group@name-style=unqualified",
+      "datasource/group@{http://www.tableausoftware.com/xml/user}ui-builder=filter-group",
+      "group/groupfilter",
+      "group/groupfilter@count=10",
+      "group/groupfilter@end=top",
+      "group/groupfilter@function=end",
+      "group/groupfilter@units=records",
+      "group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-marker=end",
+      "group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-top-by-field=true",
+      "groupfilter/groupfilter",
+      "groupfilter/groupfilter@direction=DESC",
+      "groupfilter/groupfilter@expression=SUM([Importe])",
+      "groupfilter/groupfilter@function=level-members",
+      "groupfilter/groupfilter@function=order",
+      "groupfilter/groupfilter@level=[Fecha]",
+      "groupfilter/groupfilter@{http://www.tableausoftware.com/xml/user}ui-enumeration=all",
+      "groupfilter/groupfilter@{http://www.tableausoftware.com/xml/user}ui-marker=enumerate",
+      "groupfilter/groupfilter@{http://www.tableausoftware.com/xml/user}ui-marker=order"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -166,2 +166,9 @@",
+      "           <groupfilter function=\"level-members\" level=\"[Fecha]\" user:ui-enumeration=\"all\" user:ui-marker=\"enumerate\"/>",
+      "+        </groupfilter>",
+      "+      </group>",
+      "+      <group caption=\"Fecha Set 7\" name=\"[Fecha Set 7]\" name-style=\"unqualified\" user:ui-builder=\"filter-group\">",
+      "+        <groupfilter count=\"10\" end=\"top\" function=\"end\" units=\"records\" user:ui-marker=\"end\" user:ui-top-by-field=\"true\">",
+      "+          <groupfilter direction=\"DESC\" expression=\"SUM([Importe])\" function=\"order\" user:ui-marker=\"order\">",
+      "+            <groupfilter function=\"level-members\" level=\"[Fecha]\" user:ui-enumeration=\"all\" user:ui-marker=\"enumerate\"/>",
+      "+          </groupfilter>",
+      "         </groupfilter>"
+     ],
+     "diffLines": 10
+    },
+    "Top > By formula:": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True"
+      },
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:validate-categorical-filter-limit-formula categorical-filter-cache-info={\"uuid\": \"{98E26F67-3EB7-47C2-BCFA-22CBD67238CF}\",\"timeout-s\": \"-1\",\"defer-domain\": false,\"fn\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[Fecha]\",\"categorical-filter-kind\": \"group-create\",\"has-apply\": true,\"use-initial-domain-type\": false,\"filter-domain-type\": \"all\",\"worksheet\": \"Barras\",\"create-group-from-filter\": fal",
+      "tabdoc:validate-categorical-filter-limit-count categorical-filter-cache-info={\"uuid\": \"{98E26F67-3EB7-47C2-BCFA-22CBD67238CF}\",\"timeout-s\": \"-1\",\"defer-domain\": false,\"fn\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[Fecha]\",\"categorical-filter-kind\": \"group-create\",\"has-apply\": true,\"use-initial-domain-type\": false,\"filter-domain-type\": \"all\",\"worksheet\": \"Barras\",\"create-group-from-filter\": false",
+      "tabdoc:apply-categorical-filter-updates categorical-filter-cache-info={\"uuid\": \"{98E26F67-3EB7-47C2-BCFA-22CBD67238CF}\",\"timeout-s\": \"-1\",\"defer-domain\": false,\"fn\": \"[federated.tszse28gx02x3fnwag3qym7mmnuk].[Fecha]\",\"categorical-filter-kind\": \"group-create\",\"has-apply\": true,\"use-initial-domain-type\": false,\"filter-domain-type\": \"all\",\"worksheet\": \"Barras\",\"create-group-from-filter\": false,\"relat",
+      "tabui:set-worksheet-sidepane-mode mode=\"data\""
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "datasource/group",
+      "datasource/group@caption",
+      "datasource/group@name",
+      "datasource/group@name-style=unqualified",
+      "datasource/group@{http://www.tableausoftware.com/xml/user}ui-builder=filter-group",
+      "group/groupfilter",
+      "group/groupfilter@function=level-members",
+      "group/groupfilter@level=[Fecha]",
+      "group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-enumeration=all",
+      "group/groupfilter@{http://www.tableausoftware.com/xml/user}ui-marker=enumerate"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -174,2 +174,5 @@",
+      "         </groupfilter>",
+      "+      </group>",
+      "+      <group caption=\"Fecha Set 8\" name=\"[Fecha Set 8]\" name-style=\"unqualified\" user:ui-builder=\"filter-group\">",
+      "+        <groupfilter function=\"level-members\" level=\"[Fecha]\" user:ui-enumeration=\"all\" user:ui-marker=\"enumerate\"/>",
+      "       </group>"
+     ],
+     "diffLines": 6
+    }
+   },
+   "controls": [
+    {
+     "type": "Edit",
+     "name": "Name:",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Fecha Set",
+     "visible": true
+    },
+    {
+     "type": "RadioButton",
+     "name": "Select from list",
+     "index": 0,
+     "enabled": true,
+     "state": "True",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "RadioButton",
+     "name": "Custom value list",
+     "index": 0,
+     "enabled": true,
+     "state": "False",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "RadioButton",
+     "name": "Use all",
+     "index": 0,
+     "enabled": true,
+     "state": "False",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "Edit",
+     "name": "",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "Edit",
+     "name": "",
+     "index": 1,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "Exclude",
+     "index": 0,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "TabItem",
+     "name": "General",
+     "index": 0,
+     "enabled": true,
+     "state": "True",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "TabItem",
+     "name": "Condition",
+     "index": 0,
+     "enabled": true,
+     "state": "False",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "TabItem",
+     "name": "Top",
+     "index": 0,
+     "enabled": true,
+     "state": "False",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "Button",
+     "name": "OK",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    }
+   ],
+   "tabs": {
+    "Condition": [
+     {
+      "type": "Edit",
+      "name": "Name:",
+      "index": 0,
+      "enabled": true,
+      "state": null,
+      "value": "Fecha Set 6",
+      "visible": true
+     },
+     {
+      "type": "RadioButton",
+      "name": "None",
+      "index": 0,
+      "enabled": true,
+      "state": "True",
+      "value": "",
+      "visible": true
+     },
+     {
+      "type": "RadioButton",
+      "name": "By field:",
+      "index": 0,
+      "enabled": true,
+      "state": "False",
+      "value": "",
+      "visible": true
+     },
+     {
+      "type": "ComboBox",
+      "name": "",
+      "index": 0,
+      "enabled": false,
+      "state": null,
+      "value": "Importe",
+      "visible": true
+     },
+     {
+      "type": "ComboBox",
+      "name": "",
+      "index": 1,
+      "enabled": false,
+      "state": null,
+      "value": "Sum",
+      "visible": true
+     },
+     {
+      "type": "ComboBox",
+      "name": "",
+      "index": 2,
+      "enabled": false,
+      "state": null,
+      "value": "=",
+      "visible": true
+     },
+     {
+      "type": "Edit",
+      "name": "",
+      "index": 0,
+      "enabled": false,
+      "state": null,
+      "value": "0",
+      "visible": true
+     },
+     {
+      "type": "Edit",
+      "name": "Min:",
+      "index": 0,
+      "enabled": false,
+      "state": null,
+      "value": "",
+      "visible": true
+     },
+     {
+      "type": "Edit",
+      "name": "Max:",
+      "index": 0,
+      "enabled": false,
+      "state": null,
+      "value": "",
+      "visible": true
+     },
+     {
+      "type": "RadioButton",
+      "name": "By formula:",
+      "index": 0,
+      "enabled": true,
+      "state": "False",
+      "value": "",
+      "visible": true
+     },
+     {
+      "type": "Edit",
+      "name": "",
+      "index": 1,
+      "enabled": false,
+      "state": null,
+      "value": "",
+      "visible": true
+     },
+     {
+      "type": "TabItem",
+      "name": "General",
+      "index": 0,
+      "enabled": true,
+      "state": "False",
+      "value": "",
+      "visible": true
+     },
+     {
+      "type": "TabItem",
+      "name": "Condition",
+      "index": 0,
+      "enabled": true,
+      "state": "True",
+      "value": "",
+      "visible": true
+     },
+     {
+      "type": "TabItem",
+      "name": "Top",
+      "index": 0,
+      "enabled": true,
+      "state": "False",
+      "value": "",
+      "visible": true
+     },
+     {
+      "type": "Button",
+      "name": "OK",
+      "index": 0,
+      "enabled": true,
+      "state": null,
+      "value": "",
+      "visible": true
+     }
+    ],
+    "Top": [
+     {
+      "type": "Edit",
+      "name": "Name:",
+      "index": 0,
+      "enabled": true,
+      "state": null,
+      "value": "Fecha Set 7",
+      "visible": true
+     },
+     {
+      "type": "RadioButton",
+      "name": "None",
+      "index": 0,
+      "enabled": true,
+      "state": "True",
+      "value": "",
+      "visible": true
+     },
+     {
+      "type": "RadioButton",
+      "name": "By field:",
+      "index": 0,
+      "enabled": true,
+      "state": "False",
+      "value": "",
+      "visible": true
+     },
+     {
+      "type": "ComboBox",
+      "name": "",
+      "index": 0,
+      "enabled": false,
+      "state": null,
+      "value": "Top",
+      "visible": true
+     },
+     {
+      "type": "ComboBox",
+      "name": "",
+      "index": 1,
+      "enabled": false,
+      "state": null,
+      "value": "10",
+      "visible": true
+     },
+     {
+      "type": "Edit",
+      "name": "",
+      "index": 0,
+      "enabled": false,
+      "state": null,
+      "value": "10",
+      "visible": true
+     },
+     {
+      "type": "ComboBox",
+      "name": "",
+      "index": 2,
+      "enabled": false,
+      "state": null,
+      "value": "Importe",
+      "visible": true
+     },
+     {
+      "type": "ComboBox",
+      "name": "",
+      "index": 3,
+      "enabled": false,
+      "state": null,
+      "value": "Sum",
+      "visible": true
+     },
+     {
+      "type": "RadioButton",
+      "name": "By formula:",
+      "index": 0,
+      "enabled": true,
+      "state": "False",
+      "value": "",
+      "visible": true
+     },
+     {
+      "type": "ComboBox",
+      "name": "",
+      "index": 4,
+      "enabled": false,
+      "state": null,
+      "value": "Top",
+      "visible": true
+     },
+     {
+      "type": "ComboBox",
+      "name": "",
+      "index": 5,
+      "enabled": false,
+      "state": null,
+      "value": "10",
+      "visible": true
+     },
+     {
+      "type": "Edit",
+      "name": "",
+      "index": 1,
+      "enabled": false,
+      "state": null,
+      "value": "10",
+      "visible": true
+     },
+     {
+      "type": "Edit",
+      "name": "",
+      "index": 2,
+      "enabled": false,
+      "state": null,
+      "value": "",
+      "visible": true
+     },
+     {
+      "type": "TabItem",
+      "name": "General",
+      "index": 0,
+      "enabled": true,
+      "state": "False",
+      "value": "",
+      "visible": true
+     },
+     {
+      "type": "TabItem",
+      "name": "Condition",
+      "index": 0,
+      "enabled": true,
+      "state": "False",
+      "value": "",
+      "visible": true
+     },
+     {
+      "type": "TabItem",
+      "name": "Top",
+      "index": 0,
+      "enabled": true,
+      "state": "True",
+      "value": "",
+      "visible": true
+     },
+     {
+      "type": "Button",
+      "name": "OK",
+      "index": 0,
+      "enabled": true,
+      "state": null,
+      "value": "",
+      "visible": true
+     }
+    ]
+   }
+  },
+  "Create Parameter": {
+   "source": "Barras · field:Fecha · Create > Parameter...",
+   "effects": {
+    "Name=Texto de prueba": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Fecha Parameter",
+       "after": "Texto de prueba",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:parameter-edit-name actual-parameter-display-name=\"Texto de prueba\" controller-id=\"14\"",
+      "tabdoc:parameter-close-dialog commit-edits=\"true\" controller-id=\"14\"",
+      "tabui:set-worksheet-sidepane-mode mode=\"data\""
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "column/calculation",
+      "column/calculation@class=tableau",
+      "column/calculation@formula=#2025-01-01#",
+      "column/members",
+      "datasource/aliases",
+      "datasource/aliases@enabled=yes",
+      "datasource/column",
+      "datasource/column@caption",
+      "datasource/column@datatype=date",
+      "datasource/column@name",
+      "datasource/column@param-domain-type=list",
+      "datasource/column@role=measure",
+      "datasource/column@type=quantitative",
+      "datasource/column@value=#2025-01-01#",
+      "datasources/datasource",
+      "datasources/datasource@hasconnection=false",
+      "datasources/datasource@inline=true",
+      "datasources/datasource@name",
+      "datasources/datasource@version=18.1",
+      "members/member",
+      "members/member@value=#2025-01-01#",
+      "members/member@value=#2025-01-10#",
+      "members/member@value=#2025-01-13#",
+      "members/member@value=#2025-01-25#",
+      "members/member@value=#2025-02-02#",
+      "members/member@value=#2025-02-11#",
+      "members/member@value=#2025-02-14#",
+      "members/member@value=#2025-02-26#",
+      "members/member@value=#2025-03-03#",
+      "members/member@value=#2025-03-12#",
+      "members/member@value=#2025-03-15#",
+      "members/member@value=#2025-03-27#",
+      "members/member@value=#2025-04-01#",
+      "members/member@value=#2025-04-04#",
+      "members/member@value=#2025-04-13#",
+      "members/member@value=#2025-04-16#",
+      "members/member@value=#2025-05-02#",
+      "members/member@value=#2025-05-05#",
+      "members/member@value=#2025-05-14#",
+      "members/member@value=#2025-05-17#",
+      "members/member@value=#2025-06-03#",
+      "members/member@value=#2025-06-06#",
+      "members/member@value=#2025-06-15#",
+      "members/member@value=#2025-06-18#",
+      "members/member@value=#2025-07-04#",
+      "members/member@value=#2025-07-07#",
+      "members/member@value=#2025-07-16#",
+      "members/member@value=#2025-07-19#",
+      "members/member@value=#2025-08-05#",
+      "members/member@value=#2025-08-08#",
+      "members/member@value=#2025-08-17#",
+      "members/member@value=#2025-08-20#",
+      "members/member@value=#2025-09-06#",
+      "members/member@value=#2025-09-09#",
+      "members/member@value=#2025-09-18#",
+      "members/member@value=#2025-09-21#",
+      "members/member@value=#2025-10-07#",
+      "members/member@value=#2025-10-10#",
+      "members/member@value=#2025-10-19#",
+      "members/member@value=#2025-10-22#",
+      "members/member@value=#2025-11-08#",
+      "members/member@value=#2025-11-11#",
+      "members/member@value=#2025-11-20#",
+      "members/member@value=#2025-11-23#",
+      "members/member@value=#2025-12-09#",
+      "members/member@value=#2025-12-12#",
+      "members/member@value=#2025-12-21#",
+      "members/member@value=#2025-12-24#"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -16,2 +16,58 @@",
+      "   <datasources>",
+      "+    <datasource hasconnection=\"false\" inline=\"true\" name=\"Parameters\" version=\"18.1\">",
+      "+      <aliases enabled=\"yes\"/>",
+      "+      <column caption=\"Texto de prueba\" datatype=\"date\" name=\"[Parameter 0757352278421507]\" param-domain-type=\"list\" role=\"measure\" type=\"quantitative\" value=\"#2025-01-01#\">",
+      "+        <calculation class=\"tableau\" formula=\"#2025-01-01#\"/>",
+      "+        <members>",
+      "+          <member value=\"#2025-01-01#\"/>",
+      "+          <member value=\"#2025-01-10#\"/>",
+      "+          <member value=\"#2025-01-13#\"/>",
+      "+          <member value=\"#2025-01-25#\"/>",
+      "+          <member value=\"#2025-02-02#\"/>",
+      "+          <member value=\"#2025-02-11#\"/>",
+      "+          <member value=\"#2025-02-14#\"/>",
+      "+          <member value=\"#2025-02-26#\"/>",
+      "+          <member value=\"#2025-03-03#\"/>",
+      "+          <member value=\"#2025-03-12#\"/>",
+      "+          <member value=\"#2025-03-15#\"/>",
+      "+          <member value=\"#2025-03-27#\"/>",
+      "+          <member value=\"#2025-04-01#\"/>",
+      "+          <member value=\"#2025-04-04#\"/>",
+      "+          <member value=\"#2025-04-13#\"/>",
+      "+          <member value=\"#2025-04-16#\"/>",
+      "+          <member value=\"#2025-05-02#\"/>",
+      "+          <member value=\"#2025-05-05#\"/>",
+      "+          <member value=\"#2025-05-14#\"/>",
+      "+          <member value=\"#2025-05-17#\"/>",
+      "+          <member value=\"#2025-06-03#\"/>",
+      "+          <member value=\"#2025-06-06#\"/>",
+      "+          <member value=\"#2025-06-15#\"/>",
+      "+          <member value=\"#2025-06-18#\"/>",
+      "+          <member value=\"#2025-07-04#\"/>",
+      "+          <member value=\"#2025-07-07#\"/>",
+      "+          <member value=\"#2025-07-16#\"/>",
+      "+          <member value=\"#2025-07-19#\"/>",
+      "+          <member value=\"#2025-08-05#\"/>",
+      "+          <member value=\"#2025-08-08#\"/>",
+      "+          <member value=\"#2025-08-17#\"/>",
+      "+          <member value=\"#2025-08-20#\"/>",
+      "+          <member value=\"#2025-09-06#\"/>",
+      "+          <member value=\"#2025-09-09#\"/>",
+      "+          <member value=\"#2025-09-18#\"/>",
+      "+          <member value=\"#2025-09-21#\"/>",
+      "+          <member value=\"#2025-10-07#\"/>",
+      "+          <member value=\"#2025-10-10#\"/>",
+      "+          <member value=\"#2025-10-19#\"/>",
+      "+          <member value=\"#2025-10-22#\"/>",
+      "+          <member value=\"#2025-11-08#\"/>",
+      "+          <member value=\"#2025-11-11#\"/>",
+      "+          <member value=\"#2025-11-20#\"/>",
+      "+          <member value=\"#2025-11-23#\"/>",
+      "+          <member value=\"#2025-12-09#\"/>",
+      "+          <member value=\"#2025-12-12#\"/>",
+      "+          <member value=\"#2025-12-21#\"/>",
+      "+          <member value=\"#2025-12-24#\"/>",
+      "+        </members>",
+      "+      </column>",
+      "+    </datasource>",
+      "     <datasource caption=\"Ventas\" inline=\"true\" name=\"federated.tszse28gx02x3fnwag3qym7mmnuk\" version=\"18.1\">"
+     ],
+     "diffLines": 59
+    },
+    "All": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:parameter-edit-domain controller-id=\"15\" parameter-domain-type=\"any\"",
+      "tabdoc:parameter-close-dialog commit-edits=\"true\" controller-id=\"15\"",
+      "tabui:set-worksheet-sidepane-mode mode=\"data\""
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "column/calculation",
+      "column/calculation@class=tableau",
+      "column/calculation@formula=#2025-01-01#",
+      "datasource/column",
+      "datasource/column@caption",
+      "datasource/column@datatype=date",
+      "datasource/column@name",
+      "datasource/column@param-domain-type=any",
+      "datasource/column@role=measure",
+      "datasource/column@type=quantitative",
+      "datasource/column@value=#2025-01-01#"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -70,2 +70,5 @@",
+      "         </members>",
+      "+      </column>",
+      "+      <column caption=\"Fecha Parameter\" datatype=\"date\" name=\"[Parameter 0757352278491141]\" param-domain-type=\"any\" role=\"measure\" type=\"quantitative\" value=\"#2025-01-01#\">",
+      "+        <calculation class=\"tableau\" formula=\"#2025-01-01#\"/>",
+      "       </column>"
+     ],
+     "diffLines": 6
+    },
+    "All > Current value=Texto de prueba": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True"
+      },
+      {
+       "acted": true,
+       "before": "1/1/2025",
+       "after": "Texto de prueba",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:parameter-edit-domain controller-id=\"17\" parameter-domain-type=\"any\"",
+      "tabdoc:parameter-edit-value controller-id=\"17\" value-string=\"Texto de prueba\""
+     ],
+     "closed": [
+      "Create Parameter"
+     ],
+     "changed": false
+    },
+    "Range": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:parameter-edit-domain controller-id=\"18\" parameter-domain-type=\"range\"",
+      "tabdoc:parameter-close-dialog commit-edits=\"true\" controller-id=\"18\"",
+      "tabui:set-worksheet-sidepane-mode mode=\"data\""
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "column/calculation",
+      "column/calculation@class=tableau",
+      "column/calculation@formula=#2025-01-01#",
+      "column/range",
+      "column/range@max=#2025-12-24#",
+      "column/range@min=#2025-01-01#",
+      "datasource/column",
+      "datasource/column@caption",
+      "datasource/column@datatype=date",
+      "datasource/column@name",
+      "datasource/column@param-domain-type=range",
+      "datasource/column@role=measure",
+      "datasource/column@type=quantitative",
+      "datasource/column@value=#2025-01-01#"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -73,2 +73,6 @@",
+      "         <calculation class=\"tableau\" formula=\"#2025-01-01#\"/>",
+      "+      </column>",
+      "+      <column caption=\"Fecha Parameter 2\" datatype=\"date\" name=\"[Parameter 0757352278687755]\" param-domain-type=\"range\" role=\"measure\" type=\"quantitative\" value=\"#2025-01-01#\">",
+      "+        <calculation class=\"tableau\" formula=\"#2025-01-01#\"/>",
+      "+        <range max=\"#2025-12-24#\" min=\"#2025-01-01#\"/>",
+      "       </column>"
+     ],
+     "diffLines": 7
+    },
+    "Range > Current value=Texto de prueba": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True"
+      },
+      {
+       "acted": true,
+       "before": "1/1/2025",
+       "after": "Texto de prueba",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:parameter-edit-domain controller-id=\"20\" parameter-domain-type=\"range\"",
+      "tabdoc:parameter-edit-value controller-id=\"20\" value-string=\"Texto de prueba\""
+     ],
+     "closed": [
+      "Create Parameter"
+     ],
+     "changed": false
+    },
+    "Range > Minimum=Texto de prueba": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True"
+      },
+      {
+       "acted": true,
+       "before": "1/1/2025",
+       "after": "Texto de prueba",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:parameter-edit-domain controller-id=\"21\" parameter-domain-type=\"range\"",
+      "tabdoc:parameter-edit-min-range-value controller-id=\"21\" value-string=\"Texto de prueba\""
+     ],
+     "closed": [
+      "Create Parameter"
+     ],
+     "changed": false
+    },
+    "Range > Maximum=Texto de prueba": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True"
+      },
+      {
+       "acted": true,
+       "before": "12/24/2025",
+       "after": "Texto de prueba",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:parameter-edit-domain controller-id=\"22\" parameter-domain-type=\"range\"",
+      "tabdoc:parameter-edit-max-range-value controller-id=\"22\" value-string=\"Texto de prueba\""
+     ],
+     "closed": [
+      "Create Parameter"
+     ],
+     "changed": false
+    },
+    "When workbook opens": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "False",
+       "after": "True",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabdoc:parameter-set-domain-to-refreshable controller-id=\"23\"",
+      "tabdoc:parameter-close-dialog commit-edits=\"true\" controller-id=\"23\"",
+      "tabui:set-worksheet-sidepane-mode mode=\"data\""
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "column/calculation",
+      "column/calculation@class=tableau",
+      "column/calculation@formula=#2025-01-01#",
+      "column/members",
+      "datasource/column",
+      "datasource/column@caption",
+      "datasource/column@datatype=date",
+      "datasource/column@name",
+      "datasource/column@param-domain-type=list",
+      "datasource/column@role=measure",
+      "datasource/column@type=quantitative",
+      "datasource/column@value=#2025-01-01#",
+      "members/member",
+      "members/member@value=#2025-01-01#",
+      "members/member@value=#2025-01-10#",
+      "members/member@value=#2025-01-13#",
+      "members/member@value=#2025-01-25#",
+      "members/member@value=#2025-02-02#",
+      "members/member@value=#2025-02-11#",
+      "members/member@value=#2025-02-14#",
+      "members/member@value=#2025-02-26#",
+      "members/member@value=#2025-03-03#",
+      "members/member@value=#2025-03-12#",
+      "members/member@value=#2025-03-15#",
+      "members/member@value=#2025-03-27#",
+      "members/member@value=#2025-04-01#",
+      "members/member@value=#2025-04-04#",
+      "members/member@value=#2025-04-13#",
+      "members/member@value=#2025-04-16#",
+      "members/member@value=#2025-05-02#",
+      "members/member@value=#2025-05-05#",
+      "members/member@value=#2025-05-14#",
+      "members/member@value=#2025-05-17#",
+      "members/member@value=#2025-06-03#",
+      "members/member@value=#2025-06-06#",
+      "members/member@value=#2025-06-15#",
+      "members/member@value=#2025-06-18#",
+      "members/member@value=#2025-07-04#",
+      "members/member@value=#2025-07-07#",
+      "members/member@value=#2025-07-16#",
+      "members/member@value=#2025-07-19#",
+      "members/member@value=#2025-08-05#",
+      "members/member@value=#2025-08-08#",
+      "members/member@value=#2025-08-17#",
+      "members/member@value=#2025-08-20#",
+      "members/member@value=#2025-09-06#",
+      "members/member@value=#2025-09-09#",
+      "members/member@value=#2025-09-18#",
+      "members/member@value=#2025-09-21#",
+      "members/member@value=#2025-10-07#",
+      "members/member@value=#2025-10-10#",
+      "members/member@value=#2025-10-19#",
+      "members/member@value=#2025-10-22#",
+      "members/member@value=#2025-11-08#",
+      "members/member@value=#2025-11-11#",
+      "members/member@value=#2025-11-20#",
+      "members/member@value=#2025-11-23#",
+      "members/member@value=#2025-12-09#",
+      "members/member@value=#2025-12-12#",
+      "members/member@value=#2025-12-21#",
+      "members/member@value=#2025-12-24#"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -77,2 +77,55 @@",
+      "         <range max=\"#2025-12-24#\" min=\"#2025-01-01#\"/>",
+      "+      </column>",
+      "+      <column caption=\"Fecha Parameter 3\" datatype=\"date\" name=\"[Parameter 0757352279044117]\" param-domain-type=\"list\" role=\"measure\" type=\"quantitative\" value=\"#2025-01-01#\">",
+      "+        <calculation class=\"tableau\" formula=\"#2025-01-01#\"/>",
+      "+        <members>",
+      "+          <member value=\"#2025-01-01#\"/>",
+      "+          <member value=\"#2025-01-10#\"/>",
+      "+          <member value=\"#2025-01-13#\"/>",
+      "+          <member value=\"#2025-01-25#\"/>",
+      "+          <member value=\"#2025-02-02#\"/>",
+      "+          <member value=\"#2025-02-11#\"/>",
+      "+          <member value=\"#2025-02-14#\"/>",
+      "+          <member value=\"#2025-02-26#\"/>",
+      "+          <member value=\"#2025-03-03#\"/>",
+      "+          <member value=\"#2025-03-12#\"/>",
+      "+          <member value=\"#2025-03-15#\"/>",
+      "+          <member value=\"#2025-03-27#\"/>",
+      "+          <member value=\"#2025-04-01#\"/>",
+      "+          <member value=\"#2025-04-04#\"/>",
+      "+          <member value=\"#2025-04-13#\"/>",
+      "+          <member value=\"#2025-04-16#\"/>",
+      "+          <member value=\"#2025-05-02#\"/>",
+      "+          <member value=\"#2025-05-05#\"/>",
+      "+          <member value=\"#2025-05-14#\"/>",
+      "+          <member value=\"#2025-05-17#\"/>",
+      "+          <member value=\"#2025-06-03#\"/>",
+      "+          <member value=\"#2025-06-06#\"/>",
+      "+          <member value=\"#2025-06-15#\"/>",
+      "+          <member value=\"#2025-06-18#\"/>",
+      "+          <member value=\"#2025-07-04#\"/>",
+      "+          <member value=\"#2025-07-07#\"/>",
+      "+          <member value=\"#2025-07-16#\"/>",
+      "+          <member value=\"#2025-07-19#\"/>",
+      "+          <member value=\"#2025-08-05#\"/>",
+      "+          <member value=\"#2025-08-08#\"/>",
+      "+          <member value=\"#2025-08-17#\"/>",
+      "+          <member value=\"#2025-08-20#\"/>",
+      "+          <member value=\"#2025-09-06#\"/>",
+      "+          <member value=\"#2025-09-09#\"/>",
+      "+          <member value=\"#2025-09-18#\"/>",
+      "+          <member value=\"#2025-09-21#\"/>",
+      "+          <member value=\"#2025-10-07#\"/>",
+      "+          <member value=\"#2025-10-10#\"/>",
+      "+          <member value=\"#2025-10-19#\"/>",
+      "+          <member value=\"#2025-10-22#\"/>",
+      "+          <member value=\"#2025-11-08#\"/>",
+      "+          <member value=\"#2025-11-11#\"/>",
+      "+          <member value=\"#2025-11-20#\"/>",
+      "+          <member value=\"#2025-11-23#\"/>",
+      "+          <member value=\"#2025-12-09#\"/>",
+      "+          <member value=\"#2025-12-12#\"/>",
+      "+          <member value=\"#2025-12-21#\"/>",
+      "+          <member value=\"#2025-12-24#\"/>",
+      "+        </members>",
+      "       </column>"
+     ],
+     "diffLines": 56
+    }
+   },
+   "controls": [
+    {
+     "type": "Edit",
+     "name": "Name",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Fecha Parameter",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "Data type : Date",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "Display format : 1/1/2025",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "Current value : 1/1/2025",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "Value when workbook opens : Current value",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "RadioButton",
+     "name": "All",
+     "index": 0,
+     "enabled": true,
+     "state": "False",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "RadioButton",
+     "name": "List",
+     "index": 0,
+     "enabled": true,
+     "state": "True",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "RadioButton",
+     "name": "Range",
+     "index": 0,
+     "enabled": true,
+     "state": "False",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "RadioButton",
+     "name": "Fixed",
+     "index": 0,
+     "enabled": true,
+     "state": "True",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "RadioButton",
+     "name": "When workbook opens",
+     "index": 0,
+     "enabled": true,
+     "state": "False",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "Add values from",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "Button",
+     "name": "OK",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    }
+   ]
+  },
+  "Create Custom Date": {
+   "source": "Barras · field:Fecha · Create > Custom date...",
+   "effects": {
+    "#0=Texto de prueba": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Fecha (Exact)",
+       "after": "Texto de prueba",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [
+      "Create Custom Date [Fecha]",
+      "Tableau"
+     ],
+     "changed": false
+    }
+   },
+   "controls": [
+    {
+     "type": "Edit",
+     "name": "",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Fecha (Exact)",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Exact Date",
+     "visible": true
+    },
+    {
+     "type": "RadioButton",
+     "name": "Date Part",
+     "index": 0,
+     "enabled": false,
+     "state": "False",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "RadioButton",
+     "name": "Date Value",
+     "index": 0,
+     "enabled": true,
+     "state": "True",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "Button",
+     "name": "OK",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    }
+   ]
+  },
+  "Edit Comment": {
+   "source": "Barras · field:Fecha · Default Properties > Comment...",
+   "effects": {
+    "#0=Texto de prueba": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Benton Sans Book",
+       "after": "Texto de prueba",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "column/desc",
+      "desc/formatted-text",
+      "formatted-text/run",
+      "formatted-text/run@fontname=Texto de prueba"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -253,3 +253,9 @@",
+      "       </column>",
+      "-      <column datatype=\"date\" name=\"[Fecha]\" role=\"dimension\" type=\"ordinal\"/>",
+      "+      <column datatype=\"date\" name=\"[Fecha]\" role=\"dimension\" type=\"ordinal\">",
+      "+        <desc>",
+      "+          <formatted-text>",
+      "+            <run fontname=\"Texto de prueba\">Æ\t</run>",
+      "+          </formatted-text>",
+      "+        </desc>",
+      "+      </column>",
+      "       <column datatype=\"real\" name=\"[Importe]\" role=\"measure\" type=\"quantitative\"/>",
+      "@@ -397,3 +403,9 @@",
+      "             <column datatype=\"string\" name=\"[Canal]\" role=\"dimension\" type=\"nominal\"/>",
+      "-            <column datatype=\"date\" name=\"[Fecha]\" role=\"dimension\" type=\"ordinal\"/>",
+      "+            <column datatype=\"date\" name=\"[Fecha]\" role=\"dimension\" type=\"ordinal\">",
+      "+              <desc>",
+      "+                <formatted-text>",
+      "+                  <run fontname=\"Texto de prueba\">Æ\t</run>",
+      "+                </formatted-text>",
+      "+              </desc>",
+      "+            </column>",
+      "             <column datatype=\"real\" name=\"[Importe]\" role=\"measure\" type=\"quantitative\"/>"
+     ],
+     "diffLines": 22
+    },
+    "#1=1000": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "10",
+       "after": "10",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": true,
+     "added": [],
+     "removed": [],
+     "diff": [
+      "@@ -256,3 +256,3 @@",
+      "           <formatted-text>",
+      "-            <run fontname=\"Texto de prueba\">Æ\t</run>",
+      "+            <run fontname=\"Texto de prueba\">Æ\t        </run>",
+      "           </formatted-text>",
+      "@@ -406,3 +406,3 @@",
+      "                 <formatted-text>",
+      "-                  <run fontname=\"Texto de prueba\">Æ\t</run>",
+      "+                  <run fontname=\"Texto de prueba\">Æ\t        </run>",
+      "                 </formatted-text>"
+     ],
+     "diffLines": 10
+    },
+    "#0": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": true,
+     "added": [],
+     "removed": [],
+     "diff": [
+      "@@ -256,3 +256,3 @@",
+      "           <formatted-text>",
+      "-            <run fontname=\"Texto de prueba\">Æ\t        </run>",
+      "+            <run fontname=\"Texto de prueba\">Æ                </run>",
+      "           </formatted-text>",
+      "@@ -406,3 +406,3 @@",
+      "                 <formatted-text>",
+      "-                  <run fontname=\"Texto de prueba\">Æ\t        </run>",
+      "+                  <run fontname=\"Texto de prueba\">Æ                </run>",
+      "                 </formatted-text>"
+     ],
+     "diffLines": 10
+    },
+    "#1": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": false
+    },
+    "#2": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Off",
+       "after": "On",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": false
+    },
+    "RichTextDialog_TextEdit=Texto de prueba": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "                ",
+       "after": "Texto de prueba",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [],
+     "closed": [],
+     "changed": true,
+     "added": [],
+     "removed": [],
+     "diff": [
+      "@@ -256,3 +256,3 @@",
+      "           <formatted-text>",
+      "-            <run fontname=\"Texto de prueba\">Æ                </run>",
+      "+            <run fontname=\"Texto de prueba\">Texto de prueba</run>",
+      "           </formatted-text>",
+      "@@ -406,3 +406,3 @@",
+      "                 <formatted-text>",
+      "-                  <run fontname=\"Texto de prueba\">Æ                </run>",
+      "+                  <run fontname=\"Texto de prueba\">Texto de prueba</run>",
+      "                 </formatted-text>"
+     ],
+     "diffLines": 10
+    }
+   },
+   "controls": [
+    {
+     "type": "ComboBox",
+     "name": "",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Benton Sans Book",
+     "visible": true
+    },
+    {
+     "type": "Edit",
+     "name": "",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Benton Sans Book",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "",
+     "index": 1,
+     "enabled": true,
+     "state": null,
+     "value": "10",
+     "visible": true
+    },
+    {
+     "type": "Edit",
+     "name": "",
+     "index": 1,
+     "enabled": true,
+     "state": null,
+     "value": "10",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "",
+     "index": 0,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "",
+     "index": 1,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "CheckBox",
+     "name": "",
+     "index": 2,
+     "enabled": true,
+     "state": "Off",
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "Edit",
+     "name": "RichTextDialog_TextEdit",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "Button",
+     "name": "OK",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    }
+   ]
+  },
+  "Edit Colors": {
+   "source": "Barras · field:Fecha · Default Properties > Color...",
+   "effects": {},
+   "controls": [
+    {
+     "type": "ComboBox",
+     "name": "",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Automatic",
+     "visible": true
+    },
+    {
+     "type": "Button",
+     "name": "OK",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    }
+   ]
+  },
+  "Edit Shape": {
+   "source": "Barras · field:Fecha · Default Properties > Shape...",
+   "effects": {},
+   "controls": [
+    {
+     "type": "ComboBox",
+     "name": "",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Default",
+     "visible": true
+    },
+    {
+     "type": "Button",
+     "name": "OK",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    }
+   ]
+  },
+  "Default Date Format": {
+   "source": "Barras · field:Fecha · Default Properties > Date Format...",
+   "effects": {},
+   "controls": [
+    {
+     "type": "Button",
+     "name": "OK",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    }
+   ]
+  },
+  "Create Hierarchy": {
+   "source": "Barras · field:Fecha · Hierarchy > Create Hierarchy...",
+   "effects": {
+    "Name:=Texto de prueba": {
+     "acts": [
+      {
+       "acted": true,
+       "before": "Fecha",
+       "after": "Texto de prueba",
+       "pressed": "OK"
+      }
+     ],
+     "commands": [
+      "tabui:set-worksheet-sidepane-mode mode=\"data\""
+     ],
+     "closed": [],
+     "changed": true,
+     "added": [
+      "datasource/drill-paths",
+      "drill-path/field",
+      "drill-paths/drill-path",
+      "drill-paths/drill-path@name"
+     ],
+     "removed": [],
+     "diff": [
+      "@@ -303,2 +303,7 @@",
+      "       </group>",
+      "+      <drill-paths>",
+      "+        <drill-path name=\"Texto de prueba\">",
+      "+          <field>[Fecha]</field>",
+      "+        </drill-path>",
+      "+      </drill-paths>",
+      "       <layout dim-ordering=\"alphabetic\" measure-ordering=\"alphabetic\" show-structure=\"true\"/>"
+     ],
+     "diffLines": 8
+    }
+   },
+   "controls": [
+    {
+     "type": "Edit",
+     "name": "Name:",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "Fecha",
+     "visible": true
+    },
+    {
+     "type": "Button",
+     "name": "OK",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    }
+   ]
+  },
+  "Custom Split": {
+   "source": "Barras · field:Region · Transform > Split",
+   "effects": {
+    "#0=Texto de prueba": {
+     "error": "Desktop did not answer: timed out",
+     "slow": true
+    }
+   },
+   "controls": [
+    {
+     "type": "Edit",
+     "name": "",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    },
+    {
+     "type": "ComboBox",
+     "name": "",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "First",
+     "visible": true
+    },
+    {
+     "type": "Button",
+     "name": "OK",
+     "index": 0,
+     "enabled": true,
+     "state": null,
+     "value": "",
+     "visible": true
+    }
+   ]
+  }
  }
 }
