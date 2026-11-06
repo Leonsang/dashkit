@@ -29,13 +29,17 @@ CLI: `create --type simple-linechart --box 20,240,740,300 --dataset @ingresos --
   espera a que estén vinculados, porque una plantilla sin campos se rechaza.
 - **Variantes:** `type="dimension-filter@casilla"` usa la plantilla de esa variante, sembrada desde el menú
   del editor. Los nombres de variante están en `controles-y-filtros.md`.
+  Verificado por el MCP el 2026-11-06: `dimension-filter@casilla` sale con el preset `control-checkbox`.
 - **`slots`:** huecos propios de algunos tipos, además de dimensiones y métricas:
   - dispersión: `x_metric`, `y_metric`, `bubble_size`;
   - área y línea: `breakdown`;
   - treemap: `color`.
 
-  `{"slots": {"breakdown": ["canal"]}}`. La CLI no los acepta; usa el MCP o un spec.
-- **Después de crear varios**, `reload_report` para verlos pintados.
+  `{"slots": {"breakdown": ["canal"]}}`. La CLI no los acepta; usa el MCP o un spec. Verificado el 2026-11-06
+  en un gráfico de áreas: el campo queda en `dimensions.breakdown`.
+- **Después de crear varios**, `reload_report` para verlos pintados. Los `warnings` de `bound` pueden traer el error
+  que el componente tenía en la plantilla (reason 266 o 267): es un error pegado; recarga y diagnostica antes
+  de juzgar.
 - **Guardados rechazados:** la herramienta los detecta (`updatePage` con error), los registra y devuelve el
   arreglo conocido (`fix`). No cambies `display.type` de un JSON clonado: da `updatePage 400`.
 
