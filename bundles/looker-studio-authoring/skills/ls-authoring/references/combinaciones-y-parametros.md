@@ -43,11 +43,36 @@ fija el tipo de unión y coloca y vincula el gráfico nuevo. Tarda unos 20 segun
 - **`update_blend blendId name joinType`** (CLI `blends update <id> --name N --join inner`): renombra y cambia
   el tipo de unión. Con `inner` se quedan solo las filas que existen en todas las tablas.
 
+### Tablas y claves de una combinación existente: update_blend
+
+```json
+{"blendId": "dataViewResource...", "addTable": {"dataset": "@sesiones", "dimensions": ["pais"], "metrics": ["SUM(sesiones)"]}}
+{"blendId": "dataViewResource...", "setKeys": {"table": 3, "keys": ["pais", "anio_mes"], "joinType": "inner"}}
+{"blendId": "dataViewResource...", "removeTable": 3}
+```
+
+CLI: `blends update <id> --add-table '{...}'`, `--keys 3:pais,anio_mes` (o `3:pais=country` si los
+nombres difieren), `--remove-table 3`.
+
+- **`addTable`:** une una tabla más (hasta 5). Sin `keys`, une por las dimensiones de la tabla nueva que ya
+  están en la combinación; `joinType` por defecto `left`.
+- **`setKeys`:** las claves de la unión que añade la tabla `table` (2 a n). Cada clave es un nombre de campo
+  que existe en los dos lados, o `{left, right}`. Un campo que la tabla aún no tiene se añade.
+- **`removeTable`:** quita la tabla de esa posición (la primera no). Si otra unión usa uno de sus campos como
+  clave, cambia antes esas claves.
+- **Después:** vuelve a vincular los gráficos que usan la combinación (`bind_fields_to_component`) y recarga.
+  Sin eso muestran el reason 31, "los datos subyacentes han cambiado".
+- **Granularidad:** cada tabla se agrega por todas sus dimensiones antes de unirse. Si una tabla tiene una
+  dimensión que no es clave (p. ej. el mes) y otra se une solo por país, las métricas de la segunda se repiten
+  por cada mes. Une por todas las dimensiones que compartan.
+- Verificado el 2026-11-06: quitar y volver a añadir una tabla da las mismas cifras, fila a fila, que la
+  combinación que crea el editor, y una clave doble (país y mes) da las del gráfico de la página.
+
 - **`delete_blend blendId`** (CLI `blends delete <id>`): borra una combinación que ningún gráfico usa. Pide
   `LS_ALLOW_DELETE=1` y confirmación del usuario.
 
-**No se puede (todavía):** añadir o quitar tablas de una combinación existente, ni cambiar sus claves. Crea
-otra con `create_blend`.
+**No se puede (todavía):** combinaciones con uniones no lineales (las que no crea el editor): la herramienta
+lo detecta y da error.
 
 ## Parámetros: add_parameter
 

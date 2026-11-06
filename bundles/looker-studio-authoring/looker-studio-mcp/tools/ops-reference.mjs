@@ -98,7 +98,7 @@ const CLI = [
   ['arrange <id...> --to front|back|forward|backward|report|page', 'arrange_components', 'MCP: `op`, `pageId`'],
   ['blends [list]', 'list_blends', ''],
   ['blends create <spec.json|json>', 'create_blend', 'Mismo objeto que el MCP'],
-  ['blends update <blendId> [--name] [--join]', 'update_blend', 'MCP: `joinType`'],
+  ['blends update <blendId> [--name] [--join] [--add-table] [--remove-table] [--keys]', 'update_blend', 'MCP: `joinType`, `addTable`, `removeTable`, `setKeys {table, keys}`; CLI `--keys 2:pais,anio_mes=mes`'],
   ['blends delete <blendId>', 'delete_blend', 'MCP: además `LS_ALLOW_DELETE=1`'],
   ['params add --name N [--type] [--values a:Etiqueta,b] [--min --max] [--default] [--source]', 'add_parameter', 'MCP: `values` [{value,label}], `allowed`, `id`'],
   ['params update <nombre> [--name] [--values] [--min --max] [--default] [--source]', 'update_parameter', '`--name` es el nombre nuevo (MCP `newName`)'],

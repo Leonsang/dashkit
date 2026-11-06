@@ -45,7 +45,7 @@ motor y no lleva el control de `LS_ALLOW_WRITE`.
 | `list_orphan_components` | **specs** | Componentes del informe que ningun spec referencia (segun cada <spec>.state.json): restos de pruebas o anadidos a mano. | `informe-como-codigo.md` |
 | `create_blend` | **tables**, **box**, name, joinType, type, pageId, dimensions, metrics | Crea una combinacion de 2 a 5 origenes y un grafico sobre ella, como "Combinar datos" del editor: crea graficos temporales con los campos de cada tabla, los combina (une por las dimensiones que comparten), los borra, nombra la combinacion, fija el tipo de union y coloca y vincula el grafico nuevo. | `combinaciones-y-parametros.md` |
 | `list_blends` | — | Combinaciones (blends) del informe: id, nombre, origenes, uniones con su tipo y claves, campos y graficos que las usan. | `combinaciones-y-parametros.md` |
-| `update_blend` | **blendId**, name, joinType | Cambia el nombre de una combinacion y/o el tipo de todas sus uniones (inner, left, right, full, cross). | `combinaciones-y-parametros.md` |
+| `update_blend` | **blendId**, name, joinType, addTable, removeTable, setKeys | Cambia una combinacion existente: nombre, tipo de todas sus uniones (joinType), una tabla mas (addTable: dataset, dimensions, metrics, keys y joinType; por defecto une por las dimensiones que ya tiene la combinacion), quitar una tabla (removeTable: posicion 2..n) y las claves de la union que anade la tabla n (setKeys {table, keys}). | `combinaciones-y-parametros.md` |
 | `delete_blend` | **blendId** | Borra una combinacion (blend) que ningun grafico usa. | `combinaciones-y-parametros.md` |
 | `add_parameter` | **name**, type, allowed, values, min, max, default, source, id | Crea un parametro en un origen con el formulario del editor (panel Datos > Anadir un parametro). | `combinaciones-y-parametros.md` |
 | `update_parameter` | **name**, newName, values, min, max, default, source | Cambia un parametro existente en su formulario (icono fx del parametro en el panel Datos): nombre visible (newName), valores de la lista (values, sustituye todas las filas), rango (min, max) y valor por defecto. | `combinaciones-y-parametros.md` |
@@ -89,7 +89,7 @@ Cada comando de la CLI tiene su herramienta MCP. Lo que cambia, en la última co
 | `arrange <id...> --to front\|back\|forward\|backward\|report\|page` | `arrange_components` | MCP: `op`, `pageId` |
 | `blends [list]` | `list_blends` | — |
 | `blends create <spec.json\|json>` | `create_blend` | Mismo objeto que el MCP |
-| `blends update <blendId> [--name] [--join]` | `update_blend` | MCP: `joinType` |
+| `blends update <blendId> [--name] [--join] [--add-table] [--remove-table] [--keys]` | `update_blend` | MCP: `joinType`, `addTable`, `removeTable`, `setKeys {table, keys}`; CLI `--keys 2:pais,anio_mes=mes` |
 | `blends delete <blendId>` | `delete_blend` | MCP: además `LS_ALLOW_DELETE=1` |
 | `params add --name N [--type] [--values a:Etiqueta,b] [--min --max] [--default] [--source]` | `add_parameter` | MCP: `values` [{value,label}], `allowed`, `id` |
 | `params update <nombre> [--name] [--values] [--min --max] [--default] [--source]` | `update_parameter` | `--name` es el nombre nuevo (MCP `newName`) |

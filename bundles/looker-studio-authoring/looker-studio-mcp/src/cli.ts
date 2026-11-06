@@ -67,7 +67,8 @@ Paginas y tema
 Combinaciones y parametros
   blends [list]                    Combinaciones: origenes, uniones, claves, campos, graficos
   blends create <spec.json|json>   {tables:[{dataset,dimensions,metrics}], box:{x,y,width,height}, name, joinType, type, dimensions, metrics}
-  blends update <blendId> [--name N] [--join inner|left|right|full|cross]
+  blends update <blendId> [--name N] [--join inner|left|right|full|cross] [--add-table <json|archivo>]
+               [--remove-table N] [--keys <tabla>:<campo>[=<campo der.>],...]
   blends delete <blendId>          Solo si ningun grafico la usa
   params add --name N [--type text|integer|decimal|boolean] [--values a:Etiqueta,b] [--min N --max N]
              [--default V] [--source <id|@campo>]   (en formulas, por su nombre visible)
@@ -228,7 +229,22 @@ async function main(): Promise<unknown> {
         return createBlend(JSON.parse(existsSync(arg) ? readFileSync(arg, 'utf8') : arg));
       }
       if (pos[0] === 'delete') return deleteBlend(need(pos[1], 'blendId'));
-      if (pos[0] === 'update') return updateBlend({ blendId: need(pos[1], 'blendId'), ...(typeof flags.name === 'string' ? { name: flags.name } : {}), ...(typeof flags.join === 'string' ? { joinType: flags.join } : {}) });
+      if (pos[0] === 'update') {
+        const json = (v: string) => JSON.parse(existsSync(v) ? readFileSync(v, 'utf8') : v);
+        // --keys 2:pais,anio_mes=mes  -> table 2, keys pais=pais and anio_mes=mes
+        const setKeys = typeof flags.keys === 'string' ? (() => {
+          const [t, ks] = flags.keys.split(':');
+          return { table: Number(t), keys: (ks ?? '').split(',').filter(Boolean).map((k) => { const [l, r] = k.split('='); return { left: l!, right: r ?? l! }; }) };
+        })() : undefined;
+        return updateBlend({
+          blendId: need(pos[1], 'blendId'),
+          ...(typeof flags.name === 'string' ? { name: flags.name } : {}),
+          ...(typeof flags.join === 'string' ? { joinType: flags.join } : {}),
+          ...(typeof flags['add-table'] === 'string' ? { addTable: json(flags['add-table']) } : {}),
+          ...(typeof flags['remove-table'] === 'string' ? { removeTable: Number(flags['remove-table']) } : {}),
+          ...(setKeys ? { setKeys } : {}),
+        });
+      }
       return listBlends();
     }
     case 'params': {

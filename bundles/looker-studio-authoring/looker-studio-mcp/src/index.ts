@@ -688,9 +688,30 @@ server.registerTool(
 server.registerTool(
   'update_blend',
   {
-    title: 'Renombrar o cambiar la union de una combinacion',
-    description: 'Cambia el nombre de una combinacion y/o el tipo de todas sus uniones (inner, left, right, full, cross).',
-    inputSchema: { blendId: z.string().min(1), name: z.string().optional(), joinType: z.enum(['left', 'inner', 'right', 'full', 'cross']).optional() },
+    title: 'Cambiar una combinacion',
+    description:
+      'Cambia una combinacion existente: nombre, tipo de todas sus uniones (joinType), una tabla mas (addTable: dataset, dimensions, ' +
+      'metrics, keys y joinType; por defecto une por las dimensiones que ya tiene la combinacion), quitar una tabla (removeTable: ' +
+      'posicion 2..n) y las claves de la union que anade la tabla n (setKeys {table, keys}). keys: nombres de campo iguales en los dos ' +
+      'lados, o pares {left, right}. Los campos nuevos se vinculan despues con bind_fields_to_component.',
+    inputSchema: {
+      blendId: z.string().min(1),
+      name: z.string().optional(),
+      joinType: z.enum(['left', 'inner', 'right', 'full', 'cross']).optional(),
+      addTable: z.object({
+        dataset: z.string().min(1).describe('Id de origen o "@campo"'),
+        dimensions: z.array(z.string()).min(1),
+        metrics: z.array(z.string()).optional().describe('"campo" o "SUM(campo)"'),
+        keys: z.array(z.union([z.string(), z.object({ left: z.string(), right: z.string() })])).optional(),
+        joinType: z.enum(['left', 'inner', 'right', 'full', 'cross']).optional(),
+      }).optional(),
+      removeTable: z.number().int().min(2).max(5).optional(),
+      setKeys: z.object({
+        table: z.number().int().min(2).max(5),
+        keys: z.array(z.union([z.string(), z.object({ left: z.string(), right: z.string() })])),
+        joinType: z.enum(['left', 'inner', 'right', 'full', 'cross']).optional(),
+      }).optional(),
+    },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
   },
   async (args) => run(() => updateBlend(args as never)),

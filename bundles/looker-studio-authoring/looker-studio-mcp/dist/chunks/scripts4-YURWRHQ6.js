@@ -4,6 +4,7 @@ import {
   blendSnapshotScript,
   componentPointsScript,
   deleteBlendScript,
+  editBlendScript,
   ensureSeedScript,
   listBlendsScript,
   menuItemPointScript,
@@ -14,13 +15,14 @@ import {
   setDisplayKeysScript,
   setTextScript,
   updateBlendScript
-} from "./chunk-MZHUAOKZ.js";
+} from "./chunk-CFG575DG.js";
 import "./chunk-5QDPZ4I5.js";
 export {
   arrangeScript,
   blendSnapshotScript,
   componentPointsScript,
   deleteBlendScript,
+  editBlendScript,
   ensureSeedScript,
   listBlendsScript,
   menuItemPointScript,

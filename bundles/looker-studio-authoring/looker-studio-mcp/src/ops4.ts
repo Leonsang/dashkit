@@ -22,6 +22,7 @@ import {
   blendSnapshotScript,
   componentPointsScript,
   deleteBlendScript,
+  editBlendScript,
   listBlendsScript,
   menuItemPointScript,
   navDispatchScript,
@@ -34,6 +35,9 @@ import {
   type BlendInfo,
 } from './looker/scripts4.js';
 import { createComponent, deleteComponent, openReport, reloadReport, resolveDataset } from './ops.js';
+import { readDataSourcesScript } from './looker/scripts.js';
+import { probeReadScript, probeStartScript } from './looker/scripts3.js';
+import { getTemplate } from './knowledge.js';
 
 const T = Number(process.env.LS_EVAL_TIMEOUT_MS ?? 15_000);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -141,14 +145,81 @@ export async function listBlends(): Promise<BlendInfo[]> {
   return evaluateOn(await getReportPage(), T, listBlendsScript);
 }
 
-export async function updateBlend(args: { blendId: string; name?: string; joinType?: string }) {
+/** Source fields of a data source, probing it with a temporary unsaved component if no chart uses it. */
+async function datasetFields(page: Page, id: string): Promise<Array<{ id: string; name: string; dataType: string }>> {
+  const ds = await evaluateOn(page, T, readDataSourcesScript);
+  const hit = ds.dataSources.find((d) => d.dataSourceId === id);
+  if (hit && hit.fields.length) return hit.fields.map((f) => ({ id: f.id, name: f.name, dataType: f.dataType }));
+  const st = await evaluateOn(page, T, probeStartScript, { datasetId: id, template: getTemplate('kpi-metric') });
+  if (!st.ok) throw new Error(`No se pudo leer el esquema del origen ${id}: ${st.error}`);
+  let pr: { ready: boolean; fields: Array<{ id: string; name: string; dataType: number }> } = { ready: false, fields: [] };
+  for (let i = 0; i < 24 && !pr.ready; i++) {
+    await sleep(250);
+    pr = await evaluateOn(page, T, probeReadScript, i === 23);
+  }
+  if (!pr.fields.length) throw new Error(`El origen ${id} no devolvio campos.`);
+  const DT: Record<number, string> = { 0: 'TEXT', 2: 'NUMBER', 3: 'BOOLEAN', 6: 'DATE', 7: 'DATETIME' };
+  return pr.fields.map((f) => ({ id: f.id, name: f.name, dataType: DT[f.dataType] ?? 'TEXT' }));
+}
+
+const keyPairs = (keys: Array<string | { left: string; right: string }> | undefined) =>
+  (keys ?? []).map((k) => (typeof k === 'string' ? { left: k, right: k } : k));
+
+export async function updateBlend(args: {
+  blendId: string;
+  name?: string;
+  joinType?: string;
+  /** Joins one more table (to the tables already there). keys: field names, or {left, right} pairs. */
+  addTable?: { dataset: string; dimensions: string[]; metrics?: string[]; keys?: Array<string | { left: string; right: string }>; joinType?: string };
+  /** 1-based position of a table to take out (not the first). */
+  removeTable?: number;
+  /** New keys of the join that adds table `table` (2..n). */
+  setKeys?: { table: number; keys: Array<string | { left: string; right: string }>; joinType?: string };
+}) {
   const { page } = await requireEditMode();
-  const jt = args.joinType ? JOIN_TYPES[args.joinType] : undefined;
-  if (args.joinType && jt === undefined) throw new Error(`joinType no valido: ${args.joinType}. Usa ${Object.keys(JOIN_TYPES).join(', ')}.`);
-  const r = await evaluateOn(page, T, updateBlendScript, { blendId: args.blendId, ...(args.name !== undefined ? { name: args.name } : {}), ...(jt !== undefined ? { joinType: jt } : {}) });
-  if (!r.ok) throw new Error(r.error);
-  await sleep(2500);
-  return (await evaluateOn(page, T, listBlendsScript)).find((b) => b.blendId === args.blendId);
+  const jtOf = (j: string | undefined) => {
+    if (j === undefined) return undefined;
+    const v = JOIN_TYPES[j];
+    if (v === undefined) throw new Error(`joinType no valido: ${j}. Usa ${Object.keys(JOIN_TYPES).join(', ')}.`);
+    return v;
+  };
+  const jt = jtOf(args.joinType);
+  const out: Record<string, unknown> = {};
+  if (args.addTable || args.removeTable !== undefined || args.setKeys) {
+    const blend = (await evaluateOn(page, T, listBlendsScript)).find((b) => b.blendId === args.blendId);
+    if (!blend) throw new Error(`Combinacion ${args.blendId} no encontrada (ids en list_blends).`);
+    const ids = new Set<string>(blend.tables);
+    let addTable: { datasetId: string; dimensions: string[]; metrics: string[]; joinType: number; keys: Array<{ left: string; right: string }> } | undefined;
+    if (args.addTable) {
+      const datasetId = (await resolveDataset(page, args.addTable.dataset))!;
+      ids.add(datasetId);
+      // Default keys: the new table's dimensions that the blend already has (same name).
+      const have = new Set(blend.fields.map((f) => f.toLowerCase()));
+      const keys = args.addTable.keys ? keyPairs(args.addTable.keys) : args.addTable.dimensions.filter((d) => have.has(d.toLowerCase())).map((d) => ({ left: d, right: d }));
+      const joinType = jtOf(args.addTable.joinType) ?? JOIN_TYPES.left!;
+      if (!keys.length && joinType !== JOIN_TYPES.cross) throw new Error('La tabla nueva no comparte ninguna dimension con la combinacion: indica keys o joinType cross.');
+      addTable = { datasetId, dimensions: args.addTable.dimensions, metrics: args.addTable.metrics ?? [], joinType, keys };
+    }
+    const schemas: Record<string, Array<{ id: string; name: string; dataType: string }>> = {};
+    for (const id of ids) schemas[id] = await datasetFields(page, id);
+    const r = await evaluateOn(page, T, editBlendScript, {
+      blendId: args.blendId,
+      schemas,
+      ...(addTable ? { addTable } : {}),
+      ...(args.removeTable !== undefined ? { removeTable: args.removeTable } : {}),
+      ...(args.setKeys ? { setKeys: { table: args.setKeys.table, keys: keyPairs(args.setKeys.keys), ...(args.setKeys.joinType ? { joinType: jtOf(args.setKeys.joinType)! } : {}) } } : {}),
+    });
+    if (!r.ok) throw new Error(r.error);
+    Object.assign(out, { tableCount: r.tables, ...(r.addedFields?.length ? { addedFields: r.addedFields } : {}), ...(r.removedFields?.length ? { removedFields: r.removedFields } : {}) });
+    await sleep(2500);
+  }
+  if (args.name !== undefined || jt !== undefined) {
+    const r = await evaluateOn(page, T, updateBlendScript, { blendId: args.blendId, ...(args.name !== undefined ? { name: args.name } : {}), ...(jt !== undefined ? { joinType: jt } : {}) });
+    if (!r.ok) throw new Error(r.error);
+    await sleep(2500);
+  }
+  const blend = (await evaluateOn(page, T, listBlendsScript)).find((b) => b.blendId === args.blendId);
+  return { ...blend, ...out, ...(out.removedFields ? { note: 'Los graficos que usaban los campos quitados quedan en error: vuelve a vincularlos.' } : {}) };
 }
 
 export async function deleteBlend(blendId: string) {

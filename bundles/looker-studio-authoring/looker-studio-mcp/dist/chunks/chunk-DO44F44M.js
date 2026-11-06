@@ -21,6 +21,7 @@ import {
   blendSnapshotScript,
   componentPointsScript,
   deleteBlendScript,
+  editBlendScript,
   listBlendsScript,
   menuItemPointScript,
   navDispatchScript,
@@ -30,7 +31,7 @@ import {
   setDisplayKeysScript,
   setTextScript,
   updateBlendScript
-} from "./chunk-MZHUAOKZ.js";
+} from "./chunk-CFG575DG.js";
 import {
   CDPSessionEvent,
   CdpBrowser,
@@ -4044,7 +4045,7 @@ async function addSourceField(opts) {
   });
   const open = async () => {
     if (!await clickText2("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) {
-      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-XMZA3CAS.js");
+      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-35MGXMIH.js");
       await selectSourceChart2(page, opts.source && opts.source.startsWith("@") ? opts.source : void 0);
       if (!await clickText2("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) throw new Error('No se encontro "Anadir un campo" en el panel Datos.');
     }
@@ -4061,7 +4062,7 @@ async function addSourceField(opts) {
     let src = await editorSource();
     const byField = !!opts.source && opts.source.startsWith("@");
     if (byField) {
-      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-XMZA3CAS.js");
+      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-35MGXMIH.js");
       await clickText2("button", /^(Cancelar|Cancel)$/);
       await close();
       await selectSourceChart2(page, opts.source);
@@ -4312,7 +4313,7 @@ async function createComponent(o) {
   const hasFields = !!(o.dimensions?.length || o.metrics?.length || o.slots && Object.keys(o.slots).length);
   const NO_DIMS = ["gauge-viz", "bulletchart", "kpi-metric"];
   const t0 = Date.now();
-  const { ensureSeedScript } = await import("./scripts4-U5ZBSV4F.js");
+  const { ensureSeedScript } = await import("./scripts4-YURWRHQ6.js");
   const seed = await evaluateOn(page, T2, ensureSeedScript, o.pageId);
   if (seed.seedId) await sleep2(1500);
   const res = await evaluateOn(page, T2, createComponentScript, {
@@ -4505,17 +4506,17 @@ async function patchIfNeeded(page, id, c) {
   }
   if (c.text !== void 0) {
     const t = typeof c.text === "string" ? { text: c.text } : c.text;
-    const { setText: setText2 } = await import("./ops4-XMZA3CAS.js");
+    const { setText: setText2 } = await import("./ops4-35MGXMIH.js");
     await setText2(id, t.text, { ...t.size ? { size: t.size } : {}, ...t.bold ? { bold: true } : {}, ...t.color ? { color: t.color } : {} });
     changes.push("text");
   }
   if (c.style) {
-    const { setStyle: setStyle2 } = await import("./ops4-XMZA3CAS.js");
+    const { setStyle: setStyle2 } = await import("./ops4-35MGXMIH.js");
     await setStyle2(id, c.style);
     changes.push("style");
   }
   if (c.parameter) {
-    const { setControlParameter: setControlParameter2 } = await import("./ops4-XMZA3CAS.js");
+    const { setControlParameter: setControlParameter2 } = await import("./ops4-35MGXMIH.js");
     await setControlParameter2(id, c.parameter);
     changes.push(`parameter:${c.parameter}`);
   }
@@ -4637,14 +4638,66 @@ async function withViewport(page, fn) {
 async function listBlends() {
   return evaluateOn(await getReportPage(), T3, listBlendsScript);
 }
+async function datasetFields(page, id) {
+  const ds = await evaluateOn(page, T3, readDataSourcesScript);
+  const hit = ds.dataSources.find((d) => d.dataSourceId === id);
+  if (hit && hit.fields.length) return hit.fields.map((f) => ({ id: f.id, name: f.name, dataType: f.dataType }));
+  const st = await evaluateOn(page, T3, probeStartScript, { datasetId: id, template: getTemplate("kpi-metric") });
+  if (!st.ok) throw new Error(`No se pudo leer el esquema del origen ${id}: ${st.error}`);
+  let pr = { ready: false, fields: [] };
+  for (let i = 0; i < 24 && !pr.ready; i++) {
+    await sleep3(250);
+    pr = await evaluateOn(page, T3, probeReadScript, i === 23);
+  }
+  if (!pr.fields.length) throw new Error(`El origen ${id} no devolvio campos.`);
+  const DT = { 0: "TEXT", 2: "NUMBER", 3: "BOOLEAN", 6: "DATE", 7: "DATETIME" };
+  return pr.fields.map((f) => ({ id: f.id, name: f.name, dataType: DT[f.dataType] ?? "TEXT" }));
+}
+var keyPairs = (keys) => (keys ?? []).map((k) => typeof k === "string" ? { left: k, right: k } : k);
 async function updateBlend(args) {
   const { page } = await requireEditMode();
-  const jt = args.joinType ? JOIN_TYPES[args.joinType] : void 0;
-  if (args.joinType && jt === void 0) throw new Error(`joinType no valido: ${args.joinType}. Usa ${Object.keys(JOIN_TYPES).join(", ")}.`);
-  const r = await evaluateOn(page, T3, updateBlendScript, { blendId: args.blendId, ...args.name !== void 0 ? { name: args.name } : {}, ...jt !== void 0 ? { joinType: jt } : {} });
-  if (!r.ok) throw new Error(r.error);
-  await sleep3(2500);
-  return (await evaluateOn(page, T3, listBlendsScript)).find((b) => b.blendId === args.blendId);
+  const jtOf = (j) => {
+    if (j === void 0) return void 0;
+    const v = JOIN_TYPES[j];
+    if (v === void 0) throw new Error(`joinType no valido: ${j}. Usa ${Object.keys(JOIN_TYPES).join(", ")}.`);
+    return v;
+  };
+  const jt = jtOf(args.joinType);
+  const out = {};
+  if (args.addTable || args.removeTable !== void 0 || args.setKeys) {
+    const blend2 = (await evaluateOn(page, T3, listBlendsScript)).find((b) => b.blendId === args.blendId);
+    if (!blend2) throw new Error(`Combinacion ${args.blendId} no encontrada (ids en list_blends).`);
+    const ids = new Set(blend2.tables);
+    let addTable;
+    if (args.addTable) {
+      const datasetId = await resolveDataset(page, args.addTable.dataset);
+      ids.add(datasetId);
+      const have = new Set(blend2.fields.map((f) => f.toLowerCase()));
+      const keys = args.addTable.keys ? keyPairs(args.addTable.keys) : args.addTable.dimensions.filter((d) => have.has(d.toLowerCase())).map((d) => ({ left: d, right: d }));
+      const joinType = jtOf(args.addTable.joinType) ?? JOIN_TYPES.left;
+      if (!keys.length && joinType !== JOIN_TYPES.cross) throw new Error("La tabla nueva no comparte ninguna dimension con la combinacion: indica keys o joinType cross.");
+      addTable = { datasetId, dimensions: args.addTable.dimensions, metrics: args.addTable.metrics ?? [], joinType, keys };
+    }
+    const schemas = {};
+    for (const id of ids) schemas[id] = await datasetFields(page, id);
+    const r = await evaluateOn(page, T3, editBlendScript, {
+      blendId: args.blendId,
+      schemas,
+      ...addTable ? { addTable } : {},
+      ...args.removeTable !== void 0 ? { removeTable: args.removeTable } : {},
+      ...args.setKeys ? { setKeys: { table: args.setKeys.table, keys: keyPairs(args.setKeys.keys), ...args.setKeys.joinType ? { joinType: jtOf(args.setKeys.joinType) } : {} } } : {}
+    });
+    if (!r.ok) throw new Error(r.error);
+    Object.assign(out, { tableCount: r.tables, ...r.addedFields?.length ? { addedFields: r.addedFields } : {}, ...r.removedFields?.length ? { removedFields: r.removedFields } : {} });
+    await sleep3(2500);
+  }
+  if (args.name !== void 0 || jt !== void 0) {
+    const r = await evaluateOn(page, T3, updateBlendScript, { blendId: args.blendId, ...args.name !== void 0 ? { name: args.name } : {}, ...jt !== void 0 ? { joinType: jt } : {} });
+    if (!r.ok) throw new Error(r.error);
+    await sleep3(2500);
+  }
+  const blend = (await evaluateOn(page, T3, listBlendsScript)).find((b) => b.blendId === args.blendId);
+  return { ...blend, ...out, ...out.removedFields ? { note: "Los graficos que usaban los campos quitados quedan en error: vuelve a vincularlos." } : {} };
 }
 async function deleteBlend(blendId) {
   const { page } = await requireEditMode();

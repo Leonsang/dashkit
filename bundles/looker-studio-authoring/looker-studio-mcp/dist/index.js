@@ -8,7 +8,7 @@ import {
   getReportLayout,
   sanitizeLearning,
   writesAllowed
-} from "./chunks/chunk-LEEVQRKN.js";
+} from "./chunks/chunk-CYFVTT56.js";
 import {
   addFilter,
   addPage,
@@ -64,10 +64,10 @@ import {
   updateParameter,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-LHYHSSJM.js";
+} from "./chunks/chunk-DO44F44M.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
-import "./chunks/chunk-MZHUAOKZ.js";
+import "./chunks/chunk-CFG575DG.js";
 import "./chunks/chunk-FAVAKK4W.js";
 import "./chunks/chunk-GIAQTVDD.js";
 import "./chunks/chunk-BGDW2RS3.js";
@@ -37410,9 +37410,26 @@ server.registerTool(
 server.registerTool(
   "update_blend",
   {
-    title: "Renombrar o cambiar la union de una combinacion",
-    description: "Cambia el nombre de una combinacion y/o el tipo de todas sus uniones (inner, left, right, full, cross).",
-    inputSchema: { blendId: external_exports.string().min(1), name: external_exports.string().optional(), joinType: external_exports.enum(["left", "inner", "right", "full", "cross"]).optional() },
+    title: "Cambiar una combinacion",
+    description: "Cambia una combinacion existente: nombre, tipo de todas sus uniones (joinType), una tabla mas (addTable: dataset, dimensions, metrics, keys y joinType; por defecto une por las dimensiones que ya tiene la combinacion), quitar una tabla (removeTable: posicion 2..n) y las claves de la union que anade la tabla n (setKeys {table, keys}). keys: nombres de campo iguales en los dos lados, o pares {left, right}. Los campos nuevos se vinculan despues con bind_fields_to_component.",
+    inputSchema: {
+      blendId: external_exports.string().min(1),
+      name: external_exports.string().optional(),
+      joinType: external_exports.enum(["left", "inner", "right", "full", "cross"]).optional(),
+      addTable: external_exports.object({
+        dataset: external_exports.string().min(1).describe('Id de origen o "@campo"'),
+        dimensions: external_exports.array(external_exports.string()).min(1),
+        metrics: external_exports.array(external_exports.string()).optional().describe('"campo" o "SUM(campo)"'),
+        keys: external_exports.array(external_exports.union([external_exports.string(), external_exports.object({ left: external_exports.string(), right: external_exports.string() })])).optional(),
+        joinType: external_exports.enum(["left", "inner", "right", "full", "cross"]).optional()
+      }).optional(),
+      removeTable: external_exports.number().int().min(2).max(5).optional(),
+      setKeys: external_exports.object({
+        table: external_exports.number().int().min(2).max(5),
+        keys: external_exports.array(external_exports.union([external_exports.string(), external_exports.object({ left: external_exports.string(), right: external_exports.string() })])),
+        joinType: external_exports.enum(["left", "inner", "right", "full", "cross"]).optional()
+      }).optional()
+    },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true }
   },
   async (args) => run(() => updateBlend(args))

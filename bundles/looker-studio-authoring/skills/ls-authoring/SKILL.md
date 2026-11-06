@@ -66,8 +66,7 @@ usuario trabaje desde la terminal o en scripts.
 
 ## Límites conocidos
 
-- **Combinaciones:** se crean, renombran, cambian de unión y borran; no se pueden añadir tablas ni cambiar
-  claves de una existente.
+- **Combinaciones:** se crean, renombran, cambian de unión, de tablas y de claves, y se borran.
 - **Parámetros:** se crean, cambian, borran y enlazan a controles; los de informe (textos dinámicos) son
   manuales.
 - **Interfaz no oficial:** una actualización de Looker Studio puede romper los scripts. Si

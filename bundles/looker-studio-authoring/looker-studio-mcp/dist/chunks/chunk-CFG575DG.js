@@ -315,6 +315,140 @@ function setDisplayKeysScript(args) {
     return { ok: false, error: String(e && e.message) };
   }
 }
+function editBlendScript(args) {
+  const w = window;
+  try {
+    const inj = w.angular.element(document.body).injector();
+    const report = inj.get("legoUndoRedoService").report;
+    const res = report.config.resource && report.config.resource.dataViewResource || {};
+    const cur = res[args.blendId];
+    if (!cur || !cur.blockDatasource) return { ok: false, error: `Combinacion ${args.blendId} no encontrada (ids en list_blends).` };
+    const copy = JSON.parse(JSON.stringify(cur));
+    const bd = copy.blockDatasource;
+    const root = bd.blocks && bd.blocks[0] && bd.blocks[0].treeQueryBlockConfig;
+    if (!root || !root.join) return { ok: false, error: "La combinacion no tiene la forma esperada (arbol de uniones)." };
+    const tables = [];
+    const joins = [];
+    const flat = (n) => {
+      if (n.query) {
+        tables.push(n.query);
+        return true;
+      }
+      const j = n.join;
+      if (!j) return false;
+      if (!flat(j.left)) return false;
+      if (!j.right || !j.right.query) return false;
+      tables.push(j.right.query);
+      joins.push({ type: j.type, condition: j.condition });
+      return true;
+    };
+    if (!flat({ join: root.join })) return { ok: false, error: "Arbol de uniones no lineal: editalo en el editor de combinaciones." };
+    const fields = bd.datasourceBlock.fields;
+    const conceptTable = /* @__PURE__ */ new Map();
+    tables.forEach((t, i) => (t.concepts || []).forEach((c) => conceptTable.set(c.id.name, i)));
+    const outName = (concept) => (fields.find((f) => f.queryTimeTransformation.dataTransformation.sourceFieldName === concept) || {}).outputName;
+    const DT = { TEXT: 100, NUMBER: 2, BOOLEAN: 1, DATE: 8, DATETIME: 9 };
+    const AGG = { AVG: 1, COUNT: 2, COUNT_DISTINCT: 3, MAX: 4, MIN: 5, SUM: 6 };
+    const rnd = () => "qt_" + Math.random().toString(36).slice(2, 12).padEnd(10, "0");
+    const added = [];
+    const conceptFor = (i, ref, metric) => {
+      const m = /^([A-Z_]+)\((.+)\)$/i.exec(ref.trim());
+      const nm = (m ? m[2] : ref).trim();
+      const agg = m ? AGG[m[1].toUpperCase()] : metric ? AGG.SUM : void 0;
+      if (m && agg === void 0) throw new Error(`Agregacion "${m[1]}" no soportada.`);
+      const t = tables[i];
+      const sch = args.schemas[String(t.datasourceId)] || [];
+      const f = sch.find((x) => x.id === nm) || sch.find((x) => x.name.toLowerCase() === nm.toLowerCase());
+      if (!f) throw new Error(`El campo "${nm}" no esta en el origen ${t.datasourceId}.`);
+      const have = (t.concepts || []).find((c) => c.queryTimeTransformation.dataTransformation.sourceFieldName === f.id && (c.queryTimeTransformation.dataTransformation.aggregation ?? void 0) === agg);
+      if (have) return have.id.name;
+      const qt = rnd();
+      const dt = { sourceFieldName: f.id };
+      if (agg !== void 0) dt.aggregation = agg;
+      (t.concepts = t.concepts || []).push({ id: { id: "t0." + qt, name: qt, namespace: "t0" }, semantic: [], queryTimeTransformation: { dataTransformation: dt, displayTransformation: {} }, isDummy: false });
+      conceptTable.set(qt, i);
+      const base = f.id + "_dv";
+      const n = fields.filter((x) => String(x.field.name).startsWith(base)).length;
+      const tpl = fields[0] ? JSON.parse(JSON.stringify(fields[0])) : { columnType: 0, enabled: true, conceptType: 0, params: [], property: [], isRepeated: false, isDefault: false, ancestors: [], lookerFilterOnlyFieldAllowedValues: [] };
+      tpl.field = { ns: "t0", name: base + n, simpleName: base + n };
+      tpl.outputName = f.name;
+      tpl.dataType = DT[f.dataType] ?? 100;
+      tpl.conceptType = 0;
+      tpl.queryTimeTransformation = { dataTransformation: { sourceFieldName: qt } };
+      let at = -1;
+      fields.forEach((x, k) => {
+        const ti = conceptTable.get(x.queryTimeTransformation.dataTransformation.sourceFieldName);
+        if (ti !== void 0 && ti <= i) at = k;
+      });
+      fields.splice(at + 1, 0, tpl);
+      added.push(f.name);
+      return qt;
+    };
+    const leftConcept = (upto, name) => {
+      for (let i = 0; i < upto; i++) {
+        const c = (tables[i].concepts || []).find((x) => {
+          const o = outName(x.id.name);
+          const sf = x.queryTimeTransformation.dataTransformation.sourceFieldName;
+          return x.queryTimeTransformation.dataTransformation.aggregation === void 0 && (o && o.toLowerCase() === name.toLowerCase() || sf === name);
+        });
+        if (c) return c.id.name;
+      }
+      return conceptFor(0, name, false);
+    };
+    const cond = (pairs, idx) => {
+      if (!pairs.length) return null;
+      return { and: { conditions: pairs.map((p) => ({ boolean: { joinKeyPair: { leftName: leftConcept(idx, p.left), rightName: conceptFor(idx, p.right, false) } } })) } };
+    };
+    let removedFields = [];
+    if (args.removeTable !== void 0) {
+      const t = args.removeTable - 1;
+      if (t < 1 || t >= tables.length) return { ok: false, error: `removeTable debe ir de 2 a ${tables.length} (la primera tabla no se quita).` };
+      if (tables.length <= 2) return { ok: false, error: "Una combinacion necesita al menos 2 tablas: borra la combinacion." };
+      const gone = new Set((tables[t].concepts || []).map((c) => c.id.name));
+      tables.splice(t, 1);
+      joins.splice(t - 1, 1);
+      for (const j of joins) {
+        const refs = JSON.stringify(j.condition || {}).match(/qt_[a-z0-9]+/g) || [];
+        if (refs.some((r) => gone.has(r))) return { ok: false, error: "Otra union usa como clave un campo de esa tabla: cambia antes sus claves (setKeys)." };
+      }
+      removedFields = fields.filter((f) => gone.has(f.queryTimeTransformation.dataTransformation.sourceFieldName)).map((f) => String(f.outputName));
+      for (let k = fields.length - 1; k >= 0; k--) if (gone.has(fields[k].queryTimeTransformation.dataTransformation.sourceFieldName)) fields.splice(k, 1);
+      conceptTable.clear();
+      tables.forEach((tb, ti) => (tb.concepts || []).forEach((c) => conceptTable.set(c.id.name, ti)));
+    }
+    if (args.addTable) {
+      if (tables.length >= 5) return { ok: false, error: "Una combinacion admite como mucho 5 tablas." };
+      tables.push({ concepts: [], datasourceId: args.addTable.datasetId });
+      const i = tables.length - 1;
+      for (const d of args.addTable.dimensions) conceptFor(i, d, false);
+      for (const m of args.addTable.metrics) conceptFor(i, m, true);
+      const c = cond(args.addTable.keys, i);
+      if (!c && args.addTable.joinType !== 101) return { ok: false, error: "Sin claves de union: indica keys o joinType cross." };
+      joins.push({ type: args.addTable.joinType, condition: c || void 0 });
+    }
+    if (args.setKeys) {
+      const i = args.setKeys.table - 1;
+      if (i < 1 || i >= tables.length) return { ok: false, error: `setKeys.table debe ir de 2 a ${tables.length}.` };
+      const c = cond(args.setKeys.keys, i);
+      joins[i - 1] = { type: args.setKeys.joinType ?? joins[i - 1].type, condition: c || void 0 };
+    }
+    const ord = fields.map((f, k) => ({ f, k, t: conceptTable.get(f.queryTimeTransformation.dataTransformation.sourceFieldName) ?? 99 }));
+    ord.sort((a, b) => a.t - b.t || a.k - b.k);
+    fields.splice(0, fields.length, ...ord.map((x) => x.f));
+    let node = { query: tables[0] };
+    for (let i = 1; i < tables.length; i++) {
+      const j = { left: node, right: { query: tables[i] }, type: joins[i - 1].type };
+      if (joins[i - 1].condition) j.condition = joins[i - 1].condition;
+      node = { join: j };
+    }
+    root.join = node.join;
+    report.updateResourceById("dataViewResource", args.blendId, copy);
+    inj.get("wrapperSaveService").save([report]);
+    return { ok: true, tables: tables.length, removedFields, addedFields: added };
+  } catch (e) {
+    return { ok: false, error: String(e && e.message) };
+  }
+}
 
 export {
   navPagesScript,
@@ -330,5 +464,6 @@ export {
   setTextScript,
   deleteBlendScript,
   ensureSeedScript,
-  setDisplayKeysScript
+  setDisplayKeysScript,
+  editBlendScript
 };
