@@ -509,15 +509,19 @@ export async function addSourceField(opts: { name: string; formula: string; sour
     return true;
   };
   const editorSource = () => page.evaluate(() => {
-    const t = Array.from(document.querySelectorAll('*')).find((e) => (e as HTMLElement).offsetParent && e.children.length === 0 && /^(Campos disponibles|Available fields)$/.test(((e as HTMLElement).innerText || '').trim()));
-    const panel = t?.closest('div')?.parentElement;
-    const name = panel ? Array.from(panel.querySelectorAll('*')).map((e) => ((e as HTMLElement).innerText || '').trim()).find((s) => s && !/^(Campos disponibles|Available fields|Buscar campos)/.test(s) && s.length > 3) : '';
-    // The scope chip ("Ambito: Insertada") carries an icon, so match the word, not the whole text.
-    const word = /\b(Insertada|Embedded|Reutilizable|Reusable)\b/;
-    const hit = Array.from(document.querySelectorAll('*'))
+    const leaves = Array.from(document.querySelectorAll('*')).filter((e) => (e as HTMLElement).offsetParent && e.children.length === 0) as HTMLElement[];
+    // The field editor's header bar: "<source name>   Ambito: [Insertada]   Credenciales ...".
+    const label = leaves.find((e) => /^(Ámbito|Ambito|Scope):?$/.test((e.innerText || '').trim()));
+    let row: HTMLElement | null = label ? label.parentElement : null;
+    while (row && row.parentElement && (row.innerText || '').length < 30) row = row.parentElement;
+    const rowLeaves = row ? leaves.filter((e) => row!.contains(e)) : [];
+    const name = rowLeaves.length ? (rowLeaves[0]!.innerText || '').trim() : '';
+    // The scope chip carries an icon whose ligature text sticks to the word ("linkInsertada"): no word boundary before it.
+    const word = /(Insertada|Embedded|Reutilizable|Reusable)\b/;
+    const hit = (row ? [row] : []).concat(Array.from(document.querySelectorAll('*')) as HTMLElement[])
       .map((e) => ((e as HTMLElement).offsetParent ? (e as HTMLElement).innerText || '' : ''))
-      .find((t) => t.length < 40 && word.test(t));
-    return { name: (name || '').split('\n')[0], scope: hit ? hit.match(word)![1]! : '' };
+      .find((t) => t.length < 40 && word.test(t)) || '';
+    return { name: name.split('\n')[0]!, scope: hit ? hit.match(word)![1]! : '' };
   });
   const open = async () => {
     if (!(await clickText('button', /^(add_circle\s*)?(Añadir un campo|Add a field)$/))) {
@@ -533,7 +537,14 @@ export async function addSourceField(opts: { name: string; formula: string; sour
   const close = async () => { await clickText('button', /^(Hecho|Done)$/); await sleep(2000); };
   try {
     await open();
-    let src = await editorSource();
+    // The scope chip renders a moment after the editor: an empty read made the first call fail as
+    // "reusable (unknown scope)" (benchmark 2026-11-07). Read again until it shows.
+    const readSource = async () => { let r = await editorSource(); for (let i = 0; i < 12 && !r.scope; i++) { await sleep(500); r = await editorSource(); } return r; };
+    let src = await readSource();
+    // With a single source in the report there is nothing to choose: a name is not looked up in the panel
+    // (clicking the source's name there opens the data source editor and takes the tab off the report).
+    const dsList = await evaluateOn(page, T, readDataSourcesScript).then((r) => (Array.isArray(r.dataSources) ? r.dataSources : Object.values(r.dataSources as Record<string, never>))).catch(() => [] as unknown[]);
+    if (opts.source && !opts.source.startsWith('@') && dsList.length === 1) opts = { ...opts, source: undefined };
     // "@campo" picks the source through a chart of it (selected before opening); a name is matched in the panel.
     const byField = !!opts.source && opts.source.startsWith('@');
     if (byField) {
@@ -542,7 +553,7 @@ export async function addSourceField(opts: { name: string; formula: string; sour
       await close();
       await selectSourceChart(page, opts.source);
       await open();
-      src = await editorSource();
+      src = await readSource();
     }
     if (opts.source && !byField && !src.name.toLowerCase().includes(opts.source.toLowerCase())) {
       // The editor opened on another source: expand the requested one in the panel and retry once.
@@ -552,13 +563,15 @@ export async function addSourceField(opts: { name: string; formula: string; sour
       if (!(await clickText('*', new RegExp(escaped, 'i')))) throw new Error(`No hay un origen "${opts.source}" en el panel Datos.`);
       await sleep(1500);
       await open();
-      src = await editorSource();
+      src = await readSource();
       if (!src.name.toLowerCase().includes(opts.source.toLowerCase())) throw new Error(`El editor de campos abrio "${src.name}", no "${opts.source}".`);
     }
     if (!/^(Insertada|Embedded)$/.test(src.scope) && !opts.allowShared) {
       await clickText('button', /^(Cancelar|Cancel)$/);
       await close();
-      throw new Error(`El origen "${src.name}" es reutilizable (${src.scope || 'ambito desconocido'}): el campo apareceria en todos los informes que lo usan. Repite con allowShared si es lo que quieres.`);
+      throw new Error(src.scope
+        ? `El origen es reutilizable (${src.scope}): el campo apareceria en todos los informes que lo usan. Repite con allowShared si es lo que quieres.`
+        : 'No se pudo leer en el editor de campos si el origen es insertado o reutilizable: repite; si sabes que es insertado (p. ej. el de un CSV subido a este informe), anade allowShared.');
     }
     const fieldId = await page.evaluate((name: string, formula: string) => {
       // Only the field editor's inputs: once the source has a parameter, the properties panel shows

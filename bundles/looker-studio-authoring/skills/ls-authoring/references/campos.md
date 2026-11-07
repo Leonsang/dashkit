@@ -72,6 +72,10 @@ número.
 Un calculado de gráfico **no sirve para filtrar** otros gráficos con una casilla o un botón: quita el error,
 pero no filtra nada (verificado en modo vista). Para eso, un campo del origen.
 
+Tampoco sirve como **fecha**: un `=PARSE_DATE(...)` de gráfico en la dimensión da «La dimensión no es válida»
+(reason 266), y ni el control de periodo ni la comparación lo usan. La fecha va en el origen, con
+`add_source_field`.
+
 ## Calculados de origen: add_source_field
 
 ```json
@@ -85,7 +89,8 @@ CLI: `fields add --name es_online --formula 'canal = "Online"' [--source "<nombr
 - Es lo que necesitan las **casillas** y los **botones de filtro predefinido**: un campo **booleano del
   origen**. Sin campo da reason 265; con uno que no es booleano, 116.
 - **Sheets:** TRUE/FALSE llega como texto. Conviértelo: `UPPER(devuelto) IN ("TRUE","SI")`.
-- **`source`:** el nombre del origen en el panel Datos, si hay más de uno.
+- **`source`:** el nombre del origen en el panel Datos, si hay más de uno (con uno solo no hace falta y se
+  ignora). La respuesta trae `dataSourceId`, el origen donde quedó el campo.
 - **Orígenes reutilizables:** se niega, porque el cambio llegaría a todos los informes que lo usan. Con
   `allowShared=true` lo hace; úsalo solo si el usuario lo pide.
 

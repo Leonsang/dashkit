@@ -108,8 +108,13 @@ export async function waitReady(page: Page, timeoutMs = 45_000): Promise<void> {
 export async function openReport(url: string): Promise<{ url: string }> {
   const browser = await getBrowser();
   // the active report's tab (see setActiveReport), or a new one
-  const target = browser.targets().some((t) => t.type() === 'page' && REPORT_URL_RE.test(t.url()));
-  const page = target ? await getReportPage() : await browser.newPage();
+  const tabs = (await Promise.all(browser.targets().filter((t) => t.type() === 'page' && REPORT_URL_RE.test(t.url())).map((t) => t.page()))).filter((p): p is Page => !!p);
+  const id = (/reporting\/([^/?#]+)/.exec(url) || [])[1];
+  // its own tab if it is open; else the tab of the report in use; else any report tab; else a new one
+  let page = id ? tabs.find((p) => p.url().includes(`/reporting/${id}`)) : undefined;
+  if (!page && tabs.length) page = (await getReportPage().catch(() => undefined)) ?? tabs[0];
+  const target = !!page;
+  if (!page) page = await browser.newPage();
   setActiveReport(url);
   // Bring to front BEFORE navigating: in a hidden tab the editor does not boot
   // (observed 2026-11-03: it ends on the home page with the model empty).

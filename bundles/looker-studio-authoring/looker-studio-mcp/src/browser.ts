@@ -1,5 +1,5 @@
 import puppeteer, { type Browser, type Page } from 'puppeteer-core';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { log } from './log.js';
 
@@ -100,6 +100,9 @@ export function setActiveReport(urlOrId: string): void {
   if (!id || id === 'create') return;
   try { writeFileSync(activeReportFile(), id); } catch { /* best effort */ }
 }
+function activeIsRecent(): boolean {
+  try { return Date.now() - statSync(activeReportFile()).mtimeMs < 6 * 3600_000; } catch { return false; }
+}
 function activeReport(): string | null {
   try { return readFileSync(activeReportFile(), 'utf8').trim() || null; } catch { return null; }
 }
@@ -123,10 +126,20 @@ export async function getReportPage(): Promise<Page> {
   // Background tabs throttle timers and rendering: ask the browser to treat the report as
   // focused and active (no window switching needed).
   for (const p of pages) await keepActive(p);
-  if (pages.length === 1) return (lastPage = pages[0]!);
   const active = activeReport();
   const preferred = active ? pages.find((p) => p.url().includes(`/reporting/${active}`)) : undefined;
   if (preferred) return (lastPage = preferred);
+  // The report dashkit is working on is no longer in any tab (its tab went to another page, e.g. the data
+  // source editor): never fall back to another report in silence, the next write would land there
+  // (benchmark 2026-11-07: a theme applied to the wrong report). An old mark (another session) is ignored.
+  if (active && activeIsRecent()) {
+    const open = pages.map((p) => (/reporting\/([^/?#]+)/.exec(p.url()) || [])[1]).filter(Boolean);
+    throw new Error(
+      `El informe activo (${active}) no esta abierto en ninguna pestana; hay otros: ${[...new Set(open)].join(', ')}. ` +
+        'Abre el que quieres con open_report <url> (CLI: open <url>): las herramientas no cambian de informe solas.',
+    );
+  }
+  if (pages.length === 1) return (lastPage = pages[0]!);
 
   const states = await Promise.all(pages.map(async (p) => ({ page: p, ...(await pageState(p)) })));
   const pick =

@@ -1503,7 +1503,7 @@ var {
 var puppeteer_core_default = puppeteer;
 
 // src/browser.ts
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir as tmpdir2 } from "node:os";
 
 // src/log.ts
@@ -1589,6 +1589,13 @@ function setActiveReport(urlOrId) {
   } catch {
   }
 }
+function activeIsRecent() {
+  try {
+    return Date.now() - statSync(activeReportFile()).mtimeMs < 6 * 36e5;
+  } catch {
+    return false;
+  }
+}
 function activeReport() {
   try {
     return readFileSync(activeReportFile(), "utf8").trim() || null;
@@ -1607,10 +1614,16 @@ async function getReportPage() {
     );
   }
   for (const p of pages) await keepActive(p);
-  if (pages.length === 1) return lastPage = pages[0];
   const active = activeReport();
   const preferred = active ? pages.find((p) => p.url().includes(`/reporting/${active}`)) : void 0;
   if (preferred) return lastPage = preferred;
+  if (active && activeIsRecent()) {
+    const open = pages.map((p) => (/reporting\/([^/?#]+)/.exec(p.url()) || [])[1]).filter(Boolean);
+    throw new Error(
+      `El informe activo (${active}) no esta abierto en ninguna pestana; hay otros: ${[...new Set(open)].join(", ")}. Abre el que quieres con open_report <url> (CLI: open <url>): las herramientas no cambian de informe solas.`
+    );
+  }
+  if (pages.length === 1) return lastPage = pages[0];
   const states = await Promise.all(pages.map(async (p) => ({ page: p, ...await pageState(p) })));
   const pick = states.find((s) => s.visible && s.focused) ?? states.find((s) => s.visible) ?? states.find((s) => s.page === lastPage) ?? states[0];
   lastPage = pick.page;
@@ -3739,8 +3752,12 @@ async function waitReady(page, timeoutMs = 45e3) {
 }
 async function openReport(url) {
   const browser = await getBrowser();
-  const target = browser.targets().some((t) => t.type() === "page" && REPORT_URL_RE.test(t.url()));
-  const page = target ? await getReportPage() : await browser.newPage();
+  const tabs = (await Promise.all(browser.targets().filter((t) => t.type() === "page" && REPORT_URL_RE.test(t.url())).map((t) => t.page()))).filter((p) => !!p);
+  const id = (/reporting\/([^/?#]+)/.exec(url) || [])[1];
+  let page = id ? tabs.find((p) => p.url().includes(`/reporting/${id}`)) : void 0;
+  if (!page && tabs.length) page = await getReportPage().catch(() => void 0) ?? tabs[0];
+  const target = !!page;
+  if (!page) page = await browser.newPage();
   setActiveReport(url);
   if (target) await settleSaves(page, 1500);
   await page.bringToFront();
@@ -3942,8 +3959,8 @@ async function deleteComponent(componentId) {
   const page = await editPage();
   const { componentLevelScript } = await import("./scripts4-ADA4C2PA.js");
   if (await evaluateOn(page, T, componentLevelScript, componentId) === "report") {
-    const { arrangeComponents } = await import("./ops4-IPEU3NXK.js");
-    const { listPages: listPages2 } = await import("./ops3-4SNWVALV.js");
+    const { arrangeComponents } = await import("./ops4-ZQPQSLYX.js");
+    const { listPages: listPages2 } = await import("./ops3-BDAX6V2Z.js");
     await arrangeComponents([componentId], "page", (await listPages2())[0].id);
   }
   const t0 = Date.now();
@@ -3980,7 +3997,7 @@ async function applySpec(specOrFile, opts = {}) {
   }
   const state = statePath && existsSync4(statePath) ? JSON.parse(readFileSync4(statePath, "utf8")) : { reportId: null, keys: {} };
   const page = opts.dryRun ? await getReportPage() : await editPage();
-  const { ensureVisible } = await import("./ops4-IPEU3NXK.js");
+  const { ensureVisible } = await import("./ops4-ZQPQSLYX.js");
   if (!opts.dryRun) await ensureVisible(page);
   const info = await evaluateOn(page, T, pageInfoScript);
   if (state.reportId && state.reportId !== info.internalReportId) {
@@ -4009,7 +4026,7 @@ async function applySpec(specOrFile, opts = {}) {
       let created = false;
       const blank = !hit && !opts.dryRun ? pages.find((p) => p.components === 0 && /^((p[aá]gina|page|untitled page|p[aá]gina sin t[ií]tulo)(\s*\d+)?)?$/i.test(String(p.name).trim()) && !wanted.includes(p.name) && !Object.values(pageIds).includes(p.id)) : void 0;
       if (blank) {
-        const { renamePage: renamePage2 } = await import("./ops3-4SNWVALV.js");
+        const { renamePage: renamePage2 } = await import("./ops3-BDAX6V2Z.js");
         await renamePage2(blank.id, name);
         pages = await listPages();
         hit = pages.find((p) => p.id === blank.id);
@@ -4045,7 +4062,7 @@ async function applySpec(specOrFile, opts = {}) {
         const extra = await patchIfNeeded(page, existingId, c);
         result.actions.push({ key: c.key, action: "update", componentId: existingId, ...extra.length ? { patched: extra } : {} });
       } else if (c.type === "image-component" && c.image) {
-        const { addImage } = await import("./ops4-IPEU3NXK.js");
+        const { addImage } = await import("./ops4-ZQPQSLYX.js");
         const { dirname: dirname5, resolve } = await import("node:path");
         const base = typeof specOrFile === "string" ? dirname5(specOrFile) : process.cwd();
         const r = await addImage({ path: resolve(base, c.image), box: { x: c.x, y: c.y, width: c.w, height: c.h }, ...pageId ? { pageId } : {} });
@@ -4111,7 +4128,7 @@ async function applySpec(specOrFile, opts = {}) {
     }
     if (filterLog.length) result.filters = filterLog;
     {
-      const { arrangeComponents } = await import("./ops4-IPEU3NXK.js");
+      const { arrangeComponents } = await import("./ops4-ZQPQSLYX.js");
       const inside = (p, q) => p !== q && q.x >= p.x && q.y >= p.y && q.x + q.w <= p.x + p.w && q.y + q.h <= p.y + p.h;
       const level = (c) => c.reportLevel ? "report" : c.page;
       const live = components.filter((c) => state.keys[c.key]);
@@ -4149,50 +4166,50 @@ async function patchIfNeeded(page, id, c) {
   }
   if (c.text !== void 0) {
     const t = typeof c.text === "string" ? { text: c.text } : c.text;
-    const { setText } = await import("./ops4-IPEU3NXK.js");
+    const { setText } = await import("./ops4-ZQPQSLYX.js");
     await setText(id, t.text, { ...t.size ? { size: t.size } : {}, ...t.bold ? { bold: true } : {}, ...t.color ? { color: t.color } : {}, ...t.align ? { align: t.align } : {} });
     changes.push("text");
   }
   if (c.style) {
-    const { setStyle } = await import("./ops4-IPEU3NXK.js");
+    const { setStyle } = await import("./ops4-ZQPQSLYX.js");
     await setStyle(id, c.style);
     changes.push("style");
   }
   if (c.conditional) {
-    const { setConditionalFormat } = await import("./ops4-IPEU3NXK.js");
+    const { setConditionalFormat } = await import("./ops4-ZQPQSLYX.js");
     await setConditionalFormat(id, c.conditional);
     changes.push(`conditional:${c.conditional.length}`);
   }
   if (c.chartStyle) {
-    const { setChartStyle } = await import("./ops4-IPEU3NXK.js");
+    const { setChartStyle } = await import("./ops4-ZQPQSLYX.js");
     await setChartStyle({ ...c.chartStyle, componentId: id, reload: false });
     changes.push("chartStyle");
   }
   if (c.comparison) {
-    const { setComparison } = await import("./ops4-IPEU3NXK.js");
+    const { setComparison } = await import("./ops4-ZQPQSLYX.js");
     await setComparison(id, c.comparison, c.dateField);
     changes.push(`comparison:${c.comparison}`);
   }
   if (c.linkPage) {
-    const { setPageLink } = await import("./ops4-IPEU3NXK.js");
+    const { setPageLink } = await import("./ops4-ZQPQSLYX.js");
     await setPageLink(id, c.linkPage);
     changes.push("linkPage");
   }
   if (c.reportLevel) {
     const { componentLevelScript } = await import("./scripts4-ADA4C2PA.js");
     if (await evaluateOn(page, T, componentLevelScript, id) === "page") {
-      const { arrangeComponents } = await import("./ops4-IPEU3NXK.js");
+      const { arrangeComponents } = await import("./ops4-ZQPQSLYX.js");
       await arrangeComponents([id], "report", c.page && !c.page.startsWith("name:") && c.page !== "active" ? c.page : void 0);
       changes.push("reportLevel");
     }
   }
   if (c.interactions) {
-    const { setChartInteractions } = await import("./ops4-IPEU3NXK.js");
+    const { setChartInteractions } = await import("./ops4-ZQPQSLYX.js");
     await setChartInteractions({ componentId: id, ...c.interactions, reload: false });
     changes.push("interactions");
   }
   if (c.parameter) {
-    const { setControlParameter } = await import("./ops4-IPEU3NXK.js");
+    const { setControlParameter } = await import("./ops4-ZQPQSLYX.js");
     await setControlParameter(id, c.parameter);
     changes.push(`parameter:${c.parameter}`);
   }
@@ -4822,16 +4839,19 @@ async function addSourceField(opts) {
     return true;
   };
   const editorSource = () => page.evaluate(() => {
-    const t = Array.from(document.querySelectorAll("*")).find((e) => e.offsetParent && e.children.length === 0 && /^(Campos disponibles|Available fields)$/.test((e.innerText || "").trim()));
-    const panel = t?.closest("div")?.parentElement;
-    const name = panel ? Array.from(panel.querySelectorAll("*")).map((e) => (e.innerText || "").trim()).find((s) => s && !/^(Campos disponibles|Available fields|Buscar campos)/.test(s) && s.length > 3) : "";
-    const word = /\b(Insertada|Embedded|Reutilizable|Reusable)\b/;
-    const hit = Array.from(document.querySelectorAll("*")).map((e) => e.offsetParent ? e.innerText || "" : "").find((t2) => t2.length < 40 && word.test(t2));
-    return { name: (name || "").split("\n")[0], scope: hit ? hit.match(word)[1] : "" };
+    const leaves = Array.from(document.querySelectorAll("*")).filter((e) => e.offsetParent && e.children.length === 0);
+    const label = leaves.find((e) => /^(Ámbito|Ambito|Scope):?$/.test((e.innerText || "").trim()));
+    let row = label ? label.parentElement : null;
+    while (row && row.parentElement && (row.innerText || "").length < 30) row = row.parentElement;
+    const rowLeaves = row ? leaves.filter((e) => row.contains(e)) : [];
+    const name = rowLeaves.length ? (rowLeaves[0].innerText || "").trim() : "";
+    const word = /(Insertada|Embedded|Reutilizable|Reusable)\b/;
+    const hit = (row ? [row] : []).concat(Array.from(document.querySelectorAll("*"))).map((e) => e.offsetParent ? e.innerText || "" : "").find((t) => t.length < 40 && word.test(t)) || "";
+    return { name: name.split("\n")[0], scope: hit ? hit.match(word)[1] : "" };
   });
   const open = async () => {
     if (!await clickText("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) {
-      const { selectSourceChart } = await import("./ops4-IPEU3NXK.js");
+      const { selectSourceChart } = await import("./ops4-ZQPQSLYX.js");
       await selectSourceChart(page, opts.source && opts.source.startsWith("@") ? opts.source : void 0);
       if (!await clickText("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) throw new Error('No se encontro "Anadir un campo" en el panel Datos.');
     }
@@ -4845,15 +4865,25 @@ async function addSourceField(opts) {
   };
   try {
     await open();
-    let src = await editorSource();
+    const readSource = async () => {
+      let r = await editorSource();
+      for (let i = 0; i < 12 && !r.scope; i++) {
+        await sleep2(500);
+        r = await editorSource();
+      }
+      return r;
+    };
+    let src = await readSource();
+    const dsList = await evaluateOn(page, T2, readDataSourcesScript).then((r) => Array.isArray(r.dataSources) ? r.dataSources : Object.values(r.dataSources)).catch(() => []);
+    if (opts.source && !opts.source.startsWith("@") && dsList.length === 1) opts = { ...opts, source: void 0 };
     const byField = !!opts.source && opts.source.startsWith("@");
     if (byField) {
-      const { selectSourceChart } = await import("./ops4-IPEU3NXK.js");
+      const { selectSourceChart } = await import("./ops4-ZQPQSLYX.js");
       await clickText("button", /^(Cancelar|Cancel)$/);
       await close();
       await selectSourceChart(page, opts.source);
       await open();
-      src = await editorSource();
+      src = await readSource();
     }
     if (opts.source && !byField && !src.name.toLowerCase().includes(opts.source.toLowerCase())) {
       await clickText("button", /^(Cancelar|Cancel)$/);
@@ -4862,13 +4892,13 @@ async function addSourceField(opts) {
       if (!await clickText("*", new RegExp(escaped, "i"))) throw new Error(`No hay un origen "${opts.source}" en el panel Datos.`);
       await sleep2(1500);
       await open();
-      src = await editorSource();
+      src = await readSource();
       if (!src.name.toLowerCase().includes(opts.source.toLowerCase())) throw new Error(`El editor de campos abrio "${src.name}", no "${opts.source}".`);
     }
     if (!/^(Insertada|Embedded)$/.test(src.scope) && !opts.allowShared) {
       await clickText("button", /^(Cancelar|Cancel)$/);
       await close();
-      throw new Error(`El origen "${src.name}" es reutilizable (${src.scope || "ambito desconocido"}): el campo apareceria en todos los informes que lo usan. Repite con allowShared si es lo que quieres.`);
+      throw new Error(src.scope ? `El origen es reutilizable (${src.scope}): el campo apareceria en todos los informes que lo usan. Repite con allowShared si es lo que quieres.` : "No se pudo leer en el editor de campos si el origen es insertado o reutilizable: repite; si sabes que es insertado (p. ej. el de un CSV subido a este informe), anade allowShared.");
     }
     const fieldId = await page.evaluate((name, formula) => {
       const inputs = Array.from(document.querySelectorAll("input.gmat-mdc-input")).filter((i) => i.offsetParent && !i.closest("[class*=propert]"));
