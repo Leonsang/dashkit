@@ -336,6 +336,13 @@ export async function createComponent(o: CreateOptions): Promise<CreateComponent
 
 export async function deleteComponent(componentId: string): Promise<{ ok: boolean; method: string; warning?: string }> {
   const page = await editPage();
+  // A report-level component is not on any page: bring it down to the current page first.
+  const { componentLevelScript } = await import('./looker/scripts4.js');
+  if ((await evaluateOn(page, T, componentLevelScript, componentId)) === 'report') {
+    const { arrangeComponents } = await import('./ops4.js');
+    const { listPages } = await import('./ops3.js');
+    await arrangeComponents([componentId], 'page', (await listPages())[0]!.id);
+  }
   const t0 = Date.now();
   const r = await evaluateOn(page, T, deleteComponentScript, componentId);
   if (r.ok) {
@@ -494,15 +501,26 @@ export async function applySpec(specOrFile: string | ReportSpec, opts: { dryRun?
       }
     }
     if (filterLog.length) (result as ApplyResult & { filters?: unknown }).filters = filterLog;
-    // Card shapes go behind everything else on their page (they were created after existing components).
-    const cards = components.filter((c) => c.key.endsWith('__card') && state.keys[c.key]);
-    if (cards.length) {
+    // Layering: a shape that contains other components is a background (card, side bar, filter bar) and goes
+    // to the back; an icon or text inside a button comes to the front. Components created later land on top,
+    // so without this a new background hides what already existed (observed 2026-11-07).
+    {
       const { arrangeComponents } = await import('./ops4.js');
-      const byPage = new Map<string, string[]>();
-      for (const c of cards) byPage.set(c.page, [...(byPage.get(c.page) ?? []), state.keys[c.key]!]);
-      for (const ids of byPage.values()) {
-        try { await arrangeComponents(ids, 'back'); } catch (e) { (result as ApplyResult & { arrange?: string }).arrange = (e as Error).message; }
-      }
+      const inside = (p: ResolvedComponent, q: ResolvedComponent) => p !== q && q.x >= p.x && q.y >= p.y && q.x + q.w <= p.x + p.w && q.y + q.h <= p.y + p.h;
+      const level = (c: ResolvedComponent) => (c.reportLevel ? 'report' : c.page);
+      const live = components.filter((c) => state.keys[c.key]);
+      const backs = live.filter((s) => s.type === 'generic-shape' && live.some((o) => level(o) === level(s) && inside(s, o)));
+      const fronts = live.filter((o) => ['image-component', 'simple-description'].includes(o.type) && live.some((b) => b.type === 'button' && level(b) === level(o) && inside(b, o)));
+      const run = async (list: ResolvedComponent[], op: 'back' | 'front') => {
+        const groups = new Map<string, string[]>();
+        // Big shapes first, so a card ends up above the page-sized background it sits on.
+        for (const c of [...list].sort((a, b) => (op === 'back' ? a.w * a.h - b.w * b.h : 0))) groups.set(level(c), [...(groups.get(level(c)) ?? []), state.keys[c.key]!]);
+        for (const ids of groups.values()) {
+          try { await arrangeComponents(ids, op); } catch (e) { (result as ApplyResult & { arrange?: string }).arrange = (e as Error).message; }
+        }
+      };
+      if (backs.length) await run(backs, 'back');
+      if (fronts.length) await run(fronts, 'front');
     }
     await reloadReport();
     result.diagnose = await diagnoseWithKnowledge();

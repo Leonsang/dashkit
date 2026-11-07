@@ -19,7 +19,7 @@ import {
 import {
   navDispatchScript,
   navPagesScript
-} from "./chunk-3SD32QSA.js";
+} from "./chunk-HQAHUJIL.js";
 import {
   CDPSessionEvent,
   CdpBrowser,
@@ -3716,7 +3716,7 @@ async function createComponent(o) {
   const hasFields = !!(o.dimensions?.length || o.metrics?.length || o.slots && Object.keys(o.slots).length);
   const NO_DIMS = ["gauge-viz", "bulletchart", "kpi-metric"];
   const t0 = Date.now();
-  const { ensureSeedScript } = await import("./scripts4-2RQWYUE3.js");
+  const { ensureSeedScript } = await import("./scripts4-DIKQS72K.js");
   const seed = await evaluateOn(page, T, ensureSeedScript, o.pageId);
   if (seed.seedId) await sleep(1500);
   const res = await evaluateOn(page, T, createComponentScript, {
@@ -3759,6 +3759,12 @@ async function createComponent(o) {
 }
 async function deleteComponent(componentId) {
   const page = await editPage();
+  const { componentLevelScript } = await import("./scripts4-DIKQS72K.js");
+  if (await evaluateOn(page, T, componentLevelScript, componentId) === "report") {
+    const { arrangeComponents } = await import("./ops4-4TPLMQL7.js");
+    const { listPages: listPages2 } = await import("./ops3-CBTZWJVR.js");
+    await arrangeComponents([componentId], "page", (await listPages2())[0].id);
+  }
   const t0 = Date.now();
   const r = await evaluateOn(page, T, deleteComponentScript, componentId);
   if (r.ok) {
@@ -3846,7 +3852,7 @@ async function applySpec(specOrFile, opts = {}) {
         const extra = await patchIfNeeded(page, existingId, c);
         result.actions.push({ key: c.key, action: "update", componentId: existingId, ...extra.length ? { patched: extra } : {} });
       } else if (c.type === "image-component" && c.image) {
-        const { addImage } = await import("./ops4-BQRP2LI4.js");
+        const { addImage } = await import("./ops4-4TPLMQL7.js");
         const { dirname: dirname5, resolve } = await import("node:path");
         const base = typeof specOrFile === "string" ? dirname5(specOrFile) : process.cwd();
         const r = await addImage({ path: resolve(base, c.image), box: { x: c.x, y: c.y, width: c.w, height: c.h }, ...pageId ? { pageId } : {} });
@@ -3900,18 +3906,26 @@ async function applySpec(specOrFile, opts = {}) {
       }
     }
     if (filterLog.length) result.filters = filterLog;
-    const cards = components.filter((c) => c.key.endsWith("__card") && state.keys[c.key]);
-    if (cards.length) {
-      const { arrangeComponents } = await import("./ops4-BQRP2LI4.js");
-      const byPage = /* @__PURE__ */ new Map();
-      for (const c of cards) byPage.set(c.page, [...byPage.get(c.page) ?? [], state.keys[c.key]]);
-      for (const ids of byPage.values()) {
-        try {
-          await arrangeComponents(ids, "back");
-        } catch (e) {
-          result.arrange = e.message;
+    {
+      const { arrangeComponents } = await import("./ops4-4TPLMQL7.js");
+      const inside = (p, q) => p !== q && q.x >= p.x && q.y >= p.y && q.x + q.w <= p.x + p.w && q.y + q.h <= p.y + p.h;
+      const level = (c) => c.reportLevel ? "report" : c.page;
+      const live = components.filter((c) => state.keys[c.key]);
+      const backs = live.filter((s) => s.type === "generic-shape" && live.some((o) => level(o) === level(s) && inside(s, o)));
+      const fronts = live.filter((o) => ["image-component", "simple-description"].includes(o.type) && live.some((b) => b.type === "button" && level(b) === level(o) && inside(b, o)));
+      const run = async (list, op) => {
+        const groups = /* @__PURE__ */ new Map();
+        for (const c of [...list].sort((a, b) => op === "back" ? a.w * a.h - b.w * b.h : 0)) groups.set(level(c), [...groups.get(level(c)) ?? [], state.keys[c.key]]);
+        for (const ids of groups.values()) {
+          try {
+            await arrangeComponents(ids, op);
+          } catch (e) {
+            result.arrange = e.message;
+          }
         }
-      }
+      };
+      if (backs.length) await run(backs, "back");
+      if (fronts.length) await run(fronts, "front");
     }
     await reloadReport();
     result.diagnose = await diagnoseWithKnowledge();
@@ -3931,50 +3945,50 @@ async function patchIfNeeded(page, id, c) {
   }
   if (c.text !== void 0) {
     const t = typeof c.text === "string" ? { text: c.text } : c.text;
-    const { setText } = await import("./ops4-BQRP2LI4.js");
+    const { setText } = await import("./ops4-4TPLMQL7.js");
     await setText(id, t.text, { ...t.size ? { size: t.size } : {}, ...t.bold ? { bold: true } : {}, ...t.color ? { color: t.color } : {}, ...t.align ? { align: t.align } : {} });
     changes.push("text");
   }
   if (c.style) {
-    const { setStyle } = await import("./ops4-BQRP2LI4.js");
+    const { setStyle } = await import("./ops4-4TPLMQL7.js");
     await setStyle(id, c.style);
     changes.push("style");
   }
   if (c.conditional) {
-    const { setConditionalFormat } = await import("./ops4-BQRP2LI4.js");
+    const { setConditionalFormat } = await import("./ops4-4TPLMQL7.js");
     await setConditionalFormat(id, c.conditional);
     changes.push(`conditional:${c.conditional.length}`);
   }
   if (c.chartStyle) {
-    const { setChartStyle } = await import("./ops4-BQRP2LI4.js");
+    const { setChartStyle } = await import("./ops4-4TPLMQL7.js");
     await setChartStyle({ ...c.chartStyle, componentId: id, reload: false });
     changes.push("chartStyle");
   }
   if (c.comparison) {
-    const { setComparison } = await import("./ops4-BQRP2LI4.js");
+    const { setComparison } = await import("./ops4-4TPLMQL7.js");
     await setComparison(id, c.comparison);
     changes.push(`comparison:${c.comparison}`);
   }
   if (c.linkPage) {
-    const { setPageLink } = await import("./ops4-BQRP2LI4.js");
+    const { setPageLink } = await import("./ops4-4TPLMQL7.js");
     await setPageLink(id, c.linkPage);
     changes.push("linkPage");
   }
   if (c.reportLevel) {
-    const { componentLevelScript } = await import("./scripts4-2RQWYUE3.js");
+    const { componentLevelScript } = await import("./scripts4-DIKQS72K.js");
     if (await evaluateOn(page, T, componentLevelScript, id) === "page") {
-      const { arrangeComponents } = await import("./ops4-BQRP2LI4.js");
+      const { arrangeComponents } = await import("./ops4-4TPLMQL7.js");
       await arrangeComponents([id], "report", c.page && !c.page.startsWith("name:") && c.page !== "active" ? c.page : void 0);
       changes.push("reportLevel");
     }
   }
   if (c.interactions) {
-    const { setChartInteractions } = await import("./ops4-BQRP2LI4.js");
+    const { setChartInteractions } = await import("./ops4-4TPLMQL7.js");
     await setChartInteractions({ componentId: id, ...c.interactions, reload: false });
     changes.push("interactions");
   }
   if (c.parameter) {
-    const { setControlParameter } = await import("./ops4-BQRP2LI4.js");
+    const { setControlParameter } = await import("./ops4-4TPLMQL7.js");
     await setControlParameter(id, c.parameter);
     changes.push(`parameter:${c.parameter}`);
   }
@@ -4612,7 +4626,7 @@ async function addSourceField(opts) {
   });
   const open = async () => {
     if (!await clickText("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) {
-      const { selectSourceChart } = await import("./ops4-BQRP2LI4.js");
+      const { selectSourceChart } = await import("./ops4-4TPLMQL7.js");
       await selectSourceChart(page, opts.source && opts.source.startsWith("@") ? opts.source : void 0);
       if (!await clickText("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) throw new Error('No se encontro "Anadir un campo" en el panel Datos.');
     }
@@ -4629,7 +4643,7 @@ async function addSourceField(opts) {
     let src = await editorSource();
     const byField = !!opts.source && opts.source.startsWith("@");
     if (byField) {
-      const { selectSourceChart } = await import("./ops4-BQRP2LI4.js");
+      const { selectSourceChart } = await import("./ops4-4TPLMQL7.js");
       await clickText("button", /^(Cancelar|Cancel)$/);
       await close();
       await selectSourceChart(page, opts.source);

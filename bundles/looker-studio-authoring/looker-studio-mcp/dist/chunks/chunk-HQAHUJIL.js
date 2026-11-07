@@ -796,11 +796,13 @@ function pageLinkScript(args) {
     const all = [...report.pages.flatMap((p) => p.components), ...report.components];
     const comp = all.find((c) => c.getId() === args.componentId);
     if (!comp) return { ok: false, error: `Componente ${args.componentId} no encontrado.` };
-    if (comp.config.config.display.type !== "button") return { ok: false, error: "El enlace a una pagina va en un boton (button)." };
+    const ty = comp.config.config.display.type;
+    if (ty !== "button" && ty !== "image-component") return { ok: false, error: "El enlace a una pagina va en un boton o una imagen." };
     const target = report.pages.find((p) => String(p.getId()) === args.pageId);
     if (!target) return { ok: false, error: `Pagina ${args.pageId} no encontrada (ids en list_pages).` };
     const name = String(target.config.attribute && target.config.attribute.name || "");
-    for (const [k, v] of Object.entries({ internalLink: args.pageId, actionType: 1, internalActionType: 1, linkType: 1, linkUrl: `http://${name}`, linkNewTab: false })) comp.setDisplayKeyValue(k, v);
+    const keys = ty === "button" ? { internalLink: args.pageId, actionType: 1, internalActionType: 1, linkType: 1, linkUrl: `http://${name}`, linkNewTab: false } : { internalLink: args.pageId, linkUrl: `http://${name}`, linkNewTab: false };
+    for (const [k, v] of Object.entries(keys)) comp.setDisplayKeyValue(k, v);
     inj.get("wrapperSaveService").save([comp]);
     return { ok: true, page: name };
   } catch (e) {

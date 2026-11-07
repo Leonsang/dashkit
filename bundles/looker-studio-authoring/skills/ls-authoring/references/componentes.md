@@ -239,7 +239,8 @@ CLI `interact <id> --optional "..." --drill --cross on`; en el spec, `interactio
 ### Navegación propia: botones a una página
 
 `patch_component linkPage` (id de página o `"name:<nombre>"`; CLI `patch <id> --link-page <id>`; en el spec,
-`linkPage`) hace que un botón abra esa página. Con `reportLevel: true` en el spec, el botón, su icono y su
+`linkPage`) hace que un botón o una imagen abra esa página. Un cuadro de texto no admite enlace y, encima de un
+botón, se queda con el clic: pon la etiqueta como texto del botón. Con `reportLevel: true` en el spec, el botón, su icono y su
 texto salen en todas las páginas: es la barra lateral de navegación (ver el arquetipo «panel con barra
 lateral» en `ls-diseno-layout`).
 

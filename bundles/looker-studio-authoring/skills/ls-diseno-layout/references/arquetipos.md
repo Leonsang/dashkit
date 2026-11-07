@@ -110,9 +110,12 @@ arriba, los dos a nivel de informe. Patrón de plantillas comerciales publicadas
 ```
 
 - **Barra lateral** (`reportLevel: true`): forma de 140 px de ancho en el color oscuro de la marca, con radio
-  16; la marca arriba; una entrada por página cada 100 px: icono blanco de 40 px, texto de 12 px centrado y
-  encima un botón transparente con `linkPage`, que es lo que se pulsa. Navegación de Looker Studio en
-  `nav-top` (`settings.viewModeNav`) para no tener dos menús laterales.
+  16; la marca arriba; una entrada por página cada 100 px: icono blanco de 40 px con `linkPage` y debajo un
+  botón del color de la barra con el nombre de la página como texto (12 px, blanco) y `linkPage`. Un cuadro de
+  texto encima de un botón se queda con el clic y no navega (los cuadros de texto no tienen enlace); por eso
+  el nombre es el texto del botón. Una franja blanca de 6 px por página marca la activa. Navegación de Looker
+  Studio en `nav-top` (`settings.viewModeNav`); el propietario la sigue viendo a la izquierda en modo vista.
+  Verificado en modo vista el 2026-11-07: icono y texto abren su página.
 - **Barra de filtros** (`reportLevel: true`): forma blanca de 60 px de alto con un cuadro de icono, la
   palabra «Filtros» y los controles de lista desplegable más el periodo, todos de 230 px. Los mismos filtros
   valen para todas las páginas; los propios de una página van en su cuerpo.

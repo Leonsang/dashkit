@@ -69,7 +69,7 @@ spec en lugar de la ruta; entonces no hay `.state.json` y cada aplicación vuelv
 | `reportLevel` | componente | Lo pone a nivel de informe: sale en todas las páginas (barra lateral, filtros comunes) |
 | `image` | componente | En un `image-component`: archivo local (ruta relativa al spec), subido una vez por informe |
 | `comparison` | componente | `previous_period`, `previous_year` o `none`: variación en scorecards, serie anterior en gráficos |
-| `linkPage` | componente | Botón que abre esa página (id o `name:<nombre>`) |
+| `linkPage` | componente | Botón o imagen que abre esa página (id o `name:<nombre>`) |
 | `interactions` | componente | `{optionalMetrics, dateDrillDown, drillStart, crossFilter}` (`set_chart_interactions`) |
 | `settings` | informe | Ajustes que se aplican primero (`report_settings`): `width`, `height`, `viewModeNav`... |
 | `row` + `items` | macro | Reparte una fila: `w = (ancho − (n−1)·gap) / n`, redondeado a la retícula. `margin`, `gap`, `width`, `x` opcionales |

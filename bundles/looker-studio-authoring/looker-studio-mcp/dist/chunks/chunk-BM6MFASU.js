@@ -16,7 +16,7 @@ import {
   reloadReport,
   requireEditMode,
   resolveDataset
-} from "./chunk-ESSLXUCI.js";
+} from "./chunk-XTSNRCRJ.js";
 import {
   arrangeScript,
   blendSnapshotScript,
@@ -41,7 +41,7 @@ import {
   setDisplayKeysScript,
   setTextScript,
   updateBlendScript
-} from "./chunk-3SD32QSA.js";
+} from "./chunk-HQAHUJIL.js";
 
 // src/looker/data.ts
 var EVAL_TIMEOUT_MS = Number(process.env.LS_EVAL_TIMEOUT_MS ?? 15e3);
@@ -802,7 +802,7 @@ async function setPageLink(componentId, pageRef) {
   const { page } = await requireEditMode();
   let pageId = pageRef;
   if (pageRef.startsWith("name:")) {
-    const { listPages } = await import("./ops3-7J47QTYX.js");
+    const { listPages } = await import("./ops3-CBTZWJVR.js");
     const hit = (await listPages()).find((p) => p.name === pageRef.slice(5));
     if (!hit) throw new Error(`No hay ninguna pagina llamada "${pageRef.slice(5)}".`);
     pageId = hit.id;
