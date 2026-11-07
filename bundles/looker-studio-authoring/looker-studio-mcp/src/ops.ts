@@ -398,6 +398,10 @@ export async function applySpec(specOrFile: string | ReportSpec, opts: { dryRun?
   }
   const state: SpecState = statePath && existsSync(statePath) ? JSON.parse(readFileSync(statePath, 'utf8')) : { reportId: null, keys: {} };
   const page = opts.dryRun ? await getReportPage() : await editPage();
+  // A hidden tab (window covered or minimised) does not render, and every schema read times out
+  // (observed 2026-11-07): bring it forward, and check again before each component.
+  const { ensureVisible } = await import('./ops4.js');
+  if (!opts.dryRun) await ensureVisible(page);
   const info = await evaluateOn(page, T, pageInfoScript);
   if (state.reportId && state.reportId !== info.internalReportId) {
     log(`El state ${statePath} es de otro informe (${state.reportId}); se ignora el mapeo de ids.`);
@@ -445,6 +449,7 @@ export async function applySpec(specOrFile: string | ReportSpec, opts: { dryRun?
     // Let the previous page's last save go out before writing to another page (see settleSaves).
     if (!opts.dryRun && prevPage !== undefined && pageId !== prevPage) await settleSaves(page);
     prevPage = pageId;
+    if (!opts.dryRun && (await page.evaluate(() => document.hidden).catch(() => false))) await ensureVisible(page);
     const existingId = c.id ?? state.keys[c.key];
     const exists = existingId ? await evaluateOn(page, T, componentExistsScript, existingId) : false;
     if (opts.dryRun) {
