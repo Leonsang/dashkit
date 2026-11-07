@@ -9,6 +9,7 @@ import {
   componentLevelScript,
   componentPointsScript,
   deleteBlendScript,
+  designProfileScript,
   editBlendScript,
   ensureSeedScript,
   groupScript,
@@ -19,13 +20,15 @@ import {
   navPagesScript,
   pageLinkScript,
   readChartStyleScript,
+  screenBoxesScript,
   selectedIdsScript,
   setConditionalFormatScript,
   setControlParameterScript,
   setDisplayKeysScript,
   setTextScript,
+  styleKeysScript,
   updateBlendScript
-} from "./chunk-HQAHUJIL.js";
+} from "./chunk-WEQC2KGA.js";
 import "./chunk-5QDPZ4I5.js";
 export {
   arrangeScript,
@@ -37,6 +40,7 @@ export {
   componentLevelScript,
   componentPointsScript,
   deleteBlendScript,
+  designProfileScript,
   editBlendScript,
   ensureSeedScript,
   groupScript,
@@ -47,10 +51,12 @@ export {
   navPagesScript,
   pageLinkScript,
   readChartStyleScript,
+  screenBoxesScript,
   selectedIdsScript,
   setConditionalFormatScript,
   setControlParameterScript,
   setDisplayKeysScript,
   setTextScript,
+  styleKeysScript,
   updateBlendScript
 };

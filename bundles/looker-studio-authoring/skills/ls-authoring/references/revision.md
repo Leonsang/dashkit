@@ -50,6 +50,18 @@ Reasons del editor con arreglo verificado:
 - **`export_report file?`** (CLI `export -o f.json`): el informe entero. Sirve de copia para comparar y
   aprende tipos y plantillas.
 
+## Ver y comprobar como el lector
+
+- **`screenshot_report pageId? view? componentId?`** (CLI `shot --view --component <id> --out f.png`): PNG de la
+  página o de un componente, en el editor o como lo ve el lector. El MCP devuelve la imagen. Trae la pestaña al
+  frente, espera a que los gráficos tengan datos y vuelve al modo en que estaba. Úsala después de cada cambio
+  visual: el diagnóstico no ve un control tapado por un fondo ni un texto que se sale.
+- **`check_view pageId? clickLinks?`** (CLI `check-view --click`): en modo vista, por componente, los controles
+  que aparecen al pasar el ratón (`Métricas opcionales`, `Desglosar información`, `Mostrar filtros aplicados`...)
+  y adónde enlaza; con `clickLinks`, pulsa cada enlace y dice en qué página acabó. Una página antigua puede
+  responder con el id de su URL (`TlJ0C`) en vez del de su modelo.
+- Verificado el 2026-11-07: los 14 enlaces de la barra lateral del showcase llevan a su página.
+
 ## Aprender entre sesiones: knowledge/
 
 El servidor guarda lo que descubre en `knowledge/` (o `LS_KNOWLEDGE_DIR`) y lo reutiliza:

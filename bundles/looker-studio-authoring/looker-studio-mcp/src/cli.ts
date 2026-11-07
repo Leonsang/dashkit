@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * ls-studio: CLI for Looker Studio / Data Studio over CDP (no screenshots, no clicks).
+ * ls-studio: CLI for Looker Studio / Data Studio over CDP.
  * Same engine as the MCP server. JSON on stdout, logs on stderr.
  */
 import { disconnectIfConnected } from './browser.js';
@@ -29,7 +29,7 @@ import {
 import { reportSettings } from './ops3.js';
 import { addFilter, addPage, addSourceField, applyTheme, detachFilter, updateFilter, exportTheme, importTheme, listFilters, listPages, readTheme, renamePage, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
 import { readFileSync, existsSync } from 'node:fs';
-import { addParameter, alignComponents, arrangeComponents, groupComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, addImage, getChartStyle, setChartInteractions, setComparison, setPageLink, setChartStyle, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
+import { addParameter, alignComponents, arrangeComponents, groupComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, addImage, analyzeReportDesign, checkView, getChartStyle, listStyleKeys, screenshotReport, setChartInteractions, setComparison, setPageLink, setChartStyle, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
 
 const HELP = `ls-studio <comando> [opciones]
 
@@ -66,6 +66,10 @@ Paginas y tema
   align <id...> [--align left|center|right|top|middle|bottom] [--distribute horizontal|vertical] [--gap N]
         [--match width|height|both]       Alinear, distribuir, igualar tamano
   group <id...> | ungroup <id|g-...> | groups [--page <id>]   Grupos de componentes
+  design [--page <id>]                 Perfil de diseno de cualquier informe (marco, tarjetas, KPIs, interacciones)
+  shot [--page <id>] [--view] [--component <id>] [--out f.png]   Captura de la pagina o de un componente
+  style-keys <id> [--filter regex]     Claves de estilo que acepta un componente, con su valor efectivo
+  check-view [--page <id>] [--click]   En modo vista: controles de cada grafico, enlaces y adonde llevan
   image <archivo> --box x,y,w,h [--page <id>] [--alt T]   Imagen o icono desde un archivo (lo sube una vez)
   interact <id> [--optional "SUM(a) as A,..."] [--drill] [--cross on|off] [--no-reload]
                                        Metricas opcionales, desglose de fecha y filtro cruzado de un grafico
@@ -245,6 +249,21 @@ async function main(): Promise<unknown> {
       return groupComponents({ op: 'ungroup', componentIds: pos.filter((x) => !x.startsWith('g-')), groupIds: pos.filter((x) => x.startsWith('g-')) });
     case 'groups':
       return groupComponents({ op: 'list', ...(typeof flags.page === 'string' ? { pageId: flags.page } : {}) });
+    case 'design':
+      // design [--page <id>]
+      return analyzeReportDesign(typeof flags.page === 'string' ? flags.page : undefined);
+    case 'shot':
+      // shot [--page <id>] [--view] [--component <id>] [--out archivo.png]
+      return screenshotReport({
+        ...(typeof flags.page === 'string' ? { pageId: flags.page } : {}),
+        ...(flags.view ? { view: true } : {}),
+        ...(typeof flags.component === 'string' ? { componentId: flags.component } : {}),
+        ...(typeof flags.out === 'string' ? { out: flags.out } : {}),
+      }).then(({ base64: _b, ...r }) => r);
+    case 'style-keys':
+      return listStyleKeys(need(pos[0], 'componentId'), typeof flags.filter === 'string' ? flags.filter : undefined);
+    case 'check-view':
+      return checkView({ ...(typeof flags.page === 'string' ? { pageId: flags.page } : {}), ...(flags.click ? { clickLinks: true } : {}) });
     case 'image': {
       // image <archivo> --box x,y,w,h [--page <id>] [--alt "texto"]
       const box = list(flags.box).map(Number);

@@ -53,6 +53,10 @@ motor y no lleva el control de `LS_ALLOW_WRITE`.
 | `get_chart_style` | **componentId** | Estilo efectivo de un grafico (lo sobrescrito y lo que pone el tipo por defecto) en los terminos de set_chart_style: cada serie con nombre, color, tipo, eje (left/right) y etiquetas; leyenda, etiquetas de datos, apilado, ejes y su pagina (pageId). | `componentes.md` |
 | `set_chart_interactions` | **componentId**, optionalMetrics, dateDrillDown, drillStart, crossFilter, reload | Lo que el lector puede hacer con un grafico: optionalMetrics (metricas opcionales: el lector cambia la metrica del grafico con su selector; misma sintaxis que bind, p. | `componentes.md` |
 | `add_image` | **path**, **box**, pageId, altText | Pone una imagen de un archivo local (SVG, PNG, JPG, GIF) en una caja. | `componentes.md` |
+| `analyze_report_design` | pageId | Perfil de diseno de cualquier informe abierto (tambien uno ajeno en modo vista, con open_report): lienzo, tema, marco comun (barra lateral, barra superior, enlaces a paginas, controles comunes), tarjetas, scorecards (cuadro de icono, comparacion), interacciones (metricas opcionales, desglose, filtro cruzado), tipografia, colores y separaciones de una pagina, y en mapping las claves del spec que reproducen cada patron. | `aprender-de-plantillas.md` |
+| `screenshot_report` | pageId, view, componentId | PNG de una pagina (la abierta o pageId) tal como la ve el lector (view=true) o en el editor, o de un solo componente (componentId). | `revision.md` |
+| `list_style_keys` | **componentId**, filter | Todas las claves de estilo que acepta un componente, con su valor efectivo (lo sobrescrito o lo que pone el tipo), y cuales estan sobrescritas. | `componentes.md` |
+| `check_view` | pageId, clickLinks | Abre una pagina en modo vista y dice, por componente, que controles aparecen al pasar el raton (metricas opcionales, desglosar, ordenar...), su titulo y a que pagina enlaza. | `revision.md` |
 | `set_chart_style` | **componentId**, series, legend, dataLabels, compactNumbers, stacked, axes, gridColor, title, reload | Estilo fino de un grafico de barras, lineas, combinado o de areas por nombre, sin conocer las claves internas. | `componentes.md` |
 | `set_conditional_format` | **componentId**, **rules**, append | Fija las reglas de formato condicional de una tabla, tabla dinamica o scorecard (Estilo > Formato condicional). | `componentes.md` |
 | `update_parameter` | **name**, newName, values, min, max, default, source | Cambia un parametro existente en su formulario (icono fx del parametro en el panel Datos): nombre visible (newName), valores de la lista (values, sustituye todas las filas), rango (min, max) y valor por defecto. | `combinaciones-y-parametros.md` |
@@ -97,6 +101,10 @@ Cada comando de la CLI tiene su herramienta MCP. Lo que cambia, en la última co
 | `format <id> <reglas.json\|json> [--append]` | `set_conditional_format` | — |
 | `chart-style <id>` | `get_chart_style` | — |
 | `image <archivo> --box x,y,w,h [--page <id>]` | `add_image` | MCP: `altText` |
+| `design [--page <id>]` | `analyze_report_design` | — |
+| `shot [--page] [--view] [--component] [--out]` | `screenshot_report` | MCP: devuelve la imagen |
+| `style-keys <id> [--filter regex]` | `list_style_keys` | — |
+| `check-view [--page <id>] [--click]` | `check_view` | MCP: `clickLinks` |
 | `interact <id> [--optional] [--drill] [--cross on\|off]` | `set_chart_interactions` | MCP: `optionalMetrics`, `dateDrillDown`, `crossFilter` |
 | `chart-style <id> <json\|archivo> [--no-reload]` | `set_chart_style` | MCP: `reload=false` |
 | `align <id...> [--align] [--distribute] [--gap] [--match]` | `align_components` | MCP: `matchSize` |

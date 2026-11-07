@@ -8,13 +8,15 @@ import {
   getReportLayout,
   sanitizeLearning,
   writesAllowed
-} from "./chunks/chunk-EJ7UZLEC.js";
+} from "./chunks/chunk-B3ZAZUTG.js";
 import {
   addImage,
   addParameter,
   alignComponents,
+  analyzeReportDesign,
   arrangeComponents,
   bindFieldsToComponent,
+  checkView,
   createBlend,
   deleteBlend,
   deletePages,
@@ -24,7 +26,9 @@ import {
   groupComponents,
   inspectDataSources,
   listBlends,
+  listStyleKeys,
   movePage,
+  screenshotReport,
   setChartInteractions,
   setChartStyle,
   setComparison,
@@ -37,7 +41,7 @@ import {
   setText,
   updateBlend,
   updateParameter
-} from "./chunks/chunk-IFW6L6XQ.js";
+} from "./chunks/chunk-25JRGRWS.js";
 import {
   addFilter,
   addPage,
@@ -75,10 +79,10 @@ import {
   updateFilter,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-DMHJUI64.js";
+} from "./chunks/chunk-5Z272VPF.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
-import "./chunks/chunk-HQAHUJIL.js";
+import "./chunks/chunk-WEQC2KGA.js";
 import "./chunks/chunk-FAVAKK4W.js";
 import "./chunks/chunk-GIAQTVDD.js";
 import "./chunks/chunk-BGDW2RS3.js";
@@ -37558,6 +37562,53 @@ server.registerTool(
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true }
   },
   async (args) => run(() => addImage(args))
+);
+server.registerTool(
+  "analyze_report_design",
+  {
+    title: "Analizar el diseno de un informe",
+    description: "Perfil de diseno de cualquier informe abierto (tambien uno ajeno en modo vista, con open_report): lienzo, tema, marco comun (barra lateral, barra superior, enlaces a paginas, controles comunes), tarjetas, scorecards (cuadro de icono, comparacion), interacciones (metricas opcionales, desglose, filtro cruzado), tipografia, colores y separaciones de una pagina, y en mapping las claves del spec que reproducen cada patron. Primer paso para replicar lo mejor de una plantilla.",
+    inputSchema: { pageId: external_exports.string().optional() },
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true }
+  },
+  async ({ pageId }) => run(() => analyzeReportDesign(pageId))
+);
+server.registerTool(
+  "screenshot_report",
+  {
+    title: "Captura del informe",
+    description: "PNG de una pagina (la abierta o pageId) tal como la ve el lector (view=true) o en el editor, o de un solo componente (componentId). Devuelve la imagen y la ruta del archivo. Usala para comprobar el diseno: lo que no se ve no esta bien (un fondo nuevo puede tapar un control, una etiqueta puede quedar fuera de su caja). Vuelve al modo en que estaba.",
+    inputSchema: { pageId: external_exports.string().optional(), view: external_exports.boolean().optional(), componentId: external_exports.string().optional() },
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true }
+  },
+  async (args) => {
+    try {
+      const r = await screenshotReport(args);
+      return { content: [{ type: "image", data: r.base64, mimeType: "image/png" }, { type: "text", text: JSON.stringify({ file: r.file, view: r.view, componentId: r.componentId ?? null }) }] };
+    } catch (err) {
+      return fail(err);
+    }
+  }
+);
+server.registerTool(
+  "list_style_keys",
+  {
+    title: "Claves de estilo de un componente",
+    description: 'Todas las claves de estilo que acepta un componente, con su valor efectivo (lo sobrescrito o lo que pone el tipo), y cuales estan sobrescritas. filter: expresion regular sobre el nombre (p. ej. "title|padding|compare"). Sirve para descubrir opciones sin herramienta propia y ponerlas con patch_component style.',
+    inputSchema: { componentId: external_exports.string().min(1), filter: external_exports.string().optional() },
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true }
+  },
+  async ({ componentId, filter }) => run(() => listStyleKeys(componentId, filter))
+);
+server.registerTool(
+  "check_view",
+  {
+    title: "Comprobar en modo vista",
+    description: 'Abre una pagina en modo vista y dice, por componente, que controles aparecen al pasar el raton (metricas opcionales, desglosar, ordenar...), su titulo y a que pagina enlaza. clickLinks=true pulsa cada enlace y dice adonde llego. Vuelve al editor al acabar. "Sin errores" no prueba que algo funcione: esto si.',
+    inputSchema: { pageId: external_exports.string().optional(), clickLinks: external_exports.boolean().optional() },
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true }
+  },
+  async (args) => run(() => checkView(args))
 );
 var COLOR = external_exports.string().regex(/^#[0-9a-fA-F]{6}$/, "#rrggbb");
 server.registerTool(

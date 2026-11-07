@@ -9,6 +9,11 @@ es `cd-...` y sale de `get_report_layout` (CLI: `layout [--page <id>]`).
 en píxeles del informe, sin zoom, relativos al lienzo), el estilo (padding, fondo, borde, radio) y sus
 campos. Si `pageId` no es la página visible, el editor navega a ella.
 
+**Opciones sin herramienta propia:** `list_style_keys componentId filter?` (CLI `style-keys <id> --filter
+"title|padding"`) lista todas las claves de estilo que acepta el componente con su valor efectivo y cuáles están
+sobrescritas; se cambian con `patch_component style`. Así se encuentran el título propio de un gráfico
+(`chartTitle*`), el margen de un scorecard (`paddingLeft`) o si muestra la variación (`hideCompare`).
+
 ## Crear: create_component
 
 ```json

@@ -111,7 +111,12 @@ guías está marcada como [OFICIAL] o [CONVENCIÓN]; respeta la diferencia.
 2. Diseña con las skills `ls-*`. Si el cambio tiene varios pasos, propón un
    spec (`/ls-sdd`).
 3. Aplica cambios pequeños y verifica cada uno con layout, diagnose y, cuando
-   haga falta, reload.
+   haga falta, reload. **Mira** el resultado con `screenshot_report` y comprueba
+   el comportamiento con `check_view` (controles y enlaces en modo vista).
+   - Para copiar lo bueno de otra plantilla: `open_report` + `analyze_report_design`
+     + `screenshot_report view=true`, y rehazlo con el spec
+     (`references/aprender-de-plantillas.md`). Patrones, no marcas ni iconos ajenos.
+   - Una opción sin herramienta propia: `list_style_keys` y `patch_component style`.
 4. Informa:
    - qué cambió y en qué informe (URL de la copia);
    - qué verificaste y cómo;

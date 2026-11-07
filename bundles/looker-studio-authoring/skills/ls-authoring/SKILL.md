@@ -35,8 +35,8 @@ Permisos del servidor (variables de entorno):
 2. **Construye en pasos pequeños**, de uno en uno, y verifica cada uno con `get_report_layout`.
 3. **Recarga y diagnostica** (`reload_report`, luego `diagnose_report`) antes de dar algo por bueno o por
    malo: el editor conserva errores viejos hasta recargar.
-4. **Comprueba el comportamiento en modo vista** cuando importa (un control que filtra, un periodo). "Sin
-   errores" no prueba que funcione.
+4. **Mira el resultado y compruébalo en modo vista**: `screenshot_report` (también de un componente) y
+   `check_view` (controles y enlaces de verdad). "Sin errores" no prueba que se vea ni que funcione.
 5. **Informa:** URL de la copia, qué cambió, qué verificaste y cómo, y lo que no se pudo.
 
 Confirma con el usuario antes de cambiar más de diez componentes, de cambiar el origen de datos o de crear
@@ -54,6 +54,7 @@ campos en un origen reutilizable.
 | Informe como código: spec, `lint`, `apply`, `orphans` | [informe-como-codigo.md](references/informe-como-codigo.md) |
 | Verificar, depurar, exportar y aprender entre sesiones | [revision.md](references/revision.md) |
 | Cómo se comporta el editor (errores pegados, modos, guardados rechazados) | [comportamiento-del-editor.md](references/comportamiento-del-editor.md) |
+| Leer el diseño de cualquier informe o plantilla y rehacer sus patrones con dashkit | [aprender-de-plantillas.md](references/aprender-de-plantillas.md) |
 | Todas las herramientas y comandos, generado desde el servidor | [operaciones.md](references/operaciones.md) |
 
 ## MCP y CLI

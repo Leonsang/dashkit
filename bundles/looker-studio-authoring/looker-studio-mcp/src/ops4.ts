@@ -36,6 +36,9 @@ import {
   comparisonScript,
   chartInteractionsScript,
   imageComponentsScript,
+  screenBoxesScript,
+  designProfileScript,
+  styleKeysScript,
   pageLinkScript,
   readChartStyleScript,
   type ChartStyle,
@@ -1001,6 +1004,146 @@ export async function addImage(o: { path: string; box: { x: number; y: number; w
   }
   if (o.altText) await setStyle(id, { altText: o.altText });
   return { ok: true, componentId: id, file: name, uploaded };
+}
+
+/** Style keys a component accepts with their effective values; filter is a regex on the key name. */
+export async function listStyleKeys(componentId: string, filter?: string) {
+  const r = await evaluateOn(await getReportPage(), T, styleKeysScript, { componentId, ...(filter ? { filter } : {}) });
+  if (!r.ok) throw new Error(r.error);
+  return { componentId, type: r.type, overridden: r.overridden, keys: r.keys };
+}
+
+/** Opens a page of the report in view or edit mode (same tab) and returns the page and whether it switched. */
+async function gotoMode(pageId: string | undefined, view: boolean): Promise<{ page: Page; restore: string | null }> {
+  const page = await getReportPage();
+  const url = page.url();
+  const m = url.match(/reporting\/([^/?#]+)(?:\/page\/([^/?#]+))?(?:\/(edit|view|preview))?/);
+  if (!m) throw new Error('No hay un informe abierto.');
+  const [, rid, pid, mode] = m;
+  const wantMode = view ? 'view' : 'edit';
+  const target = pageId ?? pid;
+  if (target === pid && (mode ?? 'view') === wantMode) return { page, restore: null };
+  await page.goto(`https://datastudio.google.com/reporting/${rid}/page/${target}${view ? '/view' : '/edit'}`, { waitUntil: 'domcontentloaded' });
+  await waitRendered(page);
+  return { page, restore: url };
+}
+
+async function waitRendered(page: Page) {
+  await ensureVisible(page);
+  // Ready when the report model is there and the number of drawn components stops changing.
+  let last = -1, stable = 0;
+  for (let i = 0; i < 60 && stable < 3; i++) {
+    await sleep(500);
+    const n = await page.evaluate(() => {
+      try { (window as any).angular.element(document.body).injector().get('legoUndoRedoService').report.pages.length; } catch { return -1; }
+      return document.querySelectorAll('.lego-component-repeat').length;
+    }).catch(() => -1);
+    stable = n > 0 && n === last ? stable + 1 : 0;
+    last = n;
+  }
+  await sleep(1000);
+}
+
+/**
+ * PNG of the open page (or another page) as the reader sees it (view=true) or in the editor, or of one
+ * component. Saved under the OS temp folder; the MCP tool also returns the image itself.
+ */
+export async function screenshotReport(o: { pageId?: string; view?: boolean; componentId?: string; out?: string }) {
+  const { tmpdir } = await import('node:os');
+  const { join, resolve } = await import('node:path');
+  const { mkdirSync, writeFileSync } = await import('node:fs');
+  const { page, restore } = await gotoMode(o.pageId, !!o.view);
+  try {
+    await ensureVisible(page);
+    let clip: { x: number; y: number; width: number; height: number } | undefined;
+    if (o.componentId) {
+      let box = (await evaluateOn(page, T, screenBoxesScript)).find((b) => b.id === o.componentId);
+      if (!box) throw new Error(`El componente ${o.componentId} no esta en esta pagina.`);
+      // bring it into the viewport, then measure again
+      await page.evaluate((y: number) => { let s = document.querySelector('.ng2-canvas-container')?.parentElement as HTMLElement | null; while (s && s.scrollHeight <= s.clientHeight) s = s.parentElement; if (s) s.scrollTop += y - 200; }, box.y);
+      await sleep(1200);
+      box = (await evaluateOn(page, T, screenBoxesScript)).find((b) => b.id === o.componentId)!;
+      const pad = 12;
+      clip = { x: Math.max(0, box.x - pad), y: Math.max(0, box.y - pad), width: box.w + 2 * pad, height: box.h + 2 * pad };
+    }
+    // Wait for the charts' data: nothing on the canvas still loading (spinners, progress, placeholders).
+    for (let i = 0; i < 30; i++) {
+      const busy = await page.evaluate(() => [...document.querySelectorAll('.ng2-canvas-container [class*="loading"], .ng2-canvas-container [class*="spinner"], .ng2-canvas-container [class*="progress"], .ng2-canvas-container [aria-busy="true"]')]
+        .some((e) => (e as HTMLElement).offsetParent !== null)).catch(() => false);
+      if (!busy) break;
+      await sleep(500);
+    }
+    await sleep(800);
+    if (o.componentId) {
+      // measure again right before the shot: the layout can still shift while data loads
+      const b = (await evaluateOn(page, T, screenBoxesScript)).find((x) => x.id === o.componentId);
+      if (b) clip = { x: Math.max(0, b.x - 12), y: Math.max(0, b.y - 12), width: b.w + 24, height: b.h + 24 };
+    }
+    // captureBeyondViewport (the default) re-lays the page out at another size and the canvas moves under the clip.
+    const buf = (await page.screenshot({ type: 'png', captureBeyondViewport: false, ...(clip ? { clip } : {}) })) as Buffer;
+    const dir = join(tmpdir(), 'ls-studio-shots');
+    mkdirSync(dir, { recursive: true });
+    const file = o.out ? resolve(o.out) : join(dir, `${Date.now()}${o.componentId ? '-' + o.componentId : ''}${o.view ? '-view' : ''}.png`);
+    writeFileSync(file, buf);
+    return { file, base64: Buffer.from(buf).toString('base64'), view: !!o.view, ...(o.componentId ? { componentId: o.componentId, clip } : {}) };
+  } finally {
+    if (restore) { await page.goto(restore, { waitUntil: 'domcontentloaded' }); await waitRendered(page); }
+  }
+}
+
+/**
+ * Checks a page as the reader sees it: for each component, the controls that show on hover (optional
+ * metrics, drill-down, sort...) and its page link; with clickLinks, clicks each link and reports where it
+ * landed. Returns to the editor afterwards.
+ */
+export async function checkView(o: { pageId?: string; clickLinks?: boolean }) {
+  const { page, restore } = await gotoMode(o.pageId, true);
+  const startUrl = page.url();
+  try {
+    const boxes = await evaluateOn(page, T, screenBoxesScript);
+    const out: Array<{ id: string; type: string; level: string; title?: string | null; controls?: string[]; link?: string | null; landed?: string }> = [];
+    for (const b of boxes) {
+      const row: (typeof out)[number] = { id: b.id, type: b.type, level: b.level, ...(b.title ? { title: b.title } : {}) };
+      if (!/description|shape|image|button|arrow|filter|daterange|dimension-control|dataset-picker/.test(b.type)) {
+        await page.evaluate((y: number, h: number) => { let s = document.querySelector('.ng2-canvas-container')?.parentElement as HTMLElement | null; while (s && s.scrollHeight <= s.clientHeight) s = s.parentElement; if (s && (y < 80 || y + h > window.innerHeight)) s.scrollTop += y - 150; }, b.y, b.h);
+        await sleep(300);
+        const nb = (await evaluateOn(page, T, screenBoxesScript)).find((x) => x.id === b.id)!;
+        await page.mouse.move(nb.x + nb.w / 2, nb.y + nb.h / 2);
+        await sleep(700);
+        row.controls = await page.evaluate((x: number, y: number, w: number, h: number) =>
+          [...new Set([...document.querySelectorAll('[aria-label]')].filter((e) => {
+            const r = (e as HTMLElement).getBoundingClientRect();
+            return (e as HTMLElement).offsetParent && r.width > 0 && r.x >= x - 4 && r.y >= y - 40 && r.x + r.width <= x + w + 4 && r.y <= y + h;
+          }).map((e) => e.getAttribute('aria-label') || '').filter((t) => t && t.length < 40))], nb.x, nb.y, nb.w, nb.h);
+      }
+      if (b.link) {
+        row.link = b.link;
+        if (o.clickLinks) {
+          // measure again: after coming back from the previous link the page may have re-laid out
+          const nb = (await evaluateOn(page, T, screenBoxesScript)).find((x) => x.id === b.id) ?? b;
+          await page.mouse.click(nb.x + nb.w / 2, nb.y + nb.h / 2);
+          await sleep(4000);
+          row.landed = (page.url().match(/\/page\/([^/?#]+)/) || [])[1] ?? page.url();
+          if (page.url() !== startUrl) { await page.goto(startUrl, { waitUntil: 'domcontentloaded' }); await waitRendered(page); }
+        }
+      }
+      if (row.controls?.length || row.link || row.title) out.push(row);
+    }
+    return { page: (startUrl.match(/\/page\/([^/?#]+)/) || [])[1], components: out };
+  } finally {
+    if (restore) { await page.goto(restore, { waitUntil: 'domcontentloaded' }); await waitRendered(page); }
+  }
+}
+
+/**
+ * Design profile of the open report (any report, also someone else's in view mode): shell (side bar, top bar,
+ * page links, global controls), cards, scorecards, interactions, typography, colours and spacing, with the
+ * spec keys that reproduce each pattern. pageId: the page to profile (default the first one).
+ */
+export async function analyzeReportDesign(pageId?: string) {
+  const r = await evaluateOn(await getReportPage(), T, designProfileScript, pageId);
+  if (!r.ok) throw new Error(r.error);
+  return r.profile;
 }
 
 export async function getChartStyle(componentId: string) {

@@ -5,13 +5,15 @@ import {
   getComponentConfig,
   getReportLayout,
   sanitizeLearning
-} from "./chunks/chunk-EJ7UZLEC.js";
+} from "./chunks/chunk-B3ZAZUTG.js";
 import {
   addImage,
   addParameter,
   alignComponents,
+  analyzeReportDesign,
   arrangeComponents,
   bindFieldsToComponent,
+  checkView,
   createBlend,
   deleteBlend,
   deletePages,
@@ -21,7 +23,9 @@ import {
   groupComponents,
   inspectDataSources,
   listBlends,
+  listStyleKeys,
   movePage,
+  screenshotReport,
   setChartInteractions,
   setChartStyle,
   setComparison,
@@ -34,7 +38,7 @@ import {
   setText,
   updateBlend,
   updateParameter
-} from "./chunks/chunk-IFW6L6XQ.js";
+} from "./chunks/chunk-25JRGRWS.js";
 import {
   addFilter,
   addPage,
@@ -73,10 +77,10 @@ import {
   updateFilter,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-DMHJUI64.js";
+} from "./chunks/chunk-5Z272VPF.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
-import "./chunks/chunk-HQAHUJIL.js";
+import "./chunks/chunk-WEQC2KGA.js";
 import "./chunks/chunk-FAVAKK4W.js";
 import "./chunks/chunk-GIAQTVDD.js";
 import "./chunks/chunk-BGDW2RS3.js";
@@ -121,6 +125,10 @@ Paginas y tema
   align <id...> [--align left|center|right|top|middle|bottom] [--distribute horizontal|vertical] [--gap N]
         [--match width|height|both]       Alinear, distribuir, igualar tamano
   group <id...> | ungroup <id|g-...> | groups [--page <id>]   Grupos de componentes
+  design [--page <id>]                 Perfil de diseno de cualquier informe (marco, tarjetas, KPIs, interacciones)
+  shot [--page <id>] [--view] [--component <id>] [--out f.png]   Captura de la pagina o de un componente
+  style-keys <id> [--filter regex]     Claves de estilo que acepta un componente, con su valor efectivo
+  check-view [--page <id>] [--click]   En modo vista: controles de cada grafico, enlaces y adonde llevan
   image <archivo> --box x,y,w,h [--page <id>] [--alt T]   Imagen o icono desde un archivo (lo sube una vez)
   interact <id> [--optional "SUM(a) as A,..."] [--drill] [--cross on|off] [--no-reload]
                                        Metricas opcionales, desglose de fecha y filtro cruzado de un grafico
@@ -296,6 +304,19 @@ async function main() {
       return groupComponents({ op: "ungroup", componentIds: pos.filter((x) => !x.startsWith("g-")), groupIds: pos.filter((x) => x.startsWith("g-")) });
     case "groups":
       return groupComponents({ op: "list", ...typeof flags.page === "string" ? { pageId: flags.page } : {} });
+    case "design":
+      return analyzeReportDesign(typeof flags.page === "string" ? flags.page : void 0);
+    case "shot":
+      return screenshotReport({
+        ...typeof flags.page === "string" ? { pageId: flags.page } : {},
+        ...flags.view ? { view: true } : {},
+        ...typeof flags.component === "string" ? { componentId: flags.component } : {},
+        ...typeof flags.out === "string" ? { out: flags.out } : {}
+      }).then(({ base64: _b, ...r }) => r);
+    case "style-keys":
+      return listStyleKeys(need(pos[0], "componentId"), typeof flags.filter === "string" ? flags.filter : void 0);
+    case "check-view":
+      return checkView({ ...typeof flags.page === "string" ? { pageId: flags.page } : {}, ...flags.click ? { clickLinks: true } : {} });
     case "image": {
       const box = list(flags.box).map(Number);
       if (box.length !== 4 || box.some((v) => Number.isNaN(v))) throw new Error("--box x,y,w,h");

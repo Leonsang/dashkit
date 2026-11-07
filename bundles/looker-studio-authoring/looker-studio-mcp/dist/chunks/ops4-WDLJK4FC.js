@@ -4,7 +4,9 @@ import {
   addImage,
   addParameter,
   alignComponents,
+  analyzeReportDesign,
   arrangeComponents,
+  checkView,
   createBlend,
   deleteBlend,
   deletePages,
@@ -14,8 +16,10 @@ import {
   getChartStyle,
   groupComponents,
   listBlends,
+  listStyleKeys,
   movePage,
   navPages,
+  screenshotReport,
   selectSourceChart,
   setChartInteractions,
   setChartStyle,
@@ -28,11 +32,11 @@ import {
   setText,
   updateBlend,
   updateParameter
-} from "./chunk-IFW6L6XQ.js";
-import "./chunk-DMHJUI64.js";
+} from "./chunk-25JRGRWS.js";
+import "./chunk-5Z272VPF.js";
 import "./chunk-5J4RMU5E.js";
 import "./chunk-Y34SSGZY.js";
-import "./chunk-HQAHUJIL.js";
+import "./chunk-WEQC2KGA.js";
 import "./chunk-FAVAKK4W.js";
 import "./chunk-GIAQTVDD.js";
 import "./chunk-BGDW2RS3.js";
@@ -44,7 +48,9 @@ export {
   addImage,
   addParameter,
   alignComponents,
+  analyzeReportDesign,
   arrangeComponents,
+  checkView,
   createBlend,
   deleteBlend,
   deletePages,
@@ -54,8 +60,10 @@ export {
   getChartStyle,
   groupComponents,
   listBlends,
+  listStyleKeys,
   movePage,
   navPages,
+  screenshotReport,
   selectSourceChart,
   setChartInteractions,
   setChartStyle,

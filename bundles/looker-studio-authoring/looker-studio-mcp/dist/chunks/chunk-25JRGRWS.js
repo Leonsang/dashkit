@@ -16,7 +16,7 @@ import {
   reloadReport,
   requireEditMode,
   resolveDataset
-} from "./chunk-DMHJUI64.js";
+} from "./chunk-5Z272VPF.js";
 import {
   arrangeScript,
   blendSnapshotScript,
@@ -26,6 +26,7 @@ import {
   componentBoxesScript,
   componentPointsScript,
   deleteBlendScript,
+  designProfileScript,
   editBlendScript,
   groupScript,
   imageComponentsScript,
@@ -35,13 +36,15 @@ import {
   navPagesScript,
   pageLinkScript,
   readChartStyleScript,
+  screenBoxesScript,
   selectedIdsScript,
   setConditionalFormatScript,
   setControlParameterScript,
   setDisplayKeysScript,
   setTextScript,
+  styleKeysScript,
   updateBlendScript
-} from "./chunk-HQAHUJIL.js";
+} from "./chunk-WEQC2KGA.js";
 
 // src/looker/data.ts
 var EVAL_TIMEOUT_MS = Number(process.env.LS_EVAL_TIMEOUT_MS ?? 15e3);
@@ -802,7 +805,7 @@ async function setPageLink(componentId, pageRef) {
   const { page } = await requireEditMode();
   let pageId = pageRef;
   if (pageRef.startsWith("name:")) {
-    const { listPages } = await import("./ops3-5ZASVQHD.js");
+    const { listPages } = await import("./ops3-6FR52J75.js");
     const hit = (await listPages()).find((p) => p.name === pageRef.slice(5));
     if (!hit) throw new Error(`No hay ninguna pagina llamada "${pageRef.slice(5)}".`);
     pageId = hit.id;
@@ -866,6 +869,137 @@ async function addImage(o) {
   if (o.altText) await setStyle(id, { altText: o.altText });
   return { ok: true, componentId: id, file: name, uploaded };
 }
+async function listStyleKeys(componentId, filter) {
+  const r = await evaluateOn(await getReportPage(), T, styleKeysScript, { componentId, ...filter ? { filter } : {} });
+  if (!r.ok) throw new Error(r.error);
+  return { componentId, type: r.type, overridden: r.overridden, keys: r.keys };
+}
+async function gotoMode(pageId, view) {
+  const page = await getReportPage();
+  const url = page.url();
+  const m = url.match(/reporting\/([^/?#]+)(?:\/page\/([^/?#]+))?(?:\/(edit|view|preview))?/);
+  if (!m) throw new Error("No hay un informe abierto.");
+  const [, rid, pid, mode] = m;
+  const wantMode = view ? "view" : "edit";
+  const target = pageId ?? pid;
+  if (target === pid && (mode ?? "view") === wantMode) return { page, restore: null };
+  await page.goto(`https://datastudio.google.com/reporting/${rid}/page/${target}${view ? "/view" : "/edit"}`, { waitUntil: "domcontentloaded" });
+  await waitRendered(page);
+  return { page, restore: url };
+}
+async function waitRendered(page) {
+  await ensureVisible(page);
+  let last = -1, stable = 0;
+  for (let i = 0; i < 60 && stable < 3; i++) {
+    await sleep(500);
+    const n = await page.evaluate(() => {
+      try {
+        window.angular.element(document.body).injector().get("legoUndoRedoService").report.pages.length;
+      } catch {
+        return -1;
+      }
+      return document.querySelectorAll(".lego-component-repeat").length;
+    }).catch(() => -1);
+    stable = n > 0 && n === last ? stable + 1 : 0;
+    last = n;
+  }
+  await sleep(1e3);
+}
+async function screenshotReport(o) {
+  const { tmpdir } = await import("node:os");
+  const { join, resolve } = await import("node:path");
+  const { mkdirSync, writeFileSync } = await import("node:fs");
+  const { page, restore } = await gotoMode(o.pageId, !!o.view);
+  try {
+    await ensureVisible(page);
+    let clip;
+    if (o.componentId) {
+      let box = (await evaluateOn(page, T, screenBoxesScript)).find((b) => b.id === o.componentId);
+      if (!box) throw new Error(`El componente ${o.componentId} no esta en esta pagina.`);
+      await page.evaluate((y) => {
+        let s = document.querySelector(".ng2-canvas-container")?.parentElement;
+        while (s && s.scrollHeight <= s.clientHeight) s = s.parentElement;
+        if (s) s.scrollTop += y - 200;
+      }, box.y);
+      await sleep(1200);
+      box = (await evaluateOn(page, T, screenBoxesScript)).find((b) => b.id === o.componentId);
+      const pad = 12;
+      clip = { x: Math.max(0, box.x - pad), y: Math.max(0, box.y - pad), width: box.w + 2 * pad, height: box.h + 2 * pad };
+    }
+    for (let i = 0; i < 30; i++) {
+      const busy = await page.evaluate(() => [...document.querySelectorAll('.ng2-canvas-container [class*="loading"], .ng2-canvas-container [class*="spinner"], .ng2-canvas-container [class*="progress"], .ng2-canvas-container [aria-busy="true"]')].some((e) => e.offsetParent !== null)).catch(() => false);
+      if (!busy) break;
+      await sleep(500);
+    }
+    await sleep(800);
+    if (o.componentId) {
+      const b = (await evaluateOn(page, T, screenBoxesScript)).find((x) => x.id === o.componentId);
+      if (b) clip = { x: Math.max(0, b.x - 12), y: Math.max(0, b.y - 12), width: b.w + 24, height: b.h + 24 };
+    }
+    const buf = await page.screenshot({ type: "png", captureBeyondViewport: false, ...clip ? { clip } : {} });
+    const dir = join(tmpdir(), "ls-studio-shots");
+    mkdirSync(dir, { recursive: true });
+    const file = o.out ? resolve(o.out) : join(dir, `${Date.now()}${o.componentId ? "-" + o.componentId : ""}${o.view ? "-view" : ""}.png`);
+    writeFileSync(file, buf);
+    return { file, base64: Buffer.from(buf).toString("base64"), view: !!o.view, ...o.componentId ? { componentId: o.componentId, clip } : {} };
+  } finally {
+    if (restore) {
+      await page.goto(restore, { waitUntil: "domcontentloaded" });
+      await waitRendered(page);
+    }
+  }
+}
+async function checkView(o) {
+  const { page, restore } = await gotoMode(o.pageId, true);
+  const startUrl = page.url();
+  try {
+    const boxes = await evaluateOn(page, T, screenBoxesScript);
+    const out = [];
+    for (const b of boxes) {
+      const row = { id: b.id, type: b.type, level: b.level, ...b.title ? { title: b.title } : {} };
+      if (!/description|shape|image|button|arrow|filter|daterange|dimension-control|dataset-picker/.test(b.type)) {
+        await page.evaluate((y, h) => {
+          let s = document.querySelector(".ng2-canvas-container")?.parentElement;
+          while (s && s.scrollHeight <= s.clientHeight) s = s.parentElement;
+          if (s && (y < 80 || y + h > window.innerHeight)) s.scrollTop += y - 150;
+        }, b.y, b.h);
+        await sleep(300);
+        const nb = (await evaluateOn(page, T, screenBoxesScript)).find((x) => x.id === b.id);
+        await page.mouse.move(nb.x + nb.w / 2, nb.y + nb.h / 2);
+        await sleep(700);
+        row.controls = await page.evaluate((x, y, w, h) => [...new Set([...document.querySelectorAll("[aria-label]")].filter((e) => {
+          const r = e.getBoundingClientRect();
+          return e.offsetParent && r.width > 0 && r.x >= x - 4 && r.y >= y - 40 && r.x + r.width <= x + w + 4 && r.y <= y + h;
+        }).map((e) => e.getAttribute("aria-label") || "").filter((t) => t && t.length < 40))], nb.x, nb.y, nb.w, nb.h);
+      }
+      if (b.link) {
+        row.link = b.link;
+        if (o.clickLinks) {
+          const nb = (await evaluateOn(page, T, screenBoxesScript)).find((x) => x.id === b.id) ?? b;
+          await page.mouse.click(nb.x + nb.w / 2, nb.y + nb.h / 2);
+          await sleep(4e3);
+          row.landed = (page.url().match(/\/page\/([^/?#]+)/) || [])[1] ?? page.url();
+          if (page.url() !== startUrl) {
+            await page.goto(startUrl, { waitUntil: "domcontentloaded" });
+            await waitRendered(page);
+          }
+        }
+      }
+      if (row.controls?.length || row.link || row.title) out.push(row);
+    }
+    return { page: (startUrl.match(/\/page\/([^/?#]+)/) || [])[1], components: out };
+  } finally {
+    if (restore) {
+      await page.goto(restore, { waitUntil: "domcontentloaded" });
+      await waitRendered(page);
+    }
+  }
+}
+async function analyzeReportDesign(pageId) {
+  const r = await evaluateOn(await getReportPage(), T, designProfileScript, pageId);
+  if (!r.ok) throw new Error(r.error);
+  return r.profile;
+}
 async function getChartStyle(componentId) {
   const r = await evaluateOn(await getReportPage(), T, readChartStyleScript, componentId);
   if (!r.ok) throw new Error(r.error);
@@ -917,6 +1051,10 @@ export {
   setPageLink,
   setChartInteractions,
   addImage,
+  listStyleKeys,
+  screenshotReport,
+  checkView,
+  analyzeReportDesign,
   getChartStyle,
   setChartStyle,
   setStyle

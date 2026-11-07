@@ -1081,3 +1081,219 @@ export function componentLevelScript(id: string): 'report' | 'page' | null {
   if (report.pages.some((p: any) => p.components.some((c: any) => c.getId() === id))) return 'page';
   return null;
 }
+
+// ---------------------------------------------------------------------------
+// seeing what the reader sees: style keys a component accepts, and where each component is on screen
+// ---------------------------------------------------------------------------
+
+/** Every style (display) key the component accepts, with its effective value (override or default). */
+export function styleKeysScript(args: { componentId: string; filter?: string }): { ok: boolean; error?: string; type?: string; keys?: Record<string, unknown>; overridden?: string[] } {
+  const w = window as any;
+  try {
+    const report = w.angular.element(document.body).injector().get('legoUndoRedoService').report;
+    const comp = [...report.pages.flatMap((p: any) => p.components), ...report.components].find((c: any) => c.getId() === args.componentId);
+    if (!comp) return { ok: false, error: `Componente ${args.componentId} no encontrado.` };
+    const re = args.filter ? new RegExp(args.filter, 'i') : null;
+    const own = comp.config.config.display.keys || {};
+    let names: string[] = [];
+    try { names = Object.keys(comp.getDefaultDisplayKeys()); } catch { /* none */ }
+    names = [...new Set([...names, ...Object.keys(own)])].filter((n) => !re || re.test(n)).sort();
+    const keys: Record<string, unknown> = {};
+    for (const n of names) {
+      let v: unknown;
+      try { v = comp.getDisplayKeyValue(n); } catch { v = own[n] && own[n].value; }
+      // 20-slot series arrays: keep only the slots in use
+      if (Array.isArray(v) && v.length === 20) { const last = v.map((x: unknown) => x !== null && x !== undefined).lastIndexOf(true); v = last < 0 ? [] : v.slice(0, last + 1); }
+      keys[n] = v === undefined ? null : v;
+    }
+    return { ok: true, type: String(comp.config.config.display.type), keys, overridden: Object.keys(own).filter((n) => own[n] && own[n].value !== undefined && (!re || re.test(n))) };
+  } catch (e: any) {
+    return { ok: false, error: String(e && e.message) };
+  }
+}
+
+/** Screen boxes (CSS px) of the components of the open page, plus each one's page link. */
+export function screenBoxesScript(): Array<{ id: string; type: string; level: 'page' | 'report'; x: number; y: number; w: number; h: number; link: string | null; title: string | null }> {
+  const w = window as any;
+  const report = w.angular.element(document.body).injector().get('legoUndoRedoService').report;
+  const cv = document.querySelector('.ng2-canvas-container') as HTMLElement | null;
+  if (!cv) return [];
+  const r = cv.getBoundingClientRect();
+  const z = r.width / (Number(report.config.attribute && report.config.attribute.width) || 1200);
+  const pid = (location.pathname.match(/\/page\/([^/]+)/) || [])[1];
+  let page = report.pages.find((p: any) => String(p.getId()) === pid) || null;
+  if (!page) {
+    // Older pages have a URL id that is not the model id: pick the page whose boxes are the ones drawn.
+    const drawn = new Set([...document.querySelectorAll('.lego-component-repeat')].map((e) => {
+      const st = (e as HTMLElement).style;
+      return `${parseInt(st.left, 10)},${parseInt(st.top, 10)},${parseInt(st.width, 10)}`;
+    }));
+    let best = 0;
+    for (const p of report.pages) {
+      const n = p.components.filter((c: any) => { const a = c.getAttribute(); return drawn.has(`${Math.round(a.left)},${Math.round(a.top)},${Math.round(a.width)}`); }).length;
+      if (n > best) { best = n; page = p; }
+    }
+  }
+  const rows: any[] = [];
+  // Calibrate scale and origin on any drawn component: its style holds the model box, its rect the screen box.
+  let ox = r.x, oy = r.y, zz = z;
+  const rep = [...document.querySelectorAll('.lego-component-repeat')].find((e) => parseFloat((e as HTMLElement).style.width) > 0) as HTMLElement | undefined;
+  if (rep) { const d = rep.getBoundingClientRect(); zz = d.width / parseFloat(rep.style.width); ox = d.x - parseFloat(rep.style.left) * zz; oy = d.y - parseFloat(rep.style.top) * zz; }
+  const add = (c: any, level: 'page' | 'report') => {
+    const a = c.getAttribute();
+    const k = c.config.config.display.keys || {};
+    const v = (n: string) => (k[n] && k[n].value !== undefined ? k[n].value : null);
+    rows.push({ id: String(c.getId()), type: String(c.config.config.display.type), level,
+      x: Math.round(ox + a.left * zz), y: Math.round(oy + a.top * zz), w: Math.round(a.width * zz), h: Math.round(a.height * zz),
+      link: v('internalLink'), title: v('chartTitleShowTitle') ? v('chartTitleText') : null });
+  };
+  if (page) for (const c of page.components) add(c, 'page');
+  for (const c of report.components) add(c, 'report');
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+// design profile of any report (read-only, works in view mode): the patterns a designer used, in the terms
+// of dashkit's spec (card, reportLevel, linkPage, comparison, interactions...). Patterns observed 2026-11-07.
+// ---------------------------------------------------------------------------
+
+export interface DesignProfile {
+  canvas: { width: number; height: number; grid: number | null; viewModeNav: string | null };
+  theme: { font: string | null; fill: string | null; accent: string | null; text: string | null; series: string[] };
+  pages: number;
+  shell: {
+    sideBar: { box: number[]; color: string | null; radius: number | null } | null;
+    topBar: { box: number[]; color: string | null } | null;
+    navItems: Array<{ type: string; box: number[]; toPage: string | null; text: string | null }>;
+    globalControls: Array<{ type: string; box: number[] }>;
+    other: number;
+  };
+  page: {
+    id: string; name: string; components: number;
+    cards: Array<{ box: number[]; color: string | null; radius: number | null; holds: string[]; title: string | null }>;
+    kpis: Array<{ box: number[]; iconTile: boolean; comparison: string | null; showsDelta: boolean; valueSize: string | null }>;
+    interactions: Array<{ type: string; title: string | null; optionalMetrics: string[]; drillLevels: number; crossFilter: boolean }>;
+    titles: { chartTitles: number; textAboveCharts: number };
+    texts: Array<{ text: string; size: number | null; bold: boolean; color: string | null }>;
+    shapeColors: Array<{ color: string; count: number }>;
+    spacing: { gaps: Array<{ px: number; count: number }>; leftEdge: number | null };
+  };
+  mapping: string[];
+}
+
+export function designProfileScript(pageId?: string): { ok: boolean; error?: string; profile?: DesignProfile } {
+  const w = window as any;
+  try {
+    const report = w.angular.element(document.body).injector().get('legoUndoRedoService').report;
+    const attr = report.config.attribute || {};
+    const W = Number(attr.width) || 1200, H = Number(attr.height) || 900;
+    const val = (c: any, k: string) => { try { const v = c.getDisplayKeyValue(k); if (v !== undefined) return v; } catch { /* fall through */ } const x = (c.config.config.display.keys || {})[k]; return x && x.value !== undefined ? x.value : null; };
+    const box = (c: any) => { const a = c.getAttribute(); return [Math.round(a.left), Math.round(a.top), Math.round(a.width), Math.round(a.height)]; };
+    const type = (c: any) => String(c.config.config.display.type);
+    const color = (v: any) => (v && typeof v === 'object' && typeof v.color === 'string' && v.opacity !== 0 ? v.color.toUpperCase() : null);
+    const isShape = (c: any) => /generic-shape|^shape$|ellipse/.test(type(c));
+    const DATA = /chart|table|kpi|map|gauge|sankey|funnel|treemap|timeline|waterfall|bullet|scatter|pivot|histogram/;
+    const htmlText = (c: any) => { const t = val(c, 'text'); if (typeof t !== 'string') return null; const d = document.createElement('div'); d.innerHTML = t; return (d.textContent || '').trim(); };
+    const htmlSize = (c: any) => { const t = val(c, 'text'); const m = typeof t === 'string' ? /font-size:\s*(\d+)px/.exec(t) : null; return m ? Number(m[1]) : (parseInt(String(val(c, 'fontSize') || ''), 10) || null); };
+    const inside = (p: number[], q: number[]) => q[0]! >= p[0]! - 2 && q[1]! >= p[1]! - 2 && q[0]! + q[2]! <= p[0]! + p[2]! + 2 && q[1]! + q[3]! <= p[1]! + p[3]! + 2;
+
+    // theme
+    const keys = report.config.config.display.keys || {};
+    const themeId = keys.themeConfig && keys.themeConfig.value;
+    const th = ((report.config.resource && report.config.resource.theme) || []).find((t: any) => t.id === themeId);
+    const tc = (th && th.content) || {};
+    const theme = {
+      font: (tc.themeFontFamily && (tc.themeFontFamily.value || tc.themeFontFamily)) || null,
+      fill: color(tc.themeFillColor), accent: color(tc.themeAccentFillColor), text: color(tc.themeFontColor),
+      series: (tc.themeSeriesColor || []).slice(0, 8).map((s: any) => s && s.color).filter(Boolean),
+    };
+    if (typeof theme.font !== 'string') theme.font = null;
+
+    // shell: report-level components
+    const rl = report.components as any[];
+    const tallLeft = rl.filter((c) => isShape(c) && box(c)[0]! < W * 0.15 && box(c)[3]! > H * 0.6).sort((a, b) => box(b)[3]! - box(a)[3]!)[0];
+    const wideTop = rl.filter((c) => isShape(c) && box(c)[1]! < H * 0.2 && box(c)[2]! > W * 0.5).sort((a, b) => box(b)[2]! - box(a)[2]!)[0];
+    const navItems = rl.filter((c) => /button|image/.test(type(c)) && val(c, 'internalLink')).map((c) => ({ type: type(c), box: box(c), toPage: val(c, 'internalLink'), text: type(c) === 'button' ? (val(c, 'text') || null) : null }));
+    const globalControls = rl.filter((c) => /filter|daterange|dimension-control|dataset-picker|slider/.test(type(c))).map((c) => ({ type: type(c), box: box(c) }));
+    const shell = {
+      sideBar: tallLeft ? { box: box(tallLeft), color: color(val(tallLeft, 'background')), radius: (val(tallLeft, 'border') || {}).radius ?? null } : null,
+      topBar: wideTop ? { box: box(wideTop), color: color(val(wideTop, 'background')) } : null,
+      navItems, globalControls,
+      other: rl.length - navItems.length - globalControls.length - (tallLeft ? 1 : 0) - (wideTop ? 1 : 0),
+    };
+
+    // page
+    const pg = (pageId && report.pages.find((p: any) => String(p.getId()) === pageId)) || report.pages[0];
+    const comps = pg.components as any[];
+    const shapes = comps.filter(isShape);
+    const data = comps.filter((c) => DATA.test(type(c)));
+    const texts = comps.filter((c) => type(c) === 'simple-description');
+    const images = comps.filter((c) => type(c) === 'image-component');
+    const cards = shapes.map((s) => {
+      const b = box(s);
+      const holds = comps.filter((o) => o !== s && inside(b, box(o)) && !isShape(o)).map(type);
+      if (!holds.some((t) => DATA.test(t))) return null;
+      const titleText = texts.find((t) => inside(b, box(t)) && box(t)[1]! - b[1]! < 50);
+      const chartTitled = comps.find((o) => DATA.test(type(o)) && inside(b, box(o)) && val(o, 'chartTitleShowTitle'));
+      return { box: b, color: color(val(s, 'background')), radius: (val(s, 'border') || {}).radius ?? null, holds: [...new Set(holds)],
+        title: titleText ? htmlText(titleText) : chartTitled ? String(val(chartTitled, 'chartTitleText') || '') : null };
+    }).filter(Boolean) as DesignProfile['page']['cards'];
+    const unit = (c: any) => { const k = c.config.config.datasource.keys.compareDateDuration; const v = k && k.value; if (!v || !v.anchorType) return null; const u = v.config && v.config.startOffsetUnit; return u === 9 ? 'previous_period' : u === 8 ? 'previous_year' : `unit ${u}`; };
+    const kpis = comps.filter((c) => type(c) === 'kpi-metric').map((c) => {
+      const b = box(c);
+      const tile = shapes.some((s) => { const sb = box(s); return sb[2]! <= 100 && sb[3]! <= 100 && Math.abs(sb[1]! + sb[3]! / 2 - (b[1]! + b[3]! / 2)) < b[3]! && sb[0]! < b[0]! && b[0]! - (sb[0]! + sb[2]!) < 60 && images.some((i) => inside(sb, box(i))); });
+      return { box: b, iconTile: tile, comparison: unit(c), showsDelta: !!unit(c) && val(c, 'hideCompare') !== true, valueSize: (val(c, 'fontSize') as string) || null };
+    });
+    const interactions = data.map((c) => {
+      const beh = c.config.behavior || {};
+      const sel = beh.onMetricSelect && beh.onMetricSelect[0] && beh.onMetricSelect[0].resource ? beh.onMetricSelect[0].resource.value : [];
+      const drill = beh.onDrillDown && beh.onDrillDown[0] && beh.onDrillDown[0].resource ? beh.onDrillDown[0].resource.value : [];
+      return { type: type(c), title: val(c, 'chartTitleShowTitle') ? String(val(c, 'chartTitleText') || '') : null, optionalMetrics: sel.map((x: any) => x.displayName), drillLevels: drill.length,
+        crossFilter: !!(beh.onSelect && beh.onSelect.some((a: any) => a && a.action === 'cross-filtering')) };
+    }).filter((x) => x.optionalMetrics.length || x.drillLevels || x.crossFilter);
+    const textAbove = data.filter((d) => texts.some((t) => { const tb = box(t), db = box(d); return Math.abs(tb[0]! - db[0]!) < 30 && db[1]! - (tb[1]! + tb[3]!) >= -10 && db[1]! - (tb[1]! + tb[3]!) < 30; })).length;
+    const colorCount: Record<string, number> = {};
+    for (const s of shapes) { const c = color(val(s, 'background')); if (c) colorCount[c] = (colorCount[c] || 0) + 1; }
+    // gaps between horizontally adjacent data components / cards
+    const blocks = (cards.length ? cards.map((c) => c.box) : data.map(box)).sort((a, b) => a[1]! - b[1]! || a[0]! - b[0]!);
+    const gapCount: Record<number, number> = {};
+    for (const a of blocks) for (const b of blocks) {
+      if (a === b) continue;
+      const g = b[0]! - (a[0]! + a[2]!);
+      if (g > 0 && g <= 60 && Math.abs(a[1]! - b[1]!) < 20) gapCount[g] = (gapCount[g] || 0) + 1;
+    }
+    const allX = comps.map((c) => box(c)[0]!).concat(comps.map((c) => box(c)[1]!)).filter((v) => v > 0);
+    const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a);
+    const grid = allX.length ? allX.reduce((g, v) => gcd(g, v)) : null;
+
+    const mapping: string[] = [];
+    if (shell.sideBar) mapping.push(`Barra lateral de ${shell.sideBar.box[2]} px (${shell.sideBar.color ?? 'sin color'}): generic-shape con reportLevel:true; las entradas, button/image con linkPage y reportLevel:true.`);
+    if (shell.navItems.length) mapping.push(`${shell.navItems.length} enlaces a paginas a nivel de informe: linkPage en botones o imagenes.`);
+    if (shell.globalControls.length) mapping.push(`${shell.globalControls.length} controles comunes a todas las paginas: reportLevel:true.`);
+    if (cards.length) mapping.push(`${cards.length} tarjetas (forma ${cards[0]!.color ?? ''} radio ${cards[0]!.radius ?? '?'}) con datos dentro: card {title} en el spec.`);
+    if (kpis.some((k) => k.iconTile)) mapping.push('Scorecards con cuadro de icono: card {icon} (iconos en assets/icons o propios con add_image).');
+    if (kpis.some((k) => k.comparison)) mapping.push(`Scorecards con comparacion (${[...new Set(kpis.map((k) => k.comparison).filter(Boolean))].join(', ')}): comparison en el spec.`);
+    if (interactions.length) mapping.push('Graficos con metricas opcionales / desglose / filtro cruzado: interactions en el spec.');
+    if (theme.fill && theme.fill !== '#FFFFFF') mapping.push(`Fondo de pagina ${theme.fill} via el relleno del tema (fill) y tarjetas de otro color encima.`);
+    if (attr.viewModeNav) mapping.push(`Navegacion de Looker Studio: ${attr.viewModeNav} (settings.viewModeNav).`);
+
+    return {
+      ok: true,
+      profile: {
+        canvas: { width: W, height: H, grid: grid && grid > 1 ? grid : null, viewModeNav: attr.viewModeNav || null },
+        theme, pages: report.pages.length, shell,
+        page: {
+          id: String(pg.getId()), name: String((pg.config.attribute && pg.config.attribute.name) || ''), components: comps.length,
+          cards, kpis, interactions,
+          titles: { chartTitles: data.filter((d) => val(d, 'chartTitleShowTitle')).length, textAboveCharts: textAbove },
+          texts: texts.map((t) => ({ text: (htmlText(t) || '').slice(0, 60), size: htmlSize(t), bold: /<b>|font-weight:\s*(bold|[6-9]00)/.test(String(val(t, 'text') || '')), color: color(val(t, 'fontColor')) })).filter((t) => t.text).slice(0, 25),
+          shapeColors: Object.entries(colorCount).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([c, n]) => ({ color: c, count: n })),
+          spacing: { gaps: Object.entries(gapCount).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([g, n]) => ({ px: Number(g), count: n })), leftEdge: comps.length ? Math.min(...data.map((d) => box(d)[0]!)) : null },
+        },
+        mapping,
+      },
+    };
+  } catch (e: any) {
+    return { ok: false, error: String(e && e.message) };
+  }
+}

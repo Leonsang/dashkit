@@ -27,7 +27,7 @@ import {
   reloadReport,
 } from './ops.js';
 import { loadSpec, type ReportSpec } from './spec.js';
-import { addParameter, alignComponents, arrangeComponents, groupComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, addImage, getChartStyle, setChartInteractions, setComparison, setPageLink, setChartStyle, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
+import { addParameter, alignComponents, arrangeComponents, groupComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, addImage, analyzeReportDesign, checkView, getChartStyle, listStyleKeys, screenshotReport, setChartInteractions, setComparison, setPageLink, setChartStyle, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
 import { renamePage, reportSettings } from './ops3.js';
 import { addFilter, addPage, addSourceField, detachFilter, updateFilter, applyTheme, listFilters, listPages, readTheme, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
 
@@ -847,6 +847,70 @@ server.registerTool(
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
   },
   async (args) => run(() => addImage(args)),
+);
+
+server.registerTool(
+  'analyze_report_design',
+  {
+    title: 'Analizar el diseno de un informe',
+    description:
+      'Perfil de diseno de cualquier informe abierto (tambien uno ajeno en modo vista, con open_report): lienzo, tema, marco comun ' +
+      '(barra lateral, barra superior, enlaces a paginas, controles comunes), tarjetas, scorecards (cuadro de icono, comparacion), ' +
+      'interacciones (metricas opcionales, desglose, filtro cruzado), tipografia, colores y separaciones de una pagina, y en ' +
+      'mapping las claves del spec que reproducen cada patron. Primer paso para replicar lo mejor de una plantilla.',
+    inputSchema: { pageId: z.string().optional() },
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  },
+  async ({ pageId }) => run(() => analyzeReportDesign(pageId)),
+);
+
+server.registerTool(
+  'screenshot_report',
+  {
+    title: 'Captura del informe',
+    description:
+      'PNG de una pagina (la abierta o pageId) tal como la ve el lector (view=true) o en el editor, o de un solo componente ' +
+      '(componentId). Devuelve la imagen y la ruta del archivo. Usala para comprobar el diseno: lo que no se ve no esta bien ' +
+      '(un fondo nuevo puede tapar un control, una etiqueta puede quedar fuera de su caja). Vuelve al modo en que estaba.',
+    inputSchema: { pageId: z.string().optional(), view: z.boolean().optional(), componentId: z.string().optional() },
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  },
+  async (args) => {
+    try {
+      const r = await screenshotReport(args);
+      return { content: [{ type: 'image', data: r.base64, mimeType: 'image/png' }, { type: 'text', text: JSON.stringify({ file: r.file, view: r.view, componentId: r.componentId ?? null }) }] };
+    } catch (err) {
+      return fail(err);
+    }
+  },
+);
+
+server.registerTool(
+  'list_style_keys',
+  {
+    title: 'Claves de estilo de un componente',
+    description:
+      'Todas las claves de estilo que acepta un componente, con su valor efectivo (lo sobrescrito o lo que pone el tipo), y cuales ' +
+      'estan sobrescritas. filter: expresion regular sobre el nombre (p. ej. "title|padding|compare"). Sirve para descubrir ' +
+      'opciones sin herramienta propia y ponerlas con patch_component style.',
+    inputSchema: { componentId: z.string().min(1), filter: z.string().optional() },
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  },
+  async ({ componentId, filter }) => run(() => listStyleKeys(componentId, filter)),
+);
+
+server.registerTool(
+  'check_view',
+  {
+    title: 'Comprobar en modo vista',
+    description:
+      'Abre una pagina en modo vista y dice, por componente, que controles aparecen al pasar el raton (metricas opcionales, ' +
+      'desglosar, ordenar...), su titulo y a que pagina enlaza. clickLinks=true pulsa cada enlace y dice adonde llego. ' +
+      'Vuelve al editor al acabar. "Sin errores" no prueba que algo funcione: esto si.',
+    inputSchema: { pageId: z.string().optional(), clickLinks: z.boolean().optional() },
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  },
+  async (args) => run(() => checkView(args)),
 );
 
 const COLOR = z.string().regex(/^#[0-9a-fA-F]{6}$/, '#rrggbb');

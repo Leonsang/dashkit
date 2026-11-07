@@ -95,7 +95,7 @@ Reinicia Claude Desktop después de guardar el archivo.
 | `diagnose_report` | ninguno | `{issues:[{severity, code, componentId, pageId, message}], stats}`. Códigos: `COMPONENT_ERROR`, `FIELD_NOT_IN_SCHEMA`, `MISSING_CONCEPT_DEF`, `NO_METRICS`, `OUT_OF_CANVAS`, `OFF_GRID`, `TOO_MANY_CHARTS`, `UI_MESSAGE` | No |
 | `get_component_config` | `componentId` | JSON interno completo del componente | No |
 
-La tabla resume las herramientas de lectura y caja. Las 56 herramientas, con sus parámetros, el comando de la CLI que hace lo mismo y la referencia que las explica, están en [`../skills/ls-authoring/references/operaciones.md`](../skills/ls-authoring/references/operaciones.md). Ese índice se genera con `node tools/ops-reference.mjs`, y `npm run check` falla si una herramienta o un comando de la CLI se queda sin pareja o sin explicar.
+La tabla resume las herramientas de lectura y caja. Las 60 herramientas, con sus parámetros, el comando de la CLI que hace lo mismo y la referencia que las explica, están en [`../skills/ls-authoring/references/operaciones.md`](../skills/ls-authoring/references/operaciones.md). Ese índice se genera con `node tools/ops-reference.mjs`, y `npm run check` falla si una herramienta o un comando de la CLI se queda sin pareja o sin explicar.
 
 Todas las herramientas devuelven JSON como texto. Si algo falla, devuelven `isError: true` con la causa.
 Coordenadas en píxeles del informe, sin zoom, relativas al lienzo.
