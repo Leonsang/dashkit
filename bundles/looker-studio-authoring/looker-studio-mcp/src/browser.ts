@@ -19,10 +19,14 @@ export class BrowserNotReadyError extends Error {
   }
 }
 
+const KEEP_ACTIVE =
+  '--disable-features=CalculateNativeWinOcclusion,IntensiveWakeUpThrottling --disable-background-timer-throttling ' +
+  '--disable-backgrounding-occluded-windows --disable-renderer-backgrounding';
 const HOW_TO_LAUNCH =
   'Lanza Chrome o Edge con depuracion remota y un perfil separado, por ejemplo:\n' +
-  '  msedge.exe --remote-debugging-port=9222 --user-data-dir="%TEMP%\\ls-mcp-profile"\n' +
-  '  chrome.exe --remote-debugging-port=9222 --user-data-dir="%TEMP%\\ls-mcp-profile"\n' +
+  `  msedge.exe --remote-debugging-port=9222 --user-data-dir="%TEMP%\\ls-mcp-profile" ${KEEP_ACTIVE}\n` +
+  `  chrome.exe --remote-debugging-port=9222 --user-data-dir="%TEMP%\\ls-mcp-profile" ${KEEP_ACTIVE}\n` +
+  '(las opciones --disable-* evitan que una ventana tapada por otra aplace los guardados del editor)\n' +
   'y abre el informe de Looker Studio en modo edicion (URL .../reporting/<id>/page/<id>/edit).';
 
 async function connect(): Promise<Browser> {
@@ -182,7 +186,59 @@ export async function evaluateOn<T, A extends unknown[]>(
   fn: (...args: A) => T | Promise<T>,
   ...args: A
 ): Promise<T> {
+  await page.evaluate(schemaCompatShim).catch(() => undefined);
   // puppeteer's generic typing for evaluate is stricter than we need here.
   const run = page.evaluate(fn as unknown as (...a: unknown[]) => Promise<T>, ...args) as Promise<T>;
   return withTimeout(run, timeoutMs, fn.name || 'script');
+}
+
+/**
+ * The scripts read a data source's fields as schema.qe.concepts. "qe" is a minified name: an editor release
+ * renamed it ("re", seen 2026-11-07) and every schema read came back empty. When the name is missing, define
+ * schema.qe as a getter for whichever own property holds the plain schema ({concepts, maxDimensions, ...}),
+ * so the scripts keep working across renames. Runs before each script; a no-op once installed.
+ */
+function schemaCompatShim(): void {
+  const w = window as any;
+  if (w.__lsSchemaShim) return;
+  try {
+    const r = w.angular.element(document.body).injector().get('legoUndoRedoService').report;
+    let s: any = null;
+    let ids: unknown[] = [];
+    try { ids = r.getDatasourceIds() || []; } catch { /* ignore */ }
+    for (const id of ids) { try { s = r.getDatasourceSchema(id); } catch { /* ignore */ } if (s) break; }
+    if (!s) {
+      for (const c of r.pages.flatMap((p: any) => p.components)) { try { s = c.getSchema(); } catch { /* ignore */ } if (s) break; }
+    }
+    if (!s || typeof s !== 'object') return;
+    if (!('qe' in s)) {
+      Object.defineProperty(Object.getPrototypeOf(s), 'qe', {
+        configurable: true,
+        get() { return Object.values(this).find((v: any) => v && typeof v === 'object' && !Array.isArray(v) && 'concepts' in v && 'maxDimensions' in v); },
+      });
+    }
+    w.__lsSchemaShim = true;
+  } catch { /* the editor is not ready yet: try again on the next script */ }
+}
+
+/**
+ * A hidden tab (window minimised or behind another, document.hidden) does not render and Looker Studio
+ * defers its saves: components created there vanish on the next reload (benchmark 2026-11-07). Minimising
+ * and restoring the window makes it visible again without the user doing anything.
+ */
+export async function revealIfHidden(page: Page): Promise<void> {
+  await page.bringToFront().catch(() => undefined);
+  if (!(await page.evaluate(() => document.hidden).catch(() => false))) return;
+  const s = await page.target().createCDPSession();
+  try {
+    const { windowId } = (await s.send('Browser.getWindowForTarget')) as { windowId: number };
+    await s.send('Browser.setWindowBounds', { windowId, bounds: { windowState: 'minimized' } });
+    await new Promise((r) => setTimeout(r, 600));
+    await s.send('Browser.setWindowBounds', { windowId, bounds: { windowState: 'normal' } });
+    await new Promise((r) => setTimeout(r, 1200));
+    await page.bringToFront();
+  } finally {
+    await s.detach().catch(() => undefined);
+  }
+  if (await page.evaluate(() => document.hidden).catch(() => false)) throw new Error('La ventana del navegador sigue oculta: ponla delante y repite.');
 }

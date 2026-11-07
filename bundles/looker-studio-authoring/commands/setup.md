@@ -13,9 +13,13 @@ argument-hint: "[URL o id del informe a abrir]"
    personal del usuario: el puerto CDP da control total sobre ese perfil a
    cualquier proceso local.
    - Windows (PowerShell):
-     `Start-Process msedge -ArgumentList '--remote-debugging-port=9222', "--user-data-dir=$env:LOCALAPPDATA\EdgeCDP"`
-   - Windows (cmd): `start msedge --remote-debugging-port=9222 --user-data-dir=%LOCALAPPDATA%\EdgeCDP`
-   - macOS: `open -na "Microsoft Edge" --args --remote-debugging-port=9222 --user-data-dir="$HOME/.edge-cdp"`
+     `Start-Process msedge -ArgumentList '--remote-debugging-port=9222', "--user-data-dir=$env:LOCALAPPDATA\EdgeCDP", '--disable-features=CalculateNativeWinOcclusion,IntensiveWakeUpThrottling', '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding'`
+   - Windows (cmd): `start msedge --remote-debugging-port=9222 --user-data-dir=%LOCALAPPDATA%\EdgeCDP --disable-features=CalculateNativeWinOcclusion,IntensiveWakeUpThrottling --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding`
+   - macOS: `open -na "Microsoft Edge" --args --remote-debugging-port=9222 --user-data-dir="$HOME/.edge-cdp" --disable-features=CalculateNativeWinOcclusion,IntensiveWakeUpThrottling --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding`
+
+   Las opciones `--disable-*` evitan que el sistema dé por oculta la ventana cuando otra la tapa: entonces
+   el editor aplaza sus guardados y lo creado puede perderse al recargar. Si el navegador ya estaba abierto
+   sin ellas, funciona igual mientras su ventana quede a la vista.
 
    Vuelve a comprobar el paso 1. La primera vez, el usuario tiene que iniciar
    sesión en Google en esa ventana. Díselo y espera a que confirme: tú no

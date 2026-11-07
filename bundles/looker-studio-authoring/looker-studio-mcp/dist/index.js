@@ -8,7 +8,7 @@ import {
   getReportLayout,
   sanitizeLearning,
   writesAllowed
-} from "./chunks/chunk-ZWBTCNEU.js";
+} from "./chunks/chunk-BJZX7ULJ.js";
 import {
   addImage,
   addParameter,
@@ -42,7 +42,7 @@ import {
   setText,
   updateBlend,
   updateParameter
-} from "./chunks/chunk-6MM4H4LL.js";
+} from "./chunks/chunk-6CEQY3HD.js";
 import {
   addFilter,
   addPage,
@@ -80,10 +80,10 @@ import {
   updateFilter,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-OIMY3WSN.js";
+} from "./chunks/chunk-SK5Z56WT.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
-import "./chunks/chunk-VAH3IT7I.js";
+import "./chunks/chunk-KBCVDAPW.js";
 import "./chunks/chunk-FAVAKK4W.js";
 import "./chunks/chunk-GIAQTVDD.js";
 import "./chunks/chunk-BGDW2RS3.js";
@@ -37184,6 +37184,7 @@ server.registerTool(
       textAlign: external_exports.enum(["left", "center", "right"]).optional(),
       style: external_exports.record(external_exports.string(), external_exports.unknown()).optional().describe('Claves de estilo del componente (las de get_component_config > config.display.keys), p. ej. {"hideMetric": false} en un scorecard'),
       comparison: external_exports.enum(["none", "previous_period", "previous_year"]).optional().describe("Periodo de comparacion de un grafico o scorecard (el scorecard muestra la variacion)"),
+      dateField: external_exports.string().optional().describe("Con comparison: campo de fecha del periodo (por defecto, la primera fecha diaria del origen)"),
       linkPage: external_exports.string().optional().describe('Boton: id de la pagina que abre, o "name:<nombre de pagina>"')
     },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true }
@@ -37198,7 +37199,7 @@ server.registerTool(
       }));
     if (args.parameter) out.parameter = await setControlParameter(args.componentId, args.parameter);
     if (args.style) out.style = await setStyle(args.componentId, args.style);
-    if (args.comparison) out.comparison = await setComparison(args.componentId, args.comparison);
+    if (args.comparison) out.comparison = await setComparison(args.componentId, args.comparison, args.dateField);
     if (args.linkPage) out.link = await setPageLink(args.componentId, args.linkPage);
     if (args.text !== void 0) out.text = await setText(args.componentId, args.text, { ...args.textSize ? { size: args.textSize } : {}, ...args.textBold ? { bold: true } : {}, ...args.textColor ? { color: args.textColor } : {}, ...args.textAlign ? { align: args.textAlign } : {} });
     return out;

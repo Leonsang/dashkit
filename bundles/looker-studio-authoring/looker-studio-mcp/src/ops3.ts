@@ -590,7 +590,17 @@ export async function addSourceField(opts: { name: string; formula: string; sour
     await sleep(3500);
     await close();
     learn('create_ok', 'source-field', { source: 'data-panel' });
-    return { ok: true, fieldId, name: opts.name, formula: opts.formula, source: src.name, scope: src.scope };
+    // The panel's first text is not always the source's name (a field, e.g. "canal", came back in the
+    // benchmark 2026-11-07): report the source that holds the new field, read from the model.
+    let owner: { dataSourceId: string; name: string } | undefined;
+    for (let i = 0; i < 6 && !owner && fieldId; i++) {
+      const ds = await evaluateOn(page, T, readDataSourcesScript).catch(() => null);
+      const list = ds ? (Array.isArray(ds.dataSources) ? ds.dataSources : Object.values(ds.dataSources as Record<string, never>)) : [];
+      const hit = (list as Array<{ dataSourceId: string; name: string; fields: Array<{ id: string }> }>).find((d) => d.fields.some((f) => f.id === fieldId));
+      if (hit) owner = { dataSourceId: hit.dataSourceId, name: hit.name };
+      else await sleep(1000);
+    }
+    return { ok: true, fieldId, name: opts.name, formula: opts.formula, ...(owner ? { dataSourceId: owner.dataSourceId, ...(owner.name !== owner.dataSourceId ? { source: owner.name } : {}) } : {}), scope: src.scope };
   } finally {
     await page.setViewport(null as never).catch(() => undefined);
   }

@@ -217,6 +217,19 @@ export function createComponentScript(args: CreateComponentArgs): CreateComponen
     keys.dataset = { stateKey: 'ds', dominant: 2, value: { id: wantDs } };
     if (curDs) warnings.push(`Origen cambiado de ${curDs} a ${wantDs}: los campos de la plantilla siguen hasta que vincules los nuevos (bind).`);
   }
+  // Chart-level filters are references to filter resources of the report the config came from. A template's
+  // point to another report ("Filtro no valido", reason 269) and the editor then never sends the save: the
+  // component vanishes on reload (benchmark 2026-11-07). A clone would silently inherit another chart's
+  // filters. A new component starts without any: filters are added with add_filter.
+  if (keys && keys.filters && Array.isArray(keys.filters.value) && keys.filters.value.length) {
+    const own = (report.config.resource && report.config.resource.filter) || {};
+    const ids = keys.filters.value as string[];
+    keys.filters.value = [];
+    const foreign = ids.filter((id) => !own[id]);
+    warnings.push(foreign.length === ids.length
+      ? `Filtros de la plantilla quitados (no existen en este informe): ${ids.join(', ')}.`
+      : `Filtros del componente copiado quitados (${ids.join(', ')}): anadelos con add_filter si los quieres.`);
+  }
   // Templates come from other reports: drop their theme overrides (colors, fonts,
   // borders, shadows) so the target report's theme applies [diseno-layout §6].
   // Observed 2026-11-03: a Firebase (dark theme) template brought fontColor #F3F3F3.
@@ -226,6 +239,24 @@ export function createComponentScript(args: CreateComponentArgs): CreateComponen
     const dropped = Object.keys(dk).filter((k) => THEME.test(k));
     for (const k of dropped) delete dk[k];
     if (dropped.length) warnings.push(`Estilos de tema de la plantilla eliminados: ${dropped.join(', ')}.`);
+  }
+  // Per-column keys of tables (type, width, decimals, compact numbers, bar scaling...) describe the template's
+  // own columns. With other fields they no longer match and the editor stops saving the page: the table and
+  // everything created after it vanish on reload (verified 2026-11-07 by bisecting the simple-table template).
+  if (source === 'template' && cfg.config.display && cfg.config.display.keys) {
+    const dk = cfg.config.display.keys;
+    const PER_COLUMN = /^(col[A-Z]|columnsWidth$|rowsHeight$|compactNumbers$|decimalPrecision$|barScaling$)/;
+    const cols = Object.keys(dk).filter((k) => PER_COLUMN.test(k));
+    for (const k of cols) delete dk[k];
+    if (cols.length) warnings.push(`Ajustes por columna de la plantilla quitados (${cols.join(', ')}): se ajustan con patch_component (style) si hacen falta.`);
+  }
+  // chartArea{Top,Left,Width,Height} are pixels of the source component's own box: in the new box the plot
+  // keeps that size (a 308x106 plot in a 560x320 chart, CSV benchmark 2026-11-07). Without them it fills it.
+  if (cfg.config.display && cfg.config.display.keys) {
+    const dk = cfg.config.display.keys;
+    const area = Object.keys(dk).filter((k) => /^chartArea(Top|Left|Width|Height)$/.test(k) && dk[k] && dk[k].value != null);
+    for (const k of area) delete dk[k];
+    if (area.length) warnings.push(`Area de dibujo fija del original quitada (${area.join(', ')}): el grafico ocupa su caja.`);
   }
   if (args.padding !== undefined && cfg.config.display && cfg.config.display.keys) {
     const dk = cfg.config.display.keys;

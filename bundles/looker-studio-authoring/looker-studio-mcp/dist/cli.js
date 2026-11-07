@@ -5,7 +5,7 @@ import {
   getComponentConfig,
   getReportLayout,
   sanitizeLearning
-} from "./chunks/chunk-ZWBTCNEU.js";
+} from "./chunks/chunk-BJZX7ULJ.js";
 import {
   addImage,
   addParameter,
@@ -39,7 +39,7 @@ import {
   setText,
   updateBlend,
   updateParameter
-} from "./chunks/chunk-6MM4H4LL.js";
+} from "./chunks/chunk-6CEQY3HD.js";
 import {
   addFilter,
   addPage,
@@ -78,10 +78,10 @@ import {
   updateFilter,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-OIMY3WSN.js";
+} from "./chunks/chunk-SK5Z56WT.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
-import "./chunks/chunk-VAH3IT7I.js";
+import "./chunks/chunk-KBCVDAPW.js";
 import "./chunks/chunk-FAVAKK4W.js";
 import "./chunks/chunk-GIAQTVDD.js";
 import "./chunks/chunk-BGDW2RS3.js";
@@ -268,7 +268,7 @@ async function main() {
         Object.assign(out, await patchComponent({ componentId: id, ...days !== void 0 ? { dateRangeDays: days } : {}, ...flags["strip-styles"] ? { stripThemeStyles: true } : {} }));
       if (typeof flags.parameter === "string") out.parameter = await setControlParameter(id, flags.parameter);
       if (typeof flags.style === "string") out.style = await setStyle(id, JSON.parse(flags.style));
-      if (typeof flags.compare === "string") out.comparison = await setComparison(id, flags.compare);
+      if (typeof flags.compare === "string") out.comparison = await setComparison(id, flags.compare, typeof flags["date-field"] === "string" ? flags["date-field"] : void 0);
       if (typeof flags["link-page"] === "string") out.link = await setPageLink(id, flags["link-page"]);
       if (typeof flags.text === "string") out.text = await setText(id, flags.text.replace(/\\n/g, "\n"), { ...num(flags.size) ? { size: num(flags.size) } : {}, ...flags.bold ? { bold: true } : {}, ...typeof flags.color === "string" ? { color: flags.color } : {}, ...typeof flags.align === "string" ? { align: flags.align } : {} });
       return out;

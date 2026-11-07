@@ -410,6 +410,7 @@ server.registerTool(
       textAlign: z.enum(['left', 'center', 'right']).optional(),
       style: z.record(z.string(), z.unknown()).optional().describe('Claves de estilo del componente (las de get_component_config > config.display.keys), p. ej. {"hideMetric": false} en un scorecard'),
       comparison: z.enum(['none', 'previous_period', 'previous_year']).optional().describe('Periodo de comparacion de un grafico o scorecard (el scorecard muestra la variacion)'),
+      dateField: z.string().optional().describe('Con comparison: campo de fecha del periodo (por defecto, la primera fecha diaria del origen)'),
       linkPage: z.string().optional().describe('Boton: id de la pagina que abre, o "name:<nombre de pagina>"'),
     },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
@@ -425,7 +426,7 @@ server.registerTool(
         }));
       if (args.parameter) out.parameter = await setControlParameter(args.componentId, args.parameter);
       if (args.style) out.style = await setStyle(args.componentId, args.style);
-      if (args.comparison) out.comparison = await setComparison(args.componentId, args.comparison);
+      if (args.comparison) out.comparison = await setComparison(args.componentId, args.comparison, args.dateField);
       if (args.linkPage) out.link = await setPageLink(args.componentId, args.linkPage);
       if (args.text !== undefined) out.text = await setText(args.componentId, args.text, { ...(args.textSize ? { size: args.textSize } : {}), ...(args.textBold ? { bold: true } : {}), ...(args.textColor ? { color: args.textColor } : {}), ...(args.textAlign ? { align: args.textAlign } : {}) });
       return out;

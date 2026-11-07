@@ -889,7 +889,7 @@ export function readChartStyleScript(componentId: string): { ok: boolean; error?
 //  Button to a page: display keys internalLink=<pageId>, actionType 1, internalActionType 1, linkType 1.
 // ---------------------------------------------------------------------------
 
-export function comparisonScript(args: { componentId: string; comparison: 'none' | 'previous_period' | 'previous_year' }): { ok: boolean; error?: string; set?: string[] } {
+export function comparisonScript(args: { componentId: string; comparison: 'none' | 'previous_period' | 'previous_year'; dateField?: string }): { ok: boolean; error?: string; set?: string[]; dateField?: string } {
   const w = window as any;
   try {
     const inj = w.angular.element(document.body).injector();
@@ -907,9 +907,35 @@ export function comparisonScript(args: { componentId: string; comparison: 'none'
     const value = args.comparison === 'none' ? { anchorType: 0, config: {} } : { anchorType: 1, config: { startOffsetUnit: unit, startOffset: 1, endOffsetUnit: unit, endOffset: 1 } };
     comp.setDataSourceKeyValue('compareDateDuration', value);
     const set = ['compareDateDuration'];
+    // The comparison needs the chart's period dimension (dateRangeDimension). A component made from a
+    // template of another report has none and then shows no comparison (CSV benchmark 2026-11-07).
+    let dateField: string | undefined;
+    if (args.comparison !== 'none') {
+      const cur = keys && keys.dateRangeDimension && keys.dateRangeDimension.value;
+      const curSf = cur && comp.config.conceptDefs[cur] && comp.config.conceptDefs[cur].queryTimeTransformation?.dataTransformation?.sourceFieldName;
+      let concepts: any = {};
+      try { concepts = comp.getSchema().qe.concepts || {}; } catch { /* not loaded */ }
+      const dates = (Object.values(concepts) as any[]).filter((f) => (f.dataType === 6 || f.dataType === 7) && f.type !== 1);
+      const want = args.dateField
+        ? dates.find((f) => f.name === args.dateField || String(f.displayName).toLowerCase() === args.dateField!.toLowerCase())
+        : (curSf && concepts[curSf]) ? null
+        : dates.find((f) => /fecha|date|d[ií]a|day/i.test(String(f.displayName)) && !/mes|month|a[nñ]o|year|semana|week/i.test(String(f.displayName))) || dates[0];
+      if (args.dateField && !want) return { ok: false, error: `"${args.dateField}" no es un campo de fecha del origen (fechas: ${dates.map((f) => f.displayName).join(', ') || 'ninguna'}).` };
+      if (want) {
+        const qt = 'qt_' + Math.random().toString(36).slice(2, 12).padEnd(10, '0');
+        const def = { name: qt, id: `t0.${qt}`, namespace: String(want.namespace || 't0'), queryTimeTransformation: { dataTransformation: { sourceFieldName: String(want.name) }, displayTransformation: {} } };
+        try { comp.updateConceptPool([def]); } catch { /* older builds */ }
+        comp.config.conceptDefs[qt] = def;
+        comp.setDataSourceKeyValue('dateRangeDimension', qt, true, true);
+        set.push('dateRangeDimension');
+        dateField = String(want.displayName);
+      } else if (!(curSf && concepts[curSf])) {
+        return { ok: false, error: 'El origen no tiene ningun campo de fecha: crea uno (p. ej. add_source_field con PARSE_DATE) y repite. Sin fecha no hay periodo con que comparar.' };
+      } else dateField = String(concepts[curSf].displayName);
+    }
     if (comp.config.config.display.type === 'kpi-metric') { comp.setDisplayKeyValue('hideCompare', args.comparison === 'none'); set.push('hideCompare'); }
     inj.get('wrapperSaveService').save([comp]);
-    return { ok: true, set };
+    return { ok: true, set, ...(dateField ? { dateField } : {}) };
   } catch (e: any) {
     return { ok: false, error: String(e && e.message) };
   }

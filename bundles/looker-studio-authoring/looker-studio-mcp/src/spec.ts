@@ -55,6 +55,8 @@ export interface SpecComponent {
   chartStyle?: Omit<ChartStyle, 'componentId'>;
   /** Comparison period of a chart or scorecard. */
   comparison?: 'none' | 'previous_period' | 'previous_year';
+  /** Date field the comparison and the date range control use (name). Default: the source's first daily date. */
+  dateField?: string;
   /** Button: the page it opens (id, or "name:<page name>"). */
   linkPage?: string;
   /** Put it at report level: it shows on every page, in the same place (navigation, global filters). */
@@ -134,6 +136,7 @@ export interface ResolvedComponent extends Required<Pick<SpecComponent, 'key' | 
   /** Chart style by name (series, legend, axes). See set_chart_style. */
   chartStyle?: Omit<ChartStyle, 'componentId'>;
   comparison?: SpecComponent['comparison'];
+  dateField?: string;
   linkPage?: string;
   interactions?: SpecComponent['interactions'];
   image?: string;
@@ -198,6 +201,7 @@ export function resolveSpec(spec: ReportSpec): ResolvedComponent[] {
             ...(it.conditional ? { conditional: it.conditional } : {}),
             ...(it.chartStyle ? { chartStyle: it.chartStyle } : {}),
             ...(it.comparison ? { comparison: it.comparison } : {}),
+            ...(it.dateField ? { dateField: it.dateField } : {}),
             ...(it.linkPage ? { linkPage: it.linkPage } : {}),
             ...(it.interactions ? { interactions: it.interactions } : {}),
             ...(it.image ? { image: it.image } : {}),
@@ -221,6 +225,7 @@ export function resolveSpec(spec: ReportSpec): ResolvedComponent[] {
           ...(c.conditional ? { conditional: c.conditional } : {}),
           ...(c.chartStyle ? { chartStyle: c.chartStyle } : {}),
           ...(c.comparison ? { comparison: c.comparison } : {}),
+          ...(c.dateField ? { dateField: c.dateField } : {}),
           ...(c.linkPage ? { linkPage: c.linkPage } : {}),
           ...(c.interactions ? { interactions: c.interactions } : {}),
           ...(c.image ? { image: c.image } : {}),
@@ -303,6 +308,8 @@ export function lintSpec(spec: ReportSpec): { issues: LintIssue[]; components: R
       if (c.metrics.length !== 1 && !c.slots && !(c.id && !c.metrics.length)) push('warning', c.key, 'kpi', 'Un scorecard debe tener exactamente 1 metrica [kpi-scorecards].');
       if (c.h < 100 || c.h > 140) push('info', c.key, 'kpi', `Alto de scorecard ${c.h}px fuera de 100–140 [kpi-scorecards §1].`);
     }
+    if (c.type.startsWith('pivot-table') && !c.id && c.dimensions.length + Object.values(c.slots ?? {}).flat().length < 2)
+      push('error', c.key, 'pivot', 'Una tabla dinamica necesita una dimension de filas y otra de columnas (con una sola da "Combinacion no valida", reason 9). Con una dimension, usa simple-table (admite formato condicional y mapa de calor).');
     if (c.type === 'simple-daterangepicker' && c.dateRangeDays === undefined)
       push('info', c.key, 'date-range', 'Control de periodo sin dateRangeDays: heredara el periodo por defecto (p. ej. ultimos 28 dias) y puede dejar la pagina sin datos.');
     if (!NON_DATA.has(c.type) && !['filter-bar', 'simple-daterangepicker'].includes(c.type) && !c.dataset)

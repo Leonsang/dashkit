@@ -24,7 +24,7 @@ motor y no lleva el control de `LS_ALLOW_WRITE`.
 | `list_templates` | — | Tipos de componente con plantilla disponible en knowledge/templates. | `componentes.md` |
 | `create_component` | **type**, **box**, pageId, dataset, dimensions, metrics, padding, slots | Crea un componente (grafico, tabla, scorecard, control...) en modo edicion clonando uno del mismo tipo del informe o usando una plantilla aprendida. | `componentes.md` |
 | `delete_component` | **componentId** | Borra un componente del informe (modo edicion). | `componentes.md` |
-| `patch_component` | **componentId**, dateRangeDays, stripThemeStyles, parameter, text, textSize, textBold, textColor, textAlign, style, comparison, linkPage | dateRangeDays: periodo por defecto de un control de fechas (ultimos N dias, movil). | `componentes.md` |
+| `patch_component` | **componentId**, dateRangeDays, stripThemeStyles, parameter, text, textSize, textBold, textColor, textAlign, style, comparison, dateField, linkPage | dateRangeDays: periodo por defecto de un control de fechas (ultimos N dias, movil). | `componentes.md` |
 | `get_theme` | — | Tema del informe (preset o personalizado) en formato amigable. | `paginas-temas-y-ajustes.md` |
 | `apply_theme` | **theme** | Crea o actualiza el tema personalizado del informe: tipografia, color de texto, relleno, acento, fondo, rejilla, colores de subida/bajada, bordes y paleta de series. | `paginas-temas-y-ajustes.md` |
 | `list_pages` | — | Paginas en el orden y con el nombre que ve el lector (navegacion), con su nombre interno, componentes y si estan ocultas. | `paginas-temas-y-ajustes.md` |

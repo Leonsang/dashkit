@@ -16,8 +16,9 @@ import {
   reloadReport,
   requireEditMode,
   resolveDataset,
+  revealIfHidden,
   setActiveReport
-} from "./chunk-OIMY3WSN.js";
+} from "./chunk-SK5Z56WT.js";
 import {
   arrangeScript,
   blendSnapshotScript,
@@ -46,7 +47,7 @@ import {
   setTextScript,
   styleKeysScript,
   updateBlendScript
-} from "./chunk-VAH3IT7I.js";
+} from "./chunk-KBCVDAPW.js";
 
 // src/looker/data.ts
 var EVAL_TIMEOUT_MS = Number(process.env.LS_EVAL_TIMEOUT_MS ?? 15e3);
@@ -128,20 +129,7 @@ async function clickText(page, re, scope = "*") {
   return true;
 }
 async function ensureVisible(page) {
-  await page.bringToFront();
-  if (!await page.evaluate(() => document.hidden).catch(() => false)) return;
-  const s = await page.target().createCDPSession();
-  try {
-    const { windowId } = await s.send("Browser.getWindowForTarget");
-    await s.send("Browser.setWindowBounds", { windowId, bounds: { windowState: "minimized" } });
-    await sleep(600);
-    await s.send("Browser.setWindowBounds", { windowId, bounds: { windowState: "normal" } });
-    await sleep(1200);
-    await page.bringToFront();
-  } finally {
-    await s.detach().catch(() => void 0);
-  }
-  if (await page.evaluate(() => document.hidden).catch(() => false)) throw new Error("La ventana del navegador sigue oculta: ponla delante y repite.");
+  await revealIfHidden(page);
 }
 async function withViewport(page, fn) {
   await ensureVisible(page);
@@ -820,18 +808,18 @@ async function setConditionalFormat(componentId, rules, append = false) {
   await sleep(1500);
   return { ok: true, componentId, rules: r.rules };
 }
-async function setComparison(componentId, comparison) {
+async function setComparison(componentId, comparison, dateField) {
   const { page } = await requireEditMode();
-  const r = await evaluateOn(page, T, comparisonScript, { componentId, comparison });
+  const r = await evaluateOn(page, T, comparisonScript, { componentId, comparison, ...dateField ? { dateField } : {} });
   if (!r.ok) throw new Error(r.error);
   await sleep(1500);
-  return { ok: true, componentId, comparison, set: r.set };
+  return { ok: true, componentId, comparison, set: r.set, ...r.dateField ? { dateField: r.dateField } : {} };
 }
 async function setPageLink(componentId, pageRef) {
   const { page } = await requireEditMode();
   let pageId = pageRef;
   if (pageRef.startsWith("name:")) {
-    const { listPages } = await import("./ops3-C2K3XG7C.js");
+    const { listPages } = await import("./ops3-4SNWVALV.js");
     const hit = (await listPages()).find((p) => p.name === pageRef.slice(5));
     if (!hit) throw new Error(`No hay ninguna pagina llamada "${pageRef.slice(5)}".`);
     pageId = hit.id;

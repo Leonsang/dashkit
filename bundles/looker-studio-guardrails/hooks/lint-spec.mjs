@@ -92,6 +92,7 @@ function resolveSpec(spec) {
             ...it.conditional ? { conditional: it.conditional } : {},
             ...it.chartStyle ? { chartStyle: it.chartStyle } : {},
             ...it.comparison ? { comparison: it.comparison } : {},
+            ...it.dateField ? { dateField: it.dateField } : {},
             ...it.linkPage ? { linkPage: it.linkPage } : {},
             ...it.interactions ? { interactions: it.interactions } : {},
             ...it.image ? { image: it.image } : {},
@@ -124,6 +125,7 @@ function resolveSpec(spec) {
           ...c.conditional ? { conditional: c.conditional } : {},
           ...c.chartStyle ? { chartStyle: c.chartStyle } : {},
           ...c.comparison ? { comparison: c.comparison } : {},
+          ...c.dateField ? { dateField: c.dateField } : {},
           ...c.linkPage ? { linkPage: c.linkPage } : {},
           ...c.interactions ? { interactions: c.interactions } : {},
           ...c.image ? { image: c.image } : {},
@@ -217,6 +219,8 @@ function lintSpec(spec) {
       if (c.metrics.length !== 1 && !c.slots && !(c.id && !c.metrics.length)) push("warning", c.key, "kpi", "Un scorecard debe tener exactamente 1 metrica [kpi-scorecards].");
       if (c.h < 100 || c.h > 140) push("info", c.key, "kpi", `Alto de scorecard ${c.h}px fuera de 100\u2013140 [kpi-scorecards \xA71].`);
     }
+    if (c.type.startsWith("pivot-table") && !c.id && c.dimensions.length + Object.values(c.slots ?? {}).flat().length < 2)
+      push("error", c.key, "pivot", 'Una tabla dinamica necesita una dimension de filas y otra de columnas (con una sola da "Combinacion no valida", reason 9). Con una dimension, usa simple-table (admite formato condicional y mapa de calor).');
     if (c.type === "simple-daterangepicker" && c.dateRangeDays === void 0)
       push("info", c.key, "date-range", "Control de periodo sin dateRangeDays: heredara el periodo por defecto (p. ej. ultimos 28 dias) y puede dejar la pagina sin datos.");
     if (!NON_DATA.has(c.type) && !["filter-bar", "simple-daterangepicker"].includes(c.type) && !c.dataset)

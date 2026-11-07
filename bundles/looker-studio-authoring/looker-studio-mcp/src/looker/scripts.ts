@@ -595,8 +595,23 @@ export async function bindFieldsScript(args: BindFieldsArgs): Promise<BindFields
       }
     }
     const drd = comp.config.config.datasource.keys.dateRangeDimension;
+    // A daily date beats a month: prefer a name like fecha/date/dia/day, then any date field.
+    const dates = (Object.values(concepts) as any[]).filter((f) => (f.dataType === 6 || f.dataType === 7) && f.type !== 1);
+    const pickDate = () => dates.find((f) => /fecha|date|d[ií]a|day/i.test(String(f.displayName || f.name)) && !/mes|month|a[nñ]o|year|semana|week/i.test(String(f.displayName))) || dates[0];
+    if (drd && !drd.value && dates.length) {
+      // Without a period dimension the date range control does not filter the chart and a scorecard has
+      // nothing to compare against. The insert menu sets one; a template of another report does not
+      // (CSV benchmark 2026-11-07: every comparison showed nothing).
+      const date = pickDate();
+      const def = mkDef({ f: date });
+      try { comp.updateConceptPool([def]); } catch { /* older builds */ }
+      comp.config.conceptDefs[def.name] = def;
+      if (typeof comp.setDataSourceKeyValue === 'function') comp.setDataSourceKeyValue('dateRangeDimension', def.name, true, true);
+      else drd.value = def.name;
+      warnings.push(`Dimension de periodo: ${date.displayName} (la usan el control de periodo y la comparacion).`);
+    }
     if (drd && typeof drd.value === 'string' && isStale(drd.value)) {
-      const date = (Object.values(concepts) as any[]).find((f) => f.dataType === 6 || f.dataType === 7);
+      const date = pickDate();
       if (date) {
         const def = mkDef({ f: date });
         try { comp.updateConceptPool([def]); } catch { /* older builds */ }

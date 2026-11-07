@@ -29,7 +29,7 @@ import {
   setTextScript,
   styleKeysScript,
   updateBlendScript
-} from "./chunk-VAH3IT7I.js";
+} from "./chunk-KBCVDAPW.js";
 import "./chunk-5QDPZ4I5.js";
 export {
   arrangeScript,

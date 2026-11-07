@@ -211,7 +211,7 @@ async function main(): Promise<unknown> {
         Object.assign(out, await patchComponent({ componentId: id, ...(days !== undefined ? { dateRangeDays: days } : {}), ...(flags['strip-styles'] ? { stripThemeStyles: true } : {}) }));
       if (typeof flags.parameter === 'string') out.parameter = await setControlParameter(id, flags.parameter);
       if (typeof flags.style === 'string') out.style = await setStyle(id, JSON.parse(flags.style));
-      if (typeof flags.compare === 'string') out.comparison = await setComparison(id, flags.compare as never);
+      if (typeof flags.compare === 'string') out.comparison = await setComparison(id, flags.compare as never, typeof flags['date-field'] === 'string' ? flags['date-field'] : undefined);
       if (typeof flags['link-page'] === 'string') out.link = await setPageLink(id, flags['link-page']);
       if (typeof flags.text === 'string') out.text = await setText(id, flags.text.replace(/\\n/g, '\n'), { ...(num(flags.size) ? { size: num(flags.size)! } : {}), ...(flags.bold ? { bold: true } : {}), ...(typeof flags.color === 'string' ? { color: flags.color } : {}), ...(typeof flags.align === 'string' ? { align: flags.align as never } : {}) });
       return out;

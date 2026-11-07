@@ -228,6 +228,18 @@ blanco (KPIs, navegación, filtros).
 spec, `comparison`). En un scorecard muestra la variación con su flecha y el color de subida o bajada del tema;
 en un gráfico de serie temporal añade la serie del periodo anterior.
 
+La comparación necesita la **dimensión de periodo** del gráfico (`dateRangeDimension`), que es también la que
+usa el control de periodo para filtrarlo. `bind` la pone sola cuando falta (la primera fecha diaria del
+origen: un nombre como `fecha`/`date`/`dia`, si no la primera fecha). Para otra fecha, usa `dateField`
+(CLI `--date-field`; en el spec, `dateField`). Si el origen no tiene ninguna fecha (un CSV con la fecha como
+texto), la herramienta falla y lo dice: crea antes un campo de fecha con `add_source_field`
+(`PARSE_DATE("%Y-%m-%d", fecha)`).
+
+El periodo anterior es del mismo largo que el del control de periodo: con un control que abarca todos los
+datos (p. ej. `dateRangeDays: 1100` en un histórico de dos años), el anterior queda vacío y el scorecard dice
+«No hay datos en comparación». Para comparar, deja el periodo en un tramo que tenga otro igual detrás
+(90 días, el último año) o usa `previous_year`.
+
 ### Interacciones del lector: set_chart_interactions
 
 ```json

@@ -19,7 +19,7 @@ import {
 import {
   navDispatchScript,
   navPagesScript
-} from "./chunk-VAH3IT7I.js";
+} from "./chunk-KBCVDAPW.js";
 import {
   CDPSessionEvent,
   CdpBrowser,
@@ -1526,7 +1526,12 @@ var BrowserNotReadyError = class extends Error {
     this.name = "BrowserNotReadyError";
   }
 };
-var HOW_TO_LAUNCH = 'Lanza Chrome o Edge con depuracion remota y un perfil separado, por ejemplo:\n  msedge.exe --remote-debugging-port=9222 --user-data-dir="%TEMP%\\ls-mcp-profile"\n  chrome.exe --remote-debugging-port=9222 --user-data-dir="%TEMP%\\ls-mcp-profile"\ny abre el informe de Looker Studio en modo edicion (URL .../reporting/<id>/page/<id>/edit).';
+var KEEP_ACTIVE = "--disable-features=CalculateNativeWinOcclusion,IntensiveWakeUpThrottling --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding";
+var HOW_TO_LAUNCH = `Lanza Chrome o Edge con depuracion remota y un perfil separado, por ejemplo:
+  msedge.exe --remote-debugging-port=9222 --user-data-dir="%TEMP%\\ls-mcp-profile" ${KEEP_ACTIVE}
+  chrome.exe --remote-debugging-port=9222 --user-data-dir="%TEMP%\\ls-mcp-profile" ${KEEP_ACTIVE}
+(las opciones --disable-* evitan que una ventana tapada por otra aplace los guardados del editor)
+y abre el informe de Looker Studio en modo edicion (URL .../reporting/<id>/page/<id>/edit).`;
 async function connect2() {
   const ws = process.env.LS_CDP_WS;
   const browserURL = process.env.LS_CDP_URL || DEFAULT_CDP_URL;
@@ -1641,8 +1646,65 @@ async function evaluate(fn, ...args) {
   return evaluateOn(page, DEFAULT_EVAL_TIMEOUT_MS, fn, ...args);
 }
 async function evaluateOn(page, timeoutMs, fn, ...args) {
+  await page.evaluate(schemaCompatShim).catch(() => void 0);
   const run = page.evaluate(fn, ...args);
   return withTimeout(run, timeoutMs, fn.name || "script");
+}
+function schemaCompatShim() {
+  const w = window;
+  if (w.__lsSchemaShim) return;
+  try {
+    const r = w.angular.element(document.body).injector().get("legoUndoRedoService").report;
+    let s = null;
+    let ids = [];
+    try {
+      ids = r.getDatasourceIds() || [];
+    } catch {
+    }
+    for (const id of ids) {
+      try {
+        s = r.getDatasourceSchema(id);
+      } catch {
+      }
+      if (s) break;
+    }
+    if (!s) {
+      for (const c of r.pages.flatMap((p) => p.components)) {
+        try {
+          s = c.getSchema();
+        } catch {
+        }
+        if (s) break;
+      }
+    }
+    if (!s || typeof s !== "object") return;
+    if (!("qe" in s)) {
+      Object.defineProperty(Object.getPrototypeOf(s), "qe", {
+        configurable: true,
+        get() {
+          return Object.values(this).find((v) => v && typeof v === "object" && !Array.isArray(v) && "concepts" in v && "maxDimensions" in v);
+        }
+      });
+    }
+    w.__lsSchemaShim = true;
+  } catch {
+  }
+}
+async function revealIfHidden(page) {
+  await page.bringToFront().catch(() => void 0);
+  if (!await page.evaluate(() => document.hidden).catch(() => false)) return;
+  const s = await page.target().createCDPSession();
+  try {
+    const { windowId } = await s.send("Browser.getWindowForTarget");
+    await s.send("Browser.setWindowBounds", { windowId, bounds: { windowState: "minimized" } });
+    await new Promise((r) => setTimeout(r, 600));
+    await s.send("Browser.setWindowBounds", { windowId, bounds: { windowState: "normal" } });
+    await new Promise((r) => setTimeout(r, 1200));
+    await page.bringToFront();
+  } finally {
+    await s.detach().catch(() => void 0);
+  }
+  if (await page.evaluate(() => document.hidden).catch(() => false)) throw new Error("La ventana del navegador sigue oculta: ponla delante y repite.");
 }
 
 // src/knowledge.ts
@@ -2314,8 +2376,22 @@ async function bindFieldsScript(args) {
       }
     }
     const drd = comp.config.config.datasource.keys.dateRangeDimension;
+    const dates = Object.values(concepts).filter((f) => (f.dataType === 6 || f.dataType === 7) && f.type !== 1);
+    const pickDate = () => dates.find((f) => /fecha|date|d[ií]a|day/i.test(String(f.displayName || f.name)) && !/mes|month|a[nñ]o|year|semana|week/i.test(String(f.displayName))) || dates[0];
+    if (drd && !drd.value && dates.length) {
+      const date = pickDate();
+      const def = mkDef({ f: date });
+      try {
+        comp.updateConceptPool([def]);
+      } catch {
+      }
+      comp.config.conceptDefs[def.name] = def;
+      if (typeof comp.setDataSourceKeyValue === "function") comp.setDataSourceKeyValue("dateRangeDimension", def.name, true, true);
+      else drd.value = def.name;
+      warnings.push(`Dimension de periodo: ${date.displayName} (la usan el control de periodo y la comparacion).`);
+    }
     if (drd && typeof drd.value === "string" && isStale(drd.value)) {
-      const date = Object.values(concepts).find((f) => f.dataType === 6 || f.dataType === 7);
+      const date = pickDate();
       if (date) {
         const def = mkDef({ f: date });
         try {
@@ -2586,6 +2662,7 @@ async function requireEditMode() {
       `El informe esta en modo "${info.mode}". Esta herramienta modifica el informe y requiere modo edicion: pulsa "Editar" en Looker Studio (la URL debe terminar en /edit) y vuelve a intentarlo.`
     );
   }
+  await revealIfHidden(page);
   return { page, info };
 }
 
@@ -2788,12 +2865,32 @@ function createComponentScript(args) {
     keys.dataset = { stateKey: "ds", dominant: 2, value: { id: wantDs } };
     if (curDs) warnings.push(`Origen cambiado de ${curDs} a ${wantDs}: los campos de la plantilla siguen hasta que vincules los nuevos (bind).`);
   }
+  if (keys && keys.filters && Array.isArray(keys.filters.value) && keys.filters.value.length) {
+    const own = report.config.resource && report.config.resource.filter || {};
+    const ids = keys.filters.value;
+    keys.filters.value = [];
+    const foreign = ids.filter((id) => !own[id]);
+    warnings.push(foreign.length === ids.length ? `Filtros de la plantilla quitados (no existen en este informe): ${ids.join(", ")}.` : `Filtros del componente copiado quitados (${ids.join(", ")}): anadelos con add_filter si los quieres.`);
+  }
   if (source === "template" && cfg.config.display && cfg.config.display.keys) {
     const dk = cfg.config.display.keys;
     const THEME = /color|fontfamily|background|border|shadow|opacity/i;
     const dropped = Object.keys(dk).filter((k) => THEME.test(k));
     for (const k of dropped) delete dk[k];
     if (dropped.length) warnings.push(`Estilos de tema de la plantilla eliminados: ${dropped.join(", ")}.`);
+  }
+  if (source === "template" && cfg.config.display && cfg.config.display.keys) {
+    const dk = cfg.config.display.keys;
+    const PER_COLUMN = /^(col[A-Z]|columnsWidth$|rowsHeight$|compactNumbers$|decimalPrecision$|barScaling$)/;
+    const cols = Object.keys(dk).filter((k) => PER_COLUMN.test(k));
+    for (const k of cols) delete dk[k];
+    if (cols.length) warnings.push(`Ajustes por columna de la plantilla quitados (${cols.join(", ")}): se ajustan con patch_component (style) si hacen falta.`);
+  }
+  if (cfg.config.display && cfg.config.display.keys) {
+    const dk = cfg.config.display.keys;
+    const area = Object.keys(dk).filter((k) => /^chartArea(Top|Left|Width|Height)$/.test(k) && dk[k] && dk[k].value != null);
+    for (const k of area) delete dk[k];
+    if (area.length) warnings.push(`Area de dibujo fija del original quitada (${area.join(", ")}): el grafico ocupa su caja.`);
   }
   if (args.padding !== void 0 && cfg.config.display && cfg.config.display.keys) {
     const dk = cfg.config.display.keys;
@@ -3411,6 +3508,7 @@ function resolveSpec(spec) {
             ...it.conditional ? { conditional: it.conditional } : {},
             ...it.chartStyle ? { chartStyle: it.chartStyle } : {},
             ...it.comparison ? { comparison: it.comparison } : {},
+            ...it.dateField ? { dateField: it.dateField } : {},
             ...it.linkPage ? { linkPage: it.linkPage } : {},
             ...it.interactions ? { interactions: it.interactions } : {},
             ...it.image ? { image: it.image } : {},
@@ -3443,6 +3541,7 @@ function resolveSpec(spec) {
           ...c.conditional ? { conditional: c.conditional } : {},
           ...c.chartStyle ? { chartStyle: c.chartStyle } : {},
           ...c.comparison ? { comparison: c.comparison } : {},
+          ...c.dateField ? { dateField: c.dateField } : {},
           ...c.linkPage ? { linkPage: c.linkPage } : {},
           ...c.interactions ? { interactions: c.interactions } : {},
           ...c.image ? { image: c.image } : {},
@@ -3536,6 +3635,8 @@ function lintSpec(spec) {
       if (c.metrics.length !== 1 && !c.slots && !(c.id && !c.metrics.length)) push("warning", c.key, "kpi", "Un scorecard debe tener exactamente 1 metrica [kpi-scorecards].");
       if (c.h < 100 || c.h > 140) push("info", c.key, "kpi", `Alto de scorecard ${c.h}px fuera de 100\u2013140 [kpi-scorecards \xA71].`);
     }
+    if (c.type.startsWith("pivot-table") && !c.id && c.dimensions.length + Object.values(c.slots ?? {}).flat().length < 2)
+      push("error", c.key, "pivot", 'Una tabla dinamica necesita una dimension de filas y otra de columnas (con una sola da "Combinacion no valida", reason 9). Con una dimension, usa simple-table (admite formato condicional y mapa de calor).');
     if (c.type === "simple-daterangepicker" && c.dateRangeDays === void 0)
       push("info", c.key, "date-range", "Control de periodo sin dateRangeDays: heredara el periodo por defecto (p. ej. ultimos 28 dias) y puede dejar la pagina sin datos.");
     if (!NON_DATA.has(c.type) && !["filter-bar", "simple-daterangepicker"].includes(c.type) && !c.dataset)
@@ -3752,7 +3853,7 @@ async function resolveDataset(page, sel) {
   const ds = await evaluateOn(page, T, readDataSourcesScript);
   let hit = ds.dataSources.find((d) => d.fields.some((f) => f.id.toLowerCase() === field || f.name.toLowerCase() === field));
   if (!hit) {
-    const { schemaFieldsScript } = await import("./scripts4-5BB2LMYX.js");
+    const { schemaFieldsScript } = await import("./scripts4-ADA4C2PA.js");
     for (const d of ds.dataSources.filter((x) => !x.fields.length)) {
       const fs4 = await evaluateOn(page, T, schemaFieldsScript, d.dataSourceId).catch(() => []);
       if (fs4.some((f) => f.id.toLowerCase() === field || f.name.toLowerCase() === field)) return d.dataSourceId;
@@ -3775,12 +3876,16 @@ async function resolveDataset(page, sel) {
   return hit.dataSourceId;
 }
 async function createComponent(o) {
+  if (o.type.startsWith("pivot-table") && (o.dimensions?.length || o.metrics?.length)) {
+    const nDims = (o.dimensions?.length ?? 0) + Object.values(o.slots ?? {}).flat().length;
+    if (nDims < 2) throw new Error('Una tabla dinamica necesita una dimension de filas y otra de columnas (con una sola da "Combinacion no valida", reason 9). Con una dimension, usa simple-table: admite formato condicional y mapa de calor.');
+  }
   const page = await editPage();
   const datasetId = await resolveDataset(page, o.dataset);
   const hasFields = !!(o.dimensions?.length || o.metrics?.length || o.slots && Object.keys(o.slots).length);
   const NO_DIMS = ["gauge-viz", "bulletchart", "kpi-metric"];
   const t0 = Date.now();
-  const { ensureSeedScript } = await import("./scripts4-5BB2LMYX.js");
+  const { ensureSeedScript } = await import("./scripts4-ADA4C2PA.js");
   const seed = await evaluateOn(page, T, ensureSeedScript, o.pageId);
   if (seed.seedId) await sleep(1500);
   const res = await evaluateOn(page, T, createComponentScript, {
@@ -3808,7 +3913,19 @@ async function createComponent(o) {
       ...o.slots ? { slots: o.slots } : {}
     });
   }
+  const b = bound;
+  if (b && b.ok === false) {
+    await deleteComponent(res.componentId).catch(() => void 0);
+    learn("create_fail", o.type, { stage: "bind", error: b.error });
+    throw new Error(`${o.type}: no se pudieron poner los campos (${b.error}). El componente no se guardo y se quito.`);
+  }
   await sleep(2500);
+  const saved = () => netSince(page, t0).some((e) => /updatePage/.test(e.path));
+  if (!saved()) {
+    await revealIfHidden(page).catch(() => void 0);
+    for (let i = 0; i < 40 && !saved(); i++) await sleep(250);
+  }
+  if (!saved()) res.warnings.push("No se vio el guardado (updatePage) en 12 s: si la ventana del navegador esta tapada, el editor lo aplaza. Recarga y comprueba con get_report_layout que el componente sigue; para evitarlo, lanza el navegador con las opciones --disable-* de /setup.");
   const inPage = await evaluateOn(page, 5e3, readNetLogScript, t0).catch(() => []);
   const net = [...netSince(page, t0), ...inPage];
   const rejected = net.filter((e) => /updatePage/.test(e.path) && e.status >= 400);
@@ -3823,10 +3940,10 @@ async function createComponent(o) {
 }
 async function deleteComponent(componentId) {
   const page = await editPage();
-  const { componentLevelScript } = await import("./scripts4-5BB2LMYX.js");
+  const { componentLevelScript } = await import("./scripts4-ADA4C2PA.js");
   if (await evaluateOn(page, T, componentLevelScript, componentId) === "report") {
-    const { arrangeComponents } = await import("./ops4-2LVZKLOV.js");
-    const { listPages: listPages2 } = await import("./ops3-C2K3XG7C.js");
+    const { arrangeComponents } = await import("./ops4-IPEU3NXK.js");
+    const { listPages: listPages2 } = await import("./ops3-4SNWVALV.js");
     await arrangeComponents([componentId], "page", (await listPages2())[0].id);
   }
   const t0 = Date.now();
@@ -3863,7 +3980,7 @@ async function applySpec(specOrFile, opts = {}) {
   }
   const state = statePath && existsSync4(statePath) ? JSON.parse(readFileSync4(statePath, "utf8")) : { reportId: null, keys: {} };
   const page = opts.dryRun ? await getReportPage() : await editPage();
-  const { ensureVisible } = await import("./ops4-2LVZKLOV.js");
+  const { ensureVisible } = await import("./ops4-IPEU3NXK.js");
   if (!opts.dryRun) await ensureVisible(page);
   const info = await evaluateOn(page, T, pageInfoScript);
   if (state.reportId && state.reportId !== info.internalReportId) {
@@ -3890,6 +4007,14 @@ async function applySpec(specOrFile, opts = {}) {
     for (const name of wanted) {
       let hit = pages.find((p) => p.name === name);
       let created = false;
+      const blank = !hit && !opts.dryRun ? pages.find((p) => p.components === 0 && /^((p[aá]gina|page|untitled page|p[aá]gina sin t[ií]tulo)(\s*\d+)?)?$/i.test(String(p.name).trim()) && !wanted.includes(p.name) && !Object.values(pageIds).includes(p.id)) : void 0;
+      if (blank) {
+        const { renamePage: renamePage2 } = await import("./ops3-4SNWVALV.js");
+        await renamePage2(blank.id, name);
+        pages = await listPages();
+        hit = pages.find((p) => p.id === blank.id);
+        created = true;
+      }
       if (!hit && !opts.dryRun) {
         await addPage(name);
         await reloadReport();
@@ -3920,7 +4045,7 @@ async function applySpec(specOrFile, opts = {}) {
         const extra = await patchIfNeeded(page, existingId, c);
         result.actions.push({ key: c.key, action: "update", componentId: existingId, ...extra.length ? { patched: extra } : {} });
       } else if (c.type === "image-component" && c.image) {
-        const { addImage } = await import("./ops4-2LVZKLOV.js");
+        const { addImage } = await import("./ops4-IPEU3NXK.js");
         const { dirname: dirname5, resolve } = await import("node:path");
         const base = typeof specOrFile === "string" ? dirname5(specOrFile) : process.cwd();
         const r = await addImage({ path: resolve(base, c.image), box: { x: c.x, y: c.y, width: c.w, height: c.h }, ...pageId ? { pageId } : {} });
@@ -3986,7 +4111,7 @@ async function applySpec(specOrFile, opts = {}) {
     }
     if (filterLog.length) result.filters = filterLog;
     {
-      const { arrangeComponents } = await import("./ops4-2LVZKLOV.js");
+      const { arrangeComponents } = await import("./ops4-IPEU3NXK.js");
       const inside = (p, q) => p !== q && q.x >= p.x && q.y >= p.y && q.x + q.w <= p.x + p.w && q.y + q.h <= p.y + p.h;
       const level = (c) => c.reportLevel ? "report" : c.page;
       const live = components.filter((c) => state.keys[c.key]);
@@ -4024,50 +4149,50 @@ async function patchIfNeeded(page, id, c) {
   }
   if (c.text !== void 0) {
     const t = typeof c.text === "string" ? { text: c.text } : c.text;
-    const { setText } = await import("./ops4-2LVZKLOV.js");
+    const { setText } = await import("./ops4-IPEU3NXK.js");
     await setText(id, t.text, { ...t.size ? { size: t.size } : {}, ...t.bold ? { bold: true } : {}, ...t.color ? { color: t.color } : {}, ...t.align ? { align: t.align } : {} });
     changes.push("text");
   }
   if (c.style) {
-    const { setStyle } = await import("./ops4-2LVZKLOV.js");
+    const { setStyle } = await import("./ops4-IPEU3NXK.js");
     await setStyle(id, c.style);
     changes.push("style");
   }
   if (c.conditional) {
-    const { setConditionalFormat } = await import("./ops4-2LVZKLOV.js");
+    const { setConditionalFormat } = await import("./ops4-IPEU3NXK.js");
     await setConditionalFormat(id, c.conditional);
     changes.push(`conditional:${c.conditional.length}`);
   }
   if (c.chartStyle) {
-    const { setChartStyle } = await import("./ops4-2LVZKLOV.js");
+    const { setChartStyle } = await import("./ops4-IPEU3NXK.js");
     await setChartStyle({ ...c.chartStyle, componentId: id, reload: false });
     changes.push("chartStyle");
   }
   if (c.comparison) {
-    const { setComparison } = await import("./ops4-2LVZKLOV.js");
-    await setComparison(id, c.comparison);
+    const { setComparison } = await import("./ops4-IPEU3NXK.js");
+    await setComparison(id, c.comparison, c.dateField);
     changes.push(`comparison:${c.comparison}`);
   }
   if (c.linkPage) {
-    const { setPageLink } = await import("./ops4-2LVZKLOV.js");
+    const { setPageLink } = await import("./ops4-IPEU3NXK.js");
     await setPageLink(id, c.linkPage);
     changes.push("linkPage");
   }
   if (c.reportLevel) {
-    const { componentLevelScript } = await import("./scripts4-5BB2LMYX.js");
+    const { componentLevelScript } = await import("./scripts4-ADA4C2PA.js");
     if (await evaluateOn(page, T, componentLevelScript, id) === "page") {
-      const { arrangeComponents } = await import("./ops4-2LVZKLOV.js");
+      const { arrangeComponents } = await import("./ops4-IPEU3NXK.js");
       await arrangeComponents([id], "report", c.page && !c.page.startsWith("name:") && c.page !== "active" ? c.page : void 0);
       changes.push("reportLevel");
     }
   }
   if (c.interactions) {
-    const { setChartInteractions } = await import("./ops4-2LVZKLOV.js");
+    const { setChartInteractions } = await import("./ops4-IPEU3NXK.js");
     await setChartInteractions({ componentId: id, ...c.interactions, reload: false });
     changes.push("interactions");
   }
   if (c.parameter) {
-    const { setControlParameter } = await import("./ops4-2LVZKLOV.js");
+    const { setControlParameter } = await import("./ops4-IPEU3NXK.js");
     await setControlParameter(id, c.parameter);
     changes.push(`parameter:${c.parameter}`);
   }
@@ -4706,7 +4831,7 @@ async function addSourceField(opts) {
   });
   const open = async () => {
     if (!await clickText("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) {
-      const { selectSourceChart } = await import("./ops4-2LVZKLOV.js");
+      const { selectSourceChart } = await import("./ops4-IPEU3NXK.js");
       await selectSourceChart(page, opts.source && opts.source.startsWith("@") ? opts.source : void 0);
       if (!await clickText("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) throw new Error('No se encontro "Anadir un campo" en el panel Datos.');
     }
@@ -4723,7 +4848,7 @@ async function addSourceField(opts) {
     let src = await editorSource();
     const byField = !!opts.source && opts.source.startsWith("@");
     if (byField) {
-      const { selectSourceChart } = await import("./ops4-2LVZKLOV.js");
+      const { selectSourceChart } = await import("./ops4-IPEU3NXK.js");
       await clickText("button", /^(Cancelar|Cancel)$/);
       await close();
       await selectSourceChart(page, opts.source);
@@ -4771,7 +4896,15 @@ async function addSourceField(opts) {
     await sleep2(3500);
     await close();
     learn("create_ok", "source-field", { source: "data-panel" });
-    return { ok: true, fieldId, name: opts.name, formula: opts.formula, source: src.name, scope: src.scope };
+    let owner;
+    for (let i = 0; i < 6 && !owner && fieldId; i++) {
+      const ds = await evaluateOn(page, T2, readDataSourcesScript).catch(() => null);
+      const list = ds ? Array.isArray(ds.dataSources) ? ds.dataSources : Object.values(ds.dataSources) : [];
+      const hit = list.find((d) => d.fields.some((f) => f.id === fieldId));
+      if (hit) owner = { dataSourceId: hit.dataSourceId, name: hit.name };
+      else await sleep2(1e3);
+    }
+    return { ok: true, fieldId, name: opts.name, formula: opts.formula, ...owner ? { dataSourceId: owner.dataSourceId, ...owner.name !== owner.dataSourceId ? { source: owner.name } : {} } : {}, scope: src.scope };
   } finally {
     await page.setViewport(null).catch(() => void 0);
   }
@@ -4785,6 +4918,7 @@ export {
   disconnectIfConnected,
   evaluate,
   evaluateOn,
+  revealIfHidden,
   readLayoutScript,
   applyBoxModelScript,
   readDataSourcesScript,

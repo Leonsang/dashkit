@@ -19,18 +19,18 @@ npm run build
 
 ## 1. Lanzar el navegador con CDP
 
-Usa un perfil **separado** (`--user-data-dir`). Chrome y Edge no abren el puerto de depuración si ya hay una instancia corriendo con el mismo perfil.
+Usa un perfil **separado** (`--user-data-dir`). Las opciones `--disable-*` hacen que una ventana tapada por otra siga activa: si no, el editor aplaza los guardados y lo creado puede perderse al recargar. Chrome y Edge no abren el puerto de depuración si ya hay una instancia corriendo con el mismo perfil.
 
 **Edge (Windows):**
 
 ```powershell
-& "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --remote-debugging-port=9222 --user-data-dir="$env:TEMP\ls-mcp-profile"
+& "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --remote-debugging-port=9222 --user-data-dir="$env:TEMP\ls-mcp-profile" --disable-features=CalculateNativeWinOcclusion,IntensiveWakeUpThrottling --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding
 ```
 
 **Chrome (Windows):**
 
 ```powershell
-& "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="$env:TEMP\ls-mcp-profile"
+& "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="$env:TEMP\ls-mcp-profile" --disable-features=CalculateNativeWinOcclusion,IntensiveWakeUpThrottling --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding
 ```
 
 Después:

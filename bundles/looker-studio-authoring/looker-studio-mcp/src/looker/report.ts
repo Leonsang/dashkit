@@ -1,5 +1,5 @@
 import type { Page } from 'puppeteer-core';
-import { evaluateOn, getReportPage } from '../browser.js';
+import { evaluateOn, getReportPage, revealIfHidden } from '../browser.js';
 import { pageInfoScript } from './scripts.js';
 import type { CanvasInfo, ReportInfo, ReportMode } from './types.js';
 
@@ -48,5 +48,7 @@ export async function requireEditMode(): Promise<{ page: Page; info: ReportInfo 
         'pulsa "Editar" en Looker Studio (la URL debe terminar en /edit) y vuelve a intentarlo.',
     );
   }
+  // every write goes through here: a hidden tab would defer the saves
+  await revealIfHidden(page);
   return { page, info };
 }

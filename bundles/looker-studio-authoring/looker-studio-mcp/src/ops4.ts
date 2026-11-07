@@ -12,7 +12,7 @@
  * - Page order, viewer names, hiding and deleting go through the report navigation actions.
  */
 import type { Page } from 'puppeteer-core';
-import { evaluateOn, getBrowser, getReportPage, setActiveReport } from './browser.js';
+import { evaluateOn, getBrowser, getReportPage, setActiveReport, revealIfHidden } from './browser.js';
 import { learn } from './knowledge.js';
 import { requireEditMode } from './looker/report.js';
 import { bindFieldsToComponent } from './looker/data.js';
@@ -118,20 +118,7 @@ async function clickText(page: Page, re: RegExp, scope = '*'): Promise<boolean> 
  * minimizing and restoring it brings it forward.
  */
 export async function ensureVisible(page: Page): Promise<void> {
-  await page.bringToFront();
-  if (!(await page.evaluate(() => document.hidden).catch(() => false))) return;
-  const s = await page.target().createCDPSession();
-  try {
-    const { windowId } = await s.send('Browser.getWindowForTarget');
-    await s.send('Browser.setWindowBounds', { windowId, bounds: { windowState: 'minimized' } });
-    await sleep(600);
-    await s.send('Browser.setWindowBounds', { windowId, bounds: { windowState: 'normal' } });
-    await sleep(1200);
-    await page.bringToFront();
-  } finally {
-    await s.detach().catch(() => undefined);
-  }
-  if (await page.evaluate(() => document.hidden).catch(() => false)) throw new Error('La ventana del navegador sigue oculta: ponla delante y repite.');
+  await revealIfHidden(page);
 }
 
 async function withViewport<T>(page: Page, fn: () => Promise<T>): Promise<T> {
@@ -945,12 +932,12 @@ export async function setConditionalFormat(componentId: string, rules: CfRule[],
  * but repaints the chart only after a reload, so this reloads unless reload=false.
  */
 /** Comparison period of a chart or scorecard (a scorecard also shows its delta). */
-export async function setComparison(componentId: string, comparison: 'none' | 'previous_period' | 'previous_year') {
+export async function setComparison(componentId: string, comparison: 'none' | 'previous_period' | 'previous_year', dateField?: string) {
   const { page } = await requireEditMode();
-  const r = await evaluateOn(page, T, comparisonScript, { componentId, comparison });
+  const r = await evaluateOn(page, T, comparisonScript, { componentId, comparison, ...(dateField ? { dateField } : {}) });
   if (!r.ok) throw new Error(r.error);
   await sleep(1500);
-  return { ok: true, componentId, comparison, set: r.set };
+  return { ok: true, componentId, comparison, set: r.set, ...(r.dateField ? { dateField: r.dateField } : {}) };
 }
 
 /** A button that opens a page of the report. page: id, or "name:<page name>". */

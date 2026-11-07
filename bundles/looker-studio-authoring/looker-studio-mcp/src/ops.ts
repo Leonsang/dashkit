@@ -5,7 +5,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from 'puppeteer-core';
-import { evaluateOn, getBrowser, getReportPage, REPORT_URL_RE, setActiveReport } from './browser.js';
+import { evaluateOn, getBrowser, getReportPage, REPORT_URL_RE, setActiveReport, revealIfHidden } from './browser.js';
 import { getTemplate, knownFix, learn, saveTemplate, seedKnowledge, summary } from './knowledge.js';
 import { log } from './log.js';
 import { requireEditMode } from './looker/report.js';
@@ -305,6 +305,10 @@ export interface CreateOptions {
 }
 
 export async function createComponent(o: CreateOptions): Promise<CreateComponentResult & { bound?: unknown; fix?: unknown }> {
+  if (o.type.startsWith('pivot-table') && (o.dimensions?.length || o.metrics?.length)) {
+    const nDims = (o.dimensions?.length ?? 0) + Object.values(o.slots ?? {}).flat().length;
+    if (nDims < 2) throw new Error('Una tabla dinamica necesita una dimension de filas y otra de columnas (con una sola da "Combinacion no valida", reason 9). Con una dimension, usa simple-table: admite formato condicional y mapa de calor.');
+  }
   const page = await editPage();
   const datasetId = await resolveDataset(page, o.dataset);
   const hasFields = !!(o.dimensions?.length || o.metrics?.length || (o.slots && Object.keys(o.slots).length));
@@ -337,7 +341,23 @@ export async function createComponent(o: CreateOptions): Promise<CreateComponent
       ...(o.slots ? { slots: o.slots } : {}),
     });
   }
+  // The save waits for the fields (deferSave): a bind that fails leaves a component that is never saved and
+  // vanishes on reload. Remove it and fail loudly (benchmark 2026-11-07: tables lost without a warning).
+  const b = bound as { ok?: boolean; error?: string } | undefined;
+  if (b && b.ok === false) {
+    await deleteComponent(res.componentId!).catch(() => undefined);
+    learn('create_fail', o.type, { stage: 'bind', error: b.error });
+    throw new Error(`${o.type}: no se pudieron poner los campos (${b.error}). El componente no se guardo y se quito.`);
+  }
   await sleep(2500);
+  // Confirm the save left the browser: a tab the OS treats as hidden (window covered by another) throttles
+  // the editor's timers and the save can arrive after the next reload, or never (benchmark 2026-11-07).
+  const saved = () => netSince(page, t0).some((e) => /updatePage/.test(e.path));
+  if (!saved()) {
+    await revealIfHidden(page).catch(() => undefined);
+    for (let i = 0; i < 40 && !saved(); i++) await sleep(250);
+  }
+  if (!saved()) res.warnings.push('No se vio el guardado (updatePage) en 12 s: si la ventana del navegador esta tapada, el editor lo aplaza. Recarga y comprueba con get_report_layout que el componente sigue; para evitarlo, lanza el navegador con las opciones --disable-* de /setup.');
   const inPage = await evaluateOn(page, 5_000, readNetLogScript, t0).catch(() => []);
   const net = [...netSince(page, t0), ...inPage];
   const rejected = net.filter((e) => /updatePage/.test(e.path) && e.status >= 400);
@@ -449,6 +469,16 @@ export async function applySpec(specOrFile: string | ReportSpec, opts: { dryRun?
     for (const name of wanted) {
       let hit = pages.find((p) => p.name === name);
       let created = false;
+      // A new report (e.g. from create_report_from_csv) starts with one empty, untitled page: use it for the
+      // spec's first missing page instead of leaving it empty in front of the others (benchmark 2026-11-07).
+      const blank = !hit && !opts.dryRun ? pages.find((p) => p.components === 0 && /^((p[aá]gina|page|untitled page|p[aá]gina sin t[ií]tulo)(\s*\d+)?)?$/i.test(String(p.name).trim()) && !wanted.includes(p.name) && !Object.values(pageIds).includes(p.id)) : undefined;
+      if (blank) {
+        const { renamePage } = await import('./ops3.js');
+        await renamePage(blank.id, name);
+        pages = await listPages();
+        hit = pages.find((p) => p.id === blank.id);
+        created = true;
+      }
       if (!hit && !opts.dryRun) {
         await addPage(name);
         await reloadReport();
@@ -593,7 +623,7 @@ async function patchIfNeeded(page: Page, id: string, c: ResolvedComponent): Prom
   }
   if (c.comparison) {
     const { setComparison } = await import('./ops4.js');
-    await setComparison(id, c.comparison);
+    await setComparison(id, c.comparison, c.dateField);
     changes.push(`comparison:${c.comparison}`);
   }
   if (c.linkPage) {
