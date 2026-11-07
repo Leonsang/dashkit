@@ -19,6 +19,7 @@ import {
 import {
   arrangeScript,
   blendSnapshotScript,
+  chartStyleScript,
   componentBoxesScript,
   componentPointsScript,
   deleteBlendScript,
@@ -34,7 +35,7 @@ import {
   setDisplayKeysScript,
   setTextScript,
   updateBlendScript
-} from "./chunk-BFA3FAWY.js";
+} from "./chunk-MUP4XVBL.js";
 import {
   CDPSessionEvent,
   CdpBrowser,
@@ -3010,7 +3011,8 @@ function resolveSpec(spec) {
             ...it.text !== void 0 ? { text: it.text } : {},
             ...it.parameter ? { parameter: it.parameter } : {},
             ...it.style ? { style: it.style } : {},
-            ...it.conditional ? { conditional: it.conditional } : {}
+            ...it.conditional ? { conditional: it.conditional } : {},
+            ...it.chartStyle ? { chartStyle: it.chartStyle } : {}
           });
         });
       } else {
@@ -3035,7 +3037,8 @@ function resolveSpec(spec) {
           ...c.text !== void 0 ? { text: c.text } : {},
           ...c.parameter ? { parameter: c.parameter } : {},
           ...c.style ? { style: c.style } : {},
-          ...c.conditional ? { conditional: c.conditional } : {}
+          ...c.conditional ? { conditional: c.conditional } : {},
+          ...c.chartStyle ? { chartStyle: c.chartStyle } : {}
         });
       }
     }
@@ -3240,7 +3243,24 @@ function uxFactsScript() {
         const val = v && v.value;
         if (THEME.test(k) && val !== void 0 && val !== null && !(Array.isArray(val) && val.every((x) => x === null || x === void 0))) overrides[k] = val;
       }
-      return { id: String(c.getId()), type: String(c.config.config.display.type), page: String(p.getId()), overrides };
+      const type = String(c.config.config.display.type);
+      let chart;
+      if (/barchart|linechart|combochart|areachart/.test(type)) {
+        const ds = c.config.config.datasource && c.config.config.datasource.keys || {};
+        const prim = (k) => ds[k] && ds[k].value && ds[k].value.primary || [];
+        const metrics = prim("metrics").length;
+        const breakdown = Object.keys(ds).some((k) => /breakdown/i.test(k) && prim(k).length > 0);
+        const arr = (k) => (dk[k] && Array.isArray(dk[k].value) ? dk[k].value : []).slice(0, metrics);
+        const sl = dk.showLegend ? dk.showLegend.value : null;
+        chart = {
+          metrics,
+          breakdown,
+          rightAxis: metrics > 1 && arr("seriesAxisIndex").some((x) => x === 1),
+          showLegend: typeof sl === "boolean" ? sl : null,
+          lineLabels: /linechart/.test(type) && (arr("seriesShowDataLabel").some((x) => x === true) || !!(dk.showDataLabel && dk.showDataLabel.value === true))
+        };
+      }
+      return { id: String(c.getId()), type, page: String(p.getId()), overrides, ...chart ? { chart } : {} };
     })
   );
   const pages = report.pages.map((p) => ({
@@ -3605,6 +3625,14 @@ function auditUx(f, layoutIssues = []) {
         if (r !== null && r < 4.5) issues.push({ severity: "error", area: "contraste", componentId: c.id, rule: "WCAG 1.4.3", message: `${c.type}: ${k} ${v.color} sobre ${back} = ${r}:1 (< 4.5:1).` });
       }
     }
+  }
+  for (const c of f.components) {
+    const ch = c.chart;
+    if (!ch) continue;
+    const series = ch.metrics + (ch.breakdown ? 2 : 0);
+    if (ch.rightAxis) issues.push({ severity: "error", area: "grafico", componentId: c.id, rule: "dataviz: un solo eje", message: `${c.type} con dos ejes Y: la alineacion de las dos escalas es arbitraria e inventa correlaciones. Separa las metricas en dos graficos o indexalas a una base comun (set_chart_style series axis=left).` });
+    if (series >= 2 && ch.showLegend === false) issues.push({ severity: "warning", area: "grafico", componentId: c.id, rule: "dataviz: leyenda", message: `${c.type} con ${ch.breakdown ? "desglose" : `${ch.metrics} metricas`} y sin leyenda: la identidad de cada serie queda solo en el color (set_chart_style legend=top).` });
+    if (ch.lineLabels) issues.push({ severity: "warning", area: "grafico", componentId: c.id, rule: "dataviz: etiquetas", message: `${c.type} con etiquetas de datos en cada punto: nadie las lee. Deja que el eje y la ayuda emergente den el valor (set_chart_style series dataLabels=false).` });
   }
   if (fonts.size > 2) issues.push({ severity: "warning", area: "tipografia", componentId: null, rule: "diseno-layout \xA78", message: `${fonts.size} familias tipograficas (${[...fonts].join(", ")}): usa como mucho 2.` });
   for (const l of layoutIssues) {
@@ -4050,7 +4078,7 @@ async function addSourceField(opts) {
   });
   const open = async () => {
     if (!await clickText2("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) {
-      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-DPVTDJLL.js");
+      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-J6ZGE3MX.js");
       await selectSourceChart2(page, opts.source && opts.source.startsWith("@") ? opts.source : void 0);
       if (!await clickText2("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) throw new Error('No se encontro "Anadir un campo" en el panel Datos.');
     }
@@ -4067,7 +4095,7 @@ async function addSourceField(opts) {
     let src = await editorSource();
     const byField = !!opts.source && opts.source.startsWith("@");
     if (byField) {
-      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-DPVTDJLL.js");
+      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-J6ZGE3MX.js");
       await clickText2("button", /^(Cancelar|Cancel)$/);
       await close();
       await selectSourceChart2(page, opts.source);
@@ -4318,7 +4346,7 @@ async function createComponent(o) {
   const hasFields = !!(o.dimensions?.length || o.metrics?.length || o.slots && Object.keys(o.slots).length);
   const NO_DIMS = ["gauge-viz", "bulletchart", "kpi-metric"];
   const t0 = Date.now();
-  const { ensureSeedScript } = await import("./scripts4-5JTQMYJ3.js");
+  const { ensureSeedScript } = await import("./scripts4-NFOQQV7Q.js");
   const seed = await evaluateOn(page, T2, ensureSeedScript, o.pageId);
   if (seed.seedId) await sleep2(1500);
   const res = await evaluateOn(page, T2, createComponentScript, {
@@ -4511,22 +4539,27 @@ async function patchIfNeeded(page, id, c) {
   }
   if (c.text !== void 0) {
     const t = typeof c.text === "string" ? { text: c.text } : c.text;
-    const { setText: setText2 } = await import("./ops4-DPVTDJLL.js");
+    const { setText: setText2 } = await import("./ops4-J6ZGE3MX.js");
     await setText2(id, t.text, { ...t.size ? { size: t.size } : {}, ...t.bold ? { bold: true } : {}, ...t.color ? { color: t.color } : {} });
     changes.push("text");
   }
   if (c.style) {
-    const { setStyle: setStyle2 } = await import("./ops4-DPVTDJLL.js");
+    const { setStyle: setStyle2 } = await import("./ops4-J6ZGE3MX.js");
     await setStyle2(id, c.style);
     changes.push("style");
   }
   if (c.conditional) {
-    const { setConditionalFormat: setConditionalFormat2 } = await import("./ops4-DPVTDJLL.js");
+    const { setConditionalFormat: setConditionalFormat2 } = await import("./ops4-J6ZGE3MX.js");
     await setConditionalFormat2(id, c.conditional);
     changes.push(`conditional:${c.conditional.length}`);
   }
+  if (c.chartStyle) {
+    const { setChartStyle: setChartStyle2 } = await import("./ops4-J6ZGE3MX.js");
+    await setChartStyle2({ ...c.chartStyle, componentId: id, reload: false });
+    changes.push("chartStyle");
+  }
   if (c.parameter) {
-    const { setControlParameter: setControlParameter2 } = await import("./ops4-DPVTDJLL.js");
+    const { setControlParameter: setControlParameter2 } = await import("./ops4-J6ZGE3MX.js");
     await setControlParameter2(id, c.parameter);
     changes.push(`parameter:${c.parameter}`);
   }
@@ -5281,6 +5314,15 @@ async function setConditionalFormat(componentId, rules, append = false) {
   await sleep3(1500);
   return { ok: true, componentId, rules: r.rules };
 }
+async function setChartStyle(args) {
+  const { reload, ...style } = args;
+  const { page } = await requireEditMode();
+  const r = await evaluateOn(page, T3, chartStyleScript, style);
+  if (!r.ok) throw new Error(r.error);
+  if (reload !== false) await reloadReport();
+  else await sleep3(1500);
+  return { ok: true, componentId: args.componentId, set: r.set, series: r.series, reloaded: reload !== false };
+}
 async function setStyle(componentId, keys) {
   const { page } = await requireEditMode();
   const r = await evaluateOn(page, T3, setDisplayKeysScript, { componentId, keys });
@@ -5330,6 +5372,7 @@ export {
   groupComponents,
   alignComponents,
   setConditionalFormat,
+  setChartStyle,
   setStyle,
   readTheme,
   applyTheme,

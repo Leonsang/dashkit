@@ -5,7 +5,7 @@ import {
   getComponentConfig,
   getReportLayout,
   sanitizeLearning
-} from "./chunks/chunk-2SVIZ4Z3.js";
+} from "./chunks/chunk-2TFBG7B3.js";
 import {
   addFilter,
   addPage,
@@ -51,6 +51,7 @@ import {
   renamePage,
   reportSettings,
   seedTemplatesFromUi,
+  setChartStyle,
   setComponentBoxModel,
   setConditionalFormat,
   setControlParameter,
@@ -65,10 +66,10 @@ import {
   updateParameter,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-VPP5EBVT.js";
+} from "./chunks/chunk-44P2Z5CU.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
-import "./chunks/chunk-BFA3FAWY.js";
+import "./chunks/chunk-MUP4XVBL.js";
 import "./chunks/chunk-FAVAKK4W.js";
 import "./chunks/chunk-GIAQTVDD.js";
 import "./chunks/chunk-BGDW2RS3.js";
@@ -113,6 +114,7 @@ Paginas y tema
   align <id...> [--align left|center|right|top|middle|bottom] [--distribute horizontal|vertical] [--gap N]
         [--match width|height|both]       Alinear, distribuir, igualar tamano
   group <id...> | ungroup <id|g-...> | groups [--page <id>]   Grupos de componentes
+  chart-style <id> <json|archivo> [--no-reload]   Estilo de grafico: series (color, type, dataLabels, axis...), legend, axes
   format <id> <reglas.json|json> [--append]   Formato condicional: [{field, op, value, background, color, target}] o {field, scale:[...]}
 
 Combinaciones y parametros
@@ -281,6 +283,11 @@ async function main() {
       return groupComponents({ op: "ungroup", componentIds: pos.filter((x) => !x.startsWith("g-")), groupIds: pos.filter((x) => x.startsWith("g-")) });
     case "groups":
       return groupComponents({ op: "list", ...typeof flags.page === "string" ? { pageId: flags.page } : {} });
+    case "chart-style": {
+      const arg = need(pos[1], "el estilo (JSON o archivo)");
+      const st = JSON.parse(existsSync(arg) ? readFileSync(arg, "utf8") : arg);
+      return setChartStyle({ ...st, componentId: need(pos[0], "componentId"), ...flags["no-reload"] ? { reload: false } : {} });
+    }
     case "format": {
       const arg = need(pos[1], "las reglas (JSON o archivo)");
       const rules = JSON.parse(existsSync(arg) ? readFileSync(arg, "utf8") : arg);

@@ -122,7 +122,7 @@ function distance(a: string, b: string): number | null {
 
 export interface UxIssue {
   severity: 'error' | 'warning' | 'info';
-  area: 'contraste' | 'tema' | 'paleta' | 'tipografia' | 'layout' | 'kpi';
+  area: 'contraste' | 'tema' | 'paleta' | 'tipografia' | 'layout' | 'kpi' | 'grafico';
   componentId: string | null;
   message: string;
   rule: string;
@@ -131,7 +131,7 @@ export interface UxIssue {
 export interface UxFacts {
   theme: Record<string, any> | null;
   themeConfig: string | null;
-  components: Array<{ id: string; type: string; page: string; overrides: Record<string, any> }>;
+  components: Array<{ id: string; type: string; page: string; overrides: Record<string, any>; chart?: { metrics: number; breakdown: boolean; rightAxis: boolean; showLegend: boolean | null; lineLabels: boolean } }>;
   pages: Array<{ id: string; name: string; background: unknown }>;
 }
 
@@ -193,6 +193,16 @@ export function auditUx(f: UxFacts, layoutIssues: Array<{ code: string; componen
         if (r !== null && r < 4.5) issues.push({ severity: 'error', area: 'contraste', componentId: c.id, rule: 'WCAG 1.4.3', message: `${c.type}: ${k} ${(v as Color).color} sobre ${back} = ${r}:1 (< 4.5:1).` });
       }
     }
+  }
+  // Chart rules from the dataviz guide: one y axis, a legend whenever there are 2+ series, and no number
+  // on every point of a line. (A single series keeps its legend: these charts have no title of their own.)
+  for (const c of f.components) {
+    const ch = c.chart;
+    if (!ch) continue;
+    const series = ch.metrics + (ch.breakdown ? 2 : 0);
+    if (ch.rightAxis) issues.push({ severity: 'error', area: 'grafico', componentId: c.id, rule: 'dataviz: un solo eje', message: `${c.type} con dos ejes Y: la alineacion de las dos escalas es arbitraria e inventa correlaciones. Separa las metricas en dos graficos o indexalas a una base comun (set_chart_style series axis=left).` });
+    if (series >= 2 && ch.showLegend === false) issues.push({ severity: 'warning', area: 'grafico', componentId: c.id, rule: 'dataviz: leyenda', message: `${c.type} con ${ch.breakdown ? 'desglose' : `${ch.metrics} metricas`} y sin leyenda: la identidad de cada serie queda solo en el color (set_chart_style legend=top).` });
+    if (ch.lineLabels) issues.push({ severity: 'warning', area: 'grafico', componentId: c.id, rule: 'dataviz: etiquetas', message: `${c.type} con etiquetas de datos en cada punto: nadie las lee. Deja que el eje y la ayuda emergente den el valor (set_chart_style series dataLabels=false).` });
   }
   if (fonts.size > 2) issues.push({ severity: 'warning', area: 'tipografia', componentId: null, rule: 'diseno-layout §8', message: `${fonts.size} familias tipograficas (${[...fonts].join(', ')}): usa como mucho 2.` });
   for (const l of layoutIssues) {

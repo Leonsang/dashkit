@@ -8,7 +8,7 @@ import {
   getReportLayout,
   sanitizeLearning,
   writesAllowed
-} from "./chunks/chunk-2SVIZ4Z3.js";
+} from "./chunks/chunk-2TFBG7B3.js";
 import {
   addFilter,
   addPage,
@@ -53,6 +53,7 @@ import {
   renamePage,
   reportSettings,
   seedTemplatesFromUi,
+  setChartStyle,
   setComponentBoxModel,
   setConditionalFormat,
   setControlParameter,
@@ -67,10 +68,10 @@ import {
   updateParameter,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-VPP5EBVT.js";
+} from "./chunks/chunk-44P2Z5CU.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
-import "./chunks/chunk-BFA3FAWY.js";
+import "./chunks/chunk-MUP4XVBL.js";
 import "./chunks/chunk-FAVAKK4W.js";
 import "./chunks/chunk-GIAQTVDD.js";
 import "./chunks/chunk-BGDW2RS3.js";
@@ -36894,7 +36895,8 @@ var WRITE_TOOLS = /* @__PURE__ */ new Set([
   "arrange_components",
   "set_conditional_format",
   "align_components",
-  "group_components"
+  "group_components",
+  "set_chart_style"
 ]);
 var DESTRUCTIVE_TOOLS = /* @__PURE__ */ new Set(["delete_component", "delete_pages", "delete_blend", "delete_parameter"]);
 {
@@ -37500,6 +37502,47 @@ server.registerTool(
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true }
   },
   async (args) => run(() => groupComponents(args))
+);
+var COLOR = external_exports.string().regex(/^#[0-9a-fA-F]{6}$/, "#rrggbb");
+server.registerTool(
+  "set_chart_style",
+  {
+    title: "Estilo de un grafico",
+    description: "Estilo fino de un grafico de barras, lineas, combinado o de areas por nombre, sin conocer las claves internas. series: por posicion (1..) o nombre de la metrica: color, type (bars, line; solo combinados y series temporales), lineWeight, showPoints, dataLabels, axis (left/right), trendline, cumulative, compact, decimals. legend: top, bottom, right, left o none. dataLabels, compactNumbers, stacked, axes (show, xTitle, yTitle, rightTitle, yMin, yMax, logScale) y gridColor. Recarga al final para que se vea (reload=false lo evita). Buenas practicas: un solo eje (evita axis right), leyenda solo con 2 series o mas, etiquetas de datos solo con pocas barras.",
+    inputSchema: {
+      componentId: external_exports.string().min(1),
+      series: external_exports.array(external_exports.object({
+        series: external_exports.union([external_exports.number().int().min(1).max(20), external_exports.string().min(1)]),
+        color: COLOR.optional(),
+        type: external_exports.enum(["bars", "line"]).optional().describe("Solo en graficos combinados y de serie temporal"),
+        lineWeight: external_exports.number().int().min(0).max(12).optional(),
+        showPoints: external_exports.boolean().optional(),
+        dataLabels: external_exports.boolean().optional(),
+        axis: external_exports.enum(["left", "right"]).optional(),
+        trendline: external_exports.enum(["none", "linear", "exponential", "polynomial"]).optional(),
+        cumulative: external_exports.boolean().optional(),
+        compact: external_exports.boolean().optional(),
+        decimals: external_exports.number().int().min(0).max(10).optional()
+      }).strict()).optional(),
+      legend: external_exports.enum(["top", "bottom", "right", "left", "none"]).optional(),
+      dataLabels: external_exports.boolean().optional(),
+      compactNumbers: external_exports.boolean().optional(),
+      stacked: external_exports.boolean().optional(),
+      axes: external_exports.object({
+        show: external_exports.boolean().optional(),
+        xTitle: external_exports.boolean().optional(),
+        yTitle: external_exports.boolean().optional(),
+        rightTitle: external_exports.boolean().optional(),
+        yMin: external_exports.number().nullable().optional(),
+        yMax: external_exports.number().nullable().optional(),
+        logScale: external_exports.boolean().optional()
+      }).strict().optional(),
+      gridColor: COLOR.optional(),
+      reload: external_exports.boolean().optional()
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true }
+  },
+  async (args) => run(() => setChartStyle(args))
 );
 var CfRuleSchema = external_exports.object({
   field: external_exports.string().min(1).describe("Campo del grafico: nombre visible o id qt_"),

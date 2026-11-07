@@ -703,3 +703,117 @@ export function groupScript(args: { componentIds?: string[]; ungroup?: boolean; 
     return { ok: false, error: String(e && e.message) };
   }
 }
+
+// ---------------------------------------------------------------------------
+// chart style by name (verified 2026-11-07): series settings are display keys holding 20-slot arrays
+// (seriesColor [{color}], seriesType, seriesLineWeight, seriesShowPoints, seriesShowDataLabel,
+// seriesAxisIndex 0/1, seriesTrendlineType, seriesCumulative, seriesCompactNumbers, seriesDecimalPrecision);
+// chart-wide keys: legend top|bottom|right|left + showLegend, showDataLabel, showStack, showAxis,
+// showHAxisTitle, showLeftYAxisTitle, showRightYAxisTitle, leftYAxisViewWindowMin/Max, leftYAxisLogScale,
+// gridColor. setDisplayKeyValue saves but the canvas repaints only after a reload.
+// ---------------------------------------------------------------------------
+
+export interface ChartSeriesStyle {
+  /** 1-based series position, or the metric's display name. */
+  series: number | string;
+  color?: string;
+  /** Only in combined (simple-combochart) and time series (simple-linechart) charts. */
+  type?: 'bars' | 'line';
+  lineWeight?: number;
+  showPoints?: boolean;
+  dataLabels?: boolean;
+  axis?: 'left' | 'right';
+  trendline?: 'none' | 'linear' | 'exponential' | 'polynomial';
+  cumulative?: boolean;
+  compact?: boolean;
+  decimals?: number;
+}
+
+export interface ChartStyle {
+  componentId: string;
+  series?: ChartSeriesStyle[];
+  legend?: 'top' | 'bottom' | 'right' | 'left' | 'none';
+  dataLabels?: boolean;
+  compactNumbers?: boolean;
+  stacked?: boolean;
+  axes?: { show?: boolean; xTitle?: boolean; yTitle?: boolean; rightTitle?: boolean; yMin?: number | null; yMax?: number | null; logScale?: boolean };
+  gridColor?: string;
+}
+
+export function chartStyleScript(args: ChartStyle): { ok: boolean; error?: string; set?: string[]; series?: string[] } {
+  const w = window as any;
+  try {
+    const inj = w.angular.element(document.body).injector();
+    const report = inj.get('legoUndoRedoService').report;
+    const all = [...report.pages.flatMap((p: any) => p.components), ...report.components];
+    const comp = all.find((c: any) => c.getId() === args.componentId);
+    if (!comp) return { ok: false, error: `Componente ${args.componentId} no encontrado.` };
+    const keys = comp.config.config.display.keys || {};
+    const has = (k: string) => k in keys || (() => { try { return k in comp.getDefaultDisplayKeys(); } catch { return false; } })();
+    const metrics: string[] = (comp.config.config.datasource.keys.metrics && comp.config.config.datasource.keys.metrics.value && comp.config.config.datasource.keys.metrics.value.primary) || [];
+    let schema: any = {};
+    try { schema = comp.getSchema().qe.concepts || {}; } catch { /* blended or not loaded */ }
+    const label = (n: string) => {
+      const d = comp.config.conceptDefs[n];
+      const q = d && d.queryTimeTransformation;
+      const dn = q && q.displayTransformation && q.displayTransformation.displayName;
+      if (dn) return String(dn);
+      const sf = q && q.dataTransformation && q.dataTransformation.sourceFieldName;
+      return String((sf && schema[sf] && schema[sf].displayName) || sf || n);
+    };
+    const names = metrics.map(label);
+    const set: string[] = [];
+    const put = (k: string, v: unknown) => {
+      if (!has(k)) throw new Error(`Este grafico (${comp.getDisplayType()}) no tiene la propiedad ${k}.`);
+      comp.setDisplayKeyValue(k, v); set.push(k);
+    };
+    const hex = (c: string) => { if (!/^#[0-9a-f]{6}$/i.test(c)) throw new Error(`Color no valido: ${c} (#rrggbb).`); return c.toUpperCase(); };
+    const arrays: Record<string, unknown[]> = {};
+    const slot = (k: string, i: number, v: unknown) => {
+      if (!arrays[k]) {
+        if (!has(k)) throw new Error(`Este grafico (${comp.getDisplayType()}) no tiene series configurables (${k}).`);
+        const cur = keys[k] && Array.isArray(keys[k].value) ? keys[k].value : [];
+        arrays[k] = Array.from({ length: 20 }, (_, j) => (cur[j] === undefined ? null : cur[j]));
+      }
+      arrays[k]![i] = v;
+    };
+    for (const s of args.series || []) {
+      const i = typeof s.series === 'number' ? s.series - 1 : names.findIndex((n) => n.toLowerCase() === String(s.series).toLowerCase());
+      if (i < 0 || i >= 20) throw new Error(`Serie "${s.series}" no encontrada (metricas: ${names.join(', ') || 'ninguna'}).`);
+      if (s.color) slot('seriesColor', i, { color: hex(s.color) });
+      if (s.type) {
+        if (!/combochart|linechart/.test(String(comp.getDisplayType()))) throw new Error(`Un grafico ${comp.getDisplayType()} no cambia el tipo de serie: usa un grafico combinado (combo-chart) o de serie temporal.`);
+        slot('seriesType', i, s.type);
+      }
+      if (s.lineWeight !== undefined) slot('seriesLineWeight', i, s.lineWeight);
+      if (s.showPoints !== undefined) slot('seriesShowPoints', i, s.showPoints);
+      if (s.dataLabels !== undefined) slot('seriesShowDataLabel', i, s.dataLabels);
+      if (s.axis) slot('seriesAxisIndex', i, s.axis === 'right' ? 1 : 0);
+      if (s.trendline) slot('seriesTrendlineType', i, s.trendline);
+      if (s.cumulative !== undefined) slot('seriesCumulative', i, s.cumulative);
+      if (s.compact !== undefined) slot('seriesCompactNumbers', i, s.compact);
+      if (s.decimals !== undefined) slot('seriesDecimalPrecision', i, s.decimals);
+    }
+    for (const [k, v] of Object.entries(arrays)) put(k, v);
+    if (args.legend) { put('showLegend', args.legend !== 'none'); if (args.legend !== 'none') put('legend', args.legend); }
+    if (args.dataLabels !== undefined) put('showDataLabel', args.dataLabels);
+    if (args.compactNumbers !== undefined) put('compactNumbers', args.compactNumbers);
+    if (args.stacked !== undefined) put('showStack', args.stacked);
+    const a = args.axes;
+    if (a) {
+      if (a.show !== undefined) put('showAxis', a.show);
+      if (a.xTitle !== undefined) put('showHAxisTitle', a.xTitle);
+      if (a.yTitle !== undefined) put('showLeftYAxisTitle', a.yTitle);
+      if (a.rightTitle !== undefined) put('showRightYAxisTitle', a.rightTitle);
+      if (a.yMin !== undefined) put('leftYAxisViewWindowMin', a.yMin);
+      if (a.yMax !== undefined) put('leftYAxisViewWindowMax', a.yMax);
+      if (a.logScale !== undefined) put('leftYAxisLogScale', a.logScale);
+    }
+    if (args.gridColor) put('gridColor', { color: hex(args.gridColor), opacity: 1 });
+    if (!set.length) return { ok: false, error: 'No hay nada que cambiar.' };
+    inj.get('wrapperSaveService').save([comp]);
+    return { ok: true, set, series: names };
+  } catch (e: any) {
+    return { ok: false, error: String(e && e.message) };
+  }
+}

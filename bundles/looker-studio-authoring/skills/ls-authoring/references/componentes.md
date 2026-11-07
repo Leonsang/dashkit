@@ -146,6 +146,35 @@ CLI: `format <id> reglas.json` (o el JSON en línea), `--append` para añadir. E
 - **Mapas de calor:** con alguna regla, el editor deja de pintar los mapas de calor de las columnas. Usa una
   `scale` donde quieras mantener el degradado.
 
+## Estilo de un gráfico: set_chart_style
+
+Series, leyenda, etiquetas y ejes de un gráfico de barras, líneas, serie temporal o combinado, por nombre:
+
+```json
+{"componentId": "cd-...",
+ "series": [{"series": "Ingresos", "color": "#1F6FEB"},
+            {"series": 2, "type": "line", "lineWeight": 2, "showPoints": true}],
+ "legend": "bottom", "dataLabels": false, "axes": {"yMin": 0, "xTitle": false}}
+```
+
+CLI: `chart-style <id> estilo.json` (o el JSON en línea), `--no-reload`. En el spec, `chartStyle`.
+
+- **`series`:** por posición (1, 2...) o por el nombre visible de la métrica. `color` (`#rrggbb`), `type`
+  (`bars` o `line`, solo en gráficos combinados y de serie temporal: en uno de barras el editor lo ignora y la
+  herramienta lo rechaza), `lineWeight`, `showPoints`, `dataLabels`, `axis` (`left`/`right`), `trendline`,
+  `cumulative`, `compact`, `decimals`.
+- **Del gráfico:** `legend` (`top`, `bottom`, `right`, `left`, `none`), `dataLabels`, `compactNumbers`,
+  `stacked`, `axes` (`show`, `xTitle`, `yTitle`, `rightTitle`, `yMin`, `yMax`, `logScale`) y `gridColor`.
+- **Recarga al final:** el editor guarda las claves pero no repinta el gráfico hasta recargar.
+  `reload=false` (o `--no-reload`) lo evita si vas a encadenar varios cambios; recarga tú al acabar.
+- Una propiedad que el tipo de gráfico no tiene da error con su nombre, en vez de guardarse sin efecto.
+- **Buenas prácticas (guía dataviz, [CONVENCIÓN]):** un solo eje Y (`audit_ux` da error con `axis=right`);
+  leyenda siempre que haya 2 series o más; etiquetas de datos solo en pocas barras, nunca en cada punto de una
+  línea; el color sigue a la entidad (una métrica, el mismo color en todo el informe). Los gráficos de esta
+  versión no tienen título propio: con una sola serie, la leyenda es lo que la nombra, así que se queda.
+- Verificado el 2026-11-07: color, leyenda abajo y etiquetas de datos se ven tras recargar; el eje derecho lo
+  detecta `audit_ux`.
+
 ## Capas y nivel de informe: arrange_components
 
 `arrange_components componentIds op` (CLI `arrange <id...> --to <op>`):
@@ -166,6 +195,7 @@ Solo si el usuario lo pide. Necesita `LS_ALLOW_DELETE=1` además de `LS_ALLOW_WR
 
 ## Lo que no se puede (todavía)
 
-- **Estilo por serie, ejes o etiquetas de datos:** sin opciones con nombre. Lo que manda es el tema
-  (`paginas-temas-y-ajustes.md`); una clave suelta del panel Estilo se cambia con `style={...}` si se conoce
-  su nombre (`get_component_config` > `config.display.keys`).
+- **Estilo de tablas, mapas y scorecards por nombre:** solo `set_chart_style` (gráficos) y
+  `set_conditional_format`. Lo demás lo manda el tema (`paginas-temas-y-ajustes.md`); una clave suelta del
+  panel Estilo se cambia con `style={...}` si se conoce su nombre (`get_component_config` >
+  `config.display.keys`).

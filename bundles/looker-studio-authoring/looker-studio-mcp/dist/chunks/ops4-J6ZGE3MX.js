@@ -15,6 +15,7 @@ import {
   movePage,
   navPages,
   selectSourceChart,
+  setChartStyle,
   setConditionalFormat,
   setControlParameter,
   setPageVisibility,
@@ -22,10 +23,10 @@ import {
   setText,
   updateBlend,
   updateParameter
-} from "./chunk-VPP5EBVT.js";
+} from "./chunk-44P2Z5CU.js";
 import "./chunk-5J4RMU5E.js";
 import "./chunk-Y34SSGZY.js";
-import "./chunk-BFA3FAWY.js";
+import "./chunk-MUP4XVBL.js";
 import "./chunk-FAVAKK4W.js";
 import "./chunk-GIAQTVDD.js";
 import "./chunk-BGDW2RS3.js";
@@ -48,6 +49,7 @@ export {
   movePage,
   navPages,
   selectSourceChart,
+  setChartStyle,
   setConditionalFormat,
   setControlParameter,
   setPageVisibility,

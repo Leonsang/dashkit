@@ -69,6 +69,13 @@ Checklist: todas las páginas con el mismo ancho; si una página es "larga", hac
 - Verde/rojo solo para variación positiva/negativa; no confiar solo en el color (añadir signo o flecha). [CONVENCIÓN + WCAG]
 - Si la métrica "baja es buena" (coste, tasa de rebote), invertir los colores de cambio en el scorecard.
 
+### Gráficos (guía dataviz)
+- **Un solo eje Y.** Dos métricas de escala distinta van en dos gráficos o indexadas a una base común: el doble eje inventa correlaciones. `audit_ux` lo marca como error. [CONVENCIÓN, guía dataviz]
+- **Leyenda con 2 series o más**; etiquetas directas solo en lo que importa (la última barra, el extremo), nunca un número en cada punto de una línea. [CONVENCIÓN, guía dataviz]
+- **El color sigue a la entidad, no a su posición:** un filtro que quita series no repinta las que quedan; más de 8 categorías se agrupan en "Otros" o en gráficos pequeños. [CONVENCIÓN, guía dataviz]
+- Una serie, un color (el 1.º de la paleta) en todas sus barras; una escala de color solo para categorías con orden. [CONVENCIÓN, guía dataviz]
+- Se aplica con `set_chart_style` (skill `ls-authoring`, `componentes.md`).
+
 ## 8. Tipografía
 | Elemento | Tamaño | Tipo |
 |---|---|---|
@@ -104,7 +111,8 @@ Para construirlo con el MCP, la skill `ls-authoring`.
 - [ ] Fila de KPIs arriba; tendencias debajo; tablas al final.
 - [ ] ≤ 15 componentes con datos por página.
 - [ ] ≤ 2 familias tipográficas; tamaños mínimos 11 px.
-- [ ] Contraste ≥ 4.5:1 en texto; leyendas presentes.
+- [ ] Contraste ≥ 4.5:1 en texto; leyendas presentes con 2 series o más.
+- [ ] Ningún gráfico con dos ejes Y; sin etiquetas en cada punto de una línea.
 - [ ] Bordes, radios y sombras uniformes.
 - [ ] Controles de fecha/filtros en la cabecera, preferiblemente a nivel de informe.
 - [ ] Sin componentes solapados ni fuera del lienzo.

@@ -73,5 +73,6 @@ usuario trabaje desde la terminal o en scripts.
   `get_learnings` muestra `method_missing`, avisa al usuario.
 - **Padding:** algunos tipos no tienen `paddingBottom` (p. ej. `kpi-metric`) y `generic-shape` no tiene
   padding; la herramienta lo avisa en `warnings`.
-- **Sin herramienta:** estilo fino de un gráfico (series, ejes, etiquetas; claves sueltas con `style`),
-  parámetros de informe y secciones de la navegación.
+- **Estilo de gráfico:** `set_chart_style` cambia series, leyenda y ejes, y recarga para que se vea (el
+  editor no repinta antes). El tipo de serie solo cambia en gráficos combinados y de serie temporal.
+- **Sin herramienta:** parámetros de informe y secciones de la navegación.

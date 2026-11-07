@@ -158,10 +158,13 @@ export function synthesizeComponentScript(args: { type: string; box: { x: number
 // uxAuditScript: raw facts for the UX audit (scoring happens in Node).
 // ---------------------------------------------------------------------------
 
+/** What the dataviz checks need from a bar, line or combo chart. */
+export interface ChartFacts { metrics: number; breakdown: boolean; rightAxis: boolean; showLegend: boolean | null; lineLabels: boolean }
+
 export function uxFactsScript(): {
   theme: unknown | null;
   themeConfig: string | null;
-  components: Array<{ id: string; type: string; page: string; overrides: Record<string, unknown> }>;
+  components: Array<{ id: string; type: string; page: string; overrides: Record<string, unknown>; chart?: ChartFacts }>;
   pages: Array<{ id: string; name: string; background: unknown }>;
 } {
   const w = window as any;
@@ -179,7 +182,23 @@ export function uxFactsScript(): {
         const val = (v as any) && (v as any).value;
         if (THEME.test(k) && val !== undefined && val !== null && !(Array.isArray(val) && val.every((x: any) => x === null || x === undefined))) overrides[k] = val;
       }
-      return { id: String(c.getId()), type: String(c.config.config.display.type), page: String(p.getId()), overrides };
+      const type = String(c.config.config.display.type);
+      let chart: ChartFacts | undefined;
+      if (/barchart|linechart|combochart|areachart/.test(type)) {
+        const ds = (c.config.config.datasource && c.config.config.datasource.keys) || {};
+        const prim = (k: string) => ((ds[k] && ds[k].value && ds[k].value.primary) || []) as unknown[];
+        const metrics = prim('metrics').length;
+        const breakdown = Object.keys(ds).some((k) => /breakdown/i.test(k) && prim(k).length > 0);
+        const arr = (k: string) => ((dk[k] && Array.isArray(dk[k].value) ? dk[k].value : []) as unknown[]).slice(0, metrics);
+        const sl = dk.showLegend ? dk.showLegend.value : null;
+        chart = {
+          metrics, breakdown,
+          rightAxis: metrics > 1 && arr('seriesAxisIndex').some((x) => x === 1),
+          showLegend: typeof sl === 'boolean' ? sl : null,
+          lineLabels: /linechart/.test(type) && (arr('seriesShowDataLabel').some((x) => x === true) || !!(dk.showDataLabel && dk.showDataLabel.value === true)),
+        };
+      }
+      return { id: String(c.getId()), type, page: String(p.getId()), overrides, ...(chart ? { chart } : {}) };
     }),
   );
   const pages = report.pages.map((p: any) => ({

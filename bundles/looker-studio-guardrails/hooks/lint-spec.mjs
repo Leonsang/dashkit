@@ -89,7 +89,8 @@ function resolveSpec(spec) {
             ...it.text !== void 0 ? { text: it.text } : {},
             ...it.parameter ? { parameter: it.parameter } : {},
             ...it.style ? { style: it.style } : {},
-            ...it.conditional ? { conditional: it.conditional } : {}
+            ...it.conditional ? { conditional: it.conditional } : {},
+            ...it.chartStyle ? { chartStyle: it.chartStyle } : {}
           });
         });
       } else {
@@ -114,7 +115,8 @@ function resolveSpec(spec) {
           ...c.text !== void 0 ? { text: c.text } : {},
           ...c.parameter ? { parameter: c.parameter } : {},
           ...c.style ? { style: c.style } : {},
-          ...c.conditional ? { conditional: c.conditional } : {}
+          ...c.conditional ? { conditional: c.conditional } : {},
+          ...c.chartStyle ? { chartStyle: c.chartStyle } : {}
         });
       }
     }

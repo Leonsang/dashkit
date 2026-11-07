@@ -518,6 +518,12 @@ async function patchIfNeeded(page: Page, id: string, c: ResolvedComponent): Prom
     await setConditionalFormat(id, c.conditional);
     changes.push(`conditional:${c.conditional.length}`);
   }
+  if (c.chartStyle) {
+    // No reload per component: the apply ends with its own reload.
+    const { setChartStyle } = await import('./ops4.js');
+    await setChartStyle({ ...c.chartStyle, componentId: id, reload: false });
+    changes.push('chartStyle');
+  }
   if (c.parameter) {
     const { setControlParameter } = await import('./ops4.js');
     await setControlParameter(id, c.parameter);

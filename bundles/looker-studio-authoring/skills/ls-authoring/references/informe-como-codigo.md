@@ -63,6 +63,7 @@ spec en lugar de la ruta; entonces no hay `.state.json` y cada aplicación vuelv
 | `text` | componente | Texto de un cuadro de texto: una cadena, o `{text, size, bold, color}` |
 | `parameter` | componente | El control fija ese parámetro (id) en vez de filtrar |
 | `style` | componente | Claves de estilo, p. ej. `{"hideMetric": false}` en un scorecard |
+| `chartStyle` | componente | Estilo del gráfico (lo de `set_chart_style` sin `componentId`): series, leyenda, ejes |
 | `conditional` | componente | Reglas de formato condicional (las de `set_conditional_format`); sustituyen las que haya |
 | `row` + `items` | macro | Reparte una fila: `w = (ancho − (n−1)·gap) / n`, redondeado a la retícula. `margin`, `gap`, `width`, `x` opcionales |
 

@@ -30,6 +30,7 @@ un informe de prueba.
 | **Dos órdenes por gráfico:** `sortData` y el orden inicial de `behavior.onSort` | Manda el segundo; un combinado creado al combinar datos quedó ordenado por "Número de registros" y su eje de meses, desordenado | `bind_fields_to_component` alinea los dos |
 | **Un guardado pendiente se pierde** si se recarga o se escribe en otra página antes de que salga | El último componente creado en una página desaparecía al recargar (tres tablas en el showcase) | Las herramientas esperan a que no quede ningún guardado en curso antes de recargar, abrir o cambiar de página |
 | **Cabecera de tabla** en texto de acento sobre un tinte del acento | Blanco sobre azul pálido (1,1:1) | `stripThemeStyles` en tablas usa el texto del tema; `audit_ux` lo detecta |
+| **Cambiar una clave de estilo de un gráfico no lo repinta** | El color o la leyenda nuevos se guardan, pero el lienzo sigue igual hasta recargar | `set_chart_style` recarga al final |
 | **Un parámetro del origen aparece como campo de texto en Propiedades** | Escribir ahí cambia el valor del parámetro en ese gráfico (reason 67) | `add_source_field` solo escribe en el editor de campos |
 
 ## Cómo escribe el servidor

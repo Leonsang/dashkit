@@ -27,7 +27,7 @@ import {
   reloadReport,
 } from './ops.js';
 import { loadSpec, type ReportSpec } from './spec.js';
-import { addParameter, alignComponents, arrangeComponents, groupComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
+import { addParameter, alignComponents, arrangeComponents, groupComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, setChartStyle, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
 import { renamePage, reportSettings } from './ops3.js';
 import { addFilter, addPage, addSourceField, detachFilter, updateFilter, applyTheme, listFilters, listPages, readTheme, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
 
@@ -52,7 +52,7 @@ const WRITE_TOOLS = new Set([
   'set_component_box_model', 'bind_fields_to_component', 'create_component', 'apply_report_spec', 'patch_component',
   'apply_theme', 'use_theme', 'add_page', 'rename_page', 'synthesize_templates', 'seed_templates_from_menu', 'add_filter',
   'detach_filter', 'update_filter', 'create_blend', 'update_blend', 'add_parameter', 'update_parameter', 'move_page', 'set_page_visibility', 'duplicate_page',
-  'arrange_components', 'set_conditional_format', 'align_components', 'group_components',
+  'arrange_components', 'set_conditional_format', 'align_components', 'group_components', 'set_chart_style',
 ]);
 const DESTRUCTIVE_TOOLS = new Set(['delete_component', 'delete_pages', 'delete_blend', 'delete_parameter']);
 {
@@ -788,6 +788,48 @@ server.registerTool(
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
   },
   async (args) => run(() => groupComponents(args)),
+);
+
+const COLOR = z.string().regex(/^#[0-9a-fA-F]{6}$/, '#rrggbb');
+server.registerTool(
+  'set_chart_style',
+  {
+    title: 'Estilo de un grafico',
+    description:
+      'Estilo fino de un grafico de barras, lineas, combinado o de areas por nombre, sin conocer las claves internas. series: por ' +
+      'posicion (1..) o nombre de la metrica: color, type (bars, line; solo combinados y series temporales), lineWeight, showPoints, dataLabels, axis (left/right), ' +
+      'trendline, cumulative, compact, decimals. legend: top, bottom, right, left o none. dataLabels, compactNumbers, stacked, axes ' +
+      '(show, xTitle, yTitle, rightTitle, yMin, yMax, logScale) y gridColor. Recarga al final para que se vea (reload=false lo evita). ' +
+      'Buenas practicas: un solo eje (evita axis right), leyenda solo con 2 series o mas, etiquetas de datos solo con pocas barras.',
+    inputSchema: {
+      componentId: z.string().min(1),
+      series: z.array(z.object({
+        series: z.union([z.number().int().min(1).max(20), z.string().min(1)]),
+        color: COLOR.optional(),
+        type: z.enum(['bars', 'line']).optional().describe('Solo en graficos combinados y de serie temporal'),
+        lineWeight: z.number().int().min(0).max(12).optional(),
+        showPoints: z.boolean().optional(),
+        dataLabels: z.boolean().optional(),
+        axis: z.enum(['left', 'right']).optional(),
+        trendline: z.enum(['none', 'linear', 'exponential', 'polynomial']).optional(),
+        cumulative: z.boolean().optional(),
+        compact: z.boolean().optional(),
+        decimals: z.number().int().min(0).max(10).optional(),
+      }).strict()).optional(),
+      legend: z.enum(['top', 'bottom', 'right', 'left', 'none']).optional(),
+      dataLabels: z.boolean().optional(),
+      compactNumbers: z.boolean().optional(),
+      stacked: z.boolean().optional(),
+      axes: z.object({
+        show: z.boolean().optional(), xTitle: z.boolean().optional(), yTitle: z.boolean().optional(), rightTitle: z.boolean().optional(),
+        yMin: z.number().nullable().optional(), yMax: z.number().nullable().optional(), logScale: z.boolean().optional(),
+      }).strict().optional(),
+      gridColor: COLOR.optional(),
+      reload: z.boolean().optional(),
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  },
+  async (args) => run(() => setChartStyle(args as never)),
 );
 
 const CfRuleSchema = z.object({

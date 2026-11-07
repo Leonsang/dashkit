@@ -17,7 +17,7 @@
  * dataset: a data source id, or "@<field>" = the data source that has that field.
  * Lint rules come from the skills (diseno-layout.md, kpi-scorecards.md, rendimiento.md).
  */
-import type { CfRule } from './looker/scripts4.js';
+import type { CfRule, ChartStyle } from './looker/scripts4.js';
 import { readFileSync } from 'node:fs';
 
 export interface SpecComponent {
@@ -51,6 +51,8 @@ export interface SpecComponent {
   style?: Record<string, unknown>;
   /** Conditional formatting rules (they replace the component's rules). See set_conditional_format. */
   conditional?: CfRule[];
+  /** Chart style by name (series, legend, axes). See set_chart_style. */
+  chartStyle?: Omit<ChartStyle, 'componentId'>;
 }
 
 export interface SpecRow {
@@ -96,6 +98,8 @@ export interface ResolvedComponent extends Required<Pick<SpecComponent, 'key' | 
   parameter?: string;
   style?: Record<string, unknown>;
   conditional?: CfRule[];
+  /** Chart style by name (series, legend, axes). See set_chart_style. */
+  chartStyle?: Omit<ChartStyle, 'componentId'>;
 }
 
 export interface LintIssue {
@@ -153,6 +157,7 @@ export function resolveSpec(spec: ReportSpec): ResolvedComponent[] {
             ...(it.parameter ? { parameter: it.parameter } : {}),
             ...(it.style ? { style: it.style } : {}),
             ...(it.conditional ? { conditional: it.conditional } : {}),
+            ...(it.chartStyle ? { chartStyle: it.chartStyle } : {}),
           });
         });
       } else {
@@ -169,6 +174,7 @@ export function resolveSpec(spec: ReportSpec): ResolvedComponent[] {
           ...(c.parameter ? { parameter: c.parameter } : {}),
           ...(c.style ? { style: c.style } : {}),
           ...(c.conditional ? { conditional: c.conditional } : {}),
+          ...(c.chartStyle ? { chartStyle: c.chartStyle } : {}),
         });
       }
     }
