@@ -188,7 +188,8 @@ export function uxFactsScript(): {
         const ds = (c.config.config.datasource && c.config.config.datasource.keys) || {};
         const prim = (k: string) => ((ds[k] && ds[k].value && ds[k].value.primary) || []) as unknown[];
         const metrics = prim('metrics').length;
-        const breakdown = Object.keys(ds).some((k) => /breakdown/i.test(k) && prim(k).length > 0);
+        const dimVal = (ds.dimensions && ds.dimensions.value) || {};
+        const breakdown = (Array.isArray(dimVal.breakdown) && dimVal.breakdown.length > 0) || Object.keys(ds).some((k) => /breakdown/i.test(k) && prim(k).length > 0);
         // Effective values (override or the type's default). In a combo chart an unset axis puts every series
         // after the first on the right axis (observed 2026-11-07), so null there means right.
         const eff = (k: string) => { try { return c.getDisplayKeyValue(k); } catch { return dk[k] ? dk[k].value : undefined; } };

@@ -3019,7 +3019,8 @@ function uxFactsScript() {
         const ds = c.config.config.datasource && c.config.config.datasource.keys || {};
         const prim = (k) => ds[k] && ds[k].value && ds[k].value.primary || [];
         const metrics = prim("metrics").length;
-        const breakdown = Object.keys(ds).some((k) => /breakdown/i.test(k) && prim(k).length > 0);
+        const dimVal = ds.dimensions && ds.dimensions.value || {};
+        const breakdown = Array.isArray(dimVal.breakdown) && dimVal.breakdown.length > 0 || Object.keys(ds).some((k) => /breakdown/i.test(k) && prim(k).length > 0);
         const eff = (k) => {
           try {
             return c.getDisplayKeyValue(k);
@@ -3761,8 +3762,8 @@ async function deleteComponent(componentId) {
   const page = await editPage();
   const { componentLevelScript } = await import("./scripts4-DIKQS72K.js");
   if (await evaluateOn(page, T, componentLevelScript, componentId) === "report") {
-    const { arrangeComponents } = await import("./ops4-4TPLMQL7.js");
-    const { listPages: listPages2 } = await import("./ops3-CBTZWJVR.js");
+    const { arrangeComponents } = await import("./ops4-NOUTM3U6.js");
+    const { listPages: listPages2 } = await import("./ops3-CURUF6I4.js");
     await arrangeComponents([componentId], "page", (await listPages2())[0].id);
   }
   const t0 = Date.now();
@@ -3852,7 +3853,7 @@ async function applySpec(specOrFile, opts = {}) {
         const extra = await patchIfNeeded(page, existingId, c);
         result.actions.push({ key: c.key, action: "update", componentId: existingId, ...extra.length ? { patched: extra } : {} });
       } else if (c.type === "image-component" && c.image) {
-        const { addImage } = await import("./ops4-4TPLMQL7.js");
+        const { addImage } = await import("./ops4-NOUTM3U6.js");
         const { dirname: dirname5, resolve } = await import("node:path");
         const base = typeof specOrFile === "string" ? dirname5(specOrFile) : process.cwd();
         const r = await addImage({ path: resolve(base, c.image), box: { x: c.x, y: c.y, width: c.w, height: c.h }, ...pageId ? { pageId } : {} });
@@ -3907,7 +3908,7 @@ async function applySpec(specOrFile, opts = {}) {
     }
     if (filterLog.length) result.filters = filterLog;
     {
-      const { arrangeComponents } = await import("./ops4-4TPLMQL7.js");
+      const { arrangeComponents } = await import("./ops4-NOUTM3U6.js");
       const inside = (p, q) => p !== q && q.x >= p.x && q.y >= p.y && q.x + q.w <= p.x + p.w && q.y + q.h <= p.y + p.h;
       const level = (c) => c.reportLevel ? "report" : c.page;
       const live = components.filter((c) => state.keys[c.key]);
@@ -3945,50 +3946,50 @@ async function patchIfNeeded(page, id, c) {
   }
   if (c.text !== void 0) {
     const t = typeof c.text === "string" ? { text: c.text } : c.text;
-    const { setText } = await import("./ops4-4TPLMQL7.js");
+    const { setText } = await import("./ops4-NOUTM3U6.js");
     await setText(id, t.text, { ...t.size ? { size: t.size } : {}, ...t.bold ? { bold: true } : {}, ...t.color ? { color: t.color } : {}, ...t.align ? { align: t.align } : {} });
     changes.push("text");
   }
   if (c.style) {
-    const { setStyle } = await import("./ops4-4TPLMQL7.js");
+    const { setStyle } = await import("./ops4-NOUTM3U6.js");
     await setStyle(id, c.style);
     changes.push("style");
   }
   if (c.conditional) {
-    const { setConditionalFormat } = await import("./ops4-4TPLMQL7.js");
+    const { setConditionalFormat } = await import("./ops4-NOUTM3U6.js");
     await setConditionalFormat(id, c.conditional);
     changes.push(`conditional:${c.conditional.length}`);
   }
   if (c.chartStyle) {
-    const { setChartStyle } = await import("./ops4-4TPLMQL7.js");
+    const { setChartStyle } = await import("./ops4-NOUTM3U6.js");
     await setChartStyle({ ...c.chartStyle, componentId: id, reload: false });
     changes.push("chartStyle");
   }
   if (c.comparison) {
-    const { setComparison } = await import("./ops4-4TPLMQL7.js");
+    const { setComparison } = await import("./ops4-NOUTM3U6.js");
     await setComparison(id, c.comparison);
     changes.push(`comparison:${c.comparison}`);
   }
   if (c.linkPage) {
-    const { setPageLink } = await import("./ops4-4TPLMQL7.js");
+    const { setPageLink } = await import("./ops4-NOUTM3U6.js");
     await setPageLink(id, c.linkPage);
     changes.push("linkPage");
   }
   if (c.reportLevel) {
     const { componentLevelScript } = await import("./scripts4-DIKQS72K.js");
     if (await evaluateOn(page, T, componentLevelScript, id) === "page") {
-      const { arrangeComponents } = await import("./ops4-4TPLMQL7.js");
+      const { arrangeComponents } = await import("./ops4-NOUTM3U6.js");
       await arrangeComponents([id], "report", c.page && !c.page.startsWith("name:") && c.page !== "active" ? c.page : void 0);
       changes.push("reportLevel");
     }
   }
   if (c.interactions) {
-    const { setChartInteractions } = await import("./ops4-4TPLMQL7.js");
+    const { setChartInteractions } = await import("./ops4-NOUTM3U6.js");
     await setChartInteractions({ componentId: id, ...c.interactions, reload: false });
     changes.push("interactions");
   }
   if (c.parameter) {
-    const { setControlParameter } = await import("./ops4-4TPLMQL7.js");
+    const { setControlParameter } = await import("./ops4-NOUTM3U6.js");
     await setControlParameter(id, c.parameter);
     changes.push(`parameter:${c.parameter}`);
   }
@@ -4161,7 +4162,8 @@ function auditUx(f, layoutIssues = []) {
   for (const c of f.components) {
     if (/table/.test(c.type) && headerRatio !== null && headerRatio < 4.5 && !c.overrides.headerFontColor)
       issues.push({ severity: "error", area: "contraste", componentId: c.id, rule: "WCAG 1.4.3", message: `${c.type}: la cabecera usa el texto de acento (${t.accentText}) sobre un tinte del acento (~${headerBack}) = ${headerRatio}:1. patch_component style={"headerFontColor":{"color":"${t.text ?? "#202124"}","opacity":1,"themeRef":{"index":1}}} o stripThemeStyles=true.` });
-    const keys = Object.keys(c.overrides).filter((k) => !c.overrides[k]?.themeRef);
+    const clearValue = (v) => !!v && typeof v === "object" && (v.opacity === 0 || v.size === 0);
+    const keys = ["generic-shape", "image-component", "shape", "ellipse"].includes(c.type) ? [] : Object.keys(c.overrides).filter((k) => !c.overrides[k]?.themeRef && !clearValue(c.overrides[k]));
     if (keys.length) issues.push({ severity: "info", area: "tema", componentId: c.id, rule: "diseno-layout \xA76", message: `${c.type} sobrescribe el tema en ${keys.length} claves (${keys.slice(0, 5).join(", ")}${keys.length > 5 ? "\u2026" : ""}).` });
     for (const [k, v] of Object.entries(c.overrides)) {
       if (/fontfamily/i.test(k) && typeof v === "string") fonts.add(v);
@@ -4626,7 +4628,7 @@ async function addSourceField(opts) {
   });
   const open = async () => {
     if (!await clickText("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) {
-      const { selectSourceChart } = await import("./ops4-4TPLMQL7.js");
+      const { selectSourceChart } = await import("./ops4-NOUTM3U6.js");
       await selectSourceChart(page, opts.source && opts.source.startsWith("@") ? opts.source : void 0);
       if (!await clickText("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) throw new Error('No se encontro "Anadir un campo" en el panel Datos.');
     }
@@ -4643,7 +4645,7 @@ async function addSourceField(opts) {
     let src = await editorSource();
     const byField = !!opts.source && opts.source.startsWith("@");
     if (byField) {
-      const { selectSourceChart } = await import("./ops4-4TPLMQL7.js");
+      const { selectSourceChart } = await import("./ops4-NOUTM3U6.js");
       await clickText("button", /^(Cancelar|Cancel)$/);
       await close();
       await selectSourceChart(page, opts.source);

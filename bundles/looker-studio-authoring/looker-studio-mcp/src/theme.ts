@@ -182,7 +182,10 @@ export function auditUx(f: UxFacts, layoutIssues: Array<{ code: string; componen
     if (/table/.test(c.type) && headerRatio !== null && headerRatio < 4.5 && !c.overrides.headerFontColor)
       issues.push({ severity: 'error', area: 'contraste', componentId: c.id, rule: 'WCAG 1.4.3', message: `${c.type}: la cabecera usa el texto de acento (${t!.accentText}) sobre un tinte del acento (~${headerBack}) = ${headerRatio}:1. patch_component style={"headerFontColor":{"color":"${t!.text ?? '#202124'}","opacity":1,"themeRef":{"index":1}}} o stripThemeStyles=true.` });
     // A value tied to a theme colour (themeRef) follows the theme: not an override.
-    const keys = Object.keys(c.overrides).filter((k) => !((c.overrides[k] as { themeRef?: unknown } | null)?.themeRef));
+    // Decorations (shapes, images) have no theme look to depart from, and a transparent background or a
+    // zero border is a component inset in a card, letting the card show: neither is a theme override.
+    const clearValue = (v: unknown) => !!v && typeof v === 'object' && ((v as { opacity?: number }).opacity === 0 || (v as { size?: number }).size === 0);
+    const keys = ['generic-shape', 'image-component', 'shape', 'ellipse'].includes(c.type) ? [] : Object.keys(c.overrides).filter((k) => !((c.overrides[k] as { themeRef?: unknown } | null)?.themeRef) && !clearValue(c.overrides[k]));
     if (keys.length) issues.push({ severity: 'info', area: 'tema', componentId: c.id, rule: 'diseno-layout §6', message: `${c.type} sobrescribe el tema en ${keys.length} claves (${keys.slice(0, 5).join(', ')}${keys.length > 5 ? '…' : ''}).` });
     for (const [k, v] of Object.entries(c.overrides)) {
       if (/fontfamily/i.test(k) && typeof v === 'string') fonts.add(v);
