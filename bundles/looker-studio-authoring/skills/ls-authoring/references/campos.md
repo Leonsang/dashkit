@@ -15,6 +15,9 @@ nombres.
 informe con el conector «Subida de archivos CSV» de Looker Studio: nuevo informe, «Crear conjunto de datos»,
 subida y «Añadir al informe». Devuelve `reportId`, `url`, `dataSourceId` y los campos con nombre y tipo.
 
+- **Tarda de 2 a 4 minutos.** Desde la CLI, dale margen al comando (`timeout 600 node dist/cli.js new-from-csv ...`
+  y un tiempo de espera de la herramienta de 10 minutos); si tu shell corta a los 2, el informe se crea igual
+  pero no ves la respuesta: búscalo con `attach`.
 - **Autorización:** la primera vez en una cuenta, el conector pide autorizar Google Cloud Storage. Es del
   usuario: la herramienta para y lo dice.
 - **Tipos:** el CSV llega como texto en las columnas de fecha y en las numéricas con celdas vacías. Crea campos

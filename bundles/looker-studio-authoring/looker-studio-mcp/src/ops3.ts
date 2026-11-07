@@ -518,10 +518,29 @@ export async function addSourceField(opts: { name: string; formula: string; sour
     const name = rowLeaves.length ? (rowLeaves[0]!.innerText || '').trim() : '';
     // The scope chip carries an icon whose ligature text sticks to the word ("linkInsertada"): no word boundary before it.
     const word = /(Insertada|Embedded|Reutilizable|Reusable)\b/;
-    const hit = (row ? [row] : []).concat(Array.from(document.querySelectorAll('*')) as HTMLElement[])
-      .map((e) => ((e as HTMLElement).offsetParent ? (e as HTMLElement).innerText || '' : ''))
-      .find((t) => t.length < 40 && word.test(t)) || '';
-    return { name: name.split('\n')[0]!, scope: hit ? hit.match(word)![1]! : '' };
+    // The editor's own element (seen 2026-11-07): <datasource-scope> with a chip span classed "embedded"
+    // for an embedded source. Text search over the page stays as the fallback.
+    const sc = document.querySelector('datasource-scope') as HTMLElement | null;
+    let scope = '';
+    if (sc) {
+      if (sc.querySelector('.embedded')) scope = 'Insertada';
+      else scope = ((sc.innerText || sc.textContent || '').match(word) || [])[1] || (sc.querySelector('[class*=reusab], [class*=shared]') ? 'Reutilizable' : '');
+    }
+    if (!scope) {
+      const hit = (Array.from(document.querySelectorAll('*')) as HTMLElement[])
+        .map((e) => (e.offsetParent ? e.innerText || '' : ''))
+        .find((t) => t.length < 40 && word.test(t)) || '';
+      scope = hit ? hit.match(word)![1]! : '';
+    }
+    // The source's name opens the same header bar, before the scope.
+    let srcName = name;
+    if (sc) {
+      let el: HTMLElement = sc;
+      while (el.parentElement && /^\s*(Ámbito|Ambito|Scope)/.test(el.parentElement.innerText || '')) el = el.parentElement;
+      const first = ((el.parentElement && el.parentElement.innerText) || '').split('\n').map((t) => t.trim()).find(Boolean) || '';
+      if (first && !/^(Ámbito|Ambito|Scope)/.test(first)) srcName = first;
+    }
+    return { name: srcName.split('\n')[0]!, scope };
   });
   const open = async () => {
     if (!(await clickText('button', /^(add_circle\s*)?(Añadir un campo|Add a field)$/))) {

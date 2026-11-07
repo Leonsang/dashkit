@@ -2,7 +2,8 @@
 // Puntuador automático del benchmark (rúbrica en rubrica.md). Mide el informe que dejó un agente con las
 // propias herramientas de dashkit; el mock se revisa a mano (aquí solo se comprueba que exista y qué nombra).
 //
-// Uso: node bench/puntuar.mjs <url-del-informe> <carpeta-de-la-ejecución>
+// Uso: node bench/puntuar.mjs <url-del-informe> <carpeta-de-la-ejecución> [--diseno]
+//   --diseno añade la fidelidad al diseño de referencia del escenario 2 (100 puntos aparte).
 //   La carpeta puede tener mock.md, *.spec.json y metricas.json ({tokens, tool_uses, duration_ms, ...}).
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
@@ -31,7 +32,7 @@ const hit = (src.dataSources || []).find((d) => csvFields.every((f) => d.fields.
 add('origen_csv', hit ? 10 : 0, 10, hit ? hit.dataSourceId : 'ningún origen con los campos del CSV');
 
 // 2. mock
-const mockPath = join(runDir, 'mock.md');
+const mockPath = join(runDir, process.argv.includes('--diseno') ? 'mapeo.md' : 'mock.md');
 const mock = existsSync(mockPath) ? readFileSync(mockPath, 'utf8') : '';
 const mockAuto = {
   existe: !!mock,
@@ -88,6 +89,37 @@ for (const p of Array.isArray(pages) ? pages : []) {
 }
 out.datos.cobertura = { kpisConComparacion: kpisCmp, temporal, porLocalTurno, esperaYValoracionJuntas: esperaVal };
 add('cobertura', (kpisCmp >= 4 ? 5 : 0) + (temporal ? 5 : 0) + (porLocalTurno ? 5 : 0) + (esperaVal ? 5 : out.datos.tocaEsperaOValoracion ? 2 : 0), 20);
+
+// 9. fidelidad al diseño de referencia (escenario 2, con --diseno): 100 puntos aparte
+if (process.argv.includes('--diseno')) {
+  const near = (a, b, tol = 40) => {
+    const rgb = (h) => (/^#?[0-9a-f]{6}$/i.test(h || '') ? [0, 2, 4].map((i) => parseInt(h.replace('#', '').slice(i, i + 2), 16)) : null);
+    const x = rgb(a), y = rgb(b);
+    return !!x && !!y && Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]) <= tol;
+  };
+  const f = { puntos: {}, total: 0 };
+  const fadd = (k, p, max, nota) => { f.puntos[k] = { p, max, ...(nota ? { nota } : {}) }; f.total += p; };
+  const prof = (Array.isArray(pages) ? pages : []).map((p) => ({ id: p.id, d: ls('design', '--page', p.id), lay: ls('layout', '--page', p.id) }));
+  const d0 = prof[0] ? prof[0].d : {};
+  const th = d0.theme || {};
+  fadd('tema_fondo', near(th.fill, '#F5EFE6') ? 10 : 0, 10, th.fill);
+  fadd('tema_acento', near(th.accent, '#A8541F') ? 10 : 0, 10, th.accent);
+  fadd('tipografia', /playfair|inter/i.test(th.font || '') ? 5 : 0, 5, th.font);
+  const sh = d0.shell || {};
+  fadd('barra_lateral', sh.sideBar ? (near(sh.sideBar.color, '#2A1B14', 60) ? 15 : 8) : 0, 15, sh.sideBar ? sh.sideBar.color : 'sin barra');
+  const nav = (sh.navItems || []).filter((n) => n.toPage).length;
+  fadd('navegacion', nav >= 2 ? 10 : nav === 1 ? 5 : 0, 10, `${nav} enlaces a paginas`);
+  const imgs = prof.reduce((n, p) => n + ((p.lay.components || []).filter((c) => /image/.test(c.type)).length), 0);
+  fadd('imagenes', imgs >= 10 ? 10 : imgs >= 3 ? 6 : imgs >= 1 ? 3 : 0, 10, `${imgs} imagenes (logo, banner, iconos)`);
+  const kpis = prof.flatMap((p) => (p.d.page && p.d.page.kpis) || []);
+  fadd('kpi_comparacion', kpis.filter((k) => k.comparison).length >= 8 ? 10 : kpis.filter((k) => k.comparison).length >= 4 ? 5 : 0, 10, `${kpis.filter((k) => k.comparison).length} de ${kpis.length}`);
+  fadd('kpi_icono', kpis.filter((k) => k.iconTile).length >= 6 ? 10 : kpis.filter((k) => k.iconTile).length >= 2 ? 5 : 0, 10, `${kpis.filter((k) => k.iconTile).length} con icono`);
+  const opt = prof.some((p) => ((p.d.page && p.d.page.interactions) || []).some((i) => (i.optionalMetrics || []).length));
+  fadd('metricas_intercambiables', opt ? 10 : 0, 10);
+  const cards = prof.reduce((n, p) => n + (((p.d.page && p.d.page.cards) || []).length), 0);
+  fadd('tarjetas', cards >= 8 ? 10 : cards >= 4 ? 5 : 0, 10, `${cards} tarjetas`);
+  out.fidelidad = f;
+}
 
 // 8. verificación como el lector: la declara el propio agente en metricas.json (verifico: true) o el log
 const met = existsSync(join(runDir, 'metricas.json')) ? JSON.parse(readFileSync(join(runDir, 'metricas.json'), 'utf8')) : {};

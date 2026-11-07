@@ -3961,8 +3961,8 @@ async function deleteComponent(componentId) {
   const page = await editPage();
   const { componentLevelScript } = await import("./scripts4-ADA4C2PA.js");
   if (await evaluateOn(page, T, componentLevelScript, componentId) === "report") {
-    const { arrangeComponents } = await import("./ops4-RJH3DGDS.js");
-    const { listPages: listPages2 } = await import("./ops3-LOGZY6GX.js");
+    const { arrangeComponents } = await import("./ops4-5ZDR5WYP.js");
+    const { listPages: listPages2 } = await import("./ops3-2TFZGTNO.js");
     await arrangeComponents([componentId], "page", (await listPages2())[0].id);
   }
   const t0 = Date.now();
@@ -3999,7 +3999,7 @@ async function applySpec(specOrFile, opts = {}) {
   }
   const state = statePath && existsSync4(statePath) ? JSON.parse(readFileSync4(statePath, "utf8")) : { reportId: null, keys: {} };
   const page = opts.dryRun ? await getReportPage() : await editPage();
-  const { ensureVisible } = await import("./ops4-RJH3DGDS.js");
+  const { ensureVisible } = await import("./ops4-5ZDR5WYP.js");
   if (!opts.dryRun) await ensureVisible(page);
   const info = await evaluateOn(page, T, pageInfoScript);
   if (state.reportId && state.reportId !== info.internalReportId) {
@@ -4028,7 +4028,7 @@ async function applySpec(specOrFile, opts = {}) {
       let created = false;
       const blank = !hit && !opts.dryRun ? pages.find((p) => p.components === 0 && /^((p[aá]gina|page|untitled page|p[aá]gina sin t[ií]tulo)(\s*\d+)?)?$/i.test(String(p.name).trim()) && !wanted.includes(p.name) && !Object.values(pageIds).includes(p.id)) : void 0;
       if (blank) {
-        const { renamePage: renamePage2 } = await import("./ops3-LOGZY6GX.js");
+        const { renamePage: renamePage2 } = await import("./ops3-2TFZGTNO.js");
         await renamePage2(blank.id, name);
         pages = await listPages();
         hit = pages.find((p) => p.id === blank.id);
@@ -4064,7 +4064,7 @@ async function applySpec(specOrFile, opts = {}) {
         const extra = await patchIfNeeded(page, existingId, c);
         result.actions.push({ key: c.key, action: "update", componentId: existingId, ...extra.length ? { patched: extra } : {} });
       } else if (c.type === "image-component" && c.image) {
-        const { addImage } = await import("./ops4-RJH3DGDS.js");
+        const { addImage } = await import("./ops4-5ZDR5WYP.js");
         const { dirname: dirname5, resolve } = await import("node:path");
         const base = typeof specOrFile === "string" ? dirname5(specOrFile) : process.cwd();
         const r = await addImage({ path: resolve(base, c.image), box: { x: c.x, y: c.y, width: c.w, height: c.h }, ...pageId ? { pageId } : {} });
@@ -4130,7 +4130,7 @@ async function applySpec(specOrFile, opts = {}) {
     }
     if (filterLog.length) result.filters = filterLog;
     {
-      const { arrangeComponents } = await import("./ops4-RJH3DGDS.js");
+      const { arrangeComponents } = await import("./ops4-5ZDR5WYP.js");
       const inside = (p, q) => p !== q && q.x >= p.x && q.y >= p.y && q.x + q.w <= p.x + p.w && q.y + q.h <= p.y + p.h;
       const level = (c) => c.reportLevel ? "report" : c.page;
       const live = components.filter((c) => state.keys[c.key]);
@@ -4168,50 +4168,50 @@ async function patchIfNeeded(page, id, c) {
   }
   if (c.text !== void 0) {
     const t = typeof c.text === "string" ? { text: c.text } : c.text;
-    const { setText } = await import("./ops4-RJH3DGDS.js");
+    const { setText } = await import("./ops4-5ZDR5WYP.js");
     await setText(id, t.text, { ...t.size ? { size: t.size } : {}, ...t.bold ? { bold: true } : {}, ...t.color ? { color: t.color } : {}, ...t.align ? { align: t.align } : {} });
     changes.push("text");
   }
   if (c.style) {
-    const { setStyle } = await import("./ops4-RJH3DGDS.js");
+    const { setStyle } = await import("./ops4-5ZDR5WYP.js");
     await setStyle(id, c.style);
     changes.push("style");
   }
   if (c.conditional) {
-    const { setConditionalFormat } = await import("./ops4-RJH3DGDS.js");
+    const { setConditionalFormat } = await import("./ops4-5ZDR5WYP.js");
     await setConditionalFormat(id, c.conditional);
     changes.push(`conditional:${c.conditional.length}`);
   }
   if (c.chartStyle) {
-    const { setChartStyle } = await import("./ops4-RJH3DGDS.js");
+    const { setChartStyle } = await import("./ops4-5ZDR5WYP.js");
     await setChartStyle({ ...c.chartStyle, componentId: id, reload: false });
     changes.push("chartStyle");
   }
   if (c.comparison) {
-    const { setComparison } = await import("./ops4-RJH3DGDS.js");
+    const { setComparison } = await import("./ops4-5ZDR5WYP.js");
     await setComparison(id, c.comparison, c.dateField);
     changes.push(`comparison:${c.comparison}`);
   }
   if (c.linkPage) {
-    const { setPageLink } = await import("./ops4-RJH3DGDS.js");
+    const { setPageLink } = await import("./ops4-5ZDR5WYP.js");
     await setPageLink(id, c.linkPage);
     changes.push("linkPage");
   }
   if (c.reportLevel) {
     const { componentLevelScript } = await import("./scripts4-ADA4C2PA.js");
     if (await evaluateOn(page, T, componentLevelScript, id) === "page") {
-      const { arrangeComponents } = await import("./ops4-RJH3DGDS.js");
+      const { arrangeComponents } = await import("./ops4-5ZDR5WYP.js");
       await arrangeComponents([id], "report", c.page && !c.page.startsWith("name:") && c.page !== "active" ? c.page : void 0);
       changes.push("reportLevel");
     }
   }
   if (c.interactions) {
-    const { setChartInteractions } = await import("./ops4-RJH3DGDS.js");
+    const { setChartInteractions } = await import("./ops4-5ZDR5WYP.js");
     await setChartInteractions({ componentId: id, ...c.interactions, reload: false });
     changes.push("interactions");
   }
   if (c.parameter) {
-    const { setControlParameter } = await import("./ops4-RJH3DGDS.js");
+    const { setControlParameter } = await import("./ops4-5ZDR5WYP.js");
     await setControlParameter(id, c.parameter);
     changes.push(`parameter:${c.parameter}`);
   }
@@ -4851,12 +4851,28 @@ async function addSourceField(opts) {
     const rowLeaves = row ? leaves.filter((e) => row.contains(e)) : [];
     const name = rowLeaves.length ? (rowLeaves[0].innerText || "").trim() : "";
     const word = /(Insertada|Embedded|Reutilizable|Reusable)\b/;
-    const hit = (row ? [row] : []).concat(Array.from(document.querySelectorAll("*"))).map((e) => e.offsetParent ? e.innerText || "" : "").find((t) => t.length < 40 && word.test(t)) || "";
-    return { name: name.split("\n")[0], scope: hit ? hit.match(word)[1] : "" };
+    const sc = document.querySelector("datasource-scope");
+    let scope = "";
+    if (sc) {
+      if (sc.querySelector(".embedded")) scope = "Insertada";
+      else scope = ((sc.innerText || sc.textContent || "").match(word) || [])[1] || (sc.querySelector("[class*=reusab], [class*=shared]") ? "Reutilizable" : "");
+    }
+    if (!scope) {
+      const hit = Array.from(document.querySelectorAll("*")).map((e) => e.offsetParent ? e.innerText || "" : "").find((t) => t.length < 40 && word.test(t)) || "";
+      scope = hit ? hit.match(word)[1] : "";
+    }
+    let srcName = name;
+    if (sc) {
+      let el = sc;
+      while (el.parentElement && /^\s*(Ámbito|Ambito|Scope)/.test(el.parentElement.innerText || "")) el = el.parentElement;
+      const first = (el.parentElement && el.parentElement.innerText || "").split("\n").map((t) => t.trim()).find(Boolean) || "";
+      if (first && !/^(Ámbito|Ambito|Scope)/.test(first)) srcName = first;
+    }
+    return { name: srcName.split("\n")[0], scope };
   });
   const open = async () => {
     if (!await clickText("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) {
-      const { selectSourceChart } = await import("./ops4-RJH3DGDS.js");
+      const { selectSourceChart } = await import("./ops4-5ZDR5WYP.js");
       await selectSourceChart(page, opts.source && opts.source.startsWith("@") ? opts.source : void 0);
       if (!await clickText("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) throw new Error('No se encontro "Anadir un campo" en el panel Datos.');
     }
@@ -4883,7 +4899,7 @@ async function addSourceField(opts) {
     if (opts.source && !opts.source.startsWith("@") && dsList.length === 1) opts = { ...opts, source: void 0 };
     const byField = !!opts.source && opts.source.startsWith("@");
     if (byField) {
-      const { selectSourceChart } = await import("./ops4-RJH3DGDS.js");
+      const { selectSourceChart } = await import("./ops4-5ZDR5WYP.js");
       await clickText("button", /^(Cancelar|Cancel)$/);
       await close();
       await selectSourceChart(page, opts.source);
