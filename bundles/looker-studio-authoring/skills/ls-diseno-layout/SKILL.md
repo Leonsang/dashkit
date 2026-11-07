@@ -70,10 +70,12 @@ Checklist: todas las páginas con el mismo ancho; si una página es "larga", hac
 - Si la métrica "baja es buena" (coste, tasa de rebote), invertir los colores de cambio en el scorecard.
 
 ### Gráficos (guía dataviz)
-- **Un solo eje Y.** Dos métricas de escala distinta van en dos gráficos o indexadas a una base común: el doble eje inventa correlaciones. `audit_ux` lo marca como error. [CONVENCIÓN, guía dataviz]
+- **Un solo eje Y.** El doble eje inventa correlaciones. `audit_ux` lo marca como error, también en un gráfico combinado que lo tiene por defecto (la serie 2 va a la derecha si no se fija). [CONVENCIÓN, guía dataviz]
+  - Misma unidad y escala parecida (Ingresos y Objetivo): un eje para las dos (`set_chart_style` con `axis=left` en todas).
+  - Escalas que no caben juntas (Sesiones en miles, Conversiones en decenas; más de ~10×): **dos gráficos** lado a lado, cada uno con su eje. Poner las dos en un eje aplasta la pequeña. Verificado en la página 4 del showcase. [CONVENCIÓN, guía dataviz]
 - **Leyenda con 2 series o más**; etiquetas directas solo en lo que importa (la última barra, el extremo), nunca un número en cada punto de una línea. [CONVENCIÓN, guía dataviz]
 - **El color sigue a la entidad, no a su posición:** un filtro que quita series no repinta las que quedan; más de 8 categorías se agrupan en "Otros" o en gráficos pequeños. [CONVENCIÓN, guía dataviz]
-- Una serie, un color (el 1.º de la paleta) en todas sus barras; una escala de color solo para categorías con orden. [CONVENCIÓN, guía dataviz]
+- Una serie, un color en todas sus barras (no un degradado según el valor); una escala de color solo para categorías con orden. Gráficos distintos de una sola serie pueden usar todos el 1.º de la paleta: la regla "un color = un significado" pide que **la misma métrica** no cambie de color entre gráficos, no que métricas distintas tengan colores distintos. [CONVENCIÓN, guía dataviz]
 - Se aplica con `set_chart_style` (skill `ls-authoring`, `componentes.md`).
 
 ## 8. Tipografía

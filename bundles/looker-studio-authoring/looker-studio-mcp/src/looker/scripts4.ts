@@ -817,3 +817,57 @@ export function chartStyleScript(args: ChartStyle): { ok: boolean; error?: strin
     return { ok: false, error: String(e && e.message) };
   }
 }
+
+/** Effective chart style (overrides merged with the type's defaults), in set_chart_style's terms. */
+export function readChartStyleScript(componentId: string): { ok: boolean; error?: string; style?: Record<string, unknown> } {
+  const w = window as any;
+  try {
+    const report = w.angular.element(document.body).injector().get('legoUndoRedoService').report;
+    const all = [...report.pages.flatMap((p: any) => p.components.map((c: any) => [p, c])), ...report.components.map((c: any) => [null, c])];
+    const hit = all.find(([, c]: any) => c.getId() === componentId);
+    if (!hit) return { ok: false, error: `Componente ${componentId} no encontrado.` };
+    const [pg, comp] = hit;
+    const type = String(comp.getDisplayType());
+    const eff = (k: string) => { try { return comp.getDisplayKeyValue(k); } catch { return undefined; } };
+    const metrics: string[] = (comp.config.config.datasource.keys.metrics && comp.config.config.datasource.keys.metrics.value && comp.config.config.datasource.keys.metrics.value.primary) || [];
+    let schema: any = {};
+    try { schema = comp.getSchema().qe.concepts || {}; } catch { /* not loaded */ }
+    const label = (n: string) => {
+      const q = comp.config.conceptDefs[n] && comp.config.conceptDefs[n].queryTimeTransformation;
+      const dn = q && q.displayTransformation && q.displayTransformation.displayName;
+      const sf = q && q.dataTransformation && q.dataTransformation.sourceFieldName;
+      return String(dn || (sf && schema[sf] && schema[sf].displayName) || sf || n);
+    };
+    const at = (k: string, i: number) => { const v = eff(k); return Array.isArray(v) ? v[i] : undefined; };
+    const set = (v: unknown) => v !== undefined && v !== null;
+    const combo = /combochart/.test(type);
+    const series = metrics.map((n, i) => {
+      const ax = at('seriesAxisIndex', i);
+      const col = at('seriesColor', i);
+      return {
+        series: i + 1,
+        name: label(n),
+        color: col && col.color ? col.color : '(tema)',
+        ...(set(at('seriesType', i)) ? { type: at('seriesType', i) } : {}),
+        axis: (set(ax) ? ax : combo && i > 0 ? 1 : 0) === 1 ? 'right' : 'left',
+        dataLabels: at('seriesShowDataLabel', i) ?? null,
+        ...(set(at('seriesLineWeight', i)) ? { lineWeight: at('seriesLineWeight', i) } : {}),
+        ...(set(at('seriesShowPoints', i)) ? { showPoints: at('seriesShowPoints', i) } : {}),
+        ...(at('seriesTrendlineType', i) && at('seriesTrendlineType', i) !== 'none' ? { trendline: at('seriesTrendlineType', i) } : {}),
+      };
+    });
+    const showLegend = eff('showLegend');
+    return {
+      ok: true,
+      style: {
+        componentId, type, pageId: pg ? String(pg.getId()) : null, series,
+        legend: showLegend === false ? 'none' : eff('legend') ?? null,
+        dataLabels: eff('showDataLabel') ?? null,
+        stacked: eff('showStack') ?? null,
+        axes: { show: eff('showAxis') ?? null, xTitle: eff('showHAxisTitle') ?? null, yTitle: eff('showLeftYAxisTitle') ?? null, rightTitle: eff('showRightYAxisTitle') ?? null, yMin: eff('leftYAxisViewWindowMin') ?? null, yMax: eff('leftYAxisViewWindowMax') ?? null },
+      },
+    };
+  } catch (e: any) {
+    return { ok: false, error: String(e && e.message) };
+  }
+}

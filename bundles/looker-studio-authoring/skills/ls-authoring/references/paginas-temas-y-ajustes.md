@@ -17,6 +17,9 @@
   `rename_page` cambia ambos.
 - **El orden que cuenta es el de la navegación.** Reordenar el modelo del informe y guardarlo no persiste;
   `move_page` usa la acción de navegación del editor, que sí.
+- **Dos ids en páginas antiguas.** Una página heredada puede tener un id en la URL (`TlJ0C`, el que da
+  `attach_to_report`) y otro en el modelo (`41982637`, el de `list_pages` y `get_report_layout`). Las
+  herramientas usan el del modelo; abrir la URL con cualquiera de los dos lleva a la misma página.
 - `add_page` inserta la página **detrás de la actual**: identifícala por el id que devuelve, o muévela.
 - En un spec, `pages[].name` busca la página por nombre y la crea si no existe.
 - Borrar páginas no se deshace: confírmalo con el usuario. No se pueden borrar todas.

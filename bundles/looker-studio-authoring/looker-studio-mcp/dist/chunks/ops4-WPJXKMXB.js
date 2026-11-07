@@ -10,6 +10,7 @@ import {
   deleteParameter,
   duplicatePage,
   ensureVisible,
+  getChartStyle,
   groupComponents,
   listBlends,
   movePage,
@@ -23,10 +24,10 @@ import {
   setText,
   updateBlend,
   updateParameter
-} from "./chunk-44P2Z5CU.js";
+} from "./chunk-W3B6K7RD.js";
 import "./chunk-5J4RMU5E.js";
 import "./chunk-Y34SSGZY.js";
-import "./chunk-MUP4XVBL.js";
+import "./chunk-NSSSGO5H.js";
 import "./chunk-FAVAKK4W.js";
 import "./chunk-GIAQTVDD.js";
 import "./chunk-BGDW2RS3.js";
@@ -44,6 +45,7 @@ export {
   deleteParameter,
   duplicatePage,
   ensureVisible,
+  getChartStyle,
   groupComponents,
   listBlends,
   movePage,

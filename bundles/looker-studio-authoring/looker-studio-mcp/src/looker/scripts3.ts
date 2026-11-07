@@ -189,13 +189,18 @@ export function uxFactsScript(): {
         const prim = (k: string) => ((ds[k] && ds[k].value && ds[k].value.primary) || []) as unknown[];
         const metrics = prim('metrics').length;
         const breakdown = Object.keys(ds).some((k) => /breakdown/i.test(k) && prim(k).length > 0);
-        const arr = (k: string) => ((dk[k] && Array.isArray(dk[k].value) ? dk[k].value : []) as unknown[]).slice(0, metrics);
-        const sl = dk.showLegend ? dk.showLegend.value : null;
+        // Effective values (override or the type's default). In a combo chart an unset axis puts every series
+        // after the first on the right axis (observed 2026-11-07), so null there means right.
+        const eff = (k: string) => { try { return c.getDisplayKeyValue(k); } catch { return dk[k] ? dk[k].value : undefined; } };
+        const arr = (k: string) => { const v = eff(k); return (Array.isArray(v) ? v : []).slice(0, metrics) as unknown[]; };
+        const combo = /combochart/.test(type);
+        const axes = Array.from({ length: metrics }, (_, i) => { const v = arr('seriesAxisIndex')[i]; return v === null || v === undefined ? (combo && i > 0 ? 1 : 0) : v; });
+        const sl = eff('showLegend');
         chart = {
           metrics, breakdown,
-          rightAxis: metrics > 1 && arr('seriesAxisIndex').some((x) => x === 1),
+          rightAxis: metrics > 1 && axes.some((x) => x === 1) && axes.some((x) => x === 0),
           showLegend: typeof sl === 'boolean' ? sl : null,
-          lineLabels: /linechart/.test(type) && (arr('seriesShowDataLabel').some((x) => x === true) || !!(dk.showDataLabel && dk.showDataLabel.value === true)),
+          lineLabels: /linechart/.test(type) && (arr('seriesShowDataLabel').some((x) => x === true) || eff('showDataLabel') === true),
         };
       }
       return { id: String(c.getId()), type, page: String(p.getId()), overrides, ...(chart ? { chart } : {}) };

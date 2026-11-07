@@ -71,6 +71,7 @@ const GUIDE = {
   arrange_components: [R + 'componentes.md'],
   set_conditional_format: [R + 'componentes.md'],
   set_chart_style: [R + 'componentes.md'],
+  get_chart_style: [R + 'componentes.md'],
   align_components: [R + 'componentes.md'],
   group_components: [R + 'componentes.md'],
 };
@@ -101,6 +102,7 @@ const CLI = [
   ['pages hide <id> [--nav on|off] [--viewer on|off]', 'set_page_visibility', 'MCP: `hiddenFromNav`, `hiddenFromViewer`'],
   ['arrange <id...> --to front|back|forward|backward|report|page', 'arrange_components', 'MCP: `op`, `pageId`'],
   ['format <id> <reglas.json|json> [--append]', 'set_conditional_format', ''],
+  ['chart-style <id>', 'get_chart_style', ''],
   ['chart-style <id> <json|archivo> [--no-reload]', 'set_chart_style', 'MCP: `reload=false`'],
   ['align <id...> [--align] [--distribute] [--gap] [--match]', 'align_components', 'MCP: `matchSize`'],
   ['group <id...>', 'group_components', 'MCP: `op=group`'],

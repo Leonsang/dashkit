@@ -29,7 +29,7 @@ import {
 import { reportSettings } from './ops3.js';
 import { addFilter, addPage, addSourceField, applyTheme, detachFilter, updateFilter, exportTheme, importTheme, listFilters, listPages, readTheme, renamePage, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
 import { readFileSync, existsSync } from 'node:fs';
-import { addParameter, alignComponents, arrangeComponents, groupComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, setChartStyle, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
+import { addParameter, alignComponents, arrangeComponents, groupComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, getChartStyle, setChartStyle, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
 
 const HELP = `ls-studio <comando> [opciones]
 
@@ -66,6 +66,7 @@ Paginas y tema
   align <id...> [--align left|center|right|top|middle|bottom] [--distribute horizontal|vertical] [--gap N]
         [--match width|height|both]       Alinear, distribuir, igualar tamano
   group <id...> | ungroup <id|g-...> | groups [--page <id>]   Grupos de componentes
+  chart-style <id>                     Estilo efectivo de un grafico (series, ejes, leyenda)
   chart-style <id> <json|archivo> [--no-reload]   Estilo de grafico: series (color, type, dataLabels, axis...), legend, axes
   format <id> <reglas.json|json> [--append]   Formato condicional: [{field, op, value, background, color, target}] o {field, scale:[...]}
 
@@ -241,7 +242,8 @@ async function main(): Promise<unknown> {
       return groupComponents({ op: 'list', ...(typeof flags.page === 'string' ? { pageId: flags.page } : {}) });
     case 'chart-style': {
       // chart-style <id> <json|archivo>  e.g. '{"series":[{"series":1,"color":"#1F6FEB"}],"legend":"none"}'
-      const arg = need(pos[1], 'el estilo (JSON o archivo)');
+      if (!pos[1]) return getChartStyle(need(pos[0], 'componentId'));
+      const arg = pos[1];
       const st = JSON.parse(existsSync(arg) ? readFileSync(arg, 'utf8') : arg);
       return setChartStyle({ ...st, componentId: need(pos[0], 'componentId'), ...(flags['no-reload'] ? { reload: false } : {}) });
     }

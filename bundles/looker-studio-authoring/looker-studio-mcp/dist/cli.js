@@ -5,7 +5,7 @@ import {
   getComponentConfig,
   getReportLayout,
   sanitizeLearning
-} from "./chunks/chunk-2TFBG7B3.js";
+} from "./chunks/chunk-4I4EYYEA.js";
 import {
   addFilter,
   addPage,
@@ -32,6 +32,7 @@ import {
   exportReport,
   exportTheme,
   findOrphans,
+  getChartStyle,
   groupComponents,
   importTheme,
   inspectDataSources,
@@ -66,10 +67,10 @@ import {
   updateParameter,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-44P2Z5CU.js";
+} from "./chunks/chunk-W3B6K7RD.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
-import "./chunks/chunk-MUP4XVBL.js";
+import "./chunks/chunk-NSSSGO5H.js";
 import "./chunks/chunk-FAVAKK4W.js";
 import "./chunks/chunk-GIAQTVDD.js";
 import "./chunks/chunk-BGDW2RS3.js";
@@ -114,6 +115,7 @@ Paginas y tema
   align <id...> [--align left|center|right|top|middle|bottom] [--distribute horizontal|vertical] [--gap N]
         [--match width|height|both]       Alinear, distribuir, igualar tamano
   group <id...> | ungroup <id|g-...> | groups [--page <id>]   Grupos de componentes
+  chart-style <id>                     Estilo efectivo de un grafico (series, ejes, leyenda)
   chart-style <id> <json|archivo> [--no-reload]   Estilo de grafico: series (color, type, dataLabels, axis...), legend, axes
   format <id> <reglas.json|json> [--append]   Formato condicional: [{field, op, value, background, color, target}] o {field, scale:[...]}
 
@@ -284,7 +286,8 @@ async function main() {
     case "groups":
       return groupComponents({ op: "list", ...typeof flags.page === "string" ? { pageId: flags.page } : {} });
     case "chart-style": {
-      const arg = need(pos[1], "el estilo (JSON o archivo)");
+      if (!pos[1]) return getChartStyle(need(pos[0], "componentId"));
+      const arg = pos[1];
       const st = JSON.parse(existsSync(arg) ? readFileSync(arg, "utf8") : arg);
       return setChartStyle({ ...st, componentId: need(pos[0], "componentId"), ...flags["no-reload"] ? { reload: false } : {} });
     }

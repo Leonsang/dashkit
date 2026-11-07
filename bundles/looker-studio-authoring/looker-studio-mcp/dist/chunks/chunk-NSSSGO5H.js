@@ -683,6 +683,73 @@ function chartStyleScript(args) {
     return { ok: false, error: String(e && e.message) };
   }
 }
+function readChartStyleScript(componentId) {
+  const w = window;
+  try {
+    const report = w.angular.element(document.body).injector().get("legoUndoRedoService").report;
+    const all = [...report.pages.flatMap((p) => p.components.map((c) => [p, c])), ...report.components.map((c) => [null, c])];
+    const hit = all.find(([, c]) => c.getId() === componentId);
+    if (!hit) return { ok: false, error: `Componente ${componentId} no encontrado.` };
+    const [pg, comp] = hit;
+    const type = String(comp.getDisplayType());
+    const eff = (k) => {
+      try {
+        return comp.getDisplayKeyValue(k);
+      } catch {
+        return void 0;
+      }
+    };
+    const metrics = comp.config.config.datasource.keys.metrics && comp.config.config.datasource.keys.metrics.value && comp.config.config.datasource.keys.metrics.value.primary || [];
+    let schema = {};
+    try {
+      schema = comp.getSchema().qe.concepts || {};
+    } catch {
+    }
+    const label = (n) => {
+      const q = comp.config.conceptDefs[n] && comp.config.conceptDefs[n].queryTimeTransformation;
+      const dn = q && q.displayTransformation && q.displayTransformation.displayName;
+      const sf = q && q.dataTransformation && q.dataTransformation.sourceFieldName;
+      return String(dn || sf && schema[sf] && schema[sf].displayName || sf || n);
+    };
+    const at = (k, i) => {
+      const v = eff(k);
+      return Array.isArray(v) ? v[i] : void 0;
+    };
+    const set = (v) => v !== void 0 && v !== null;
+    const combo = /combochart/.test(type);
+    const series = metrics.map((n, i) => {
+      const ax = at("seriesAxisIndex", i);
+      const col = at("seriesColor", i);
+      return {
+        series: i + 1,
+        name: label(n),
+        color: col && col.color ? col.color : "(tema)",
+        ...set(at("seriesType", i)) ? { type: at("seriesType", i) } : {},
+        axis: (set(ax) ? ax : combo && i > 0 ? 1 : 0) === 1 ? "right" : "left",
+        dataLabels: at("seriesShowDataLabel", i) ?? null,
+        ...set(at("seriesLineWeight", i)) ? { lineWeight: at("seriesLineWeight", i) } : {},
+        ...set(at("seriesShowPoints", i)) ? { showPoints: at("seriesShowPoints", i) } : {},
+        ...at("seriesTrendlineType", i) && at("seriesTrendlineType", i) !== "none" ? { trendline: at("seriesTrendlineType", i) } : {}
+      };
+    });
+    const showLegend = eff("showLegend");
+    return {
+      ok: true,
+      style: {
+        componentId,
+        type,
+        pageId: pg ? String(pg.getId()) : null,
+        series,
+        legend: showLegend === false ? "none" : eff("legend") ?? null,
+        dataLabels: eff("showDataLabel") ?? null,
+        stacked: eff("showStack") ?? null,
+        axes: { show: eff("showAxis") ?? null, xTitle: eff("showHAxisTitle") ?? null, yTitle: eff("showLeftYAxisTitle") ?? null, rightTitle: eff("showRightYAxisTitle") ?? null, yMin: eff("leftYAxisViewWindowMin") ?? null, yMax: eff("leftYAxisViewWindowMax") ?? null }
+      }
+    };
+  } catch (e) {
+    return { ok: false, error: String(e && e.message) };
+  }
+}
 
 export {
   navPagesScript,
@@ -703,5 +770,6 @@ export {
   setConditionalFormatScript,
   componentBoxesScript,
   groupScript,
-  chartStyleScript
+  chartStyleScript,
+  readChartStyleScript
 };

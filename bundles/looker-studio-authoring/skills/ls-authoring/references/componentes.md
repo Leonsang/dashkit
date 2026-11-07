@@ -159,16 +159,23 @@ Series, leyenda, etiquetas y ejes de un gráfico de barras, líneas, serie tempo
 
 CLI: `chart-style <id> estilo.json` (o el JSON en línea), `--no-reload`. En el spec, `chartStyle`.
 
+**Leer antes de cambiar:** `get_chart_style componentId` (CLI `chart-style <id>`) da el estilo **efectivo**:
+lo sobrescrito más lo que pone el tipo por defecto, con el nombre de cada serie, su eje y su página
+(`pageId`). `get_component_config` solo enseña lo sobrescrito; por ejemplo, un combinado sin eje fijado no
+tiene la clave y aun así pinta la serie 2 a la derecha.
+
 - **`series`:** por posición (1, 2...) o por el nombre visible de la métrica. `color` (`#rrggbb`), `type`
   (`bars` o `line`, solo en gráficos combinados y de serie temporal: en uno de barras el editor lo ignora y la
   herramienta lo rechaza), `lineWeight`, `showPoints`, `dataLabels`, `axis` (`left`/`right`), `trendline`,
   `cumulative`, `compact`, `decimals`.
 - **Del gráfico:** `legend` (`top`, `bottom`, `right`, `left`, `none`), `dataLabels`, `compactNumbers`,
   `stacked`, `axes` (`show`, `xTitle`, `yTitle`, `rightTitle`, `yMin`, `yMax`, `logScale`) y `gridColor`.
-- **Recarga al final:** el editor guarda las claves pero no repinta el gráfico hasta recargar.
+- **Recarga al final:** el editor guarda las claves pero no repinta el gráfico hasta recargar. Recarga la
+  página abierta: si el gráfico está en otra, ábrela (`open_report` con su `pageId`) para verlo.
   `reload=false` (o `--no-reload`) lo evita si vas a encadenar varios cambios; recarga tú al acabar.
 - Una propiedad que el tipo de gráfico no tiene da error con su nombre, en vez de guardarse sin efecto.
-- **Buenas prácticas (guía dataviz, [CONVENCIÓN]):** un solo eje Y (`audit_ux` da error con `axis=right`);
+- **Buenas prácticas (guía dataviz, [CONVENCIÓN]; detalle en `ls-diseno-layout` §7):** un solo eje Y
+  (`audit_ux` da error con una serie a la derecha, también la del combinado por defecto);
   leyenda siempre que haya 2 series o más; etiquetas de datos solo en pocas barras, nunca en cada punto de una
   línea; el color sigue a la entidad (una métrica, el mismo color en todo el informe). Los gráficos de esta
   versión no tienen título propio: con una sola serie, la leyenda es lo que la nombra, así que se queda.

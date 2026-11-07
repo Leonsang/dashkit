@@ -8,7 +8,7 @@ import {
   getReportLayout,
   sanitizeLearning,
   writesAllowed
-} from "./chunks/chunk-2TFBG7B3.js";
+} from "./chunks/chunk-4I4EYYEA.js";
 import {
   addFilter,
   addPage,
@@ -33,6 +33,7 @@ import {
   duplicatePage,
   exportReport,
   findOrphans,
+  getChartStyle,
   groupComponents,
   inspectDataSources,
   learn,
@@ -68,10 +69,10 @@ import {
   updateParameter,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-44P2Z5CU.js";
+} from "./chunks/chunk-W3B6K7RD.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
-import "./chunks/chunk-MUP4XVBL.js";
+import "./chunks/chunk-NSSSGO5H.js";
 import "./chunks/chunk-FAVAKK4W.js";
 import "./chunks/chunk-GIAQTVDD.js";
 import "./chunks/chunk-BGDW2RS3.js";
@@ -37502,6 +37503,16 @@ server.registerTool(
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true }
   },
   async (args) => run(() => groupComponents(args))
+);
+server.registerTool(
+  "get_chart_style",
+  {
+    title: "Leer el estilo de un grafico",
+    description: "Estilo efectivo de un grafico (lo sobrescrito y lo que pone el tipo por defecto) en los terminos de set_chart_style: cada serie con nombre, color, tipo, eje (left/right) y etiquetas; leyenda, etiquetas de datos, apilado, ejes y su pagina (pageId). Un combinado sin eje fijado pinta la serie 2 y siguientes a la derecha: aqui sale axis=right.",
+    inputSchema: { componentId: external_exports.string().min(1) },
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true }
+  },
+  async ({ componentId }) => run(() => getChartStyle(componentId))
 );
 var COLOR = external_exports.string().regex(/^#[0-9a-fA-F]{6}$/, "#rrggbb");
 server.registerTool(

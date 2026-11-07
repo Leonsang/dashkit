@@ -65,7 +65,8 @@ guías está marcada como [OFICIAL] o [CONVENCIÓN]; respeta la diferencia.
   - `arrange_components`: orden de capas y nivel de informe (un control de periodo para todas las
     páginas). `align_components` alinea, distribuye e iguala tamaños; `group_components` agrupa.
   - `set_conditional_format`: formato condicional de tablas y scorecards.
-  - `set_chart_style`: series (color, tipo, etiquetas, eje), leyenda y ejes de un gráfico, por nombre.
+  - `get_chart_style` lee el estilo efectivo de un gráfico; `set_chart_style` cambia series (color, tipo,
+    etiquetas, eje), leyenda y ejes por nombre.
     Un solo eje Y y leyenda con 2 series o más (`audit_ux` lo comprueba).
 - **Combinaciones y parámetros:**
   - `create_blend` combina de 2 a 5 orígenes por las dimensiones que comparten

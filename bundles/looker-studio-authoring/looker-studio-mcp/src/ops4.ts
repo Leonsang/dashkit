@@ -33,6 +33,7 @@ import {
   setControlParameterScript,
   setConditionalFormatScript,
   chartStyleScript,
+  readChartStyleScript,
   type ChartStyle,
   setDisplayKeysScript,
   type CfRule,
@@ -908,6 +909,12 @@ export async function setConditionalFormat(componentId: string, rules: CfRule[],
  * Chart style by name: series colour/type/labels/axis, legend, data labels, axes. The editor saves the keys
  * but repaints the chart only after a reload, so this reloads unless reload=false.
  */
+export async function getChartStyle(componentId: string) {
+  const r = await evaluateOn(await getReportPage(), T, readChartStyleScript, componentId);
+  if (!r.ok) throw new Error(r.error);
+  return r.style;
+}
+
 export async function setChartStyle(args: ChartStyle & { reload?: boolean }) {
   const { reload, ...style } = args;
   const { page } = await requireEditMode();
@@ -915,7 +922,7 @@ export async function setChartStyle(args: ChartStyle & { reload?: boolean }) {
   if (!r.ok) throw new Error(r.error);
   if (reload !== false) await reloadReport();
   else await sleep(1500);
-  return { ok: true, componentId: args.componentId, set: r.set, series: r.series, reloaded: reload !== false };
+  return { ok: true, componentId: args.componentId, set: r.set, series: r.series, reloaded: reload !== false, note: 'Se recarga la pagina abierta; si el grafico esta en otra, abrela para verlo (pageId en get_chart_style).' };
 }
 
 export async function setStyle(componentId: string, keys: Record<string, unknown>) {

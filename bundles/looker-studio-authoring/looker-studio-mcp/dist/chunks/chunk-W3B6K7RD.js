@@ -29,13 +29,14 @@ import {
   menuItemPointScript,
   navDispatchScript,
   navPagesScript,
+  readChartStyleScript,
   selectedIdsScript,
   setConditionalFormatScript,
   setControlParameterScript,
   setDisplayKeysScript,
   setTextScript,
   updateBlendScript
-} from "./chunk-MUP4XVBL.js";
+} from "./chunk-NSSSGO5H.js";
 import {
   CDPSessionEvent,
   CdpBrowser,
@@ -3250,14 +3251,29 @@ function uxFactsScript() {
         const prim = (k) => ds[k] && ds[k].value && ds[k].value.primary || [];
         const metrics = prim("metrics").length;
         const breakdown = Object.keys(ds).some((k) => /breakdown/i.test(k) && prim(k).length > 0);
-        const arr = (k) => (dk[k] && Array.isArray(dk[k].value) ? dk[k].value : []).slice(0, metrics);
-        const sl = dk.showLegend ? dk.showLegend.value : null;
+        const eff = (k) => {
+          try {
+            return c.getDisplayKeyValue(k);
+          } catch {
+            return dk[k] ? dk[k].value : void 0;
+          }
+        };
+        const arr = (k) => {
+          const v = eff(k);
+          return (Array.isArray(v) ? v : []).slice(0, metrics);
+        };
+        const combo = /combochart/.test(type);
+        const axes = Array.from({ length: metrics }, (_, i) => {
+          const v = arr("seriesAxisIndex")[i];
+          return v === null || v === void 0 ? combo && i > 0 ? 1 : 0 : v;
+        });
+        const sl = eff("showLegend");
         chart = {
           metrics,
           breakdown,
-          rightAxis: metrics > 1 && arr("seriesAxisIndex").some((x) => x === 1),
+          rightAxis: metrics > 1 && axes.some((x) => x === 1) && axes.some((x) => x === 0),
           showLegend: typeof sl === "boolean" ? sl : null,
-          lineLabels: /linechart/.test(type) && (arr("seriesShowDataLabel").some((x) => x === true) || !!(dk.showDataLabel && dk.showDataLabel.value === true))
+          lineLabels: /linechart/.test(type) && (arr("seriesShowDataLabel").some((x) => x === true) || eff("showDataLabel") === true)
         };
       }
       return { id: String(c.getId()), type, page: String(p.getId()), overrides, ...chart ? { chart } : {} };
@@ -4078,7 +4094,7 @@ async function addSourceField(opts) {
   });
   const open = async () => {
     if (!await clickText2("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) {
-      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-J6ZGE3MX.js");
+      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-WPJXKMXB.js");
       await selectSourceChart2(page, opts.source && opts.source.startsWith("@") ? opts.source : void 0);
       if (!await clickText2("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) throw new Error('No se encontro "Anadir un campo" en el panel Datos.');
     }
@@ -4095,7 +4111,7 @@ async function addSourceField(opts) {
     let src = await editorSource();
     const byField = !!opts.source && opts.source.startsWith("@");
     if (byField) {
-      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-J6ZGE3MX.js");
+      const { selectSourceChart: selectSourceChart2 } = await import("./ops4-WPJXKMXB.js");
       await clickText2("button", /^(Cancelar|Cancel)$/);
       await close();
       await selectSourceChart2(page, opts.source);
@@ -4346,7 +4362,7 @@ async function createComponent(o) {
   const hasFields = !!(o.dimensions?.length || o.metrics?.length || o.slots && Object.keys(o.slots).length);
   const NO_DIMS = ["gauge-viz", "bulletchart", "kpi-metric"];
   const t0 = Date.now();
-  const { ensureSeedScript } = await import("./scripts4-NFOQQV7Q.js");
+  const { ensureSeedScript } = await import("./scripts4-KRVXZWI4.js");
   const seed = await evaluateOn(page, T2, ensureSeedScript, o.pageId);
   if (seed.seedId) await sleep2(1500);
   const res = await evaluateOn(page, T2, createComponentScript, {
@@ -4473,7 +4489,7 @@ async function applySpec(specOrFile, opts = {}) {
         await updateExisting(page, existingId, c);
         state.keys[c.key] = existingId;
         const extra = await patchIfNeeded(page, existingId, c);
-        result.actions.push({ key: c.key, action: "update", componentId: existingId, ...extra.length ? { warnings: extra } : {} });
+        result.actions.push({ key: c.key, action: "update", componentId: existingId, ...extra.length ? { patched: extra } : {} });
       } else {
         const r = await createComponent({
           ...c.variant ? { variant: c.variant } : {},
@@ -4488,7 +4504,7 @@ async function applySpec(specOrFile, opts = {}) {
         });
         state.keys[c.key] = r.componentId;
         const extra = await patchIfNeeded(page, r.componentId, c);
-        result.actions.push({ key: c.key, action: "create", componentId: r.componentId, warnings: [...r.warnings, ...extra] });
+        result.actions.push({ key: c.key, action: "create", componentId: r.componentId, ...r.warnings.length ? { warnings: r.warnings } : {}, ...extra.length ? { patched: extra } : {} });
       }
     } catch (e) {
       result.actions.push({ key: c.key, action: exists ? "update" : "create", error: e.message });
@@ -4539,27 +4555,27 @@ async function patchIfNeeded(page, id, c) {
   }
   if (c.text !== void 0) {
     const t = typeof c.text === "string" ? { text: c.text } : c.text;
-    const { setText: setText2 } = await import("./ops4-J6ZGE3MX.js");
+    const { setText: setText2 } = await import("./ops4-WPJXKMXB.js");
     await setText2(id, t.text, { ...t.size ? { size: t.size } : {}, ...t.bold ? { bold: true } : {}, ...t.color ? { color: t.color } : {} });
     changes.push("text");
   }
   if (c.style) {
-    const { setStyle: setStyle2 } = await import("./ops4-J6ZGE3MX.js");
+    const { setStyle: setStyle2 } = await import("./ops4-WPJXKMXB.js");
     await setStyle2(id, c.style);
     changes.push("style");
   }
   if (c.conditional) {
-    const { setConditionalFormat: setConditionalFormat2 } = await import("./ops4-J6ZGE3MX.js");
+    const { setConditionalFormat: setConditionalFormat2 } = await import("./ops4-WPJXKMXB.js");
     await setConditionalFormat2(id, c.conditional);
     changes.push(`conditional:${c.conditional.length}`);
   }
   if (c.chartStyle) {
-    const { setChartStyle: setChartStyle2 } = await import("./ops4-J6ZGE3MX.js");
+    const { setChartStyle: setChartStyle2 } = await import("./ops4-WPJXKMXB.js");
     await setChartStyle2({ ...c.chartStyle, componentId: id, reload: false });
     changes.push("chartStyle");
   }
   if (c.parameter) {
-    const { setControlParameter: setControlParameter2 } = await import("./ops4-J6ZGE3MX.js");
+    const { setControlParameter: setControlParameter2 } = await import("./ops4-WPJXKMXB.js");
     await setControlParameter2(id, c.parameter);
     changes.push(`parameter:${c.parameter}`);
   }
@@ -5314,6 +5330,11 @@ async function setConditionalFormat(componentId, rules, append = false) {
   await sleep3(1500);
   return { ok: true, componentId, rules: r.rules };
 }
+async function getChartStyle(componentId) {
+  const r = await evaluateOn(await getReportPage(), T3, readChartStyleScript, componentId);
+  if (!r.ok) throw new Error(r.error);
+  return r.style;
+}
 async function setChartStyle(args) {
   const { reload, ...style } = args;
   const { page } = await requireEditMode();
@@ -5321,7 +5342,7 @@ async function setChartStyle(args) {
   if (!r.ok) throw new Error(r.error);
   if (reload !== false) await reloadReport();
   else await sleep3(1500);
-  return { ok: true, componentId: args.componentId, set: r.set, series: r.series, reloaded: reload !== false };
+  return { ok: true, componentId: args.componentId, set: r.set, series: r.series, reloaded: reload !== false, note: "Se recarga la pagina abierta; si el grafico esta en otra, abrela para verlo (pageId en get_chart_style)." };
 }
 async function setStyle(componentId, keys) {
   const { page } = await requireEditMode();
@@ -5372,6 +5393,7 @@ export {
   groupComponents,
   alignComponents,
   setConditionalFormat,
+  getChartStyle,
   setChartStyle,
   setStyle,
   readTheme,

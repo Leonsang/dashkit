@@ -373,7 +373,7 @@ interface SpecState {
 export interface ApplyResult {
   dryRun: boolean;
   lint: ReturnType<typeof lintSpec>['issues'];
-  actions: Array<{ key: string; action: 'create' | 'update' | 'skip'; componentId?: string; error?: string; warnings?: string[] }>;
+  actions: Array<{ key: string; action: 'create' | 'update' | 'skip'; componentId?: string; error?: string; warnings?: string[]; patched?: string[] }>;
   pages?: Array<{ name: string; pageId: string; created: boolean }>;
   theme?: unknown;
   diagnose?: unknown;
@@ -448,7 +448,7 @@ export async function applySpec(specOrFile: string | ReportSpec, opts: { dryRun?
         await updateExisting(page, existingId!, c);
         state.keys[c.key] = existingId!;
         const extra = await patchIfNeeded(page, existingId!, c);
-        result.actions.push({ key: c.key, action: 'update', componentId: existingId!, ...(extra.length ? { warnings: extra } : {}) });
+        result.actions.push({ key: c.key, action: 'update', componentId: existingId!, ...(extra.length ? { patched: extra } : {}) });
       } else {
         const r = await createComponent({
           ...(c.variant ? { variant: c.variant } : {}),
@@ -459,7 +459,7 @@ export async function applySpec(specOrFile: string | ReportSpec, opts: { dryRun?
         });
         state.keys[c.key] = r.componentId!;
         const extra = await patchIfNeeded(page, r.componentId!, c);
-        result.actions.push({ key: c.key, action: 'create', componentId: r.componentId!, warnings: [...r.warnings, ...extra] });
+        result.actions.push({ key: c.key, action: 'create', componentId: r.componentId!, ...(r.warnings.length ? { warnings: r.warnings } : {}), ...(extra.length ? { patched: extra } : {}) });
       }
     } catch (e) {
       result.actions.push({ key: c.key, action: exists ? 'update' : 'create', error: (e as Error).message });

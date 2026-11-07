@@ -27,7 +27,7 @@ import {
   reloadReport,
 } from './ops.js';
 import { loadSpec, type ReportSpec } from './spec.js';
-import { addParameter, alignComponents, arrangeComponents, groupComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, setChartStyle, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
+import { addParameter, alignComponents, arrangeComponents, groupComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, getChartStyle, setChartStyle, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
 import { renamePage, reportSettings } from './ops3.js';
 import { addFilter, addPage, addSourceField, detachFilter, updateFilter, applyTheme, listFilters, listPages, readTheme, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
 
@@ -788,6 +788,20 @@ server.registerTool(
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
   },
   async (args) => run(() => groupComponents(args)),
+);
+
+server.registerTool(
+  'get_chart_style',
+  {
+    title: 'Leer el estilo de un grafico',
+    description:
+      'Estilo efectivo de un grafico (lo sobrescrito y lo que pone el tipo por defecto) en los terminos de set_chart_style: cada serie ' +
+      'con nombre, color, tipo, eje (left/right) y etiquetas; leyenda, etiquetas de datos, apilado, ejes y su pagina (pageId). Un ' +
+      'combinado sin eje fijado pinta la serie 2 y siguientes a la derecha: aqui sale axis=right.',
+    inputSchema: { componentId: z.string().min(1) },
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  },
+  async ({ componentId }) => run(() => getChartStyle(componentId)),
 );
 
 const COLOR = z.string().regex(/^#[0-9a-fA-F]{6}$/, '#rrggbb');
