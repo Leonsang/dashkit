@@ -67,16 +67,19 @@ const ux = ls('ux');
 out.datos.ux = ux.score ?? null;
 add('ux', ux.score >= 90 ? 15 : ux.score >= 75 ? 10 : ux.score >= 50 ? 5 : 0, 15);
 
-// 7. cobertura (sobre todas las páginas)
+// 7. cobertura (sobre todas las páginas). layout da ids internos (_103145323_, calc_...): se traducen a nombres.
+const idName = {};
+for (const d of src.dataSources || []) for (const f of d.fields || []) idName[f.id] = f.name;
+const nm = (x) => (idName[x] ?? idName[String(x).replace(/^t\d+\./, '')] ?? String(x)).toLowerCase();
 let kpisCmp = 0, temporal = false, porLocalTurno = false, esperaVal = false;
 for (const p of Array.isArray(pages) ? pages : []) {
   const d = ls('design', '--page', p.id);
   kpisCmp += ((d.page && d.page.kpis) || []).filter((k) => k.comparison).length;
   const lay = ls('layout', '--page', p.id);
   for (const c of lay.components || []) {
-    const dims = (c.data && c.data.dimensions) || [], mets = (c.data && c.data.metrics) || [];
+    const dims = ((c.data && c.data.dimensions) || []).map(nm), mets = ((c.data && c.data.metrics) || []).map(nm);
     const all = [...dims, ...mets].join(' ').toLowerCase();
-    if (/linechart|timeseries|areachart|combochart/.test(c.type) && /fecha|mes|semana/.test(dims.join(' ').toLowerCase())) temporal = true;
+    if (/linechart|timeseries|areachart|combochart/.test(c.type) && /fecha|mes|semana|dia/.test(dims.join(' '))) temporal = true;
     if (/local|turno/.test(dims.join(' ').toLowerCase())) porLocalTurno = true;
     if (/espera/.test(all) && /valoracion/.test(all)) esperaVal = true;
     if (/espera/.test(all) || /valoracion/.test(all)) out.datos.tocaEsperaOValoracion = true;

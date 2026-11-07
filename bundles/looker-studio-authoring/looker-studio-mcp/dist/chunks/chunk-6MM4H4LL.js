@@ -17,7 +17,7 @@ import {
   requireEditMode,
   resolveDataset,
   setActiveReport
-} from "./chunk-TBJANFP6.js";
+} from "./chunk-OIMY3WSN.js";
 import {
   arrangeScript,
   blendSnapshotScript,
@@ -831,7 +831,7 @@ async function setPageLink(componentId, pageRef) {
   const { page } = await requireEditMode();
   let pageId = pageRef;
   if (pageRef.startsWith("name:")) {
-    const { listPages } = await import("./ops3-MYKDF62B.js");
+    const { listPages } = await import("./ops3-C2K3XG7C.js");
     const hit = (await listPages()).find((p) => p.name === pageRef.slice(5));
     if (!hit) throw new Error(`No hay ninguna pagina llamada "${pageRef.slice(5)}".`);
     pageId = hit.id;
@@ -1076,6 +1076,20 @@ async function addUploadedToReport(page, stems) {
   }
 }
 async function createReportFromCsv(o) {
+  const before = new Set((await getBrowser()).targets().map((t) => t));
+  try {
+    return await createReportFromCsvInner(o);
+  } catch (e) {
+    for (const t of (await getBrowser()).targets()) {
+      if (!before.has(t) && t.type() === "page" && /\/reporting\/create/.test(t.url())) {
+        const pg = await t.page();
+        await pg?.close({ runBeforeUnload: false }).catch(() => void 0);
+      }
+    }
+    throw e;
+  }
+}
+async function createReportFromCsvInner(o) {
   const { resolve, basename, extname } = await import("node:path");
   const { existsSync } = await import("node:fs");
   const files = o.files.map((f) => resolve(f));
@@ -1098,24 +1112,63 @@ async function createReportFromCsv(o) {
     }
     return null;
   };
-  const tile = await textEl(/^(Subida de archivos CSV|File Upload|CSV file upload)$/, 3e4);
-  if (!tile) throw new Error('No aparecio el conector "Subida de archivos CSV" en "Anadir datos al informe".');
-  await tile.click();
-  let state = "";
-  for (let i = 0; i < 60 && !state; i++) {
-    await sleep(500);
-    state = await page.evaluate(() => {
-      const bs = [...document.querySelectorAll("button")].filter((b) => b.offsetParent);
-      if (bs.some((b) => /^(AUTORIZAR|AUTHORIZE)$/i.test((b.innerText || "").trim()))) return "auth";
-      if (bs.some((b) => /Crear conjunto|Create dataset/i.test(b.innerText || ""))) return "ready";
-      return "";
-    });
+  const seen = async () => page.evaluate(() => [...document.querySelectorAll("button, h1, h2, [role=dialog]")].filter((e) => e.offsetParent).map((e) => (e.innerText || "").trim().split("\n")[0]).filter(Boolean).slice(0, 20).join(" | ")).catch(() => "");
+  const clickWhen = async (src, what, timeoutMs, leafText = false) => {
+    for (let t = 0; t < timeoutMs; t += 500) {
+      if (await page.evaluate(() => document.hidden).catch(() => false)) await ensureVisible(page);
+      const pt = await page.evaluate((src2, leaf) => {
+        const rx = new RegExp(src2, "i");
+        const els = leaf ? [...document.querySelectorAll("*")].filter((e2) => e2.children.length === 0) : [...document.querySelectorAll("button")];
+        const e = els.find((x) => x.offsetParent && rx.test((x.innerText || x.textContent || "").trim()));
+        if (!e) return null;
+        const r = e.getBoundingClientRect();
+        return r.width > 0 ? { x: r.x + r.width / 2, y: r.y + r.height / 2 } : null;
+      }, src, leafText);
+      if (pt) {
+        await page.mouse.click(pt.x, pt.y);
+        return true;
+      }
+      if (await page.evaluate(() => [...document.querySelectorAll("button")].some((b) => /^(AUTORIZAR|AUTHORIZE)$/i.test((b.innerText || "").trim()) && b.offsetParent)).catch(() => false))
+        throw new Error("Looker Studio pide autorizar una vez el conector de subida de CSV (guarda los archivos en Google Cloud Storage). Es una decision del usuario: que pulse AUTORIZAR en la pestana abierta y repite.");
+      await sleep(500);
+    }
+    const { tmpdir } = await import("node:os");
+    const shotPath = `${tmpdir()}/ls-studio-csv-${Date.now()}.png`;
+    await page.screenshot({ path: shotPath, captureBeyondViewport: false }).catch(() => void 0);
+    throw new Error(`No aparecio ${what}. En pantalla: ${await seen()}. Captura: ${shotPath}`);
+  };
+  const tilePos = () => page.evaluate(() => {
+    const e = [...document.querySelectorAll("*")].find((x) => x.children.length === 0 && x.offsetParent && /^(Subida de archivos CSV|File Upload|CSV file upload)$/i.test((x.textContent || "").trim()));
+    if (!e) return null;
+    const r = e.getBoundingClientRect();
+    return r.width > 0 ? { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) } : null;
+  });
+  const opened = () => page.evaluate(() => [...document.querySelectorAll("button")].some((b) => b.offsetParent && /Crear conjunto|Create dataset|^(AUTORIZAR|AUTHORIZE)$/i.test((b.innerText || "").trim())));
+  for (let attempt = 0; attempt < 4 && !await opened(); attempt++) {
+    const search = await page.evaluateHandle(() => [...document.querySelectorAll("input")].find((i) => i.offsetParent && /^(Buscar|Search)$/i.test(i.placeholder || "")) || null);
+    if (await search.evaluate((e) => !!e)) {
+      await search.asElement().click({ clickCount: 3 });
+      await page.keyboard.type("CSV");
+    }
+    let last = null, stable = 0;
+    for (let t = 0; t < 4e4 && stable < 3; t += 500) {
+      if (await page.evaluate(() => document.hidden).catch(() => false)) await ensureVisible(page);
+      await sleep(500);
+      const pos = await tilePos();
+      stable = pos && last && pos.x === last.x && pos.y === last.y ? stable + 1 : 0;
+      last = pos;
+    }
+    if (!last) break;
+    await page.mouse.click(last.x, last.y);
+    for (let t = 0; t < 1e4 && !await opened(); t += 500) await sleep(500);
   }
-  const needsAuth = state === "auth";
-  if (needsAuth) throw new Error("Looker Studio pide autorizar una vez el conector de subida de CSV (guarda los archivos en Google Cloud Storage). Es una decision del usuario: que pulse AUTORIZAR en la pestana abierta y repite.");
-  const create = await page.evaluateHandle(() => [...document.querySelectorAll("button")].find((b) => /Crear conjunto|Create dataset/i.test(b.innerText || "") && b.offsetParent) || null);
-  if (!await create.evaluate((e) => !!e)) throw new Error('No se encontro "Crear conjunto de datos".');
-  await create.asElement().click();
+  if (!await opened()) {
+    const { tmpdir } = await import("node:os");
+    const shotPath = `${tmpdir()}/ls-studio-csv-${Date.now()}.png`;
+    await page.screenshot({ path: shotPath, captureBeyondViewport: false }).catch(() => void 0);
+    throw new Error(`No se abrio el conector "Subida de archivos CSV" (paso 1 de 4). En pantalla: ${await seen()}. Captura: ${shotPath}`);
+  }
+  await clickWhen("Crear conjunto|Create dataset", '"Crear conjunto de datos" (paso 2 de 4)', 4e4);
   await sleep(1500);
   const input = await page.evaluateHandle(() => {
     const d = [...document.querySelectorAll("[role=dialog], .cdk-overlay-pane")].pop();
@@ -1124,13 +1177,28 @@ async function createReportFromCsv(o) {
   if (!await input.evaluate((e) => !!e)) throw new Error("No se abrio el dialogo para nombrar el conjunto de datos.");
   await input.asElement().click({ clickCount: 3 });
   await page.keyboard.type(dataset);
-  const pt = await page.evaluate(() => {
-    const d = [...document.querySelectorAll("[role=dialog], .cdk-overlay-pane")].pop();
-    const b = [...d.querySelectorAll("button")].find((x) => /Continue|Continuar/i.test(x.textContent || ""));
-    const r = b.getBoundingClientRect();
-    return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
-  });
-  const [chooser] = await Promise.all([page.waitForFileChooser({ timeout: 15e3 }), page.mouse.click(pt.x, pt.y)]);
+  let chooser = null;
+  for (let attempt = 0; attempt < 3 && !chooser; attempt++) {
+    let pt = null;
+    for (let t = 0; t < 1e4 && !pt; t += 500) {
+      pt = await page.evaluate(() => {
+        const d = [...document.querySelectorAll("[role=dialog], .cdk-overlay-pane")].pop();
+        const b = d && [...d.querySelectorAll("button")].find((x) => /Continue|Continuar/i.test(x.textContent || ""));
+        if (!b || b.disabled) return null;
+        const r = b.getBoundingClientRect();
+        return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+      });
+      if (!pt) await sleep(500);
+    }
+    if (!pt) throw new Error('El boton "Continue" del dialogo no se activo (paso 3 de 4).');
+    try {
+      [chooser] = await Promise.all([page.waitForFileChooser({ timeout: 8e3 }), page.mouse.click(pt.x, pt.y)]);
+    } catch {
+      chooser = null;
+      await sleep(1e3);
+    }
+  }
+  if (!chooser) throw new Error('"Continue" no abrio el selector de archivos tras 3 intentos (paso 3 de 4).');
   await chooser.accept(files);
   await addUploadedToReport(page, files.map((f) => basename(f).replace(/\.(csv|tsv)$/i, "")));
   let ds;
@@ -1149,6 +1217,20 @@ async function createReportFromCsv(o) {
   setActiveReport(reportId);
   await page.goto(`https://datastudio.google.com/reporting/${reportId}/edit`, { waitUntil: "domcontentloaded" });
   await waitRendered(page);
+  const schemaReady = async () => (await evaluateOn(page, T, schemaFieldsScript, ds.dataSourceId).catch(() => [])).length > 0;
+  let ready = false;
+  for (let i = 0; i < 20 && !ready; i++) {
+    ready = await schemaReady();
+    if (!ready) await sleep(500);
+  }
+  for (let r = 0; r < 2 && !ready; r++) {
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await waitRendered(page);
+    for (let i = 0; i < 30 && !ready; i++) {
+      ready = await schemaReady();
+      if (!ready) await sleep(500);
+    }
+  }
   const named = await inspectDataSourcesNamed().catch(() => null);
   const source = named ? named.dataSources.find((d) => d.dataSourceId === ds.dataSourceId) : null;
   return {
@@ -1158,6 +1240,7 @@ async function createReportFromCsv(o) {
     dataSourceId: ds.dataSourceId,
     dataset,
     fields: source ? source.fields : ds.fields,
+    ...ready ? {} : { warning: "El esquema del origen aun no llego al editor: haz reload_report y luego inspect_data_sources (CLI: reload, sources) para ver los campos." },
     note: 'El informe se llama "Informe sin titulo" (renombrarlo aun no tiene herramienta). Revisa los tipos: una fecha o un numero con celdas vacias pueden llegar como texto; corrigelo con add_source_field (p. ej. PARSE_DATE).'
   };
 }

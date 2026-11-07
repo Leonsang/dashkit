@@ -1222,6 +1222,19 @@ async function addUploadedToReport(page: Page, stems: string[]) {
 }
 
 export async function createReportFromCsv(o: { files: string[]; dataset?: string }) {
+  const before = new Set((await getBrowser()).targets().map((t) => t));
+  try {
+    return await createReportFromCsvInner(o);
+  } catch (e) {
+    // do not leave a half-made report tab behind (closing it does not delete anything)
+    for (const t of (await getBrowser()).targets()) {
+      if (!before.has(t) && t.type() === 'page' && /\/reporting\/create/.test(t.url())) { const pg = await t.page(); await pg?.close({ runBeforeUnload: false }).catch(() => undefined); }
+    }
+    throw e;
+  }
+}
+
+async function createReportFromCsvInner(o: { files: string[]; dataset?: string }) {
   const { resolve, basename, extname } = await import('node:path');
   const { existsSync } = await import('node:fs');
   const files = o.files.map((f) => resolve(f));
@@ -1245,38 +1258,87 @@ export async function createReportFromCsv(o: { files: string[]; dataset?: string
     }
     return null;
   };
-  const tile = await textEl(/^(Subida de archivos CSV|File Upload|CSV file upload)$/, 30000);
-  if (!tile) throw new Error('No aparecio el conector "Subida de archivos CSV" en "Anadir datos al informe".');
-  await tile.click();
-  // the connector panel loads: either the dataset list (with "Crear conjunto de datos") or the authorisation
-  let state = '';
-  for (let i = 0; i < 60 && !state; i++) {
-    await sleep(500);
-    state = await page.evaluate(() => {
-      const bs = [...document.querySelectorAll('button')].filter((b) => (b as HTMLElement).offsetParent);
-      if (bs.some((b) => /^(AUTORIZAR|AUTHORIZE)$/i.test((b.innerText || '').trim()))) return 'auth';
-      if (bs.some((b) => /Crear conjunto|Create dataset/i.test(b.innerText || ''))) return 'ready';
-      return '';
-    });
+  // Find-and-click in one step, by position, bringing the tab forward if it stopped rendering (a tab opened
+  // in the background does not finish loading the connector panel: seen 2026-11-07).
+  const seen = async () => page.evaluate(() => [...document.querySelectorAll('button, h1, h2, [role=dialog]')]
+    .filter((e) => (e as HTMLElement).offsetParent).map((e) => ((e as HTMLElement).innerText || '').trim().split('\n')[0]).filter(Boolean).slice(0, 20).join(' | ')).catch(() => '');
+  const clickWhen = async (src: string, what: string, timeoutMs: number, leafText = false) => {
+    for (let t = 0; t < timeoutMs; t += 500) {
+      if (await page.evaluate(() => document.hidden).catch(() => false)) await ensureVisible(page);
+      const pt = await page.evaluate((src: string, leaf: boolean) => {
+        const rx = new RegExp(src, 'i');
+        const els = leaf ? [...document.querySelectorAll('*')].filter((e) => e.children.length === 0) : [...document.querySelectorAll('button')];
+        const e = els.find((x) => (x as HTMLElement).offsetParent && rx.test(((x as HTMLElement).innerText || x.textContent || '').trim()));
+        if (!e) return null;
+        const r = e.getBoundingClientRect();
+        return r.width > 0 ? { x: r.x + r.width / 2, y: r.y + r.height / 2 } : null;
+      }, src, leafText);
+      if (pt) { await page.mouse.click(pt.x, pt.y); return true; }
+      if (await page.evaluate(() => [...document.querySelectorAll('button')].some((b) => /^(AUTORIZAR|AUTHORIZE)$/i.test((b.innerText || '').trim()) && (b as HTMLElement).offsetParent)).catch(() => false))
+        throw new Error('Looker Studio pide autorizar una vez el conector de subida de CSV (guarda los archivos en Google Cloud Storage). Es una decision del usuario: que pulse AUTORIZAR en la pestana abierta y repite.');
+      await sleep(500);
+    }
+    const { tmpdir } = await import('node:os');
+    const shotPath = `${tmpdir()}/ls-studio-csv-${Date.now()}.png`;
+    await page.screenshot({ path: shotPath, captureBeyondViewport: false }).catch(() => undefined);
+    throw new Error(`No aparecio ${what}. En pantalla: ${await seen()}. Captura: ${shotPath}`);
+  };
+  // The connector grid fills in gradually and its tiles move (a new connector shifted the CSV tile under the
+  // click, 2026-11-07): filter it with the panel's search box, click once its position is stable, and check
+  // that the connector opened.
+  const tilePos = () => page.evaluate(() => {
+    const e = [...document.querySelectorAll('*')].find((x) => x.children.length === 0 && (x as HTMLElement).offsetParent && /^(Subida de archivos CSV|File Upload|CSV file upload)$/i.test((x.textContent || '').trim()));
+    if (!e) return null;
+    const r = e.getBoundingClientRect();
+    return r.width > 0 ? { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) } : null;
+  });
+  const opened = () => page.evaluate(() => [...document.querySelectorAll('button')].some((b) => (b as HTMLElement).offsetParent && /Crear conjunto|Create dataset|^(AUTORIZAR|AUTHORIZE)$/i.test((b.innerText || '').trim())));
+  for (let attempt = 0; attempt < 4 && !(await opened()); attempt++) {
+    const search = await page.evaluateHandle(() => [...document.querySelectorAll('input')].find((i) => (i as HTMLElement).offsetParent && /^(Buscar|Search)$/i.test(i.placeholder || '')) || null);
+    if (await (search as any).evaluate((e: unknown) => !!e)) { await (search as any).asElement().click({ clickCount: 3 }); await page.keyboard.type('CSV'); }
+    let last: { x: number; y: number } | null = null, stable = 0;
+    for (let t = 0; t < 40000 && stable < 3; t += 500) {
+      if (await page.evaluate(() => document.hidden).catch(() => false)) await ensureVisible(page);
+      await sleep(500);
+      const pos = await tilePos();
+      stable = pos && last && pos.x === last.x && pos.y === last.y ? stable + 1 : 0;
+      last = pos;
+    }
+    if (!last) break;
+    await page.mouse.click(last.x, last.y);
+    for (let t = 0; t < 10000 && !(await opened()); t += 500) await sleep(500);
   }
-  const needsAuth = state === 'auth';
-  if (needsAuth) throw new Error('Looker Studio pide autorizar una vez el conector de subida de CSV (guarda los archivos en Google Cloud Storage). Es una decision del usuario: que pulse AUTORIZAR en la pestana abierta y repite.');
-  const create = await page.evaluateHandle(() => [...document.querySelectorAll('button')].find((b) => /Crear conjunto|Create dataset/i.test(b.innerText || '') && (b as HTMLElement).offsetParent) || null);
-  if (!(await (create as any).evaluate((e: unknown) => !!e))) throw new Error('No se encontro "Crear conjunto de datos".');
-  await (create as any).asElement().click();
+  if (!(await opened())) {
+    const { tmpdir } = await import('node:os');
+    const shotPath = `${tmpdir()}/ls-studio-csv-${Date.now()}.png`;
+    await page.screenshot({ path: shotPath, captureBeyondViewport: false }).catch(() => undefined);
+    throw new Error(`No se abrio el conector "Subida de archivos CSV" (paso 1 de 4). En pantalla: ${await seen()}. Captura: ${shotPath}`);
+  }
+  await clickWhen('Crear conjunto|Create dataset', '"Crear conjunto de datos" (paso 2 de 4)', 40000);
   await sleep(1500);
   const input = await page.evaluateHandle(() => { const d = [...document.querySelectorAll('[role=dialog], .cdk-overlay-pane')].pop(); return (d && d.querySelector('input')) || null; });
   if (!(await (input as any).evaluate((e: unknown) => !!e))) throw new Error('No se abrio el dialogo para nombrar el conjunto de datos.');
   await (input as any).asElement().click({ clickCount: 3 });
   await page.keyboard.type(dataset);
-  const pt = await page.evaluate(() => {
-    const d = [...document.querySelectorAll('[role=dialog], .cdk-overlay-pane')].pop()!;
-    const b = [...d.querySelectorAll('button')].find((x) => /Continue|Continuar/i.test(x.textContent || ''))!;
-    const r = b.getBoundingClientRect();
-    return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
-  });
-  // "Continue" opens the file picker directly
-  const [chooser] = await Promise.all([page.waitForFileChooser({ timeout: 15000 }), page.mouse.click(pt.x, pt.y)]);
+  // "Continue" opens the file picker directly; it can take a moment to enable after typing the name
+  let chooser: Awaited<ReturnType<Page['waitForFileChooser']>> | null = null;
+  for (let attempt = 0; attempt < 3 && !chooser; attempt++) {
+    let pt: { x: number; y: number } | null = null;
+    for (let t = 0; t < 10000 && !pt; t += 500) {
+      pt = await page.evaluate(() => {
+        const d = [...document.querySelectorAll('[role=dialog], .cdk-overlay-pane')].pop();
+        const b = d && [...d.querySelectorAll('button')].find((x) => /Continue|Continuar/i.test(x.textContent || ''));
+        if (!b || (b as HTMLButtonElement).disabled) return null;
+        const r = b.getBoundingClientRect();
+        return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+      });
+      if (!pt) await sleep(500);
+    }
+    if (!pt) throw new Error('El boton "Continue" del dialogo no se activo (paso 3 de 4).');
+    try { [chooser] = await Promise.all([page.waitForFileChooser({ timeout: 8000 }), page.mouse.click(pt.x, pt.y)]); }
+    catch { chooser = null; await sleep(1000); }
+  }
+  if (!chooser) throw new Error('"Continue" no abrio el selector de archivos tras 3 intentos (paso 3 de 4).');
   await chooser.accept(files);
   await addUploadedToReport(page, files.map((f) => basename(f).replace(/\.(csv|tsv)$/i, '')));
   let ds: { dataSourceId: string; fields: Array<{ id: string; name: string; dataType: string }> } | undefined;
@@ -1292,11 +1354,18 @@ export async function createReportFromCsv(o: { files: string[]; dataset?: string
   setActiveReport(reportId);
   await page.goto(`https://datastudio.google.com/reporting/${reportId}/edit`, { waitUntil: 'domcontentloaded' });
   await waitRendered(page);
+  // The new source's schema reaches the editor late: if it is not there after a while, reload once (verified:
+  // a reload brings the 20 fields of cafe_brisa.csv).
+  const schemaReady = async () => (await evaluateOn(page, T, schemaFieldsScript, ds!.dataSourceId).catch(() => [])).length > 0;
+  let ready = false;
+  for (let i = 0; i < 20 && !ready; i++) { ready = await schemaReady(); if (!ready) await sleep(500); }
+  for (let r = 0; r < 2 && !ready; r++) { await page.reload({ waitUntil: 'domcontentloaded' }); await waitRendered(page); for (let i = 0; i < 30 && !ready; i++) { ready = await schemaReady(); if (!ready) await sleep(500); } }
   const named = await inspectDataSourcesNamed().catch(() => null);
   const source = named ? (named.dataSources as Array<{ dataSourceId: string; fields: unknown[] }>).find((d) => d.dataSourceId === ds!.dataSourceId) : null;
   return {
     ok: true, reportId, url: `https://datastudio.google.com/reporting/${reportId}/edit`, dataSourceId: ds.dataSourceId, dataset,
     fields: source ? source.fields : ds.fields,
+    ...(ready ? {} : { warning: 'El esquema del origen aun no llego al editor: haz reload_report y luego inspect_data_sources (CLI: reload, sources) para ver los campos.' }),
     note: 'El informe se llama "Informe sin titulo" (renombrarlo aun no tiene herramienta). Revisa los tipos: una fecha o un numero con celdas vacias pueden llegar como texto; corrigelo con add_source_field (p. ej. PARSE_DATE).',
   };
 }
