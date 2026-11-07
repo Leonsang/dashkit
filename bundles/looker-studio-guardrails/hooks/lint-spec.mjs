@@ -149,6 +149,7 @@ function expandCards(list) {
     out.push({
       key: `${c.key}__card`,
       type: "generic-shape",
+      ...k.id ? { id: k.id } : {},
       x: c.x,
       y: c.y,
       w: c.w,

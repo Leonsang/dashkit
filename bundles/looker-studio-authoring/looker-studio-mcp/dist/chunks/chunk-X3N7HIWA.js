@@ -19,7 +19,7 @@ import {
 import {
   navDispatchScript,
   navPagesScript
-} from "./chunk-WEQC2KGA.js";
+} from "./chunk-PXCDDC3O.js";
 import {
   CDPSessionEvent,
   CdpBrowser,
@@ -3419,6 +3419,7 @@ function expandCards(list) {
     out.push({
       key: `${c.key}__card`,
       type: "generic-shape",
+      ...k.id ? { id: k.id } : {},
       x: c.x,
       y: c.y,
       w: c.w,
@@ -3717,7 +3718,7 @@ async function createComponent(o) {
   const hasFields = !!(o.dimensions?.length || o.metrics?.length || o.slots && Object.keys(o.slots).length);
   const NO_DIMS = ["gauge-viz", "bulletchart", "kpi-metric"];
   const t0 = Date.now();
-  const { ensureSeedScript } = await import("./scripts4-P2AS3GUB.js");
+  const { ensureSeedScript } = await import("./scripts4-ROWZRC3K.js");
   const seed = await evaluateOn(page, T, ensureSeedScript, o.pageId);
   if (seed.seedId) await sleep(1500);
   const res = await evaluateOn(page, T, createComponentScript, {
@@ -3760,10 +3761,10 @@ async function createComponent(o) {
 }
 async function deleteComponent(componentId) {
   const page = await editPage();
-  const { componentLevelScript } = await import("./scripts4-P2AS3GUB.js");
+  const { componentLevelScript } = await import("./scripts4-ROWZRC3K.js");
   if (await evaluateOn(page, T, componentLevelScript, componentId) === "report") {
-    const { arrangeComponents } = await import("./ops4-WDLJK4FC.js");
-    const { listPages: listPages2 } = await import("./ops3-6FR52J75.js");
+    const { arrangeComponents } = await import("./ops4-HTQW36Z5.js");
+    const { listPages: listPages2 } = await import("./ops3-4XIANYWV.js");
     await arrangeComponents([componentId], "page", (await listPages2())[0].id);
   }
   const t0 = Date.now();
@@ -3800,7 +3801,7 @@ async function applySpec(specOrFile, opts = {}) {
   }
   const state = statePath && existsSync4(statePath) ? JSON.parse(readFileSync3(statePath, "utf8")) : { reportId: null, keys: {} };
   const page = opts.dryRun ? await getReportPage() : await editPage();
-  const { ensureVisible } = await import("./ops4-WDLJK4FC.js");
+  const { ensureVisible } = await import("./ops4-HTQW36Z5.js");
   if (!opts.dryRun) await ensureVisible(page);
   const info = await evaluateOn(page, T, pageInfoScript);
   if (state.reportId && state.reportId !== info.internalReportId) {
@@ -3809,7 +3810,8 @@ async function applySpec(specOrFile, opts = {}) {
   }
   state.reportId = info.internalReportId;
   if (!opts.dryRun) {
-    const dir = join4(process.env.LS_BACKUP_DIR ?? join4(process.cwd(), "backups"));
+    const { tmpdir: tmpdir2 } = await import("node:os");
+    const dir = join4(process.env.LS_BACKUP_DIR ?? join4(tmpdir2(), "ls-studio-backups"));
     mkdirSync2(dir, { recursive: true });
     const file = join4(dir, `${info.internalReportId}-${(/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-")}.json`);
     writeFileSync2(file, JSON.stringify(await evaluateOn(page, T, exportReportScript), null, 2));
@@ -3849,14 +3851,14 @@ async function applySpec(specOrFile, opts = {}) {
       result.actions.push({ key: c.key, action: exists ? "update" : "create", ...exists ? { componentId: existingId } : {} });
       continue;
     }
-    try {
+    const once = async () => {
       if (exists) {
         await updateExisting(page, existingId, c);
         state.keys[c.key] = existingId;
         const extra = await patchIfNeeded(page, existingId, c);
         result.actions.push({ key: c.key, action: "update", componentId: existingId, ...extra.length ? { patched: extra } : {} });
       } else if (c.type === "image-component" && c.image) {
-        const { addImage } = await import("./ops4-WDLJK4FC.js");
+        const { addImage } = await import("./ops4-HTQW36Z5.js");
         const { dirname: dirname5, resolve } = await import("node:path");
         const base = typeof specOrFile === "string" ? dirname5(specOrFile) : process.cwd();
         const r = await addImage({ path: resolve(base, c.image), box: { x: c.x, y: c.y, width: c.w, height: c.h }, ...pageId ? { pageId } : {} });
@@ -3879,8 +3881,19 @@ async function applySpec(specOrFile, opts = {}) {
         const extra = await patchIfNeeded(page, r.componentId, c);
         result.actions.push({ key: c.key, action: "create", componentId: r.componentId, ...r.warnings.length ? { warnings: r.warnings } : {}, ...extra.length ? { patched: extra } : {} });
       }
+    };
+    try {
+      await once();
     } catch (e) {
-      result.actions.push({ key: c.key, action: exists ? "update" : "create", error: e.message });
+      if (/esquema del origen|no devolvio campos/i.test(e.message)) {
+        try {
+          await ensureVisible(page);
+          await sleep(2e3);
+          await once();
+        } catch (e2) {
+          result.actions.push({ key: c.key, action: exists ? "update" : "create", error: e2.message });
+        }
+      } else result.actions.push({ key: c.key, action: exists ? "update" : "create", error: e.message });
     }
     if (statePath) writeFileSync2(statePath, JSON.stringify(state, null, 2));
   }
@@ -3911,7 +3924,7 @@ async function applySpec(specOrFile, opts = {}) {
     }
     if (filterLog.length) result.filters = filterLog;
     {
-      const { arrangeComponents } = await import("./ops4-WDLJK4FC.js");
+      const { arrangeComponents } = await import("./ops4-HTQW36Z5.js");
       const inside = (p, q) => p !== q && q.x >= p.x && q.y >= p.y && q.x + q.w <= p.x + p.w && q.y + q.h <= p.y + p.h;
       const level = (c) => c.reportLevel ? "report" : c.page;
       const live = components.filter((c) => state.keys[c.key]);
@@ -3949,50 +3962,50 @@ async function patchIfNeeded(page, id, c) {
   }
   if (c.text !== void 0) {
     const t = typeof c.text === "string" ? { text: c.text } : c.text;
-    const { setText } = await import("./ops4-WDLJK4FC.js");
+    const { setText } = await import("./ops4-HTQW36Z5.js");
     await setText(id, t.text, { ...t.size ? { size: t.size } : {}, ...t.bold ? { bold: true } : {}, ...t.color ? { color: t.color } : {}, ...t.align ? { align: t.align } : {} });
     changes.push("text");
   }
   if (c.style) {
-    const { setStyle } = await import("./ops4-WDLJK4FC.js");
+    const { setStyle } = await import("./ops4-HTQW36Z5.js");
     await setStyle(id, c.style);
     changes.push("style");
   }
   if (c.conditional) {
-    const { setConditionalFormat } = await import("./ops4-WDLJK4FC.js");
+    const { setConditionalFormat } = await import("./ops4-HTQW36Z5.js");
     await setConditionalFormat(id, c.conditional);
     changes.push(`conditional:${c.conditional.length}`);
   }
   if (c.chartStyle) {
-    const { setChartStyle } = await import("./ops4-WDLJK4FC.js");
+    const { setChartStyle } = await import("./ops4-HTQW36Z5.js");
     await setChartStyle({ ...c.chartStyle, componentId: id, reload: false });
     changes.push("chartStyle");
   }
   if (c.comparison) {
-    const { setComparison } = await import("./ops4-WDLJK4FC.js");
+    const { setComparison } = await import("./ops4-HTQW36Z5.js");
     await setComparison(id, c.comparison);
     changes.push(`comparison:${c.comparison}`);
   }
   if (c.linkPage) {
-    const { setPageLink } = await import("./ops4-WDLJK4FC.js");
+    const { setPageLink } = await import("./ops4-HTQW36Z5.js");
     await setPageLink(id, c.linkPage);
     changes.push("linkPage");
   }
   if (c.reportLevel) {
-    const { componentLevelScript } = await import("./scripts4-P2AS3GUB.js");
+    const { componentLevelScript } = await import("./scripts4-ROWZRC3K.js");
     if (await evaluateOn(page, T, componentLevelScript, id) === "page") {
-      const { arrangeComponents } = await import("./ops4-WDLJK4FC.js");
+      const { arrangeComponents } = await import("./ops4-HTQW36Z5.js");
       await arrangeComponents([id], "report", c.page && !c.page.startsWith("name:") && c.page !== "active" ? c.page : void 0);
       changes.push("reportLevel");
     }
   }
   if (c.interactions) {
-    const { setChartInteractions } = await import("./ops4-WDLJK4FC.js");
+    const { setChartInteractions } = await import("./ops4-HTQW36Z5.js");
     await setChartInteractions({ componentId: id, ...c.interactions, reload: false });
     changes.push("interactions");
   }
   if (c.parameter) {
-    const { setControlParameter } = await import("./ops4-WDLJK4FC.js");
+    const { setControlParameter } = await import("./ops4-HTQW36Z5.js");
     await setControlParameter(id, c.parameter);
     changes.push(`parameter:${c.parameter}`);
   }
@@ -4631,7 +4644,7 @@ async function addSourceField(opts) {
   });
   const open = async () => {
     if (!await clickText("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) {
-      const { selectSourceChart } = await import("./ops4-WDLJK4FC.js");
+      const { selectSourceChart } = await import("./ops4-HTQW36Z5.js");
       await selectSourceChart(page, opts.source && opts.source.startsWith("@") ? opts.source : void 0);
       if (!await clickText("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) throw new Error('No se encontro "Anadir un campo" en el panel Datos.');
     }
@@ -4648,7 +4661,7 @@ async function addSourceField(opts) {
     let src = await editorSource();
     const byField = !!opts.source && opts.source.startsWith("@");
     if (byField) {
-      const { selectSourceChart } = await import("./ops4-WDLJK4FC.js");
+      const { selectSourceChart } = await import("./ops4-HTQW36Z5.js");
       await clickText("button", /^(Cancelar|Cancel)$/);
       await close();
       await selectSourceChart(page, opts.source);

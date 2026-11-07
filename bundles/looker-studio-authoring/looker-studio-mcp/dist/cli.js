@@ -5,7 +5,7 @@ import {
   getComponentConfig,
   getReportLayout,
   sanitizeLearning
-} from "./chunks/chunk-B3ZAZUTG.js";
+} from "./chunks/chunk-O3X3SSUM.js";
 import {
   addImage,
   addParameter,
@@ -21,7 +21,7 @@ import {
   duplicatePage,
   getChartStyle,
   groupComponents,
-  inspectDataSources,
+  inspectDataSourcesNamed,
   listBlends,
   listStyleKeys,
   movePage,
@@ -38,7 +38,7 @@ import {
   setText,
   updateBlend,
   updateParameter
-} from "./chunks/chunk-25JRGRWS.js";
+} from "./chunks/chunk-HLQG6ZM7.js";
 import {
   addFilter,
   addPage,
@@ -77,10 +77,10 @@ import {
   updateFilter,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-5Z272VPF.js";
+} from "./chunks/chunk-X3N7HIWA.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
-import "./chunks/chunk-WEQC2KGA.js";
+import "./chunks/chunk-PXCDDC3O.js";
 import "./chunks/chunk-FAVAKK4W.js";
 import "./chunks/chunk-GIAQTVDD.js";
 import "./chunks/chunk-BGDW2RS3.js";
@@ -215,7 +215,7 @@ async function main() {
     case "layout":
       return getReportLayout(typeof flags.page === "string" ? flags.page : void 0);
     case "sources":
-      return inspectDataSources();
+      return inspectDataSourcesNamed();
     case "config":
       return getComponentConfig(need(pos[0], "componentId"));
     case "diagnose":
@@ -273,10 +273,19 @@ async function main() {
     }
     case "delete":
       return deleteComponent(need(pos[0], "componentId"));
-    case "lint":
-      return lintSpec(loadSpec(need(pos[0], "spec.json")));
-    case "apply":
-      return applySpec(need(pos[0], "spec.json"), { dryRun: !!flags["dry-run"] });
+    case "lint": {
+      const l = lintSpec(loadSpec(need(pos[0], "spec.json")));
+      const errors = l.issues.filter((i) => i.severity === "error").length;
+      const warnings = l.issues.filter((i) => i.severity === "warning").length;
+      if (errors) process.exitCode = 1;
+      return { ok: errors === 0, errors, warnings, issues: l.issues.filter((i) => i.severity !== "info"), info: l.issues.filter((i) => i.severity === "info").length, ...flags.verbose ? { components: l.components } : { components: l.components.length } };
+    }
+    case "apply": {
+      const r = await applySpec(need(pos[0], "spec.json"), { dryRun: !!flags["dry-run"] });
+      const errors = r.actions.filter((a) => a.error);
+      if (errors.length || r.lint.some((i) => i.severity === "error")) process.exitCode = 1;
+      return { ok: !errors.length, errors: errors.map((a) => ({ key: a.key, error: a.error })), ...r };
+    }
     case "pages":
       if (pos[0] === "add") return addPage(need(pos[1], "el nombre de la pagina"));
       if (pos[0] === "rename") return renamePage(need(pos[1], "pageId"), need(pos.slice(2).join(" "), "el nombre"));

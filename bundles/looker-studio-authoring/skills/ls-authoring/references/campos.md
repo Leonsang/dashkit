@@ -3,6 +3,11 @@
 Las reglas del modelo (embebido o reutilizable, credenciales, ids, blends, parámetros) están en
 `ls-modelo-datos`. Aquí, cómo se usan con las herramientas.
 
+
+**Nombres de los campos:** `inspect_data_sources` (CLI `sources`) devuelve cada campo con su `name` (el nombre
+visible, el que se usa en `bind`, el spec y las fórmulas) y su `id` interno (`_n900455703_`). En un origen recién
+conectado ningún gráfico usa aún sus campos; la herramienta lo sondea con un componente temporal para leer los
+nombres.
 ## Ver los orígenes: inspect_data_sources
 
 Devuelve cada origen con `dataSourceId`, los límites de dimensiones y métricas, qué componentes lo usan

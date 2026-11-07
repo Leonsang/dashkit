@@ -8,7 +8,7 @@ import {
   getReportLayout,
   sanitizeLearning,
   writesAllowed
-} from "./chunks/chunk-B3ZAZUTG.js";
+} from "./chunks/chunk-O3X3SSUM.js";
 import {
   addImage,
   addParameter,
@@ -24,7 +24,7 @@ import {
   duplicatePage,
   getChartStyle,
   groupComponents,
-  inspectDataSources,
+  inspectDataSourcesNamed,
   listBlends,
   listStyleKeys,
   movePage,
@@ -41,7 +41,7 @@ import {
   setText,
   updateBlend,
   updateParameter
-} from "./chunks/chunk-25JRGRWS.js";
+} from "./chunks/chunk-HLQG6ZM7.js";
 import {
   addFilter,
   addPage,
@@ -79,10 +79,10 @@ import {
   updateFilter,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-5Z272VPF.js";
+} from "./chunks/chunk-X3N7HIWA.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
-import "./chunks/chunk-WEQC2KGA.js";
+import "./chunks/chunk-PXCDDC3O.js";
 import "./chunks/chunk-FAVAKK4W.js";
 import "./chunks/chunk-GIAQTVDD.js";
 import "./chunks/chunk-BGDW2RS3.js";
@@ -36997,7 +36997,7 @@ server.registerTool(
     inputSchema: {},
     annotations: { readOnlyHint: true, openWorldHint: true }
   },
-  async () => run(() => inspectDataSources())
+  async () => run(() => inspectDataSourcesNamed())
 );
 server.registerTool(
   "bind_fields_to_component",

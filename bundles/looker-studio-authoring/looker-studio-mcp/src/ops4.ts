@@ -160,10 +160,10 @@ export async function listBlends(): Promise<BlendInfo[]> {
 }
 
 /** Source fields of a data source, probing it with a temporary unsaved component if no chart uses it. */
-async function datasetFields(page: Page, id: string): Promise<Array<{ id: string; name: string; dataType: string }>> {
+async function datasetFields(page: Page, id: string, forceProbe = false): Promise<Array<{ id: string; name: string; dataType: string }>> {
   const ds = await evaluateOn(page, T, readDataSourcesScript);
   const hit = ds.dataSources.find((d) => d.dataSourceId === id);
-  if (hit && hit.fields.length) return hit.fields.map((f) => ({ id: f.id, name: f.name, dataType: f.dataType }));
+  if (hit && hit.fields.length && !forceProbe) return hit.fields.map((f) => ({ id: f.id, name: f.name, dataType: f.dataType }));
   const st = await evaluateOn(page, T, probeStartScript, { datasetId: id, template: getTemplate('kpi-metric') });
   if (!st.ok) throw new Error(`No se pudo leer el esquema del origen ${id}: ${st.error}`);
   let pr: { ready: boolean; fields: Array<{ id: string; name: string; dataType: number }> } = { ready: false, fields: [] };
@@ -174,6 +174,30 @@ async function datasetFields(page: Page, id: string): Promise<Array<{ id: string
   if (!pr.fields.length) throw new Error(`El origen ${id} no devolvio campos.`);
   const DT: Record<number, string> = { 0: 'TEXT', 2: 'NUMBER', 3: 'BOOLEAN', 6: 'DATE', 7: 'DATETIME' };
   return pr.fields.map((f) => ({ id: f.id, name: f.name, dataType: DT[f.dataType] ?? 'TEXT' }));
+}
+
+/**
+ * Data sources with the display names of their fields. A field no chart uses yet only has its internal id
+ * (e.g. _n900455703_): the source is probed with a temporary component to read the names.
+ */
+export async function inspectDataSourcesNamed() {
+  const page = await getReportPage();
+  const ds = await evaluateOn(page, T, readDataSourcesScript);
+  const list = Array.isArray(ds.dataSources) ? ds.dataSources : Object.values(ds.dataSources as Record<string, unknown>);
+  const out = [] as Array<Record<string, unknown>>;
+  for (const d of list as Array<{ dataSourceId: string; name: string; fields: Array<{ id: string; name: string; dataType: string; type?: string }> }>) {
+    const unnamed = !d.fields.length || d.fields.some((f) => !f.name || f.name === f.id);
+    if (unnamed) {
+      try {
+        await ensureVisible(page);
+        const named = await datasetFields(page, d.dataSourceId, true);
+        out.push({ ...d, fields: named.map((f) => ({ ...f, ...(d.fields.find((x) => x.id === f.id)?.type ? { type: d.fields.find((x) => x.id === f.id)!.type } : {}) })) });
+        continue;
+      } catch { /* keep what we have */ }
+    }
+    out.push(d);
+  }
+  return { dataSources: out, note: 'En bind, el spec y las formulas se usa el nombre (name); el id (_n..._) tambien vale.' };
 }
 
 const keyPairs = (keys: Array<string | { left: string; right: string }> | undefined) =>
@@ -1079,8 +1103,29 @@ export async function screenshotReport(o: { pageId?: string; view?: boolean; com
       const b = (await evaluateOn(page, T, screenBoxesScript)).find((x) => x.id === o.componentId);
       if (b) clip = { x: Math.max(0, b.x - 12), y: Math.max(0, b.y - 12), width: b.w + 24, height: b.h + 24 };
     }
-    // captureBeyondViewport (the default) re-lays the page out at another size and the canvas moves under the clip.
-    const buf = (await page.screenshot({ type: 'png', captureBeyondViewport: false, ...(clip ? { clip } : {}) })) as Buffer;
+    // The canvas scrolls inside its own container, so the window only shows part of it: emulate a viewport
+    // tall enough for the whole canvas (then measure again), shoot, and restore. captureBeyondViewport (the
+    // default) re-lays the page out at another size under the clip, so it stays off.
+    const need = await page.evaluate(() => {
+      const cv = document.querySelector('.ng2-canvas-container') as HTMLElement | null;
+      if (!cv) return 0;
+      let s: HTMLElement | null = cv.parentElement; while (s && s.scrollHeight <= s.clientHeight) s = s.parentElement;
+      if (s) s.scrollTop = 0;
+      return Math.ceil(cv.getBoundingClientRect().bottom + 40);
+    }).catch(() => 0);
+    const vw = await page.evaluate(() => ({ w: window.innerWidth, h: window.innerHeight }));
+    const tall = need > vw.h;
+    if (tall) { await page.setViewport({ width: vw.w, height: need }); await sleep(2500); }
+    let buf: Buffer;
+    try {
+      if (o.componentId) {
+        const b = (await evaluateOn(page, T, screenBoxesScript)).find((x) => x.id === o.componentId);
+        if (b) clip = { x: Math.max(0, b.x - 12), y: Math.max(0, b.y - 12), width: b.w + 24, height: b.h + 24 };
+      }
+      buf = (await page.screenshot({ type: 'png', captureBeyondViewport: false, ...(clip ? { clip } : {}) })) as Buffer;
+    } finally {
+      if (tall) await page.setViewport(null as never).catch(() => undefined);
+    }
     const dir = join(tmpdir(), 'ls-studio-shots');
     mkdirSync(dir, { recursive: true });
     const file = o.out ? resolve(o.out) : join(dir, `${Date.now()}${o.componentId ? '-' + o.componentId : ''}${o.view ? '-view' : ''}.png`);
@@ -1101,9 +1146,10 @@ export async function checkView(o: { pageId?: string; clickLinks?: boolean }) {
   const startUrl = page.url();
   try {
     const boxes = await evaluateOn(page, T, screenBoxesScript);
-    const out: Array<{ id: string; type: string; level: string; title?: string | null; controls?: string[]; link?: string | null; landed?: string }> = [];
+    const out: Array<{ id: string; type: string; level: string; title?: string | null; controls?: string[]; link?: string | null; landed?: string; crossFilter?: boolean; optionalMetrics?: string[]; drillLevels?: number }> = [];
     for (const b of boxes) {
-      const row: (typeof out)[number] = { id: b.id, type: b.type, level: b.level, ...(b.title ? { title: b.title } : {}) };
+      // configured behaviour from the model (a click to test cross-filtering would change the page's state)
+      const row: (typeof out)[number] = { id: b.id, type: b.type, level: b.level, ...(b.title ? { title: b.title } : {}), ...(b.crossFilter ? { crossFilter: true } : {}), ...(b.optionalMetrics.length ? { optionalMetrics: b.optionalMetrics } : {}), ...(b.drillLevels ? { drillLevels: b.drillLevels } : {}) };
       if (!/description|shape|image|button|arrow|filter|daterange|dimension-control|dataset-picker/.test(b.type)) {
         await page.evaluate((y: number, h: number) => { let s = document.querySelector('.ng2-canvas-container')?.parentElement as HTMLElement | null; while (s && s.scrollHeight <= s.clientHeight) s = s.parentElement; if (s && (y < 80 || y + h > window.innerHeight)) s.scrollTop += y - 150; }, b.y, b.h);
         await sleep(300);
@@ -1127,7 +1173,7 @@ export async function checkView(o: { pageId?: string; clickLinks?: boolean }) {
           if (page.url() !== startUrl) { await page.goto(startUrl, { waitUntil: 'domcontentloaded' }); await waitRendered(page); }
         }
       }
-      if (row.controls?.length || row.link || row.title) out.push(row);
+      if (row.controls?.length || row.link || row.title || row.crossFilter) out.push(row);
     }
     return { page: (startUrl.match(/\/page\/([^/?#]+)/) || [])[1], components: out };
   } finally {

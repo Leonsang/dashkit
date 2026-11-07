@@ -412,7 +412,8 @@ export async function applySpec(specOrFile: string | ReportSpec, opts: { dryRun?
   // Backup before any change (like the Power BI modeling MCP's "always back up" rule):
   // a full export that can be used to compare or rebuild. backups/ is git-ignored.
   if (!opts.dryRun) {
-    const dir = join(process.env.LS_BACKUP_DIR ?? join(process.cwd(), 'backups'));
+    const { tmpdir } = await import('node:os');
+    const dir = join(process.env.LS_BACKUP_DIR ?? join(tmpdir(), 'ls-studio-backups'));
     mkdirSync(dir, { recursive: true });
     const file = join(dir, `${info.internalReportId}-${new Date().toISOString().replace(/[:.]/g, '-')}.json`);
     writeFileSync(file, JSON.stringify(await evaluateOn(page, T, exportReportScript), null, 2));
@@ -456,7 +457,7 @@ export async function applySpec(specOrFile: string | ReportSpec, opts: { dryRun?
       result.actions.push({ key: c.key, action: exists ? 'update' : 'create', ...(exists ? { componentId: existingId } : {}) });
       continue;
     }
-    try {
+    const once = async () => {
       if (exists) {
         await updateExisting(page, existingId!, c);
         state.keys[c.key] = existingId!;
@@ -482,8 +483,15 @@ export async function applySpec(specOrFile: string | ReportSpec, opts: { dryRun?
         const extra = await patchIfNeeded(page, r.componentId!, c);
         result.actions.push({ key: c.key, action: 'create', componentId: r.componentId!, ...(r.warnings.length ? { warnings: r.warnings } : {}), ...(extra.length ? { patched: extra } : {}) });
       }
+    };
+    try {
+      await once();
     } catch (e) {
-      result.actions.push({ key: c.key, action: exists ? 'update' : 'create', error: (e as Error).message });
+      // A schema read that times out is usually a tab that stopped rendering: bring it forward and retry once.
+      if (/esquema del origen|no devolvio campos/i.test((e as Error).message)) {
+        try { await ensureVisible(page); await sleep(2000); await once(); }
+        catch (e2) { result.actions.push({ key: c.key, action: exists ? 'update' : 'create', error: (e2 as Error).message }); }
+      } else result.actions.push({ key: c.key, action: exists ? 'update' : 'create', error: (e as Error).message });
     }
     if (statePath) writeFileSync(statePath, JSON.stringify(state, null, 2));
   }

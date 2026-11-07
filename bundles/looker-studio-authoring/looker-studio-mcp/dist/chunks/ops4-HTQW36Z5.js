@@ -15,6 +15,7 @@ import {
   ensureVisible,
   getChartStyle,
   groupComponents,
+  inspectDataSourcesNamed,
   listBlends,
   listStyleKeys,
   movePage,
@@ -32,11 +33,11 @@ import {
   setText,
   updateBlend,
   updateParameter
-} from "./chunk-25JRGRWS.js";
-import "./chunk-5Z272VPF.js";
+} from "./chunk-HLQG6ZM7.js";
+import "./chunk-X3N7HIWA.js";
 import "./chunk-5J4RMU5E.js";
 import "./chunk-Y34SSGZY.js";
-import "./chunk-WEQC2KGA.js";
+import "./chunk-PXCDDC3O.js";
 import "./chunk-FAVAKK4W.js";
 import "./chunk-GIAQTVDD.js";
 import "./chunk-BGDW2RS3.js";
@@ -59,6 +60,7 @@ export {
   ensureVisible,
   getChartStyle,
   groupComponents,
+  inspectDataSourcesNamed,
   listBlends,
   listStyleKeys,
   movePage,

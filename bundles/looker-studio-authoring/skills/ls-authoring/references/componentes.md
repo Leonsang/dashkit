@@ -179,6 +179,8 @@ tiene la clave y aun así pinta la serie 2 a la derecha.
   página abierta: si el gráfico está en otra, ábrela (`open_report` con su `pageId`) para verlo.
   `reload=false` (o `--no-reload`) lo evita si vas a encadenar varios cambios; recarga tú al acabar.
 - Una propiedad que el tipo de gráfico no tiene da error con su nombre, en vez de guardarse sin efecto.
+- **Gráfico circular:** `legend` funciona igual; el hueco del anillo es la clave `pieHole` (0 a 1, p. ej. 0,55)
+  con `patch_component style`. Otras claves de cualquier tipo: `list_style_keys`.
 - **Buenas prácticas (guía dataviz, [CONVENCIÓN]; detalle en `ls-diseno-layout` §7):** un solo eje Y
   (`audit_ux` da error con una serie a la derecha, también la del combinado por defecto);
   leyenda siempre que haya 2 series o más; etiquetas de datos solo en pocas barras, nunca en cada punto de una
@@ -202,7 +204,8 @@ Patrones tomados de plantillas publicadas (verificado el 2026-11-07); todos se d
 { "key": "kpi_ingresos", "type": "kpi-metric", "card": { "icon": "../assets/icons/ingresos.svg" }, ... }
 ```
 
-- La caja es la de la tarjeta. `card` crea detrás una forma redondeada (`<key>__card`, blanca, radio 12) y mete
+- La caja es la de la tarjeta. `card` crea detrás una forma redondeada (`<key>__card`, blanca, radio 12; o adopta
+  una que ya exista con `card.id`) y mete
   el componente dentro con un margen (`inset`, 10 por defecto), sin fondo ni borde propios y con su título.
 - **Scorecard con `icon`:** a la izquierda, un cuadro del color de acento (`<key>__tile`, `iconBackground`)
   con el icono en blanco (`<key>__icon`); el valor pasa a la derecha y baja a 24 px para que quepa.

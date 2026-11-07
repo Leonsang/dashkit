@@ -71,6 +71,8 @@ export interface SpecComponent {
 }
 
 export interface SpecCard {
+  /** Adopt the card shape that already exists (its component id) instead of creating one. */
+  id?: string;
   /** Title inside the card (the component's own chart title). */
   title?: string;
   /** Scorecard icon: an image file (white line icon), drawn on a coloured tile left of the value. */
@@ -245,7 +247,7 @@ function expandCards(list: ResolvedComponent[]): ResolvedComponent[] {
     const radius = k.radius ?? 12;
     const shared = { page: c.page, dimensions: [], metrics: [], ...(c.reportLevel ? { reportLevel: true } : {}) };
     out.push({
-      key: `${c.key}__card`, type: 'generic-shape', x: c.x, y: c.y, w: c.w, h: c.h, ...shared,
+      key: `${c.key}__card`, type: 'generic-shape', ...(k.id ? { id: k.id } : {}), x: c.x, y: c.y, w: c.w, h: c.h, ...shared,
       style: { background: { color: k.background ?? '#FFFFFF', opacity: 1 }, border: { color: '#FFFFFF', opacity: 0, size: 0, style: 'solid', radius } },
     });
     const clear = { background: { color: '#FFFFFF', opacity: 0 }, border: { color: '#FFFFFF', opacity: 0, size: 0, style: 'solid', radius: 0 } };

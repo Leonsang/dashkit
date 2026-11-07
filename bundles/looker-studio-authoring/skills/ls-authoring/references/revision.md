@@ -50,15 +50,26 @@ Reasons del editor con arreglo verificado:
 - **`export_report file?`** (CLI `export -o f.json`): el informe entero. Sirve de copia para comparar y
   aprende tipos y plantillas.
 
+## Salidas de la CLI
+
+- `lint` resume primero: `{ok, errors, warnings, issues}` (sale con código 1 si hay errores); `--verbose` añade
+  las cajas resueltas.
+- `apply` pone primero `ok` y `errors` (por clave) y sale con código 1 si algún componente falló. Si una lectura
+  del esquema falla porque la pestaña dejó de pintar, la reintenta una vez tras traerla al frente.
+- La copia de seguridad que hace `apply` va a la carpeta temporal del sistema (`ls-studio-backups`), o a
+  `LS_BACKUP_DIR` si está definida; nunca dentro del repositorio.
+- `config`, `style-keys`, `chart-style` y `layout` leen el **informe abierto**: para mirar otro, `open_report`.
+
 ## Ver y comprobar como el lector
 
 - **`screenshot_report pageId? view? componentId?`** (CLI `shot --view --component <id> --out f.png`): PNG de la
-  página o de un componente, en el editor o como lo ve el lector. El MCP devuelve la imagen. Trae la pestaña al
-  frente, espera a que los gráficos tengan datos y vuelve al modo en que estaba. Úsala después de cada cambio
+  página entera (aunque no quepa en la ventana) o de un componente, en el editor o como lo ve el lector. El MCP
+  devuelve la imagen. Trae la pestaña al frente, espera a que los gráficos tengan datos y vuelve al modo en que estaba. Úsala después de cada cambio
   visual: el diagnóstico no ve un control tapado por un fondo ni un texto que se sale.
 - **`check_view pageId? clickLinks?`** (CLI `check-view --click`): en modo vista, por componente, los controles
   que aparecen al pasar el ratón (`Métricas opcionales`, `Desglosar información`, `Mostrar filtros aplicados`...)
-  y adónde enlaza; con `clickLinks`, pulsa cada enlace y dice en qué página acabó. Una página antigua puede
+  y adónde enlaza; con `clickLinks`, pulsa cada enlace y dice en qué página acabó. Del modelo añade lo que no se
+  ve sin hacer clic: `crossFilter`, `optionalMetrics` y `drillLevels`. Una página antigua puede
   responder con el id de su URL (`TlJ0C`) en vez del de su modelo.
 - Verificado el 2026-11-07: los 14 enlaces de la barra lateral del showcase llevan a su página.
 

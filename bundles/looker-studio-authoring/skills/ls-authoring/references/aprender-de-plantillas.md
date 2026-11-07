@@ -17,6 +17,7 @@ dashkit en el informe del usuario. No se copian marcas, logos, textos ni iconos 
    - `page.interactions`: métricas opcionales, niveles de desglose, filtro cruzado;
    - `page.texts`, `shapeColors`, `spacing`: tipografía, paleta de las formas y separaciones;
    - `mapping`: qué clave del spec reproduce cada patrón.
+   - Las piezas aparcadas fuera del lienzo (coordenadas negativas) no cuentan.
 3. `screenshot_report view=true` (CLI `shot --view`): mira la página como el lector. Con `componentId`, solo esa
    pieza. El perfil dice qué hay; la captura, cómo se ve.
 4. Para una pieza concreta: `get_component_config` (incluye `behavior`), `get_chart_style` y
@@ -31,6 +32,7 @@ Escribe un spec (`informe-como-codigo.md`) con lo que el perfil propone:
 |---|---|
 | Barra lateral, barra superior, controles comunes | `reportLevel: true` en la forma, los controles y las entradas |
 | Enlaces a páginas | `linkPage` en un botón (con el nombre como texto del botón) o en una imagen |
+| Pestañas (`page.tabs`) | Botones con `linkPage` a las páginas hermanas dentro de una forma; en cada página, la pestaña activa con otro fondo |
 | Tarjetas con datos | `card: {title}` (forma detrás, título dentro) |
 | Scorecard con cuadro de icono | `card: {icon, iconBackground}` |
 | Comparación | `comparison` |

@@ -4,7 +4,6 @@ import {
   bindFieldsScript,
   createComponent,
   deleteComponent,
-  evaluate,
   evaluateOn,
   getReportPage,
   getTemplate,
@@ -16,7 +15,7 @@ import {
   reloadReport,
   requireEditMode,
   resolveDataset
-} from "./chunk-5Z272VPF.js";
+} from "./chunk-X3N7HIWA.js";
 import {
   arrangeScript,
   blendSnapshotScript,
@@ -44,13 +43,10 @@ import {
   setTextScript,
   styleKeysScript,
   updateBlendScript
-} from "./chunk-WEQC2KGA.js";
+} from "./chunk-PXCDDC3O.js";
 
 // src/looker/data.ts
 var EVAL_TIMEOUT_MS = Number(process.env.LS_EVAL_TIMEOUT_MS ?? 15e3);
-async function inspectDataSources() {
-  return evaluate(readDataSourcesScript);
-}
 async function bindFieldsToComponent(args) {
   const { page } = await requireEditMode();
   const res = await evaluateOn(page, EVAL_TIMEOUT_MS, bindFieldsScript, args);
@@ -161,10 +157,10 @@ async function withViewport(page, fn) {
 async function listBlends() {
   return evaluateOn(await getReportPage(), T, listBlendsScript);
 }
-async function datasetFields(page, id) {
+async function datasetFields(page, id, forceProbe = false) {
   const ds = await evaluateOn(page, T, readDataSourcesScript);
   const hit = ds.dataSources.find((d) => d.dataSourceId === id);
-  if (hit && hit.fields.length) return hit.fields.map((f) => ({ id: f.id, name: f.name, dataType: f.dataType }));
+  if (hit && hit.fields.length && !forceProbe) return hit.fields.map((f) => ({ id: f.id, name: f.name, dataType: f.dataType }));
   const st = await evaluateOn(page, T, probeStartScript, { datasetId: id, template: getTemplate("kpi-metric") });
   if (!st.ok) throw new Error(`No se pudo leer el esquema del origen ${id}: ${st.error}`);
   let pr = { ready: false, fields: [] };
@@ -175,6 +171,26 @@ async function datasetFields(page, id) {
   if (!pr.fields.length) throw new Error(`El origen ${id} no devolvio campos.`);
   const DT = { 0: "TEXT", 2: "NUMBER", 3: "BOOLEAN", 6: "DATE", 7: "DATETIME" };
   return pr.fields.map((f) => ({ id: f.id, name: f.name, dataType: DT[f.dataType] ?? "TEXT" }));
+}
+async function inspectDataSourcesNamed() {
+  const page = await getReportPage();
+  const ds = await evaluateOn(page, T, readDataSourcesScript);
+  const list = Array.isArray(ds.dataSources) ? ds.dataSources : Object.values(ds.dataSources);
+  const out = [];
+  for (const d of list) {
+    const unnamed = !d.fields.length || d.fields.some((f) => !f.name || f.name === f.id);
+    if (unnamed) {
+      try {
+        await ensureVisible(page);
+        const named = await datasetFields(page, d.dataSourceId, true);
+        out.push({ ...d, fields: named.map((f) => ({ ...f, ...d.fields.find((x) => x.id === f.id)?.type ? { type: d.fields.find((x) => x.id === f.id).type } : {} })) });
+        continue;
+      } catch {
+      }
+    }
+    out.push(d);
+  }
+  return { dataSources: out, note: "En bind, el spec y las formulas se usa el nombre (name); el id (_n..._) tambien vale." };
 }
 var keyPairs = (keys) => (keys ?? []).map((k) => typeof k === "string" ? { left: k, right: k } : k);
 async function updateBlend(args) {
@@ -805,7 +821,7 @@ async function setPageLink(componentId, pageRef) {
   const { page } = await requireEditMode();
   let pageId = pageRef;
   if (pageRef.startsWith("name:")) {
-    const { listPages } = await import("./ops3-6FR52J75.js");
+    const { listPages } = await import("./ops3-4XIANYWV.js");
     const hit = (await listPages()).find((p) => p.name === pageRef.slice(5));
     if (!hit) throw new Error(`No hay ninguna pagina llamada "${pageRef.slice(5)}".`);
     pageId = hit.id;
@@ -936,7 +952,30 @@ async function screenshotReport(o) {
       const b = (await evaluateOn(page, T, screenBoxesScript)).find((x) => x.id === o.componentId);
       if (b) clip = { x: Math.max(0, b.x - 12), y: Math.max(0, b.y - 12), width: b.w + 24, height: b.h + 24 };
     }
-    const buf = await page.screenshot({ type: "png", captureBeyondViewport: false, ...clip ? { clip } : {} });
+    const need = await page.evaluate(() => {
+      const cv = document.querySelector(".ng2-canvas-container");
+      if (!cv) return 0;
+      let s = cv.parentElement;
+      while (s && s.scrollHeight <= s.clientHeight) s = s.parentElement;
+      if (s) s.scrollTop = 0;
+      return Math.ceil(cv.getBoundingClientRect().bottom + 40);
+    }).catch(() => 0);
+    const vw = await page.evaluate(() => ({ w: window.innerWidth, h: window.innerHeight }));
+    const tall = need > vw.h;
+    if (tall) {
+      await page.setViewport({ width: vw.w, height: need });
+      await sleep(2500);
+    }
+    let buf;
+    try {
+      if (o.componentId) {
+        const b = (await evaluateOn(page, T, screenBoxesScript)).find((x) => x.id === o.componentId);
+        if (b) clip = { x: Math.max(0, b.x - 12), y: Math.max(0, b.y - 12), width: b.w + 24, height: b.h + 24 };
+      }
+      buf = await page.screenshot({ type: "png", captureBeyondViewport: false, ...clip ? { clip } : {} });
+    } finally {
+      if (tall) await page.setViewport(null).catch(() => void 0);
+    }
     const dir = join(tmpdir(), "ls-studio-shots");
     mkdirSync(dir, { recursive: true });
     const file = o.out ? resolve(o.out) : join(dir, `${Date.now()}${o.componentId ? "-" + o.componentId : ""}${o.view ? "-view" : ""}.png`);
@@ -956,7 +995,7 @@ async function checkView(o) {
     const boxes = await evaluateOn(page, T, screenBoxesScript);
     const out = [];
     for (const b of boxes) {
-      const row = { id: b.id, type: b.type, level: b.level, ...b.title ? { title: b.title } : {} };
+      const row = { id: b.id, type: b.type, level: b.level, ...b.title ? { title: b.title } : {}, ...b.crossFilter ? { crossFilter: true } : {}, ...b.optionalMetrics.length ? { optionalMetrics: b.optionalMetrics } : {}, ...b.drillLevels ? { drillLevels: b.drillLevels } : {} };
       if (!/description|shape|image|button|arrow|filter|daterange|dimension-control|dataset-picker/.test(b.type)) {
         await page.evaluate((y, h) => {
           let s = document.querySelector(".ng2-canvas-container")?.parentElement;
@@ -985,7 +1024,7 @@ async function checkView(o) {
           }
         }
       }
-      if (row.controls?.length || row.link || row.title) out.push(row);
+      if (row.controls?.length || row.link || row.title || row.crossFilter) out.push(row);
     }
     return { page: (startUrl.match(/\/page\/([^/?#]+)/) || [])[1], components: out };
   } finally {
@@ -1024,11 +1063,11 @@ async function setStyle(componentId, keys) {
 
 export {
   setComponentBoxModel,
-  inspectDataSources,
   bindFieldsToComponent,
   JOIN_TYPES,
   ensureVisible,
   listBlends,
+  inspectDataSourcesNamed,
   updateBlend,
   deleteBlend,
   createBlend,

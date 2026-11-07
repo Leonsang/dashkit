@@ -937,7 +937,7 @@ function styleKeysScript(args) {
   try {
     const report = w.angular.element(document.body).injector().get("legoUndoRedoService").report;
     const comp = [...report.pages.flatMap((p) => p.components), ...report.components].find((c) => c.getId() === args.componentId);
-    if (!comp) return { ok: false, error: `Componente ${args.componentId} no encontrado.` };
+    if (!comp) return { ok: false, error: `Componente ${args.componentId} no esta en el informe abierto (${location.pathname.split("/")[2]}): abre su informe con open_report.` };
     const re = args.filter ? new RegExp(args.filter, "i") : null;
     const own = comp.config.config.display.keys || {};
     let names = [];
@@ -1013,7 +1013,10 @@ function screenBoxesScript() {
       w: Math.round(a.width * zz),
       h: Math.round(a.height * zz),
       link: v("internalLink"),
-      title: v("chartTitleShowTitle") ? v("chartTitleText") : null
+      title: v("chartTitleShowTitle") ? v("chartTitleText") : null,
+      crossFilter: !!(c.config.behavior && (c.config.behavior.onSelect || []).some((x) => x && x.action === "cross-filtering")),
+      optionalMetrics: (c.config.behavior && c.config.behavior.onMetricSelect && c.config.behavior.onMetricSelect[0] && c.config.behavior.onMetricSelect[0].resource && c.config.behavior.onMetricSelect[0].resource.value || []).map((x) => x.displayName),
+      drillLevels: (c.config.behavior && c.config.behavior.onDrillDown && c.config.behavior.onDrillDown[0] && c.config.behavior.onDrillDown[0].resource && c.config.behavior.onDrillDown[0].resource.value || []).length
     });
   };
   if (page) for (const c of page.components) add(c, "page");
@@ -1068,7 +1071,11 @@ function designProfileScript(pageId) {
       series: (tc.themeSeriesColor || []).slice(0, 8).map((s) => s && s.color).filter(Boolean)
     };
     if (typeof theme.font !== "string") theme.font = null;
-    const rl = report.components;
+    const onCanvas = (c) => {
+      const b = box(c);
+      return b[0] >= 0 && b[1] >= 0 && b[0] < W && b[1] < H;
+    };
+    const rl = report.components.filter(onCanvas);
     const tallLeft = rl.filter((c) => isShape(c) && box(c)[0] < W * 0.15 && box(c)[3] > H * 0.6).sort((a, b) => box(b)[3] - box(a)[3])[0];
     const wideTop = rl.filter((c) => isShape(c) && box(c)[1] < H * 0.2 && box(c)[2] > W * 0.5).sort((a, b) => box(b)[2] - box(a)[2])[0];
     const navItems = rl.filter((c) => /button|image/.test(type(c)) && val(c, "internalLink")).map((c) => ({ type: type(c), box: box(c), toPage: val(c, "internalLink"), text: type(c) === "button" ? val(c, "text") || null : null }));
@@ -1081,7 +1088,7 @@ function designProfileScript(pageId) {
       other: rl.length - navItems.length - globalControls.length - (tallLeft ? 1 : 0) - (wideTop ? 1 : 0)
     };
     const pg = pageId && report.pages.find((p) => String(p.getId()) === pageId) || report.pages[0];
-    const comps = pg.components;
+    const comps = pg.components.filter(onCanvas);
     const shapes = comps.filter(isShape);
     const data = comps.filter((c) => DATA.test(type(c)));
     const texts = comps.filter((c) => type(c) === "simple-description");
@@ -1115,6 +1122,11 @@ function designProfileScript(pageId) {
       });
       return { box: b, iconTile: tile, comparison: unit(c), showsDelta: !!unit(c) && val(c, "hideCompare") !== true, valueSize: val(c, "fontSize") || null };
     });
+    const tabs = shapes.map((s) => {
+      const b = box(s);
+      const btns = comps.filter((o) => type(o) === "button" && inside(b, box(o)) && val(o, "internalLink"));
+      return btns.length >= 2 ? { box: b, tabs: btns.map((o) => ({ text: val(o, "text") || null, toPage: val(o, "internalLink") })) } : null;
+    }).filter(Boolean);
     const interactions = data.map((c) => {
       const beh = c.config.behavior || {};
       const sel = beh.onMetricSelect && beh.onMetricSelect[0] && beh.onMetricSelect[0].resource ? beh.onMetricSelect[0].resource.value : [];
@@ -1153,6 +1165,7 @@ function designProfileScript(pageId) {
     if (cards.length) mapping.push(`${cards.length} tarjetas (forma ${cards[0].color ?? ""} radio ${cards[0].radius ?? "?"}) con datos dentro: card {title} en el spec.`);
     if (kpis.some((k) => k.iconTile)) mapping.push("Scorecards con cuadro de icono: card {icon} (iconos en assets/icons o propios con add_image).");
     if (kpis.some((k) => k.comparison)) mapping.push(`Scorecards con comparacion (${[...new Set(kpis.map((k) => k.comparison).filter(Boolean))].join(", ")}): comparison en el spec.`);
+    if (tabs.length) mapping.push(`${tabs.length} grupo(s) de pestanas (botones con linkPage a paginas hermanas dentro de una forma): button con linkPage y el texto de la pestana; la activa con otro fondo en su pagina.`);
     if (interactions.length) mapping.push("Graficos con metricas opcionales / desglose / filtro cruzado: interactions en el spec.");
     if (theme.fill && theme.fill !== "#FFFFFF") mapping.push(`Fondo de pagina ${theme.fill} via el relleno del tema (fill) y tarjetas de otro color encima.`);
     if (attr.viewModeNav) mapping.push(`Navegacion de Looker Studio: ${attr.viewModeNav} (settings.viewModeNav).`);
@@ -1170,6 +1183,7 @@ function designProfileScript(pageId) {
           cards,
           kpis,
           interactions,
+          tabs,
           titles: { chartTitles: data.filter((d) => val(d, "chartTitleShowTitle")).length, textAboveCharts: textAbove },
           texts: texts.map((t) => ({ text: (htmlText(t) || "").slice(0, 60), size: htmlSize(t), bold: /<b>|font-weight:\s*(bold|[6-9]00)/.test(String(val(t, "text") || "")), color: color(val(t, "fontColor")) })).filter((t) => t.text).slice(0, 25),
           shapeColors: Object.entries(colorCount).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([c, n]) => ({ color: c, count: n })),

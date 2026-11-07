@@ -27,7 +27,7 @@ import {
   reloadReport,
 } from './ops.js';
 import { loadSpec, type ReportSpec } from './spec.js';
-import { addParameter, alignComponents, arrangeComponents, groupComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, addImage, analyzeReportDesign, checkView, getChartStyle, listStyleKeys, screenshotReport, setChartInteractions, setComparison, setPageLink, setChartStyle, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
+import { addParameter, alignComponents, arrangeComponents, groupComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, addImage, analyzeReportDesign, inspectDataSourcesNamed, checkView, getChartStyle, listStyleKeys, screenshotReport, setChartInteractions, setComparison, setPageLink, setChartStyle, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
 import { renamePage, reportSettings } from './ops3.js';
 import { addFilter, addPage, addSourceField, detachFilter, updateFilter, applyTheme, listFilters, listPages, readTheme, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
 
@@ -184,7 +184,7 @@ server.registerTool(
     inputSchema: {},
     annotations: { readOnlyHint: true, openWorldHint: true },
   },
-  async () => run(() => inspectDataSources()),
+  async () => run(() => inspectDataSourcesNamed()),
 );
 
 server.registerTool(

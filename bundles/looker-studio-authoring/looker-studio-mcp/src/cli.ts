@@ -29,7 +29,7 @@ import {
 import { reportSettings } from './ops3.js';
 import { addFilter, addPage, addSourceField, applyTheme, detachFilter, updateFilter, exportTheme, importTheme, listFilters, listPages, readTheme, renamePage, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
 import { readFileSync, existsSync } from 'node:fs';
-import { addParameter, alignComponents, arrangeComponents, groupComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, addImage, analyzeReportDesign, checkView, getChartStyle, listStyleKeys, screenshotReport, setChartInteractions, setComparison, setPageLink, setChartStyle, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
+import { addParameter, alignComponents, arrangeComponents, groupComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, addImage, analyzeReportDesign, inspectDataSourcesNamed, checkView, getChartStyle, listStyleKeys, screenshotReport, setChartInteractions, setComparison, setPageLink, setChartStyle, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
 
 const HELP = `ls-studio <comando> [opciones]
 
@@ -158,7 +158,7 @@ async function main(): Promise<unknown> {
     case 'layout':
       return getReportLayout(typeof flags.page === 'string' ? flags.page : undefined);
     case 'sources':
-      return inspectDataSources();
+      return inspectDataSourcesNamed();
     case 'config':
       return getComponentConfig(need(pos[0], 'componentId'));
     case 'diagnose':
@@ -218,9 +218,21 @@ async function main(): Promise<unknown> {
     case 'delete':
       return deleteComponent(need(pos[0], 'componentId'));
     case 'lint':
-      return lintSpec(loadSpec(need(pos[0], 'spec.json')));
-    case 'apply':
-      return applySpec(need(pos[0], 'spec.json'), { dryRun: !!flags['dry-run'] });
+    {
+      const l = lintSpec(loadSpec(need(pos[0], 'spec.json')));
+      const errors = l.issues.filter((i) => i.severity === 'error').length;
+      const warnings = l.issues.filter((i) => i.severity === 'warning').length;
+      if (errors) process.exitCode = 1;
+      // the resolved boxes only with --verbose: the summary is what matters
+      return { ok: errors === 0, errors, warnings, issues: l.issues.filter((i) => i.severity !== 'info'), info: l.issues.filter((i) => i.severity === 'info').length, ...(flags.verbose ? { components: l.components } : { components: l.components.length }) };
+    }
+    case 'apply': {
+      const r = await applySpec(need(pos[0], 'spec.json'), { dryRun: !!flags['dry-run'] });
+      const errors = r.actions.filter((a) => a.error);
+      if (errors.length || r.lint.some((i) => i.severity === 'error')) process.exitCode = 1;
+      // the failures first, so they are not lost at the top of a long output
+      return { ok: !errors.length, errors: errors.map((a) => ({ key: a.key, error: a.error })), ...r };
+    }
     case 'pages':
       if (pos[0] === 'add') return addPage(need(pos[1], 'el nombre de la pagina'));
       if (pos[0] === 'rename') return renamePage(need(pos[1], 'pageId'), need(pos.slice(2).join(' '), 'el nombre'));

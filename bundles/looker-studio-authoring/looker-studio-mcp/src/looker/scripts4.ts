@@ -1092,7 +1092,7 @@ export function styleKeysScript(args: { componentId: string; filter?: string }):
   try {
     const report = w.angular.element(document.body).injector().get('legoUndoRedoService').report;
     const comp = [...report.pages.flatMap((p: any) => p.components), ...report.components].find((c: any) => c.getId() === args.componentId);
-    if (!comp) return { ok: false, error: `Componente ${args.componentId} no encontrado.` };
+    if (!comp) return { ok: false, error: `Componente ${args.componentId} no esta en el informe abierto (${location.pathname.split('/')[2]}): abre su informe con open_report.` };
     const re = args.filter ? new RegExp(args.filter, 'i') : null;
     const own = comp.config.config.display.keys || {};
     let names: string[] = [];
@@ -1113,7 +1113,7 @@ export function styleKeysScript(args: { componentId: string; filter?: string }):
 }
 
 /** Screen boxes (CSS px) of the components of the open page, plus each one's page link. */
-export function screenBoxesScript(): Array<{ id: string; type: string; level: 'page' | 'report'; x: number; y: number; w: number; h: number; link: string | null; title: string | null }> {
+export function screenBoxesScript(): Array<{ id: string; type: string; level: 'page' | 'report'; x: number; y: number; w: number; h: number; link: string | null; title: string | null; crossFilter: boolean; optionalMetrics: string[]; drillLevels: number }> {
   const w = window as any;
   const report = w.angular.element(document.body).injector().get('legoUndoRedoService').report;
   const cv = document.querySelector('.ng2-canvas-container') as HTMLElement | null;
@@ -1145,7 +1145,10 @@ export function screenBoxesScript(): Array<{ id: string; type: string; level: 'p
     const v = (n: string) => (k[n] && k[n].value !== undefined ? k[n].value : null);
     rows.push({ id: String(c.getId()), type: String(c.config.config.display.type), level,
       x: Math.round(ox + a.left * zz), y: Math.round(oy + a.top * zz), w: Math.round(a.width * zz), h: Math.round(a.height * zz),
-      link: v('internalLink'), title: v('chartTitleShowTitle') ? v('chartTitleText') : null });
+      link: v('internalLink'), title: v('chartTitleShowTitle') ? v('chartTitleText') : null,
+      crossFilter: !!(c.config.behavior && (c.config.behavior.onSelect || []).some((x: any) => x && x.action === 'cross-filtering')),
+      optionalMetrics: ((c.config.behavior && c.config.behavior.onMetricSelect && c.config.behavior.onMetricSelect[0] && c.config.behavior.onMetricSelect[0].resource && c.config.behavior.onMetricSelect[0].resource.value) || []).map((x: any) => x.displayName),
+      drillLevels: ((c.config.behavior && c.config.behavior.onDrillDown && c.config.behavior.onDrillDown[0] && c.config.behavior.onDrillDown[0].resource && c.config.behavior.onDrillDown[0].resource.value) || []).length });
   };
   if (page) for (const c of page.components) add(c, 'page');
   for (const c of report.components) add(c, 'report');
@@ -1171,6 +1174,7 @@ export interface DesignProfile {
   page: {
     id: string; name: string; components: number;
     cards: Array<{ box: number[]; color: string | null; radius: number | null; holds: string[]; title: string | null }>;
+    tabs: Array<{ box: number[]; tabs: Array<{ text: string | null; toPage: string }> }>;
     kpis: Array<{ box: number[]; iconTile: boolean; comparison: string | null; showsDelta: boolean; valueSize: string | null }>;
     interactions: Array<{ type: string; title: string | null; optionalMetrics: string[]; drillLevels: number; crossFilter: boolean }>;
     titles: { chartTitles: number; textAboveCharts: number };
@@ -1210,7 +1214,9 @@ export function designProfileScript(pageId?: string): { ok: boolean; error?: str
     if (typeof theme.font !== 'string') theme.font = null;
 
     // shell: report-level components
-    const rl = report.components as any[];
+    // pieces parked outside the canvas (negative or beyond the size) are not part of the design
+    const onCanvas = (c: any) => { const b = box(c); return b[0]! >= 0 && b[1]! >= 0 && b[0]! < W && b[1]! < H; };
+    const rl = (report.components as any[]).filter(onCanvas);
     const tallLeft = rl.filter((c) => isShape(c) && box(c)[0]! < W * 0.15 && box(c)[3]! > H * 0.6).sort((a, b) => box(b)[3]! - box(a)[3]!)[0];
     const wideTop = rl.filter((c) => isShape(c) && box(c)[1]! < H * 0.2 && box(c)[2]! > W * 0.5).sort((a, b) => box(b)[2]! - box(a)[2]!)[0];
     const navItems = rl.filter((c) => /button|image/.test(type(c)) && val(c, 'internalLink')).map((c) => ({ type: type(c), box: box(c), toPage: val(c, 'internalLink'), text: type(c) === 'button' ? (val(c, 'text') || null) : null }));
@@ -1224,7 +1230,7 @@ export function designProfileScript(pageId?: string): { ok: boolean; error?: str
 
     // page
     const pg = (pageId && report.pages.find((p: any) => String(p.getId()) === pageId)) || report.pages[0];
-    const comps = pg.components as any[];
+    const comps = (pg.components as any[]).filter(onCanvas);
     const shapes = comps.filter(isShape);
     const data = comps.filter((c) => DATA.test(type(c)));
     const texts = comps.filter((c) => type(c) === 'simple-description');
@@ -1244,6 +1250,12 @@ export function designProfileScript(pageId?: string): { ok: boolean; error?: str
       const tile = shapes.some((s) => { const sb = box(s); return sb[2]! <= 100 && sb[3]! <= 100 && Math.abs(sb[1]! + sb[3]! / 2 - (b[1]! + b[3]! / 2)) < b[3]! && sb[0]! < b[0]! && b[0]! - (sb[0]! + sb[2]!) < 60 && images.some((i) => inside(sb, box(i))); });
       return { box: b, iconTile: tile, comparison: unit(c), showsDelta: !!unit(c) && val(c, 'hideCompare') !== true, valueSize: (val(c, 'fontSize') as string) || null };
     });
+    // tabs: a shape holding 2+ buttons that open sibling pages (one of them usually highlighted)
+    const tabs = shapes.map((s) => {
+      const b = box(s);
+      const btns = comps.filter((o) => type(o) === 'button' && inside(b, box(o)) && val(o, 'internalLink'));
+      return btns.length >= 2 ? { box: b, tabs: btns.map((o) => ({ text: val(o, 'text') || null, toPage: val(o, 'internalLink') })) } : null;
+    }).filter(Boolean) as Array<{ box: number[]; tabs: Array<{ text: string | null; toPage: string }> }>;
     const interactions = data.map((c) => {
       const beh = c.config.behavior || {};
       const sel = beh.onMetricSelect && beh.onMetricSelect[0] && beh.onMetricSelect[0].resource ? beh.onMetricSelect[0].resource.value : [];
@@ -1273,6 +1285,7 @@ export function designProfileScript(pageId?: string): { ok: boolean; error?: str
     if (cards.length) mapping.push(`${cards.length} tarjetas (forma ${cards[0]!.color ?? ''} radio ${cards[0]!.radius ?? '?'}) con datos dentro: card {title} en el spec.`);
     if (kpis.some((k) => k.iconTile)) mapping.push('Scorecards con cuadro de icono: card {icon} (iconos en assets/icons o propios con add_image).');
     if (kpis.some((k) => k.comparison)) mapping.push(`Scorecards con comparacion (${[...new Set(kpis.map((k) => k.comparison).filter(Boolean))].join(', ')}): comparison en el spec.`);
+    if (tabs.length) mapping.push(`${tabs.length} grupo(s) de pestanas (botones con linkPage a paginas hermanas dentro de una forma): button con linkPage y el texto de la pestana; la activa con otro fondo en su pagina.`);
     if (interactions.length) mapping.push('Graficos con metricas opcionales / desglose / filtro cruzado: interactions en el spec.');
     if (theme.fill && theme.fill !== '#FFFFFF') mapping.push(`Fondo de pagina ${theme.fill} via el relleno del tema (fill) y tarjetas de otro color encima.`);
     if (attr.viewModeNav) mapping.push(`Navegacion de Looker Studio: ${attr.viewModeNav} (settings.viewModeNav).`);
@@ -1284,7 +1297,7 @@ export function designProfileScript(pageId?: string): { ok: boolean; error?: str
         theme, pages: report.pages.length, shell,
         page: {
           id: String(pg.getId()), name: String((pg.config.attribute && pg.config.attribute.name) || ''), components: comps.length,
-          cards, kpis, interactions,
+          cards, kpis, interactions, tabs,
           titles: { chartTitles: data.filter((d) => val(d, 'chartTitleShowTitle')).length, textAboveCharts: textAbove },
           texts: texts.map((t) => ({ text: (htmlText(t) || '').slice(0, 60), size: htmlSize(t), bold: /<b>|font-weight:\s*(bold|[6-9]00)/.test(String(val(t, 'text') || '')), color: color(val(t, 'fontColor')) })).filter((t) => t.text).slice(0, 25),
           shapeColors: Object.entries(colorCount).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([c, n]) => ({ color: c, count: n })),
