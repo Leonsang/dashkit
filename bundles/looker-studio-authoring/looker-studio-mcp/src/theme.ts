@@ -176,11 +176,16 @@ export function auditUx(f: UxFacts, layoutIssues: Array<{ code: string; componen
     if (!x || !y) return null;
     return '#' + x.map((v, i) => Math.round(y[i]! + (v - y[i]!) * a).toString(16).padStart(2, '0')).join('');
   };
-  const headerBack = t?.accent ? tint(t.accent, t.fill && t.fill !== 'transparent' ? t.fill : PAGE_BG, 0.08) : null;
-  const headerRatio = headerBack && t?.accentText ? contrast(t.accentText, headerBack) : null;
+  // Re-observed 2026-11-07 (themes marca-azul and calido-editorial, tables made by create_component): the
+  // header is painted with the solid accent and, without headerFontColor, its text is the theme's header
+  // colour (dark on a dark accent is unreadable). The 8% tint seen on 2026-11-06 is not the default.
+  void tint;
+  const headerBack = t?.accent ?? null;
+  const headerText = t?.header ?? t?.text ?? null;
+  const headerRatio = headerBack && headerText ? contrast(headerText, headerBack) : null;
   for (const c of f.components) {
-    if (/table/.test(c.type) && headerRatio !== null && headerRatio < 4.5 && !c.overrides.headerFontColor)
-      issues.push({ severity: 'error', area: 'contraste', componentId: c.id, rule: 'WCAG 1.4.3', message: `${c.type}: la cabecera usa el texto de acento (${t!.accentText}) sobre un tinte del acento (~${headerBack}) = ${headerRatio}:1. patch_component style={"headerFontColor":{"color":"${t!.text ?? '#202124'}","opacity":1,"themeRef":{"index":1}}} o stripThemeStyles=true.` });
+    if (/table/.test(c.type) && headerRatio !== null && headerRatio < 4.5 && !c.overrides.headerFontColor && !c.overrides.headerColor)
+      issues.push({ severity: 'error', area: 'contraste', componentId: c.id, rule: 'WCAG 1.4.3', message: `${c.type}: la cabecera pinta el texto del tema (${headerText}) sobre el acento (${headerBack}) = ${headerRatio}:1. patch_component style={"headerFontColor":{"color":"${t!.accentText ?? '#FFFFFF'}","opacity":1}}.` });
     // A value tied to a theme colour (themeRef) follows the theme: not an override.
     // Decorations (shapes, images) have no theme look to depart from, and a transparent background or a
     // zero border is a component inset in a card, letting the card show: neither is a theme override.
@@ -190,8 +195,12 @@ export function auditUx(f: UxFacts, layoutIssues: Array<{ code: string; componen
     for (const [k, v] of Object.entries(c.overrides)) {
       if (/fontfamily/i.test(k) && typeof v === 'string') fonts.add(v);
       if (/fontcolor/i.test(k) && v && typeof v === 'object' && typeof (v as Color).color === 'string') {
+        // A table header's text sits on the header colour (its own, or the theme's accent tint), not on the
+        // component's background (false 1.03:1 for white on an accent header, benchmark 2026-11-07).
+        const hdr = k === 'headerFontColor' ? (c.overrides.headerColor as Color | undefined) : undefined;
         const bgOv = c.overrides.backgroundColor ?? c.overrides.background;
-        const back = (bgOv && typeof bgOv === 'object' && (bgOv as Color).color) || t?.fill || PAGE_BG;
+        const back = (k === 'headerFontColor' ? ((hdr && typeof hdr === 'object' && hdr.color) || headerBack) : null)
+          || (bgOv && typeof bgOv === 'object' && (bgOv as Color).color) || t?.fill || PAGE_BG;
         const r = contrast((v as Color).color, back === 'transparent' ? PAGE_BG : back);
         if (r !== null && r < 4.5) issues.push({ severity: 'error', area: 'contraste', componentId: c.id, rule: 'WCAG 1.4.3', message: `${c.type}: ${k} ${(v as Color).color} sobre ${back} = ${r}:1 (< 4.5:1).` });
       }

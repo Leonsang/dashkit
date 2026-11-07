@@ -95,7 +95,7 @@ sus colores y fuentes: quítalos con `patch_component stripThemeStyles=true` par
   | `kpi-metric` | `hideCompare`, `compactNumbers` | Comparación y números compactos |
   | `simple-linechart` | `missingDataDisplayType: "linearInterpolation"` | Une los puntos; con `lineToZero` (por defecto) una serie mensual sobre un eje diario sale en picos |
   | `button` | `text: "Solo pedidos online"`, `fontSize: "16px"` | Etiqueta del botón (la plantilla dice "Botón nuevo") |
-  | `simple-table`, `pivot-table` | `headerFontColor: {"color":"#202124","opacity":1,"themeRef":{"index":1}}` | Cabecera con el color de texto del tema. `stripThemeStyles` ya lo pone |
+  | `simple-table`, `pivot-table` | `headerColor: {"color":"<acento>","opacity":1}`, `headerFontColor: {"color":"<texto de acento>","opacity":1}` | Cabecera legible con cualquier tema. `stripThemeStyles` ya lo pone |
 
 CLI: `patch <id> --date-days 28 --strip-styles`, `patch <id> --text "Ventas 2025" --size 24 --bold --align center`,
 `patch <id> --parameter metrica`, `patch <id> --style '{"hideMetric":false}'`. En el spec, `style`.
@@ -107,9 +107,10 @@ su primera dimensión ascendente, y alinea con ese orden el orden inicial que el
 (`behavior.onSort`): en un gráfico combinado nuevo el editor lo pone por "Número de registros" y es el que
 manda.
 
-**Cabeceras de tabla:** el editor pinta la cabecera sobre un tinte claro del acento con el color de texto del
-acento, que en casi todos los temas es blanco: no se lee. `stripThemeStyles=true` en tablas fija la cabecera al
-color de texto del tema, y `audit_ux` avisa de las tablas que no lo tienen.
+**Cabeceras de tabla:** según el informe, el editor pinta la cabecera sobre un tinte claro del acento con el
+texto de acento (blanco sobre celeste) o sobre el acento sólido con el texto del tema (oscuro sobre oscuro): en
+los dos casos puede no leerse. `stripThemeStyles=true` en tablas fija las dos claves, el acento del tema de
+fondo y su texto de acento encima, y `audit_ux` avisa de las tablas que no las tienen.
 
 ## Alinear, distribuir y agrupar: align_components, group_components
 

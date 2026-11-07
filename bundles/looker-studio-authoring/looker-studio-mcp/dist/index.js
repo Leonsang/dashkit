@@ -8,7 +8,7 @@ import {
   getReportLayout,
   sanitizeLearning,
   writesAllowed
-} from "./chunks/chunk-ODXFQJJM.js";
+} from "./chunks/chunk-CNPWPIV3.js";
 import {
   addImage,
   addParameter,
@@ -42,7 +42,7 @@ import {
   setText,
   updateBlend,
   updateParameter
-} from "./chunks/chunk-DGF4AYBS.js";
+} from "./chunks/chunk-BC2L2S4Q.js";
 import {
   addFilter,
   addPage,
@@ -80,7 +80,7 @@ import {
   updateFilter,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-2SU643XG.js";
+} from "./chunks/chunk-4HVPQT54.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
 import "./chunks/chunk-KBCVDAPW.js";

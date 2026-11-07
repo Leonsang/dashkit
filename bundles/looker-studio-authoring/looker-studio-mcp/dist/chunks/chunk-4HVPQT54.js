@@ -2997,16 +2997,18 @@ function patchComponentScript(args) {
         changes.push(`-${k}`);
       }
       if (/table/.test(String(comp.config.config.display.type))) {
-        let color = "#202124";
+        let accent = "#1A73E8", accentText = "#FFFFFF";
         try {
           const themes = report.config.resource && report.config.resource.theme || [];
           const list = Array.isArray(themes) ? themes : Object.values(themes);
-          const fc = list.map((t) => t && t.content && t.content.themeFontColor).find(Boolean);
-          if (fc && fc.color) color = fc.color;
+          const ct = list.map((t) => t && t.content).find((x) => x && x.themeAccentFillColor);
+          if (ct && ct.themeAccentFillColor.color) accent = ct.themeAccentFillColor.color;
+          if (ct && ct.themeAccentFontColor && ct.themeAccentFontColor.color) accentText = ct.themeAccentFontColor.color;
         } catch {
         }
-        comp.setDisplayKeyValue("headerFontColor", { color, opacity: 1, themeRef: { index: 1 } });
-        changes.push("headerFontColor=texto del tema");
+        comp.setDisplayKeyValue("headerColor", { color: accent, opacity: 1 });
+        comp.setDisplayKeyValue("headerFontColor", { color: accentText, opacity: 1 });
+        changes.push("cabecera=acento del tema con su texto");
       }
     }
     if (changes.length) inj.get("wrapperSaveService").save([comp]);
@@ -3959,8 +3961,8 @@ async function deleteComponent(componentId) {
   const page = await editPage();
   const { componentLevelScript } = await import("./scripts4-ADA4C2PA.js");
   if (await evaluateOn(page, T, componentLevelScript, componentId) === "report") {
-    const { arrangeComponents } = await import("./ops4-ZQPQSLYX.js");
-    const { listPages: listPages2 } = await import("./ops3-BDAX6V2Z.js");
+    const { arrangeComponents } = await import("./ops4-RJH3DGDS.js");
+    const { listPages: listPages2 } = await import("./ops3-LOGZY6GX.js");
     await arrangeComponents([componentId], "page", (await listPages2())[0].id);
   }
   const t0 = Date.now();
@@ -3997,7 +3999,7 @@ async function applySpec(specOrFile, opts = {}) {
   }
   const state = statePath && existsSync4(statePath) ? JSON.parse(readFileSync4(statePath, "utf8")) : { reportId: null, keys: {} };
   const page = opts.dryRun ? await getReportPage() : await editPage();
-  const { ensureVisible } = await import("./ops4-ZQPQSLYX.js");
+  const { ensureVisible } = await import("./ops4-RJH3DGDS.js");
   if (!opts.dryRun) await ensureVisible(page);
   const info = await evaluateOn(page, T, pageInfoScript);
   if (state.reportId && state.reportId !== info.internalReportId) {
@@ -4026,7 +4028,7 @@ async function applySpec(specOrFile, opts = {}) {
       let created = false;
       const blank = !hit && !opts.dryRun ? pages.find((p) => p.components === 0 && /^((p[aá]gina|page|untitled page|p[aá]gina sin t[ií]tulo)(\s*\d+)?)?$/i.test(String(p.name).trim()) && !wanted.includes(p.name) && !Object.values(pageIds).includes(p.id)) : void 0;
       if (blank) {
-        const { renamePage: renamePage2 } = await import("./ops3-BDAX6V2Z.js");
+        const { renamePage: renamePage2 } = await import("./ops3-LOGZY6GX.js");
         await renamePage2(blank.id, name);
         pages = await listPages();
         hit = pages.find((p) => p.id === blank.id);
@@ -4062,7 +4064,7 @@ async function applySpec(specOrFile, opts = {}) {
         const extra = await patchIfNeeded(page, existingId, c);
         result.actions.push({ key: c.key, action: "update", componentId: existingId, ...extra.length ? { patched: extra } : {} });
       } else if (c.type === "image-component" && c.image) {
-        const { addImage } = await import("./ops4-ZQPQSLYX.js");
+        const { addImage } = await import("./ops4-RJH3DGDS.js");
         const { dirname: dirname5, resolve } = await import("node:path");
         const base = typeof specOrFile === "string" ? dirname5(specOrFile) : process.cwd();
         const r = await addImage({ path: resolve(base, c.image), box: { x: c.x, y: c.y, width: c.w, height: c.h }, ...pageId ? { pageId } : {} });
@@ -4128,7 +4130,7 @@ async function applySpec(specOrFile, opts = {}) {
     }
     if (filterLog.length) result.filters = filterLog;
     {
-      const { arrangeComponents } = await import("./ops4-ZQPQSLYX.js");
+      const { arrangeComponents } = await import("./ops4-RJH3DGDS.js");
       const inside = (p, q) => p !== q && q.x >= p.x && q.y >= p.y && q.x + q.w <= p.x + p.w && q.y + q.h <= p.y + p.h;
       const level = (c) => c.reportLevel ? "report" : c.page;
       const live = components.filter((c) => state.keys[c.key]);
@@ -4166,50 +4168,50 @@ async function patchIfNeeded(page, id, c) {
   }
   if (c.text !== void 0) {
     const t = typeof c.text === "string" ? { text: c.text } : c.text;
-    const { setText } = await import("./ops4-ZQPQSLYX.js");
+    const { setText } = await import("./ops4-RJH3DGDS.js");
     await setText(id, t.text, { ...t.size ? { size: t.size } : {}, ...t.bold ? { bold: true } : {}, ...t.color ? { color: t.color } : {}, ...t.align ? { align: t.align } : {} });
     changes.push("text");
   }
   if (c.style) {
-    const { setStyle } = await import("./ops4-ZQPQSLYX.js");
+    const { setStyle } = await import("./ops4-RJH3DGDS.js");
     await setStyle(id, c.style);
     changes.push("style");
   }
   if (c.conditional) {
-    const { setConditionalFormat } = await import("./ops4-ZQPQSLYX.js");
+    const { setConditionalFormat } = await import("./ops4-RJH3DGDS.js");
     await setConditionalFormat(id, c.conditional);
     changes.push(`conditional:${c.conditional.length}`);
   }
   if (c.chartStyle) {
-    const { setChartStyle } = await import("./ops4-ZQPQSLYX.js");
+    const { setChartStyle } = await import("./ops4-RJH3DGDS.js");
     await setChartStyle({ ...c.chartStyle, componentId: id, reload: false });
     changes.push("chartStyle");
   }
   if (c.comparison) {
-    const { setComparison } = await import("./ops4-ZQPQSLYX.js");
+    const { setComparison } = await import("./ops4-RJH3DGDS.js");
     await setComparison(id, c.comparison, c.dateField);
     changes.push(`comparison:${c.comparison}`);
   }
   if (c.linkPage) {
-    const { setPageLink } = await import("./ops4-ZQPQSLYX.js");
+    const { setPageLink } = await import("./ops4-RJH3DGDS.js");
     await setPageLink(id, c.linkPage);
     changes.push("linkPage");
   }
   if (c.reportLevel) {
     const { componentLevelScript } = await import("./scripts4-ADA4C2PA.js");
     if (await evaluateOn(page, T, componentLevelScript, id) === "page") {
-      const { arrangeComponents } = await import("./ops4-ZQPQSLYX.js");
+      const { arrangeComponents } = await import("./ops4-RJH3DGDS.js");
       await arrangeComponents([id], "report", c.page && !c.page.startsWith("name:") && c.page !== "active" ? c.page : void 0);
       changes.push("reportLevel");
     }
   }
   if (c.interactions) {
-    const { setChartInteractions } = await import("./ops4-ZQPQSLYX.js");
+    const { setChartInteractions } = await import("./ops4-RJH3DGDS.js");
     await setChartInteractions({ componentId: id, ...c.interactions, reload: false });
     changes.push("interactions");
   }
   if (c.parameter) {
-    const { setControlParameter } = await import("./ops4-ZQPQSLYX.js");
+    const { setControlParameter } = await import("./ops4-RJH3DGDS.js");
     await setControlParameter(id, c.parameter);
     changes.push(`parameter:${c.parameter}`);
   }
@@ -4377,19 +4379,22 @@ function auditUx(f, layoutIssues = []) {
     if (!x || !y) return null;
     return "#" + x.map((v, i) => Math.round(y[i] + (v - y[i]) * a).toString(16).padStart(2, "0")).join("");
   };
-  const headerBack = t?.accent ? tint(t.accent, t.fill && t.fill !== "transparent" ? t.fill : PAGE_BG, 0.08) : null;
-  const headerRatio = headerBack && t?.accentText ? contrast(t.accentText, headerBack) : null;
+  void tint;
+  const headerBack = t?.accent ?? null;
+  const headerText = t?.header ?? t?.text ?? null;
+  const headerRatio = headerBack && headerText ? contrast(headerText, headerBack) : null;
   for (const c of f.components) {
-    if (/table/.test(c.type) && headerRatio !== null && headerRatio < 4.5 && !c.overrides.headerFontColor)
-      issues.push({ severity: "error", area: "contraste", componentId: c.id, rule: "WCAG 1.4.3", message: `${c.type}: la cabecera usa el texto de acento (${t.accentText}) sobre un tinte del acento (~${headerBack}) = ${headerRatio}:1. patch_component style={"headerFontColor":{"color":"${t.text ?? "#202124"}","opacity":1,"themeRef":{"index":1}}} o stripThemeStyles=true.` });
+    if (/table/.test(c.type) && headerRatio !== null && headerRatio < 4.5 && !c.overrides.headerFontColor && !c.overrides.headerColor)
+      issues.push({ severity: "error", area: "contraste", componentId: c.id, rule: "WCAG 1.4.3", message: `${c.type}: la cabecera pinta el texto del tema (${headerText}) sobre el acento (${headerBack}) = ${headerRatio}:1. patch_component style={"headerFontColor":{"color":"${t.accentText ?? "#FFFFFF"}","opacity":1}}.` });
     const clearValue = (v) => !!v && typeof v === "object" && (v.opacity === 0 || v.size === 0);
     const keys = ["generic-shape", "image-component", "shape", "ellipse"].includes(c.type) ? [] : Object.keys(c.overrides).filter((k) => !c.overrides[k]?.themeRef && !clearValue(c.overrides[k]));
     if (keys.length) issues.push({ severity: "info", area: "tema", componentId: c.id, rule: "diseno-layout \xA76", message: `${c.type} sobrescribe el tema en ${keys.length} claves (${keys.slice(0, 5).join(", ")}${keys.length > 5 ? "\u2026" : ""}).` });
     for (const [k, v] of Object.entries(c.overrides)) {
       if (/fontfamily/i.test(k) && typeof v === "string") fonts.add(v);
       if (/fontcolor/i.test(k) && v && typeof v === "object" && typeof v.color === "string") {
+        const hdr = k === "headerFontColor" ? c.overrides.headerColor : void 0;
         const bgOv = c.overrides.backgroundColor ?? c.overrides.background;
-        const back = bgOv && typeof bgOv === "object" && bgOv.color || t?.fill || PAGE_BG;
+        const back = (k === "headerFontColor" ? hdr && typeof hdr === "object" && hdr.color || headerBack : null) || bgOv && typeof bgOv === "object" && bgOv.color || t?.fill || PAGE_BG;
         const r = contrast(v.color, back === "transparent" ? PAGE_BG : back);
         if (r !== null && r < 4.5) issues.push({ severity: "error", area: "contraste", componentId: c.id, rule: "WCAG 1.4.3", message: `${c.type}: ${k} ${v.color} sobre ${back} = ${r}:1 (< 4.5:1).` });
       }
@@ -4851,7 +4856,7 @@ async function addSourceField(opts) {
   });
   const open = async () => {
     if (!await clickText("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) {
-      const { selectSourceChart } = await import("./ops4-ZQPQSLYX.js");
+      const { selectSourceChart } = await import("./ops4-RJH3DGDS.js");
       await selectSourceChart(page, opts.source && opts.source.startsWith("@") ? opts.source : void 0);
       if (!await clickText("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) throw new Error('No se encontro "Anadir un campo" en el panel Datos.');
     }
@@ -4878,7 +4883,7 @@ async function addSourceField(opts) {
     if (opts.source && !opts.source.startsWith("@") && dsList.length === 1) opts = { ...opts, source: void 0 };
     const byField = !!opts.source && opts.source.startsWith("@");
     if (byField) {
-      const { selectSourceChart } = await import("./ops4-ZQPQSLYX.js");
+      const { selectSourceChart } = await import("./ops4-RJH3DGDS.js");
       await clickText("button", /^(Cancelar|Cancel)$/);
       await close();
       await selectSourceChart(page, opts.source);

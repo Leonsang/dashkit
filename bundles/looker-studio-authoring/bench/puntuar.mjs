@@ -70,7 +70,8 @@ add('ux', ux.score >= 90 ? 15 : ux.score >= 75 ? 10 : ux.score >= 50 ? 5 : 0, 15
 // 7. cobertura (sobre todas las páginas). layout da ids internos (_103145323_, calc_...): se traducen a nombres.
 const idName = {};
 for (const d of src.dataSources || []) for (const f of d.fields || []) idName[f.id] = f.name;
-const nm = (x) => (idName[x] ?? idName[String(x).replace(/^t\d+\./, '')] ?? String(x)).toLowerCase();
+// sin tildes: un alias "Valoración media" cuenta como valoracion
+const nm = (x) => (idName[x] ?? idName[String(x).replace(/^t\d+\./, '')] ?? String(x)).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 let kpisCmp = 0, temporal = false, porLocalTurno = false, esperaVal = false;
 for (const p of Array.isArray(pages) ? pages : []) {
   const d = ls('design', '--page', p.id);

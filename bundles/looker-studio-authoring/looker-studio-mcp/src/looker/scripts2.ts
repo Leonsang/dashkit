@@ -360,18 +360,22 @@ export function patchComponentScript(args: { componentId: string; dateRangeDays?
         comp.setDisplayKeyValue(k, undefined);
         changes.push(`-${k}`);
       }
-      // Tables paint their header on a light tint of the accent with the accent's text colour: white on
-      // pale blue with the usual themes (1.1:1, observed 2026-11-06). Use the theme's text colour there.
+      // Table headers: on 2026-11-06 the editor painted them on a light tint of the accent with the accent's
+      // text colour; on 2026-11-07 (CSV reports) on the solid accent with the theme's header colour. Either
+      // default can be unreadable, so set both: the accent as background and the accent's text on it (the
+      // pair the theme audit already checks).
       if (/table/.test(String(comp.config.config.display.type))) {
-        let color = '#202124';
+        let accent = '#1A73E8', accentText = '#FFFFFF';
         try {
           const themes = (report.config.resource && report.config.resource.theme) || [];
           const list = Array.isArray(themes) ? themes : Object.values(themes);
-          const fc = list.map((t: any) => t && t.content && t.content.themeFontColor).find(Boolean);
-          if (fc && fc.color) color = fc.color;
-        } catch { /* default */ }
-        comp.setDisplayKeyValue('headerFontColor', { color, opacity: 1, themeRef: { index: 1 } });
-        changes.push('headerFontColor=texto del tema');
+          const ct = list.map((t: any) => t && t.content).find((x: any) => x && x.themeAccentFillColor);
+          if (ct && ct.themeAccentFillColor.color) accent = ct.themeAccentFillColor.color;
+          if (ct && ct.themeAccentFontColor && ct.themeAccentFontColor.color) accentText = ct.themeAccentFontColor.color;
+        } catch { /* defaults */ }
+        comp.setDisplayKeyValue('headerColor', { color: accent, opacity: 1 });
+        comp.setDisplayKeyValue('headerFontColor', { color: accentText, opacity: 1 });
+        changes.push('cabecera=acento del tema con su texto');
       }
     }
     if (changes.length) inj.get('wrapperSaveService').save([comp]);
