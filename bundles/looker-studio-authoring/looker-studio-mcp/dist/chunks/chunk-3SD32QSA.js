@@ -676,6 +676,13 @@ function chartStyleScript(args) {
       if (a.logScale !== void 0) put("leftYAxisLogScale", a.logScale);
     }
     if (args.gridColor) put("gridColor", { color: hex(args.gridColor), opacity: 1 });
+    if (args.title === null) put("chartTitleShowTitle", false);
+    else if (args.title) {
+      put("chartTitleShowTitle", true);
+      put("chartTitleText", args.title.text);
+      if (args.title.size) put("chartTitleFontSize", args.title.size);
+      if (args.title.bold !== void 0) put("chartTitleBold", args.title.bold);
+    }
     if (!set.length) return { ok: false, error: "No hay nada que cambiar." };
     inj.get("wrapperSaveService").save([comp]);
     return { ok: true, set, series: names };
@@ -750,6 +757,179 @@ function readChartStyleScript(componentId) {
     return { ok: false, error: String(e && e.message) };
   }
 }
+function comparisonScript(args) {
+  const w = window;
+  try {
+    const inj = w.angular.element(document.body).injector();
+    const report = inj.get("legoUndoRedoService").report;
+    const all = [...report.pages.flatMap((p) => p.components), ...report.components];
+    const comp = all.find((c) => c.getId() === args.componentId);
+    if (!comp) return { ok: false, error: `Componente ${args.componentId} no encontrado.` };
+    const keys = comp.config.config.datasource && comp.config.config.datasource.keys;
+    if (!keys || !("compareDateDuration" in keys)) {
+      let ok = false;
+      try {
+        ok = "compareDateDuration" in (comp.getAllDataSourceKeys ? comp.getAllDataSourceKeys() : {});
+      } catch {
+      }
+      if (!ok) return { ok: false, error: `Un ${comp.config.config.display.type} no admite periodo de comparacion.` };
+    }
+    const unit = args.comparison === "previous_year" ? 8 : 9;
+    const value = args.comparison === "none" ? { anchorType: 0, config: {} } : { anchorType: 1, config: { startOffsetUnit: unit, startOffset: 1, endOffsetUnit: unit, endOffset: 1 } };
+    comp.setDataSourceKeyValue("compareDateDuration", value);
+    const set = ["compareDateDuration"];
+    if (comp.config.config.display.type === "kpi-metric") {
+      comp.setDisplayKeyValue("hideCompare", args.comparison === "none");
+      set.push("hideCompare");
+    }
+    inj.get("wrapperSaveService").save([comp]);
+    return { ok: true, set };
+  } catch (e) {
+    return { ok: false, error: String(e && e.message) };
+  }
+}
+function pageLinkScript(args) {
+  const w = window;
+  try {
+    const inj = w.angular.element(document.body).injector();
+    const report = inj.get("legoUndoRedoService").report;
+    const all = [...report.pages.flatMap((p) => p.components), ...report.components];
+    const comp = all.find((c) => c.getId() === args.componentId);
+    if (!comp) return { ok: false, error: `Componente ${args.componentId} no encontrado.` };
+    if (comp.config.config.display.type !== "button") return { ok: false, error: "El enlace a una pagina va en un boton (button)." };
+    const target = report.pages.find((p) => String(p.getId()) === args.pageId);
+    if (!target) return { ok: false, error: `Pagina ${args.pageId} no encontrada (ids en list_pages).` };
+    const name = String(target.config.attribute && target.config.attribute.name || "");
+    for (const [k, v] of Object.entries({ internalLink: args.pageId, actionType: 1, internalActionType: 1, linkType: 1, linkUrl: `http://${name}`, linkNewTab: false })) comp.setDisplayKeyValue(k, v);
+    inj.get("wrapperSaveService").save([comp]);
+    return { ok: true, page: name };
+  } catch (e) {
+    return { ok: false, error: String(e && e.message) };
+  }
+}
+function chartInteractionsScript(args) {
+  const w = window;
+  try {
+    const inj = w.angular.element(document.body).injector();
+    const report = inj.get("legoUndoRedoService").report;
+    const all = [...report.pages.flatMap((p) => p.components), ...report.components];
+    const comp = all.find((c) => c.getId() === args.componentId);
+    if (!comp) return { ok: false, error: `Componente ${args.componentId} no encontrado.` };
+    const cfg = comp.config;
+    cfg.behavior = cfg.behavior || {};
+    const beh = cfg.behavior;
+    const keys = cfg.config.datasource.keys;
+    let schema = {};
+    try {
+      schema = comp.getSchema().qe.concepts || {};
+    } catch {
+    }
+    const label = (n) => {
+      const q = cfg.conceptDefs[n] && cfg.conceptDefs[n].queryTimeTransformation;
+      const dn = q && q.displayTransformation && q.displayTransformation.displayName;
+      const sf = q && q.dataTransformation && q.dataTransformation.sourceFieldName;
+      return String(dn || sf && schema[sf] && schema[sf].displayName || sf || n);
+    };
+    const conceptObj = (n, type, dataType) => {
+      const d = JSON.parse(JSON.stringify(cfg.conceptDefs[n]));
+      return { id: d.id || `t0.${n}`, name: n, namespace: d.namespace || "t0", displayName: label(n), type, dataType, isDefault: false, isAutoField: true, queryTimeTransformation: d.queryTimeTransformation };
+    };
+    const out = {};
+    if (args.clearSelector) {
+      delete beh.onMetricSelect;
+      out.selector = [];
+    }
+    if (args.toSelector) {
+      const prim = keys.metrics.value.primary;
+      if (args.toSelector >= prim.length) return { ok: false, error: "El grafico tiene que conservar al menos una metrica propia." };
+      const moved = prim.slice(prim.length - args.toSelector);
+      keys.metrics.value.primary = prim.slice(0, prim.length - args.toSelector);
+      const prev = beh.onMetricSelect && beh.onMetricSelect[0] && beh.onMetricSelect[0].resource ? beh.onMetricSelect[0].resource.value : [];
+      const fresh = moved.map((n) => conceptObj(n, 1, 5));
+      const value = [...prev.filter((v) => !moved.includes(v.name) && !fresh.some((f) => f.displayName === v.displayName)), ...fresh];
+      beh.onMetricSelect = [{ action: "metric-selector", isControl: false, resource: { type: "concepts", value }, init: null }];
+      out.selector = value.map((v) => v.displayName);
+    }
+    if (args.dateDrill) {
+      const base = keys.dimensions && keys.dimensions.value && keys.dimensions.value.primary && keys.dimensions.value.primary[0];
+      if (!base) return { ok: false, error: "El grafico no tiene dimension." };
+      const prevDrill = beh.onDrillDown && beh.onDrillDown[0] && beh.onDrillDown[0].resource && beh.onDrillDown[0].resource.value;
+      if (prevDrill && prevDrill.length && prevDrill.some((v) => v.name === base) && base !== prevDrill[prevDrill.length - 1].name) {
+        out.drill = prevDrill.map((v) => v.name);
+      } else {
+        const bd = cfg.conceptDefs[base];
+        const tc = bd && bd.queryTimeTransformation && bd.queryTimeTransformation.dataTransformation && bd.queryTimeTransformation.dataTransformation.transformationConfig;
+        if (tc && tc.transformationType) return { ok: false, error: "La dimension ya esta agrupada (mes, semana...): usa la fecha diaria para desglosar." };
+        const levels = [];
+        for (const t of [3, 4]) {
+          let name = Object.keys(cfg.conceptDefs).find((n) => {
+            const q = cfg.conceptDefs[n].queryTimeTransformation;
+            return q && q.dataTransformation && q.dataTransformation.sourceFieldName === bd.queryTimeTransformation.dataTransformation.sourceFieldName && q.dataTransformation.transformationConfig && q.dataTransformation.transformationConfig.transformationType === t;
+          });
+          if (!name) {
+            name = "qt_" + Math.random().toString(36).slice(2, 12);
+            const d = JSON.parse(JSON.stringify(bd));
+            d.id = `${d.namespace || "t0"}.${name}`;
+            d.name = name;
+            d.queryTimeTransformation.dataTransformation.transformationConfig = { transformationType: t };
+            d.queryTimeTransformation.displayTransformation = Object.assign({}, d.queryTimeTransformation.displayTransformation || {}, { outputSemanticInfo: { semanticConfig: [{ semanticType: t, dateTimeOptions: { useNativeDateTime: true } }] } });
+            delete d.queryTimeTransformation.displayTransformation.displayName;
+            cfg.conceptDefs[name] = d;
+          }
+          levels.push(name);
+        }
+        levels.push(base);
+        const value = levels.map((n) => conceptObj(n, 0, 6));
+        const act = () => [{ action: "drill-down", isControl: false, resource: { type: "concepts", value: JSON.parse(JSON.stringify(value)) } }];
+        beh.onDrillDown = act();
+        beh.onTooltipOrHeaderClick = act();
+        out.drill = ["mes", "semana", label(base)];
+        if (args.drillStart !== "day") {
+          const month = levels[0];
+          keys.dimensions.value.primary = [month, ...keys.dimensions.value.primary.slice(1)];
+          const sd = keys.sortData && Array.isArray(keys.sortData.value) ? keys.sortData.value : [];
+          for (const s of sd) if (s.sortColumn === base) s.sortColumn = month;
+          for (const a of beh.onSort || []) {
+            const so = a && a.init && a.init.sortOptions;
+            for (const s of so && so.sortData || []) if (s.sortColumn && s.sortColumn.name === base) {
+              s.sortColumn.name = month;
+              s.sortColumn.dataTransformation = JSON.parse(JSON.stringify(cfg.conceptDefs[month].queryTimeTransformation.dataTransformation));
+            }
+          }
+          out.drill = ["mes (inicio)", "semana", label(base)];
+        }
+      }
+    }
+    if (args.crossFilter !== void 0) {
+      if (args.crossFilter) beh.onSelect = [{ action: "cross-filtering", isControl: false }];
+      else delete beh.onSelect;
+      out.crossFilter = args.crossFilter;
+    }
+    inj.get("wrapperSaveService").save([comp]);
+    return { ok: true, ...out };
+  } catch (e) {
+    return { ok: false, error: String(e && e.message) };
+  }
+}
+function imageComponentsScript() {
+  const w = window;
+  const report = w.angular.element(document.body).injector().get("legoUndoRedoService").report;
+  const rows = [];
+  const add = (c, pageId) => {
+    if (c.config.config.display.type !== "image-component") return;
+    const f = c.config.config.display.keys.file;
+    rows.push({ id: String(c.getId()), pageId, file: f && f.value && f.value.id ? JSON.parse(JSON.stringify(f.value)) : null });
+  };
+  for (const p of report.pages) for (const c of p.components) add(c, String(p.getId()));
+  for (const c of report.components) add(c, null);
+  return rows;
+}
+function componentLevelScript(id) {
+  const report = window.angular.element(document.body).injector().get("legoUndoRedoService").report;
+  if (report.components.some((c) => c.getId() === id)) return "report";
+  if (report.pages.some((p) => p.components.some((c) => c.getId() === id))) return "page";
+  return null;
+}
 
 export {
   navPagesScript,
@@ -771,5 +951,10 @@ export {
   componentBoxesScript,
   groupScript,
   chartStyleScript,
-  readChartStyleScript
+  readChartStyleScript,
+  comparisonScript,
+  pageLinkScript,
+  chartInteractionsScript,
+  imageComponentsScript,
+  componentLevelScript
 };

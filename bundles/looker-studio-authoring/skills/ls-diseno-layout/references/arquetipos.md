@@ -88,6 +88,41 @@ un **Resumen** y una o dos páginas de **Desglose**; la de **Detalle** va al fin
 - Tabla paginada de 10 a 25 filas por página (`ls-rendimiento` §8).
 - Ejemplo: `pagina-4-controles.spec.json`.
 
+## 5. Panel con barra lateral (envoltorio para todo el informe)
+
+No es una página sino el **marco común** de todas: navegación propia a la izquierda y una barra de filtros
+arriba, los dos a nivel de informe. Patrón de plantillas comerciales publicadas, rehecho con dashkit
+(`showcase.spec.json`; verificado el 2026-11-07). Lienzo de 1330 × 980 px.
+
+```
+┌──────┬─────────────────────────────────────────── título de la página [170,20,840,60] ───────┐
+│marca │ ┌ filtros [170,90,1140,60]: ▣ Filtros · canal · región · categoría · periodo ────────┐ │
+│      │ └─────────────────────────────────────────────────────────────────────────────────────┘ │
+│ ▣    │ ┌▣ KPI ┐┌▣ KPI ┐┌▣ KPI ┐┌▣ KPI ┐┌▣ KPI ┐   tarjetas con icono, y=170 h=120            │
+│Resum.│ ┌ Tarjeta con título ────────────────┐┌ Tarjeta con título ────┐                       │
+│ ▣    │ │ [170,310,740,300]                  ││ [930,310,380,300]       │                       │
+│Impul.│ └────────────────────────────────────┘└─────────────────────────┘                       │
+│ ...  │ ┌ Tarjeta ─────────────────┐┌ Tarjeta ──────────────────┐                               │
+│[10,10│ │ [170,630,560,320]        ││ [750,630,560,320]          │                               │
+│140,  │ └──────────────────────────┘└────────────────────────────┘                               │
+│960]  │                                                                                          │
+└──────┴──────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+- **Barra lateral** (`reportLevel: true`): forma de 140 px de ancho en el color oscuro de la marca, con radio
+  16; la marca arriba; una entrada por página cada 100 px: icono blanco de 40 px, texto de 12 px centrado y
+  encima un botón transparente con `linkPage`, que es lo que se pulsa. Navegación de Looker Studio en
+  `nav-top` (`settings.viewModeNav`) para no tener dos menús laterales.
+- **Barra de filtros** (`reportLevel: true`): forma blanca de 60 px de alto con un cuadro de icono, la
+  palabra «Filtros» y los controles de lista desplegable más el periodo, todos de 230 px. Los mismos filtros
+  valen para todas las páginas; los propios de una página van en su cuerpo.
+- **Tarjetas** (`card`): cada gráfico en una forma blanca de radio 12 con su título dentro; los KPIs con un
+  cuadro de color con icono a la izquierda y la variación frente al periodo anterior (`comparison`).
+- **Tema** `panel-lateral`: fondo de página gris claro (#F4F6F9) y sin borde por componente, para que las
+  tarjetas blancas hagan de borde.
+- **Gráfico principal vivo**: métricas opcionales y desglose mes › semana › día (`interactions`).
+- Cuidado con el contraste del texto de la barra lateral: blanco sobre el color oscuro, ≥ 4,5:1.
+
 ## Reglas comunes
 
 - **Cabecera de 60 a 100 px** con los controles; el periodo siempre arriba a la derecha.

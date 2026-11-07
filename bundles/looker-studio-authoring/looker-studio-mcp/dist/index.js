@@ -8,43 +8,58 @@ import {
   getReportLayout,
   sanitizeLearning,
   writesAllowed
-} from "./chunks/chunk-4I4EYYEA.js";
+} from "./chunks/chunk-YTEUPV2Q.js";
 import {
-  addFilter,
-  addPage,
+  addImage,
   addParameter,
-  addSourceField,
   alignComponents,
-  applySpec,
-  applyTheme,
   arrangeComponents,
-  attachToReport,
   bindFieldsToComponent,
-  captureTemplates,
-  copyReport,
   createBlend,
-  createComponent,
   deleteBlend,
-  deleteComponent,
   deletePages,
   deleteParameter,
-  detachFilter,
-  diagnoseWithKnowledge,
   duplicatePage,
-  exportReport,
-  findOrphans,
   getChartStyle,
   groupComponents,
   inspectDataSources,
+  listBlends,
+  movePage,
+  setChartInteractions,
+  setChartStyle,
+  setComparison,
+  setComponentBoxModel,
+  setConditionalFormat,
+  setControlParameter,
+  setPageLink,
+  setPageVisibility,
+  setStyle,
+  setText,
+  updateBlend,
+  updateParameter
+} from "./chunks/chunk-VTTP2ZY6.js";
+import {
+  addFilter,
+  addPage,
+  addSourceField,
+  applySpec,
+  applyTheme,
+  attachToReport,
+  captureTemplates,
+  copyReport,
+  createComponent,
+  deleteComponent,
+  detachFilter,
+  diagnoseWithKnowledge,
+  exportReport,
+  findOrphans,
   learn,
   lintSpec,
-  listBlends,
   listFilters,
   listPages,
   listTemplates,
   loadSpec,
   log,
-  movePage,
   openReport,
   packageRoot,
   patchComponent,
@@ -54,25 +69,16 @@ import {
   renamePage,
   reportSettings,
   seedTemplatesFromUi,
-  setChartStyle,
-  setComponentBoxModel,
-  setConditionalFormat,
-  setControlParameter,
-  setPageVisibility,
-  setStyle,
-  setText,
   summary,
   synthesizeTemplates,
   themeLibrary,
-  updateBlend,
   updateFilter,
-  updateParameter,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-W3B6K7RD.js";
+} from "./chunks/chunk-ESSLXUCI.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
-import "./chunks/chunk-NSSSGO5H.js";
+import "./chunks/chunk-3SD32QSA.js";
 import "./chunks/chunk-FAVAKK4W.js";
 import "./chunks/chunk-GIAQTVDD.js";
 import "./chunks/chunk-BGDW2RS3.js";
@@ -36897,7 +36903,9 @@ var WRITE_TOOLS = /* @__PURE__ */ new Set([
   "set_conditional_format",
   "align_components",
   "group_components",
-  "set_chart_style"
+  "set_chart_style",
+  "set_chart_interactions",
+  "add_image"
 ]);
 var DESTRUCTIVE_TOOLS = /* @__PURE__ */ new Set(["delete_component", "delete_pages", "delete_blend", "delete_parameter"]);
 {
@@ -37157,7 +37165,7 @@ server.registerTool(
   "patch_component",
   {
     title: "Ajustar control / estilos",
-    description: "dateRangeDays: periodo por defecto de un control de fechas (ultimos N dias, movil). parameter: el control fija ese parametro (id). text (+ textSize, textBold, textColor): texto de un cuadro de texto. style: claves de estilo. stripThemeStyles: quita colores/fuentes/bordes sobrescritos en el componente para que mande el tema del informe (util tras crear desde plantillas de otros informes).",
+    description: "dateRangeDays: periodo por defecto de un control de fechas (ultimos N dias, movil). parameter: el control fija ese parametro (id). text (+ textSize, textBold, textColor): texto de un cuadro de texto. style: claves de estilo. comparison: periodo de comparacion (previous_period, previous_year, none). linkPage: el boton abre esa pagina. stripThemeStyles: quita colores/fuentes/bordes sobrescritos en el componente para que mande el tema del informe (util tras crear desde plantillas de otros informes).",
     inputSchema: {
       componentId: external_exports.string().min(1),
       dateRangeDays: external_exports.number().int().positive().optional(),
@@ -37167,7 +37175,10 @@ server.registerTool(
       textSize: external_exports.number().int().positive().optional(),
       textBold: external_exports.boolean().optional(),
       textColor: external_exports.string().optional(),
-      style: external_exports.record(external_exports.string(), external_exports.unknown()).optional().describe('Claves de estilo del componente (las de get_component_config > config.display.keys), p. ej. {"hideMetric": false} en un scorecard')
+      textAlign: external_exports.enum(["left", "center", "right"]).optional(),
+      style: external_exports.record(external_exports.string(), external_exports.unknown()).optional().describe('Claves de estilo del componente (las de get_component_config > config.display.keys), p. ej. {"hideMetric": false} en un scorecard'),
+      comparison: external_exports.enum(["none", "previous_period", "previous_year"]).optional().describe("Periodo de comparacion de un grafico o scorecard (el scorecard muestra la variacion)"),
+      linkPage: external_exports.string().optional().describe('Boton: id de la pagina que abre, o "name:<nombre de pagina>"')
     },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true }
   },
@@ -37181,7 +37192,9 @@ server.registerTool(
       }));
     if (args.parameter) out.parameter = await setControlParameter(args.componentId, args.parameter);
     if (args.style) out.style = await setStyle(args.componentId, args.style);
-    if (args.text !== void 0) out.text = await setText(args.componentId, args.text, { ...args.textSize ? { size: args.textSize } : {}, ...args.textBold ? { bold: true } : {}, ...args.textColor ? { color: args.textColor } : {} });
+    if (args.comparison) out.comparison = await setComparison(args.componentId, args.comparison);
+    if (args.linkPage) out.link = await setPageLink(args.componentId, args.linkPage);
+    if (args.text !== void 0) out.text = await setText(args.componentId, args.text, { ...args.textSize ? { size: args.textSize } : {}, ...args.textBold ? { bold: true } : {}, ...args.textColor ? { color: args.textColor } : {}, ...args.textAlign ? { align: args.textAlign } : {} });
     return out;
   })
 );
@@ -37514,12 +37527,44 @@ server.registerTool(
   },
   async ({ componentId }) => run(() => getChartStyle(componentId))
 );
+server.registerTool(
+  "set_chart_interactions",
+  {
+    title: "Interacciones de un grafico",
+    description: 'Lo que el lector puede hacer con un grafico: optionalMetrics (metricas opcionales: el lector cambia la metrica del grafico con su selector; misma sintaxis que bind, p. ej. "SUM(pedidos) as Pedidos"; [] las quita), dateDrillDown (la fecha diaria se desglosa mes > semana > dia) y crossFilter (un clic en el grafico filtra el resto de la pagina). Recarga al final.',
+    inputSchema: {
+      componentId: external_exports.string().min(1),
+      optionalMetrics: external_exports.array(external_exports.string().min(1)).optional(),
+      dateDrillDown: external_exports.boolean().optional(),
+      drillStart: external_exports.enum(["month", "day"]).optional().describe("Nivel que se ve al abrir: mes (por defecto) o dia"),
+      crossFilter: external_exports.boolean().optional(),
+      reload: external_exports.boolean().optional()
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true }
+  },
+  async (args) => run(() => setChartInteractions(args))
+);
+server.registerTool(
+  "add_image",
+  {
+    title: "Anadir una imagen o icono",
+    description: "Pone una imagen de un archivo local (SVG, PNG, JPG, GIF) en una caja. Si el informe ya tiene ese archivo (mismo nombre), lo reutiliza sin subirlo otra vez; si no, lo sube con el selector de archivos del editor (este editor no admite imagenes por URL). Para iconos de tarjetas y de la navegacion: assets/icons del servidor tiene iconos propios en blanco.",
+    inputSchema: {
+      path: external_exports.string().min(1).describe("Ruta del archivo"),
+      box: external_exports.object({ x: external_exports.number(), y: external_exports.number(), width: external_exports.number().positive(), height: external_exports.number().positive() }),
+      pageId: external_exports.string().optional(),
+      altText: external_exports.string().optional()
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true }
+  },
+  async (args) => run(() => addImage(args))
+);
 var COLOR = external_exports.string().regex(/^#[0-9a-fA-F]{6}$/, "#rrggbb");
 server.registerTool(
   "set_chart_style",
   {
     title: "Estilo de un grafico",
-    description: "Estilo fino de un grafico de barras, lineas, combinado o de areas por nombre, sin conocer las claves internas. series: por posicion (1..) o nombre de la metrica: color, type (bars, line; solo combinados y series temporales), lineWeight, showPoints, dataLabels, axis (left/right), trendline, cumulative, compact, decimals. legend: top, bottom, right, left o none. dataLabels, compactNumbers, stacked, axes (show, xTitle, yTitle, rightTitle, yMin, yMax, logScale) y gridColor. Recarga al final para que se vea (reload=false lo evita). Buenas practicas: un solo eje (evita axis right), leyenda solo con 2 series o mas, etiquetas de datos solo con pocas barras.",
+    description: "Estilo fino de un grafico de barras, lineas, combinado o de areas por nombre, sin conocer las claves internas. series: por posicion (1..) o nombre de la metrica: color, type (bars, line; solo combinados y series temporales), lineWeight, showPoints, dataLabels, axis (left/right), trendline, cumulative, compact, decimals. legend: top, bottom, right, left o none. dataLabels, compactNumbers, stacked, axes (show, xTitle, yTitle, rightTitle, yMin, yMax, logScale), gridColor y title (titulo propio del grafico). Recarga al final para que se vea (reload=false lo evita). Buenas practicas: un solo eje (evita axis right), leyenda solo con 2 series o mas, etiquetas de datos solo con pocas barras.",
     inputSchema: {
       componentId: external_exports.string().min(1),
       series: external_exports.array(external_exports.object({
@@ -37549,6 +37594,7 @@ server.registerTool(
         logScale: external_exports.boolean().optional()
       }).strict().optional(),
       gridColor: COLOR.optional(),
+      title: external_exports.object({ text: external_exports.string(), size: external_exports.number().int().positive().optional(), bold: external_exports.boolean().optional() }).strict().nullable().optional().describe("Titulo propio del grafico (se dibuja encima de su caja); null lo quita"),
       reload: external_exports.boolean().optional()
     },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true }

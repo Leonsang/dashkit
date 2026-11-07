@@ -159,7 +159,7 @@ export function synthesizeComponentScript(args: { type: string; box: { x: number
 // ---------------------------------------------------------------------------
 
 /** What the dataviz checks need from a bar, line or combo chart. */
-export interface ChartFacts { metrics: number; breakdown: boolean; rightAxis: boolean; showLegend: boolean | null; lineLabels: boolean }
+export interface ChartFacts { metrics: number; breakdown: boolean; rightAxis: boolean; showLegend: boolean | null; lineLabels: boolean; titled: boolean }
 
 export function uxFactsScript(): {
   theme: unknown | null;
@@ -201,6 +201,7 @@ export function uxFactsScript(): {
           rightAxis: metrics > 1 && axes.some((x) => x === 1) && axes.some((x) => x === 0),
           showLegend: typeof sl === 'boolean' ? sl : null,
           lineLabels: /linechart/.test(type) && (arr('seriesShowDataLabel').some((x) => x === true) || eff('showDataLabel') === true),
+          titled: eff('chartTitleShowTitle') === true,
         };
       }
       return { id: String(c.getId()), type, page: String(p.getId()), overrides, ...(chart ? { chart } : {}) };

@@ -72,6 +72,8 @@ const GUIDE = {
   set_conditional_format: [R + 'componentes.md'],
   set_chart_style: [R + 'componentes.md'],
   get_chart_style: [R + 'componentes.md'],
+  set_chart_interactions: [R + 'componentes.md'],
+  add_image: [R + 'componentes.md'],
   align_components: [R + 'componentes.md'],
   group_components: [R + 'componentes.md'],
 };
@@ -103,6 +105,8 @@ const CLI = [
   ['arrange <id...> --to front|back|forward|backward|report|page', 'arrange_components', 'MCP: `op`, `pageId`'],
   ['format <id> <reglas.json|json> [--append]', 'set_conditional_format', ''],
   ['chart-style <id>', 'get_chart_style', ''],
+  ['image <archivo> --box x,y,w,h [--page <id>]', 'add_image', 'MCP: `altText`'],
+  ['interact <id> [--optional] [--drill] [--cross on|off]', 'set_chart_interactions', 'MCP: `optionalMetrics`, `dateDrillDown`, `crossFilter`'],
   ['chart-style <id> <json|archivo> [--no-reload]', 'set_chart_style', 'MCP: `reload=false`'],
   ['align <id...> [--align] [--distribute] [--gap] [--match]', 'align_components', 'MCP: `matchSize`'],
   ['group <id...>', 'group_components', 'MCP: `op=group`'],

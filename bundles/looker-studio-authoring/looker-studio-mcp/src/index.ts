@@ -27,7 +27,7 @@ import {
   reloadReport,
 } from './ops.js';
 import { loadSpec, type ReportSpec } from './spec.js';
-import { addParameter, alignComponents, arrangeComponents, groupComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, getChartStyle, setChartStyle, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
+import { addParameter, alignComponents, arrangeComponents, groupComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, addImage, getChartStyle, setChartInteractions, setComparison, setPageLink, setChartStyle, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
 import { renamePage, reportSettings } from './ops3.js';
 import { addFilter, addPage, addSourceField, detachFilter, updateFilter, applyTheme, listFilters, listPages, readTheme, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
 
@@ -52,7 +52,7 @@ const WRITE_TOOLS = new Set([
   'set_component_box_model', 'bind_fields_to_component', 'create_component', 'apply_report_spec', 'patch_component',
   'apply_theme', 'use_theme', 'add_page', 'rename_page', 'synthesize_templates', 'seed_templates_from_menu', 'add_filter',
   'detach_filter', 'update_filter', 'create_blend', 'update_blend', 'add_parameter', 'update_parameter', 'move_page', 'set_page_visibility', 'duplicate_page',
-  'arrange_components', 'set_conditional_format', 'align_components', 'group_components', 'set_chart_style',
+  'arrange_components', 'set_conditional_format', 'align_components', 'group_components', 'set_chart_style', 'set_chart_interactions', 'add_image',
 ]);
 const DESTRUCTIVE_TOOLS = new Set(['delete_component', 'delete_pages', 'delete_blend', 'delete_parameter']);
 {
@@ -396,7 +396,7 @@ server.registerTool(
   {
     title: 'Ajustar control / estilos',
     description:
-      'dateRangeDays: periodo por defecto de un control de fechas (ultimos N dias, movil). parameter: el control fija ese parametro (id). text (+ textSize, textBold, textColor): texto de un cuadro de texto. style: claves de estilo. stripThemeStyles: quita colores/fuentes/bordes ' +
+      'dateRangeDays: periodo por defecto de un control de fechas (ultimos N dias, movil). parameter: el control fija ese parametro (id). text (+ textSize, textBold, textColor): texto de un cuadro de texto. style: claves de estilo. comparison: periodo de comparacion (previous_period, previous_year, none). linkPage: el boton abre esa pagina. stripThemeStyles: quita colores/fuentes/bordes ' +
       'sobrescritos en el componente para que mande el tema del informe (util tras crear desde plantillas de otros informes).',
     inputSchema: {
       componentId: z.string().min(1),
@@ -407,7 +407,10 @@ server.registerTool(
       textSize: z.number().int().positive().optional(),
       textBold: z.boolean().optional(),
       textColor: z.string().optional(),
+      textAlign: z.enum(['left', 'center', 'right']).optional(),
       style: z.record(z.string(), z.unknown()).optional().describe('Claves de estilo del componente (las de get_component_config > config.display.keys), p. ej. {"hideMetric": false} en un scorecard'),
+      comparison: z.enum(['none', 'previous_period', 'previous_year']).optional().describe('Periodo de comparacion de un grafico o scorecard (el scorecard muestra la variacion)'),
+      linkPage: z.string().optional().describe('Boton: id de la pagina que abre, o "name:<nombre de pagina>"'),
     },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
   },
@@ -422,7 +425,9 @@ server.registerTool(
         }));
       if (args.parameter) out.parameter = await setControlParameter(args.componentId, args.parameter);
       if (args.style) out.style = await setStyle(args.componentId, args.style);
-      if (args.text !== undefined) out.text = await setText(args.componentId, args.text, { ...(args.textSize ? { size: args.textSize } : {}), ...(args.textBold ? { bold: true } : {}), ...(args.textColor ? { color: args.textColor } : {}) });
+      if (args.comparison) out.comparison = await setComparison(args.componentId, args.comparison);
+      if (args.linkPage) out.link = await setPageLink(args.componentId, args.linkPage);
+      if (args.text !== undefined) out.text = await setText(args.componentId, args.text, { ...(args.textSize ? { size: args.textSize } : {}), ...(args.textBold ? { bold: true } : {}), ...(args.textColor ? { color: args.textColor } : {}), ...(args.textAlign ? { align: args.textAlign } : {}) });
       return out;
     }),
 );
@@ -804,6 +809,46 @@ server.registerTool(
   async ({ componentId }) => run(() => getChartStyle(componentId)),
 );
 
+server.registerTool(
+  'set_chart_interactions',
+  {
+    title: 'Interacciones de un grafico',
+    description:
+      'Lo que el lector puede hacer con un grafico: optionalMetrics (metricas opcionales: el lector cambia la metrica del grafico ' +
+      'con su selector; misma sintaxis que bind, p. ej. "SUM(pedidos) as Pedidos"; [] las quita), dateDrillDown (la fecha diaria se ' +
+      'desglosa mes > semana > dia) y crossFilter (un clic en el grafico filtra el resto de la pagina). Recarga al final.',
+    inputSchema: {
+      componentId: z.string().min(1),
+      optionalMetrics: z.array(z.string().min(1)).optional(),
+      dateDrillDown: z.boolean().optional(),
+      drillStart: z.enum(['month', 'day']).optional().describe('Nivel que se ve al abrir: mes (por defecto) o dia'),
+      crossFilter: z.boolean().optional(),
+      reload: z.boolean().optional(),
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  },
+  async (args) => run(() => setChartInteractions(args)),
+);
+
+server.registerTool(
+  'add_image',
+  {
+    title: 'Anadir una imagen o icono',
+    description:
+      'Pone una imagen de un archivo local (SVG, PNG, JPG, GIF) en una caja. Si el informe ya tiene ese archivo (mismo nombre), lo ' +
+      'reutiliza sin subirlo otra vez; si no, lo sube con el selector de archivos del editor (este editor no admite imagenes por URL). ' +
+      'Para iconos de tarjetas y de la navegacion: assets/icons del servidor tiene iconos propios en blanco.',
+    inputSchema: {
+      path: z.string().min(1).describe('Ruta del archivo'),
+      box: z.object({ x: z.number(), y: z.number(), width: z.number().positive(), height: z.number().positive() }),
+      pageId: z.string().optional(),
+      altText: z.string().optional(),
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+  },
+  async (args) => run(() => addImage(args)),
+);
+
 const COLOR = z.string().regex(/^#[0-9a-fA-F]{6}$/, '#rrggbb');
 server.registerTool(
   'set_chart_style',
@@ -813,7 +858,7 @@ server.registerTool(
       'Estilo fino de un grafico de barras, lineas, combinado o de areas por nombre, sin conocer las claves internas. series: por ' +
       'posicion (1..) o nombre de la metrica: color, type (bars, line; solo combinados y series temporales), lineWeight, showPoints, dataLabels, axis (left/right), ' +
       'trendline, cumulative, compact, decimals. legend: top, bottom, right, left o none. dataLabels, compactNumbers, stacked, axes ' +
-      '(show, xTitle, yTitle, rightTitle, yMin, yMax, logScale) y gridColor. Recarga al final para que se vea (reload=false lo evita). ' +
+      '(show, xTitle, yTitle, rightTitle, yMin, yMax, logScale), gridColor y title (titulo propio del grafico). Recarga al final para que se vea (reload=false lo evita). ' +
       'Buenas practicas: un solo eje (evita axis right), leyenda solo con 2 series o mas, etiquetas de datos solo con pocas barras.',
     inputSchema: {
       componentId: z.string().min(1),
@@ -839,6 +884,7 @@ server.registerTool(
         yMin: z.number().nullable().optional(), yMax: z.number().nullable().optional(), logScale: z.boolean().optional(),
       }).strict().optional(),
       gridColor: COLOR.optional(),
+      title: z.object({ text: z.string(), size: z.number().int().positive().optional(), bold: z.boolean().optional() }).strict().nullable().optional().describe('Titulo propio del grafico (se dibuja encima de su caja); null lo quita'),
       reload: z.boolean().optional(),
     },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },

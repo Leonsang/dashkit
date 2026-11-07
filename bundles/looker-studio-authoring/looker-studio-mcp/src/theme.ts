@@ -131,7 +131,7 @@ export interface UxIssue {
 export interface UxFacts {
   theme: Record<string, any> | null;
   themeConfig: string | null;
-  components: Array<{ id: string; type: string; page: string; overrides: Record<string, any>; chart?: { metrics: number; breakdown: boolean; rightAxis: boolean; showLegend: boolean | null; lineLabels: boolean } }>;
+  components: Array<{ id: string; type: string; page: string; overrides: Record<string, any>; chart?: { metrics: number; breakdown: boolean; rightAxis: boolean; showLegend: boolean | null; lineLabels: boolean; titled?: boolean } }>;
   pages: Array<{ id: string; name: string; background: unknown }>;
 }
 
@@ -195,13 +195,14 @@ export function auditUx(f: UxFacts, layoutIssues: Array<{ code: string; componen
     }
   }
   // Chart rules from the dataviz guide: one y axis, a legend whenever there are 2+ series, and no number
-  // on every point of a line. (A single series keeps its legend: these charts have no title of their own.)
+  // on every point of a line. A single series with its own title does not need a legend.
   for (const c of f.components) {
     const ch = c.chart;
     if (!ch) continue;
     const series = ch.metrics + (ch.breakdown ? 2 : 0);
     if (ch.rightAxis) issues.push({ severity: 'error', area: 'grafico', componentId: c.id, rule: 'dataviz: un solo eje', message: `${c.type} con dos ejes Y: la alineacion de las dos escalas es arbitraria e inventa correlaciones. Separa las metricas en dos graficos o indexalas a una base comun (set_chart_style series axis=left).` });
     if (series >= 2 && ch.showLegend === false) issues.push({ severity: 'warning', area: 'grafico', componentId: c.id, rule: 'dataviz: leyenda', message: `${c.type} con ${ch.breakdown ? 'desglose' : `${ch.metrics} metricas`} y sin leyenda: la identidad de cada serie queda solo en el color (set_chart_style legend=top).` });
+    if (series === 1 && ch.titled && ch.showLegend !== false) issues.push({ severity: 'info', area: 'grafico', componentId: c.id, rule: 'dataviz: leyenda', message: `${c.type} con una sola serie, titulo y leyenda: la leyenda repite el titulo (set_chart_style legend=none).` });
     if (ch.lineLabels) issues.push({ severity: 'warning', area: 'grafico', componentId: c.id, rule: 'dataviz: etiquetas', message: `${c.type} con etiquetas de datos en cada punto: nadie las lee. Deja que el eje y la ayuda emergente den el valor (set_chart_style series dataLabels=false).` });
   }
   if (fonts.size > 2) issues.push({ severity: 'warning', area: 'tipografia', componentId: null, rule: 'diseno-layout §8', message: `${fonts.size} familias tipograficas (${[...fonts].join(', ')}): usa como mucho 2.` });

@@ -31,7 +31,7 @@ import type { DiagnoseIssue, DiagnoseResult } from './looker/types.js';
 import type { Box, CreateComponentResult, ExportResult } from './looker/types2.js';
 import { lintSpec, loadSpec, type ReportSpec, type ResolvedComponent } from './spec.js';
 import { probeReadScript, probeStartScript } from './looker/scripts3.js';
-import { addFilter, addPage, applyTheme, listPages, useThemePreset } from './ops3.js';
+import { addFilter, addPage, applyTheme, listPages, reportSettings, useThemePreset } from './ops3.js';
 
 const T = Number(process.env.LS_EVAL_TIMEOUT_MS ?? 15_000);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -411,6 +411,7 @@ export async function applySpec(specOrFile: string | ReportSpec, opts: { dryRun?
   // theme + pages by name (created if missing)
   if (spec.theme && !opts.dryRun) result.theme = await applyTheme(spec.theme);
   else if (spec.themePreset && !opts.dryRun) result.theme = await useThemePreset(spec.themePreset);
+  if (spec.settings && !opts.dryRun) (result as ApplyResult & { settings?: unknown }).settings = await reportSettings(spec.settings);
   const pageIds: Record<string, string> = {};
   const wanted = [...new Set(components.map((c) => c.page).filter((p) => p.startsWith('name:')))].map((p) => p.slice(5));
   if (wanted.length) {
@@ -449,6 +450,14 @@ export async function applySpec(specOrFile: string | ReportSpec, opts: { dryRun?
         state.keys[c.key] = existingId!;
         const extra = await patchIfNeeded(page, existingId!, c);
         result.actions.push({ key: c.key, action: 'update', componentId: existingId!, ...(extra.length ? { patched: extra } : {}) });
+      } else if (c.type === 'image-component' && c.image) {
+        const { addImage } = await import('./ops4.js');
+        const { dirname, resolve } = await import('node:path');
+        const base = typeof specOrFile === 'string' ? dirname(specOrFile) : process.cwd();
+        const r = await addImage({ path: resolve(base, c.image), box: { x: c.x, y: c.y, width: c.w, height: c.h }, ...(pageId ? { pageId } : {}) });
+        state.keys[c.key] = r.componentId;
+        const extra = await patchIfNeeded(page, r.componentId, c);
+        result.actions.push({ key: c.key, action: 'create', componentId: r.componentId, patched: [r.uploaded ? `image:${r.file} (subida)` : `image:${r.file}`, ...extra] });
       } else {
         const r = await createComponent({
           ...(c.variant ? { variant: c.variant } : {}),
@@ -485,6 +494,16 @@ export async function applySpec(specOrFile: string | ReportSpec, opts: { dryRun?
       }
     }
     if (filterLog.length) (result as ApplyResult & { filters?: unknown }).filters = filterLog;
+    // Card shapes go behind everything else on their page (they were created after existing components).
+    const cards = components.filter((c) => c.key.endsWith('__card') && state.keys[c.key]);
+    if (cards.length) {
+      const { arrangeComponents } = await import('./ops4.js');
+      const byPage = new Map<string, string[]>();
+      for (const c of cards) byPage.set(c.page, [...(byPage.get(c.page) ?? []), state.keys[c.key]!]);
+      for (const ids of byPage.values()) {
+        try { await arrangeComponents(ids, 'back'); } catch (e) { (result as ApplyResult & { arrange?: string }).arrange = (e as Error).message; }
+      }
+    }
     await reloadReport();
     result.diagnose = await diagnoseWithKnowledge();
   }
@@ -505,7 +524,7 @@ async function patchIfNeeded(page: Page, id: string, c: ResolvedComponent): Prom
   if (c.text !== undefined) {
     const t = typeof c.text === 'string' ? { text: c.text } : c.text;
     const { setText } = await import('./ops4.js');
-    await setText(id, t.text, { ...(t.size ? { size: t.size } : {}), ...(t.bold ? { bold: true } : {}), ...(t.color ? { color: t.color } : {}) });
+    await setText(id, t.text, { ...(t.size ? { size: t.size } : {}), ...(t.bold ? { bold: true } : {}), ...(t.color ? { color: t.color } : {}), ...(t.align ? { align: t.align } : {}) });
     changes.push('text');
   }
   if (c.style) {
@@ -523,6 +542,30 @@ async function patchIfNeeded(page: Page, id: string, c: ResolvedComponent): Prom
     const { setChartStyle } = await import('./ops4.js');
     await setChartStyle({ ...c.chartStyle, componentId: id, reload: false });
     changes.push('chartStyle');
+  }
+  if (c.comparison) {
+    const { setComparison } = await import('./ops4.js');
+    await setComparison(id, c.comparison);
+    changes.push(`comparison:${c.comparison}`);
+  }
+  if (c.linkPage) {
+    const { setPageLink } = await import('./ops4.js');
+    await setPageLink(id, c.linkPage);
+    changes.push('linkPage');
+  }
+  if (c.reportLevel) {
+    const { componentLevelScript } = await import('./looker/scripts4.js');
+    if ((await evaluateOn(page, T, componentLevelScript, id)) === 'page') {
+      const { arrangeComponents } = await import('./ops4.js');
+      await arrangeComponents([id], 'report', c.page && !c.page.startsWith('name:') && c.page !== 'active' ? c.page : undefined);
+      changes.push('reportLevel');
+    }
+  }
+  if (c.interactions) {
+    // The metrics bound above are the chart's own; optional ones are re-added only if missing.
+    const { setChartInteractions } = await import('./ops4.js');
+    await setChartInteractions({ componentId: id, ...c.interactions, reload: false });
+    changes.push('interactions');
   }
   if (c.parameter) {
     const { setControlParameter } = await import('./ops4.js');

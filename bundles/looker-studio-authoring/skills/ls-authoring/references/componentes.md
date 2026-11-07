@@ -76,7 +76,7 @@ sus colores y fuentes: quítalos con `patch_component stripThemeStyles=true` par
 
 - `dateRangeDays=N`: periodo por defecto de un control de fechas, los últimos N días (móvil).
 - `stripThemeStyles=true`: quita colores, fuentes y bordes sobrescritos en el componente.
-- `text="..."` (con `textSize`, `textBold`, `textColor`): el texto de un cuadro de texto
+- `text="..."` (con `textSize`, `textBold`, `textColor`, `textAlign`): el texto de un cuadro de texto
   (`simple-description`). `
 ` separa líneas.
 - `parameter=<id>`: un control pasa a fijar ese parámetro en vez de filtrar (ver
@@ -92,7 +92,7 @@ sus colores y fuentes: quítalos con `patch_component stripThemeStyles=true` par
   | `button` | `text: "Solo pedidos online"`, `fontSize: "16px"` | Etiqueta del botón (la plantilla dice "Botón nuevo") |
   | `simple-table`, `pivot-table` | `headerFontColor: {"color":"#202124","opacity":1,"themeRef":{"index":1}}` | Cabecera con el color de texto del tema. `stripThemeStyles` ya lo pone |
 
-CLI: `patch <id> --date-days 28 --strip-styles`, `patch <id> --text "Ventas 2025" --size 24 --bold`,
+CLI: `patch <id> --date-days 28 --strip-styles`, `patch <id> --text "Ventas 2025" --size 24 --bold --align center`,
 `patch <id> --parameter metrica`, `patch <id> --style '{"hideMetric":false}'`. En el spec, `style`.
 
 **Series temporales:** `simple-linechart` solo acepta una dimensión de fecha (con un número como `anio_mes`
@@ -177,10 +177,71 @@ tiene la clave y aun así pinta la serie 2 a la derecha.
 - **Buenas prácticas (guía dataviz, [CONVENCIÓN]; detalle en `ls-diseno-layout` §7):** un solo eje Y
   (`audit_ux` da error con una serie a la derecha, también la del combinado por defecto);
   leyenda siempre que haya 2 series o más; etiquetas de datos solo en pocas barras, nunca en cada punto de una
-  línea; el color sigue a la entidad (una métrica, el mismo color en todo el informe). Los gráficos de esta
-  versión no tienen título propio: con una sola serie, la leyenda es lo que la nombra, así que se queda.
+  línea; el color sigue a la entidad (una métrica, el mismo color en todo el informe). Con una sola serie,
+  ponle título propio (`title`) y quita la leyenda (`legend: "none"`): el título ya la nombra.
+- **`title`:** `{text, size?, bold?}` muestra el título propio del componente (claves `chartTitle*`, las tienen
+  todos los tipos); `null` lo quita. Se dibuja **encima** de la caja del componente, fuera del borde del tema:
+  para una tarjeta cerrada con el título dentro, usa `card` en el spec (más abajo).
 - Verificado el 2026-11-07: color, leyenda abajo y etiquetas de datos se ven tras recargar; el eje derecho lo
   detecta `audit_ux`.
+
+## Tarjetas, iconos e interacciones
+
+Patrones tomados de plantillas publicadas (verificado el 2026-11-07); todos se declaran en el spec.
+
+### Tarjeta: `card` en el spec
+
+```json
+{ "key": "ventas", "type": "simple-linechart", "x": 170, "y": 310, "w": 740, "h": 300,
+  "card": { "title": "Ingresos en el tiempo" }, ... }
+{ "key": "kpi_ingresos", "type": "kpi-metric", "card": { "icon": "../assets/icons/ingresos.svg" }, ... }
+```
+
+- La caja es la de la tarjeta. `card` crea detrás una forma redondeada (`<key>__card`, blanca, radio 12) y mete
+  el componente dentro con un margen (`inset`, 10 por defecto), sin fondo ni borde propios y con su título.
+- **Scorecard con `icon`:** a la izquierda, un cuadro del color de acento (`<key>__tile`, `iconBackground`)
+  con el icono en blanco (`<key>__icon`); el valor pasa a la derecha y baja a 24 px para que quepa.
+- Al aplicar, las formas de las tarjetas se mandan al fondo de su página, también cuando envuelven
+  componentes que ya existían.
+- Con el tema `panel-lateral` (fondo de página gris claro, sin borde por componente) las tarjetas blancas
+  destacan solas.
+
+### Imágenes e iconos: add_image
+
+`add_image path box pageId? altText?` (CLI `image <archivo> --box x,y,w,h`; en el spec, un `image-component` con
+`"image": "<ruta>"`). Este editor no admite imágenes por URL, solo subir un archivo: la herramienta lo sube con
+el selector de archivos del editor, que crea la imagen en la página abierta, y la coloca. Un archivo ya subido
+al informe (mismo nombre) se reutiliza sin volver a subirlo. `assets/icons/` trae iconos de línea propios en
+blanco (KPIs, navegación, filtros).
+
+### Comparación con el periodo anterior
+
+`patch_component comparison` (`previous_period`, `previous_year`, `none`; CLI `patch <id> --compare ...`; en el
+spec, `comparison`). En un scorecard muestra la variación con su flecha y el color de subida o bajada del tema;
+en un gráfico de serie temporal añade la serie del periodo anterior.
+
+### Interacciones del lector: set_chart_interactions
+
+```json
+{"componentId": "cd-...", "optionalMetrics": ["COUNT_DISTINCT(id_pedido) as Pedidos", "SUM(unidades) as Unidades"],
+ "dateDrillDown": true, "crossFilter": true}
+```
+
+CLI `interact <id> --optional "..." --drill --cross on`; en el spec, `interactions`.
+
+- **`optionalMetrics`:** el lector cambia la métrica del gráfico con su selector (el icono de métricas
+  alternativas). Misma sintaxis que `bind`; `[]` las quita.
+- **`dateDrillDown`:** la fecha diaria del gráfico se desglosa mes › semana › día. Empieza en mes (`drillStart:
+  "day"` para empezar en día). Pide una dimensión de fecha diaria (p. ej. `fecha`, no `mes_inicio`).
+- **`crossFilter`:** un clic en el gráfico filtra el resto de la página.
+- Recarga al final para que se vea.
+
+### Navegación propia: botones a una página
+
+`patch_component linkPage` (id de página o `"name:<nombre>"`; CLI `patch <id> --link-page <id>`; en el spec,
+`linkPage`) hace que un botón abra esa página. Con `reportLevel: true` en el spec, el botón, su icono y su
+texto salen en todas las páginas: es la barra lateral de navegación (ver el arquetipo «panel con barra
+lateral» en `ls-diseno-layout`).
 
 ## Capas y nivel de informe: arrange_components
 

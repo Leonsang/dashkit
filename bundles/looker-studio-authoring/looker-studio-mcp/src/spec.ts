@@ -44,7 +44,7 @@ export interface SpecComponent {
   slots?: Record<string, string[]>;
   /** Text box (simple-description) content: a string, or {text, size, bold, color}; "
 " separates lines. */
-  text?: string | { text: string; size?: number; bold?: boolean; color?: string };
+  text?: string | { text: string; size?: number; bold?: boolean; color?: string; align?: 'left' | 'center' | 'right' };
   /** Control that sets this parameter (id) instead of filtering. */
   parameter?: string;
   /** Style (display) keys, e.g. {"hideMetric": false} on a scorecard. */
@@ -53,6 +53,35 @@ export interface SpecComponent {
   conditional?: CfRule[];
   /** Chart style by name (series, legend, axes). See set_chart_style. */
   chartStyle?: Omit<ChartStyle, 'componentId'>;
+  /** Comparison period of a chart or scorecard. */
+  comparison?: 'none' | 'previous_period' | 'previous_year';
+  /** Button: the page it opens (id, or "name:<page name>"). */
+  linkPage?: string;
+  /** Put it at report level: it shows on every page, in the same place (navigation, global filters). */
+  reportLevel?: boolean;
+  /**
+   * Wrap it in a card: a rounded shape behind it, the component inset inside with its own title, and for a
+   * scorecard an icon tile on the left. Expanded by resolveSpec into extra components (<key>__card, __tile, __icon).
+   */
+  card?: SpecCard;
+  /** image-component: a local image file (path relative to the spec), uploaded once per report. See add_image. */
+  image?: string;
+  /** Viewer interactions: optional metrics, date drill-down, cross-filtering. See set_chart_interactions. */
+  interactions?: { optionalMetrics?: string[]; dateDrillDown?: boolean; drillStart?: 'month' | 'day'; crossFilter?: boolean };
+}
+
+export interface SpecCard {
+  /** Title inside the card (the component's own chart title). */
+  title?: string;
+  /** Scorecard icon: an image file (white line icon), drawn on a coloured tile left of the value. */
+  icon?: string;
+  /** Tile colour (#rrggbb). Default: the theme accent. */
+  iconBackground?: string;
+  /** Card colour. Default white. */
+  background?: string;
+  radius?: number;
+  /** Inner margin. Default 10. */
+  inset?: number;
 }
 
 export interface SpecRow {
@@ -74,6 +103,8 @@ export interface ReportSpec {
   grid?: number;
   canvasWidth?: number;
   canvasHeight?: number;
+  /** Report settings applied first (report_settings keys): width, height, viewModeNav, viewerFilterBar... */
+  settings?: Record<string, unknown>;
   defaults?: { dataset?: string; padding?: number };
   /** Report theme (see theme.ts FriendlyTheme). */
   theme?: import('./theme.js').FriendlyTheme;
@@ -100,6 +131,12 @@ export interface ResolvedComponent extends Required<Pick<SpecComponent, 'key' | 
   conditional?: CfRule[];
   /** Chart style by name (series, legend, axes). See set_chart_style. */
   chartStyle?: Omit<ChartStyle, 'componentId'>;
+  comparison?: SpecComponent['comparison'];
+  linkPage?: string;
+  interactions?: SpecComponent['interactions'];
+  image?: string;
+  reportLevel?: boolean;
+  card?: SpecCard;
 }
 
 export interface LintIssue {
@@ -146,7 +183,7 @@ export function resolveSpec(spec: ReportSpec): ResolvedComponent[] {
         c.items.forEach((it, i) => {
           out.push({
             key: it.key, type: it.type, id: it.id, x: x0 + i * (w + gap), y, w, h,
-            padding: it.padding ?? spec.defaults?.padding, dataset: it.dataset ?? spec.defaults?.dataset,
+            padding: it.padding ?? spec.defaults?.padding, dataset: it.dataset ?? (NON_DATA.has(it.type) && !it.dimensions?.length ? undefined : spec.defaults?.dataset),
             dimensions: it.dimensions ?? [], metrics: it.metrics ?? [], page,
             ...(it.dateRangeDays !== undefined ? { dateRangeDays: it.dateRangeDays } : {}),
             ...(it.stripStyles ? { stripStyles: true } : {}),
@@ -158,12 +195,18 @@ export function resolveSpec(spec: ReportSpec): ResolvedComponent[] {
             ...(it.style ? { style: it.style } : {}),
             ...(it.conditional ? { conditional: it.conditional } : {}),
             ...(it.chartStyle ? { chartStyle: it.chartStyle } : {}),
+            ...(it.comparison ? { comparison: it.comparison } : {}),
+            ...(it.linkPage ? { linkPage: it.linkPage } : {}),
+            ...(it.interactions ? { interactions: it.interactions } : {}),
+            ...(it.image ? { image: it.image } : {}),
+            ...(it.reportLevel ? { reportLevel: true } : {}),
+            ...(it.card ? { card: it.card } : {}),
           });
         });
       } else {
         out.push({
           key: c.key, type: c.type, id: c.id, x: c.x ?? 0, y: c.y ?? 0, w: c.w ?? 400, h: c.h ?? 300,
-          padding: c.padding ?? spec.defaults?.padding, dataset: c.dataset ?? spec.defaults?.dataset,
+          padding: c.padding ?? spec.defaults?.padding, dataset: c.dataset ?? (NON_DATA.has(c.type) && !c.dimensions?.length ? undefined : spec.defaults?.dataset),
           dimensions: c.dimensions ?? [], metrics: c.metrics ?? [], page,
           ...(c.dateRangeDays !== undefined ? { dateRangeDays: c.dateRangeDays } : {}),
           ...(c.stripStyles ? { stripStyles: true } : {}),
@@ -175,9 +218,58 @@ export function resolveSpec(spec: ReportSpec): ResolvedComponent[] {
           ...(c.style ? { style: c.style } : {}),
           ...(c.conditional ? { conditional: c.conditional } : {}),
           ...(c.chartStyle ? { chartStyle: c.chartStyle } : {}),
+          ...(c.comparison ? { comparison: c.comparison } : {}),
+          ...(c.linkPage ? { linkPage: c.linkPage } : {}),
+          ...(c.interactions ? { interactions: c.interactions } : {}),
+          ...(c.image ? { image: c.image } : {}),
+          ...(c.reportLevel ? { reportLevel: true } : {}),
+          ...(c.card ? { card: c.card } : {}),
         });
       }
     }
+  }
+  return expandCards(out);
+}
+
+/**
+ * Card macro (pattern taken from published templates, 2026-11-07): the title of a chart renders above its box,
+ * outside the theme border, so a closed card needs a shape behind it. Scorecards get an icon tile and their
+ * value moves right of it.
+ */
+function expandCards(list: ResolvedComponent[]): ResolvedComponent[] {
+  const out: ResolvedComponent[] = [];
+  for (const c of list) {
+    if (!c.card) { out.push(c); continue; }
+    const k = c.card;
+    const inset = k.inset ?? 10;
+    const radius = k.radius ?? 12;
+    const shared = { page: c.page, dimensions: [], metrics: [], ...(c.reportLevel ? { reportLevel: true } : {}) };
+    out.push({
+      key: `${c.key}__card`, type: 'generic-shape', x: c.x, y: c.y, w: c.w, h: c.h, ...shared,
+      style: { background: { color: k.background ?? '#FFFFFF', opacity: 1 }, border: { color: '#FFFFFF', opacity: 0, size: 0, style: 'solid', radius } },
+    });
+    const clear = { background: { color: '#FFFFFF', opacity: 0 }, border: { color: '#FFFFFF', opacity: 0, size: 0, style: 'solid', radius: 0 } };
+    if (c.type === 'kpi-metric' && k.icon) {
+      const tile = Math.min(64, c.h - 2 * 20);
+      const ty = c.y + Math.round((c.h - tile) / 2);
+      out.push({ key: `${c.key}__tile`, type: 'generic-shape', x: c.x + 20, y: ty, w: tile, h: tile, ...shared,
+        style: { background: { color: k.iconBackground ?? '#1A73E8', opacity: 1 }, border: { color: '#FFFFFF', opacity: 0, size: 0, style: 'solid', radius: Math.round(tile / 4) } } });
+      const ic = Math.round(tile / 2);
+      out.push({ key: `${c.key}__icon`, type: 'image-component', x: c.x + 20 + (tile - ic) / 2, y: ty + (tile - ic) / 2, w: ic, h: ic, ...shared, image: k.icon });
+      const left = 20 + tile + 10;
+      out.push({ ...c, x: c.x + left, y: c.y + inset, w: c.w - left - inset, h: c.h - 2 * inset, style: { ...clear, fontSize: '24px', ...(c.style ?? {}) } });
+      continue;
+    }
+    // With no background or border of its own, the title is drawn inside the component's box, at its top.
+    const titleH = 0;
+    out.push({
+      ...c, x: c.x + inset, y: c.y + inset + titleH, w: c.w - 2 * inset, h: c.h - 2 * inset - titleH,
+      style: {
+        ...clear,
+        ...(k.title ? { chartTitleShowTitle: true, chartTitleText: k.title, chartTitleFontSize: 15, chartTitleBold: true } : {}),
+        ...(c.style ?? {}),
+      },
+    });
   }
   return out;
 }
@@ -198,7 +290,7 @@ export function lintSpec(spec: ReportSpec): { issues: LintIssue[]; components: R
     if (keys.has(c.key)) push('error', c.key, 'key', `Clave duplicada "${c.key}".`);
     keys.add(c.key);
     if (!KNOWN_TYPES.includes(c.type)) push('error', c.key, 'type', `Tipo desconocido "${c.type}".`);
-    if ([c.x, c.y, c.w, c.h].some((v) => v % grid !== 0))
+    if (!c.key.includes('__') && !c.card && [c.x, c.y, c.w, c.h].some((v) => v % grid !== 0))
       push('warning', c.key, 'grid', `x/y/w/h (${c.x},${c.y},${c.w},${c.h}) no son multiplos de la reticula ${grid}px [diseno-layout §3].`);
     if (c.x < 0 || c.y < 0 || c.x + c.w > W || c.y + c.h > H)
       push('error', c.key, 'canvas', `Se sale del lienzo ${W}x${H} [diseno-layout §2].`);
@@ -206,7 +298,7 @@ export function lintSpec(spec: ReportSpec): { issues: LintIssue[]; components: R
     if (c.padding !== undefined && (c.padding < 10 || c.padding > 16))
       push('info', c.key, 'padding', `Padding ${c.padding}px fuera de 10–16 px [diseno-layout §3].`);
     if (c.type === 'kpi-metric') {
-      if (c.metrics.length !== 1 && !c.slots) push('warning', c.key, 'kpi', 'Un scorecard debe tener exactamente 1 metrica [kpi-scorecards].');
+      if (c.metrics.length !== 1 && !c.slots && !(c.id && !c.metrics.length)) push('warning', c.key, 'kpi', 'Un scorecard debe tener exactamente 1 metrica [kpi-scorecards].');
       if (c.h < 100 || c.h > 140) push('info', c.key, 'kpi', `Alto de scorecard ${c.h}px fuera de 100–140 [kpi-scorecards §1].`);
     }
     if (c.type === 'simple-daterangepicker' && c.dateRangeDays === undefined)
@@ -222,6 +314,9 @@ export function lintSpec(spec: ReportSpec): { issues: LintIssue[]; components: R
     for (let i = 0; i < list.length; i++)
       for (let j = i + 1; j < list.length; j++) {
         const a = list[i]!, b = list[j]!;
+        // A decoration that contains the other one is a background (card, side bar, icon tile), not an overlap.
+        const inside = (p: ResolvedComponent, q: ResolvedComponent) => q.x >= p.x && q.y >= p.y && q.x + q.w <= p.x + p.w && q.y + q.h <= p.y + p.h;
+        if ((NON_DATA.has(a.type) && inside(a, b)) || (NON_DATA.has(b.type) && inside(b, a))) continue;
         if (a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h)
           push('warning', a.key, 'overlap', `Se solapa con "${b.key}" en la pagina ${page}.`);
       }

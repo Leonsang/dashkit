@@ -102,7 +102,7 @@ Checklist: todas las páginas con el mismo ancho; si una página es "larga", hac
 ## Referencias
 | Tema | Archivo |
 |---|---|
-| Cuatro arquetipos de página con sus cajas (resumen, desglose, objetivos, exploración) | [arquetipos.md](references/arquetipos.md) |
+| Cuatro arquetipos de página con sus cajas (resumen, desglose, objetivos, exploración) y el marco «panel con barra lateral» (navegación y filtros comunes, tarjetas con icono) | [arquetipos.md](references/arquetipos.md) |
 | Qué tema usar, contraste medido de la biblioteca, paleta de series, subida y bajada | [temas-y-color.md](references/temas-y-color.md) |
 
 Para construirlo con el MCP, la skill `ls-authoring`.

@@ -738,6 +738,8 @@ export interface ChartStyle {
   stacked?: boolean;
   axes?: { show?: boolean; xTitle?: boolean; yTitle?: boolean; rightTitle?: boolean; yMin?: number | null; yMax?: number | null; logScale?: boolean };
   gridColor?: string;
+  /** The component's own title (drawn above its box). null hides it. */
+  title?: { text: string; size?: number; bold?: boolean } | null;
 }
 
 export function chartStyleScript(args: ChartStyle): { ok: boolean; error?: string; set?: string[]; series?: string[] } {
@@ -810,6 +812,13 @@ export function chartStyleScript(args: ChartStyle): { ok: boolean; error?: strin
       if (a.logScale !== undefined) put('leftYAxisLogScale', a.logScale);
     }
     if (args.gridColor) put('gridColor', { color: hex(args.gridColor), opacity: 1 });
+    if (args.title === null) put('chartTitleShowTitle', false);
+    else if (args.title) {
+      put('chartTitleShowTitle', true);
+      put('chartTitleText', args.title.text);
+      if (args.title.size) put('chartTitleFontSize', args.title.size);
+      if (args.title.bold !== undefined) put('chartTitleBold', args.title.bold);
+    }
     if (!set.length) return { ok: false, error: 'No hay nada que cambiar.' };
     inj.get('wrapperSaveService').save([comp]);
     return { ok: true, set, series: names };
@@ -870,4 +879,201 @@ export function readChartStyleScript(componentId: string): { ok: boolean; error?
   } catch (e: any) {
     return { ok: false, error: String(e && e.message) };
   }
+}
+
+// ---------------------------------------------------------------------------
+// comparison period and page links (verified 2026-11-07 against a published template):
+//  datasource key compareDateDuration = {anchorType: 1, config: {startOffsetUnit: 9 (previous period) | 8
+//  (previous year), startOffset: 1, endOffsetUnit: same, endOffset: 1}}; {anchorType: 0, config: {}} = none.
+//  A scorecard shows the delta only with display key hideCompare=false.
+//  Button to a page: display keys internalLink=<pageId>, actionType 1, internalActionType 1, linkType 1.
+// ---------------------------------------------------------------------------
+
+export function comparisonScript(args: { componentId: string; comparison: 'none' | 'previous_period' | 'previous_year' }): { ok: boolean; error?: string; set?: string[] } {
+  const w = window as any;
+  try {
+    const inj = w.angular.element(document.body).injector();
+    const report = inj.get('legoUndoRedoService').report;
+    const all = [...report.pages.flatMap((p: any) => p.components), ...report.components];
+    const comp = all.find((c: any) => c.getId() === args.componentId);
+    if (!comp) return { ok: false, error: `Componente ${args.componentId} no encontrado.` };
+    const keys = comp.config.config.datasource && comp.config.config.datasource.keys;
+    if (!keys || !('compareDateDuration' in keys)) {
+      let ok = false;
+      try { ok = 'compareDateDuration' in (comp.getAllDataSourceKeys ? comp.getAllDataSourceKeys() : {}); } catch { /* none */ }
+      if (!ok) return { ok: false, error: `Un ${comp.config.config.display.type} no admite periodo de comparacion.` };
+    }
+    const unit = args.comparison === 'previous_year' ? 8 : 9;
+    const value = args.comparison === 'none' ? { anchorType: 0, config: {} } : { anchorType: 1, config: { startOffsetUnit: unit, startOffset: 1, endOffsetUnit: unit, endOffset: 1 } };
+    comp.setDataSourceKeyValue('compareDateDuration', value);
+    const set = ['compareDateDuration'];
+    if (comp.config.config.display.type === 'kpi-metric') { comp.setDisplayKeyValue('hideCompare', args.comparison === 'none'); set.push('hideCompare'); }
+    inj.get('wrapperSaveService').save([comp]);
+    return { ok: true, set };
+  } catch (e: any) {
+    return { ok: false, error: String(e && e.message) };
+  }
+}
+
+export function pageLinkScript(args: { componentId: string; pageId: string }): { ok: boolean; error?: string; page?: string } {
+  const w = window as any;
+  try {
+    const inj = w.angular.element(document.body).injector();
+    const report = inj.get('legoUndoRedoService').report;
+    const all = [...report.pages.flatMap((p: any) => p.components), ...report.components];
+    const comp = all.find((c: any) => c.getId() === args.componentId);
+    if (!comp) return { ok: false, error: `Componente ${args.componentId} no encontrado.` };
+    if (comp.config.config.display.type !== 'button') return { ok: false, error: 'El enlace a una pagina va en un boton (button).' };
+    const target = report.pages.find((p: any) => String(p.getId()) === args.pageId);
+    if (!target) return { ok: false, error: `Pagina ${args.pageId} no encontrada (ids en list_pages).` };
+    const name = String((target.config.attribute && target.config.attribute.name) || '');
+    for (const [k, v] of Object.entries({ internalLink: args.pageId, actionType: 1, internalActionType: 1, linkType: 1, linkUrl: `http://${name}`, linkNewTab: false })) comp.setDisplayKeyValue(k, v);
+    inj.get('wrapperSaveService').save([comp]);
+    return { ok: true, page: name };
+  } catch (e: any) {
+    return { ok: false, error: String(e && e.message) };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// chart interactions (read 2026-11-07 from a published template): they live in comp.config.behavior.
+//  onMetricSelect: [{action: 'metric-selector', isControl: false, resource: {type: 'concepts', value: [concept...]}}]
+//    the optional metrics the viewer can switch to (the chart's own metrics stay in metrics.primary).
+//  onDrillDown + onTooltipOrHeaderClick: [{action: 'drill-down', isControl: false, resource: {type: 'concepts',
+//    value: [levels...]}}]; a date drills as [transformationType 3, 4, the date itself] (month, week, day).
+//  onSelect: [{action: 'cross-filtering', isControl: false}] makes a click filter the rest of the page.
+// ---------------------------------------------------------------------------
+
+export function chartInteractionsScript(args: {
+  componentId: string;
+  /** Move this many trailing metrics of metrics.primary into the metric selector. */
+  toSelector?: number;
+  clearSelector?: boolean;
+  dateDrill?: boolean;
+  /** Level shown first: month (default) or day. */
+  drillStart?: 'month' | 'day';
+  crossFilter?: boolean;
+}): { ok: boolean; error?: string; selector?: string[]; drill?: string[]; crossFilter?: boolean } {
+  const w = window as any;
+  try {
+    const inj = w.angular.element(document.body).injector();
+    const report = inj.get('legoUndoRedoService').report;
+    const all = [...report.pages.flatMap((p: any) => p.components), ...report.components];
+    const comp = all.find((c: any) => c.getId() === args.componentId);
+    if (!comp) return { ok: false, error: `Componente ${args.componentId} no encontrado.` };
+    const cfg = comp.config;
+    cfg.behavior = cfg.behavior || {};
+    const beh = cfg.behavior;
+    const keys = cfg.config.datasource.keys;
+    let schema: any = {};
+    try { schema = comp.getSchema().qe.concepts || {}; } catch { /* not loaded */ }
+    const label = (n: string) => {
+      const q = cfg.conceptDefs[n] && cfg.conceptDefs[n].queryTimeTransformation;
+      const dn = q && q.displayTransformation && q.displayTransformation.displayName;
+      const sf = q && q.dataTransformation && q.dataTransformation.sourceFieldName;
+      return String(dn || (sf && schema[sf] && schema[sf].displayName) || sf || n);
+    };
+    const conceptObj = (n: string, type: number, dataType: number) => {
+      const d = JSON.parse(JSON.stringify(cfg.conceptDefs[n]));
+      return { id: d.id || `t0.${n}`, name: n, namespace: d.namespace || 't0', displayName: label(n), type, dataType, isDefault: false, isAutoField: true, queryTimeTransformation: d.queryTimeTransformation };
+    };
+    const out: { selector?: string[]; drill?: string[]; crossFilter?: boolean } = {};
+    if (args.clearSelector) { delete beh.onMetricSelect; out.selector = []; }
+    if (args.toSelector) {
+      const prim: string[] = keys.metrics.value.primary;
+      if (args.toSelector >= prim.length) return { ok: false, error: 'El grafico tiene que conservar al menos una metrica propia.' };
+      const moved = prim.slice(prim.length - args.toSelector);
+      keys.metrics.value.primary = prim.slice(0, prim.length - args.toSelector);
+      const prev = beh.onMetricSelect && beh.onMetricSelect[0] && beh.onMetricSelect[0].resource ? beh.onMetricSelect[0].resource.value : [];
+      const fresh = moved.map((n) => conceptObj(n, 1, 5));
+      // Re-applying a spec binds the optional metrics again: keep one entry per display name.
+      const value = [...prev.filter((v: any) => !moved.includes(v.name) && !fresh.some((f) => f.displayName === v.displayName)), ...fresh];
+      beh.onMetricSelect = [{ action: 'metric-selector', isControl: false, resource: { type: 'concepts', value }, init: null }];
+      out.selector = value.map((v: any) => v.displayName);
+    }
+    if (args.dateDrill) {
+      const base: string | undefined = keys.dimensions && keys.dimensions.value && keys.dimensions.value.primary && keys.dimensions.value.primary[0];
+      if (!base) return { ok: false, error: 'El grafico no tiene dimension.' };
+      // Already drilling: the daily date is the last level of the existing list.
+      const prevDrill = beh.onDrillDown && beh.onDrillDown[0] && beh.onDrillDown[0].resource && beh.onDrillDown[0].resource.value;
+      if (prevDrill && prevDrill.length && prevDrill.some((v: any) => v.name === base) && base !== prevDrill[prevDrill.length - 1].name) { out.drill = prevDrill.map((v: any) => v.name); }
+      else {
+      const bd = cfg.conceptDefs[base];
+      const tc = bd && bd.queryTimeTransformation && bd.queryTimeTransformation.dataTransformation && bd.queryTimeTransformation.dataTransformation.transformationConfig;
+      if (tc && tc.transformationType) return { ok: false, error: 'La dimension ya esta agrupada (mes, semana...): usa la fecha diaria para desglosar.' };
+      const levels: string[] = [];
+      for (const t of [3, 4]) {
+        let name = Object.keys(cfg.conceptDefs).find((n) => {
+          const q = cfg.conceptDefs[n].queryTimeTransformation;
+          return q && q.dataTransformation && q.dataTransformation.sourceFieldName === bd.queryTimeTransformation.dataTransformation.sourceFieldName && q.dataTransformation.transformationConfig && q.dataTransformation.transformationConfig.transformationType === t;
+        });
+        if (!name) {
+          name = 'qt_' + Math.random().toString(36).slice(2, 12);
+          const d = JSON.parse(JSON.stringify(bd));
+          d.id = `${d.namespace || 't0'}.${name}`; d.name = name;
+          d.queryTimeTransformation.dataTransformation.transformationConfig = { transformationType: t };
+          d.queryTimeTransformation.displayTransformation = Object.assign({}, d.queryTimeTransformation.displayTransformation || {}, { outputSemanticInfo: { semanticConfig: [{ semanticType: t, dateTimeOptions: { useNativeDateTime: true } }] } });
+          delete d.queryTimeTransformation.displayTransformation.displayName;
+          cfg.conceptDefs[name] = d;
+        }
+        levels.push(name);
+      }
+      levels.push(base);
+      const value = levels.map((n) => conceptObj(n, 0, 6));
+      const act = () => [{ action: 'drill-down', isControl: false, resource: { type: 'concepts', value: JSON.parse(JSON.stringify(value)) } }];
+      beh.onDrillDown = act();
+      beh.onTooltipOrHeaderClick = act();
+      out.drill = ['mes', 'semana', label(base)];
+      if (args.drillStart !== 'day') {
+        // Start at month: the chart's dimension becomes the month level, and its sort follows.
+        const month = levels[0]!;
+        keys.dimensions.value.primary = [month, ...keys.dimensions.value.primary.slice(1)];
+        const sd = keys.sortData && Array.isArray(keys.sortData.value) ? keys.sortData.value : [];
+        for (const s of sd) if (s.sortColumn === base) s.sortColumn = month;
+        for (const a of (beh.onSort || [])) {
+          const so = a && a.init && a.init.sortOptions;
+          for (const s of (so && so.sortData) || []) if (s.sortColumn && s.sortColumn.name === base) { s.sortColumn.name = month; s.sortColumn.dataTransformation = JSON.parse(JSON.stringify(cfg.conceptDefs[month].queryTimeTransformation.dataTransformation)); }
+        }
+        out.drill = ['mes (inicio)', 'semana', label(base)];
+      }
+      }
+    }
+    if (args.crossFilter !== undefined) {
+      if (args.crossFilter) beh.onSelect = [{ action: 'cross-filtering', isControl: false }];
+      else delete beh.onSelect;
+      out.crossFilter = args.crossFilter;
+    }
+    inj.get('wrapperSaveService').save([comp]);
+    return { ok: true, ...out };
+  } catch (e: any) {
+    return { ok: false, error: String(e && e.message) };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// images (verified 2026-11-07): this editor has no image URL option, only "Selecciona un archivo". Uploading
+// through any input[type=file].file-upload-input creates a NEW image component on the current page whose display
+// key file = {name, type, id}. That value can be set on any other image of the same report, so a file is uploaded once.
+// ---------------------------------------------------------------------------
+
+export function imageComponentsScript(): Array<{ id: string; pageId: string | null; file: { name?: string; id?: string; type?: string } | null }> {
+  const w = window as any;
+  const report = w.angular.element(document.body).injector().get('legoUndoRedoService').report;
+  const rows: Array<{ id: string; pageId: string | null; file: any }> = [];
+  const add = (c: any, pageId: string | null) => {
+    if (c.config.config.display.type !== 'image-component') return;
+    const f = c.config.config.display.keys.file;
+    rows.push({ id: String(c.getId()), pageId, file: f && f.value && f.value.id ? JSON.parse(JSON.stringify(f.value)) : null });
+  };
+  for (const p of report.pages) for (const c of p.components) add(c, String(p.getId()));
+  for (const c of report.components) add(c, null);
+  return rows;
+}
+
+/** "report" if the component is at report level (on every page), "page" if on a page, null if missing. */
+export function componentLevelScript(id: string): 'report' | 'page' | null {
+  const report = (window as any).angular.element(document.body).injector().get('legoUndoRedoService').report;
+  if (report.components.some((c: any) => c.getId() === id)) return 'report';
+  if (report.pages.some((p: any) => p.components.some((c: any) => c.getId() === id))) return 'page';
+  return null;
 }

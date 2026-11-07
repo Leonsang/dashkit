@@ -75,4 +75,9 @@ usuario trabaje desde la terminal o en scripts.
   padding; la herramienta lo avisa en `warnings`.
 - **Estilo de gráfico:** `set_chart_style` cambia series, leyenda y ejes, y recarga para que se vea (el
   editor no repinta antes). El tipo de serie solo cambia en gráficos combinados y de serie temporal.
-- **Sin herramienta:** parámetros de informe y secciones de la navegación.
+- **Imágenes:** este editor no admite imágenes por URL; `add_image` sube el archivo (una vez por informe) con el
+  selector de archivos del editor.
+- **Títulos de gráfico:** se dibujan encima de la caja, fuera del borde del tema; para un título dentro de la
+  tarjeta, `card` en el spec.
+- **Sin herramienta:** parámetros de informe y secciones de la navegación de Looker Studio (la navegación
+  propia con botones sí: `linkPage`).

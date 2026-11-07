@@ -68,6 +68,13 @@ guías está marcada como [OFICIAL] o [CONVENCIÓN]; respeta la diferencia.
   - `get_chart_style` lee el estilo efectivo de un gráfico; `set_chart_style` cambia series (color, tipo,
     etiquetas, eje), leyenda y ejes por nombre.
     Un solo eje Y y leyenda con 2 series o más (`audit_ux` lo comprueba).
+  - `set_chart_interactions`: métricas opcionales (el lector cambia la métrica), desglose mes › semana › día
+    y filtro cruzado. `patch_component comparison` añade la comparación con el periodo anterior.
+  - `add_image` sube un icono o imagen (una vez por informe); `patch_component linkPage` convierte un botón
+    en un enlace a una página.
+  - En el spec, `card` envuelve un componente en una tarjeta con título (o un KPI con icono) y
+    `reportLevel` lo repite en todas las páginas: así se monta el «panel con barra lateral»
+    (`ls-diseno-layout`, arquetipos).
 - **Combinaciones y parámetros:**
   - `create_blend` combina de 2 a 5 orígenes por las dimensiones que comparten
     y deja un gráfico vinculado; `list_blends`, `update_blend`, `delete_blend`.

@@ -60,18 +60,27 @@ spec en lugar de la ruta; entonces no hay `.state.json` y cada aplicación vuelv
 | `dataset`, `dimensions`, `metrics`, `slots` | componente | Como en `create_component` (`campos.md`) |
 | `filters[]` | componente | Filtros del componente |
 | `dateRangeDays`, `stripStyles` | componente | Como `patch_component` |
-| `text` | componente | Texto de un cuadro de texto: una cadena, o `{text, size, bold, color}` |
+| `text` | componente | Texto de un cuadro de texto: una cadena, o `{text, size, bold, color, align}` |
 | `parameter` | componente | El control fija ese parámetro (id) en vez de filtrar |
 | `style` | componente | Claves de estilo, p. ej. `{"hideMetric": false}` en un scorecard |
 | `chartStyle` | componente | Estilo del gráfico (lo de `set_chart_style` sin `componentId`): series, leyenda, ejes |
 | `conditional` | componente | Reglas de formato condicional (las de `set_conditional_format`); sustituyen las que haya |
+| `card` | macro | Tarjeta: forma redondeada detrás, el componente dentro con su título (`title`) o, en un scorecard, un cuadro con icono (`icon`, `iconBackground`). Crea `<key>__card`, `__tile`, `__icon` (`componentes.md`) |
+| `reportLevel` | componente | Lo pone a nivel de informe: sale en todas las páginas (barra lateral, filtros comunes) |
+| `image` | componente | En un `image-component`: archivo local (ruta relativa al spec), subido una vez por informe |
+| `comparison` | componente | `previous_period`, `previous_year` o `none`: variación en scorecards, serie anterior en gráficos |
+| `linkPage` | componente | Botón que abre esa página (id o `name:<nombre>`) |
+| `interactions` | componente | `{optionalMetrics, dateDrillDown, drillStart, crossFilter}` (`set_chart_interactions`) |
+| `settings` | informe | Ajustes que se aplican primero (`report_settings`): `width`, `height`, `viewModeNav`... |
 | `row` + `items` | macro | Reparte una fila: `w = (ancho − (n−1)·gap) / n`, redondeado a la retícula. `margin`, `gap`, `width`, `x` opcionales |
 
 Ejemplos completos en `looker-studio-mcp/examples/`:
 - `resumen.spec.json`: una página;
 - `paginas-2-3.spec.json`: dos páginas, 14 componentes, filtros de página y tema;
 - `pagina-4-controles.spec.json`: todos los controles;
-- `showcase.spec.json`: seis páginas y 49 componentes con títulos, filas de KPIs, variantes, huecos, casilla y
+- `showcase.spec.json`: siete páginas con el arquetipo «panel con barra lateral» (navegación y filtros a nivel
+  de informe, tarjetas con título, KPIs con icono y comparación);
+  antes: seis páginas y 49 componentes con títulos, filas de KPIs, variantes, huecos, casilla y
   botón de filtro, y tres orígenes. Es la base del informe de demostración; las combinaciones y los
   parámetros se añaden después con sus herramientas.
 

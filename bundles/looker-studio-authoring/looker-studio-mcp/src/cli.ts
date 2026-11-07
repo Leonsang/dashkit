@@ -29,7 +29,7 @@ import {
 import { reportSettings } from './ops3.js';
 import { addFilter, addPage, addSourceField, applyTheme, detachFilter, updateFilter, exportTheme, importTheme, listFilters, listPages, readTheme, renamePage, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
 import { readFileSync, existsSync } from 'node:fs';
-import { addParameter, alignComponents, arrangeComponents, groupComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, getChartStyle, setChartStyle, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
+import { addParameter, alignComponents, arrangeComponents, groupComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, addImage, getChartStyle, setChartInteractions, setComparison, setPageLink, setChartStyle, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
 
 const HELP = `ls-studio <comando> [opciones]
 
@@ -66,6 +66,9 @@ Paginas y tema
   align <id...> [--align left|center|right|top|middle|bottom] [--distribute horizontal|vertical] [--gap N]
         [--match width|height|both]       Alinear, distribuir, igualar tamano
   group <id...> | ungroup <id|g-...> | groups [--page <id>]   Grupos de componentes
+  image <archivo> --box x,y,w,h [--page <id>] [--alt T]   Imagen o icono desde un archivo (lo sube una vez)
+  interact <id> [--optional "SUM(a) as A,..."] [--drill] [--cross on|off] [--no-reload]
+                                       Metricas opcionales, desglose de fecha y filtro cruzado de un grafico
   chart-style <id>                     Estilo efectivo de un grafico (series, ejes, leyenda)
   chart-style <id> <json|archivo> [--no-reload]   Estilo de grafico: series (color, type, dataLabels, axis...), legend, axes
   format <id> <reglas.json|json> [--append]   Formato condicional: [{field, op, value, background, color, target}] o {field, scale:[...]}
@@ -203,7 +206,9 @@ async function main(): Promise<unknown> {
         Object.assign(out, await patchComponent({ componentId: id, ...(days !== undefined ? { dateRangeDays: days } : {}), ...(flags['strip-styles'] ? { stripThemeStyles: true } : {}) }));
       if (typeof flags.parameter === 'string') out.parameter = await setControlParameter(id, flags.parameter);
       if (typeof flags.style === 'string') out.style = await setStyle(id, JSON.parse(flags.style));
-      if (typeof flags.text === 'string') out.text = await setText(id, flags.text.replace(/\\n/g, '\n'), { ...(num(flags.size) ? { size: num(flags.size)! } : {}), ...(flags.bold ? { bold: true } : {}), ...(typeof flags.color === 'string' ? { color: flags.color } : {}) });
+      if (typeof flags.compare === 'string') out.comparison = await setComparison(id, flags.compare as never);
+      if (typeof flags['link-page'] === 'string') out.link = await setPageLink(id, flags['link-page']);
+      if (typeof flags.text === 'string') out.text = await setText(id, flags.text.replace(/\\n/g, '\n'), { ...(num(flags.size) ? { size: num(flags.size)! } : {}), ...(flags.bold ? { bold: true } : {}), ...(typeof flags.color === 'string' ? { color: flags.color } : {}), ...(typeof flags.align === 'string' ? { align: flags.align as never } : {}) });
       return out;
     }
     case 'delete':
@@ -240,6 +245,22 @@ async function main(): Promise<unknown> {
       return groupComponents({ op: 'ungroup', componentIds: pos.filter((x) => !x.startsWith('g-')), groupIds: pos.filter((x) => x.startsWith('g-')) });
     case 'groups':
       return groupComponents({ op: 'list', ...(typeof flags.page === 'string' ? { pageId: flags.page } : {}) });
+    case 'image': {
+      // image <archivo> --box x,y,w,h [--page <id>] [--alt "texto"]
+      const box = list(flags.box).map(Number);
+      if (box.length !== 4 || box.some((v) => Number.isNaN(v))) throw new Error('--box x,y,w,h');
+      return addImage({ path: need(pos[0], 'archivo'), box: { x: box[0]!, y: box[1]!, width: box[2]!, height: box[3]! }, ...(typeof flags.page === 'string' ? { pageId: flags.page } : {}), ...(typeof flags.alt === 'string' ? { altText: flags.alt } : {}) });
+    }
+    case 'interact': {
+      // interact <id> [--optional "SUM(a) as A,SUM(b) as B"] [--drill] [--cross on|off] [--no-reload]
+      return setChartInteractions({
+        componentId: need(pos[0], 'componentId'),
+        ...(typeof flags.optional === 'string' ? { optionalMetrics: list(flags.optional) } : {}),
+        ...(flags.drill ? { dateDrillDown: true } : {}),
+        ...(typeof flags.cross === 'string' ? { crossFilter: flags.cross === 'on' } : {}),
+        ...(flags['no-reload'] ? { reload: false } : {}),
+      });
+    }
     case 'chart-style': {
       // chart-style <id> <json|archivo>  e.g. '{"series":[{"series":1,"color":"#1F6FEB"}],"legend":"none"}'
       if (!pos[1]) return getChartStyle(need(pos[0], 'componentId'));

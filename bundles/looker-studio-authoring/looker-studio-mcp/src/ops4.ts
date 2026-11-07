@@ -33,6 +33,10 @@ import {
   setControlParameterScript,
   setConditionalFormatScript,
   chartStyleScript,
+  comparisonScript,
+  chartInteractionsScript,
+  imageComponentsScript,
+  pageLinkScript,
   readChartStyleScript,
   type ChartStyle,
   setDisplayKeysScript,
@@ -812,12 +816,12 @@ export async function setControlParameter(componentId: string, parameterId: stri
 }
 
 /** Sets the text of a text box. Plain text is escaped; lines become <div>s. Pass html=true to send HTML as is. */
-export async function setText(componentId: string, text: string, opts: { html?: boolean; size?: number; bold?: boolean; color?: string } = {}) {
+export async function setText(componentId: string, text: string, opts: { html?: boolean; size?: number; bold?: boolean; color?: string; align?: 'left' | 'center' | 'right' } = {}) {
   const { page } = await requireEditMode();
   const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   let html = opts.html ? text : text.split('\n').map((l) => `<div>${esc(l) || '<br>'}</div>`).join('');
-  if (!opts.html && (opts.size || opts.bold || opts.color)) {
-    const style = [opts.size ? `font-size:${opts.size}px` : '', opts.color ? `color:${opts.color}` : ''].filter(Boolean).join(';');
+  if (!opts.html && (opts.size || opts.bold || opts.color || opts.align)) {
+    const style = [opts.size ? `font-size:${opts.size}px` : '', opts.color ? `color:${opts.color}` : '', opts.align ? `text-align:${opts.align}` : ''].filter(Boolean).join(';');
     html = `<div style="${style}">${opts.bold ? `<b>${html}</b>` : html}</div>`;
   }
   const r = await evaluateOn(page, T, setTextScript, { componentId, html });
@@ -909,6 +913,96 @@ export async function setConditionalFormat(componentId: string, rules: CfRule[],
  * Chart style by name: series colour/type/labels/axis, legend, data labels, axes. The editor saves the keys
  * but repaints the chart only after a reload, so this reloads unless reload=false.
  */
+/** Comparison period of a chart or scorecard (a scorecard also shows its delta). */
+export async function setComparison(componentId: string, comparison: 'none' | 'previous_period' | 'previous_year') {
+  const { page } = await requireEditMode();
+  const r = await evaluateOn(page, T, comparisonScript, { componentId, comparison });
+  if (!r.ok) throw new Error(r.error);
+  await sleep(1500);
+  return { ok: true, componentId, comparison, set: r.set };
+}
+
+/** A button that opens a page of the report. page: id, or "name:<page name>". */
+export async function setPageLink(componentId: string, pageRef: string) {
+  const { page } = await requireEditMode();
+  let pageId = pageRef;
+  if (pageRef.startsWith('name:')) {
+    const { listPages } = await import('./ops3.js');
+    const hit = (await listPages()).find((p) => p.name === pageRef.slice(5));
+    if (!hit) throw new Error(`No hay ninguna pagina llamada "${pageRef.slice(5)}".`);
+    pageId = hit.id;
+  }
+  const r = await evaluateOn(page, T, pageLinkScript, { componentId, pageId });
+  if (!r.ok) throw new Error(r.error);
+  await sleep(1500);
+  return { ok: true, componentId, pageId, page: r.page };
+}
+
+/**
+ * Viewer interactions of a chart: optional metrics (the viewer switches the chart's metric), date drill-down
+ * (month > week > day) and cross-filtering. Optional metrics are first bound as metrics, so their fields
+ * resolve exactly as in bind_fields_to_component, and then moved to the metric selector.
+ */
+export async function setChartInteractions(o: { componentId: string; optionalMetrics?: string[]; dateDrillDown?: boolean; drillStart?: 'month' | 'day'; crossFilter?: boolean; reload?: boolean }) {
+  const { page } = await requireEditMode();
+  if (o.optionalMetrics && o.optionalMetrics.length)
+    await bindFieldsToComponent({ componentId: o.componentId, dimensions: [], metrics: o.optionalMetrics, mode: 'append' });
+  const r = await evaluateOn(page, T, chartInteractionsScript, {
+    componentId: o.componentId,
+    ...(o.optionalMetrics ? (o.optionalMetrics.length ? { toSelector: o.optionalMetrics.length } : { clearSelector: true }) : {}),
+    ...(o.dateDrillDown ? { dateDrill: true, ...(o.drillStart ? { drillStart: o.drillStart } : {}) } : {}),
+    ...(o.crossFilter !== undefined ? { crossFilter: o.crossFilter } : {}),
+  });
+  if (!r.ok) throw new Error(r.error);
+  if (o.reload !== false) await reloadReport();
+  else await sleep(1500);
+  return { ok: true, componentId: o.componentId, ...(r.selector ? { optionalMetrics: r.selector } : {}), ...(r.drill ? { drillDown: r.drill } : {}), ...(r.crossFilter !== undefined ? { crossFilter: r.crossFilter } : {}) };
+}
+
+/**
+ * An image from a local file (SVG, PNG, JPG, GIF). A file already uploaded to this report (same file name) is
+ * reused; otherwise it is uploaded with the editor's file input, which creates the image on the open page.
+ */
+export async function addImage(o: { path: string; box: { x: number; y: number; width: number; height: number }; pageId?: string; altText?: string }) {
+  const { resolve, basename, extname } = await import('node:path');
+  const { existsSync } = await import('node:fs');
+  const abs = resolve(o.path);
+  if (!existsSync(abs)) throw new Error(`No existe ${abs}.`);
+  if (!['.svg', '.png', '.jpg', '.jpeg', '.gif'].includes(extname(abs).toLowerCase())) throw new Error('La imagen tiene que ser SVG, PNG, JPG o GIF.');
+  const name = basename(abs);
+  let { page, info } = await requireEditMode();
+  const before = await evaluateOn(page, T, imageComponentsScript);
+  const known = before.find((r) => r.file && r.file.name === name);
+  let id: string;
+  let uploaded = false;
+  if (known) {
+    const r = await createComponent({ type: 'image-component', box: o.box, ...(o.pageId ? { pageId: o.pageId } : {}), dimensions: [], metrics: [] });
+    id = r.componentId!;
+    await setStyle(id, { file: known.file });
+  } else {
+    if (o.pageId && info.pageId !== o.pageId) {
+      await openReport(`https://datastudio.google.com/reporting/${info.reportId}/page/${o.pageId}/edit`);
+      page = await getReportPage();
+    }
+    await ensureVisible(page);
+    const input = await page.$('input[type=file].file-upload-input');
+    if (!input) throw new Error('No se encontro el selector de archivo del editor.');
+    const old = new Set(before.map((r) => r.id));
+    await input.uploadFile(abs);
+    let hit: { id: string } | undefined;
+    for (let i = 0; i < 50 && !hit; i++) {
+      await sleep(500);
+      hit = (await evaluateOn(page, T, imageComponentsScript)).find((r) => !old.has(r.id) && r.file && r.file.name === name);
+    }
+    if (!hit) throw new Error(`La subida de ${name} no creo ninguna imagen (mira el editor).`);
+    id = hit.id;
+    uploaded = true;
+    await setComponentBoxModel({ componentId: id, position: { x: o.box.x, y: o.box.y }, dimensions: { width: o.box.width, height: o.box.height } });
+  }
+  if (o.altText) await setStyle(id, { altText: o.altText });
+  return { ok: true, componentId: id, file: name, uploaded };
+}
+
 export async function getChartStyle(componentId: string) {
   const r = await evaluateOn(await getReportPage(), T, readChartStyleScript, componentId);
   if (!r.ok) throw new Error(r.error);
