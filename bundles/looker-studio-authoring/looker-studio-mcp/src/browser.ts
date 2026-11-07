@@ -1,4 +1,6 @@
 import puppeteer, { type Browser, type Page } from 'puppeteer-core';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { log } from './log.js';
 
 /** Matches Looker Studio report URLs on both the current and legacy domains. */
@@ -80,6 +82,24 @@ async function pageState(page: Page): Promise<{ visible: boolean; focused: boole
  * Finds the Looker Studio report tab. Preference order:
  * focused+visible > visible > last used > first match.
  */
+/**
+ * The report dashkit opened or created last (open_report, copy_report, create_report_from_csv): with several
+ * report tabs open, every tool works on that one. Kept in a temp file so the CLI (one process per command)
+ * and the MCP server agree.
+ */
+function activeReportFile(): string {
+  return `${tmpdir()}/ls-studio-active-report.txt`;
+}
+export function setActiveReport(urlOrId: string): void {
+  const m = /reporting\/([^/?#]+)/.exec(urlOrId);
+  const id = m ? m[1]! : urlOrId;
+  if (!id || id === 'create') return;
+  try { writeFileSync(activeReportFile(), id); } catch { /* best effort */ }
+}
+function activeReport(): string | null {
+  try { return readFileSync(activeReportFile(), 'utf8').trim() || null; } catch { return null; }
+}
+
 export async function getReportPage(): Promise<Page> {
   const browser = await getBrowser();
   // Filter targets by URL BEFORE creating Page objects: attaching to unrelated hidden tabs
@@ -100,6 +120,9 @@ export async function getReportPage(): Promise<Page> {
   // focused and active (no window switching needed).
   for (const p of pages) await keepActive(p);
   if (pages.length === 1) return (lastPage = pages[0]!);
+  const active = activeReport();
+  const preferred = active ? pages.find((p) => p.url().includes(`/reporting/${active}`)) : undefined;
+  if (preferred) return (lastPage = preferred);
 
   const states = await Promise.all(pages.map(async (p) => ({ page: p, ...(await pageState(p)) })));
   const pick =

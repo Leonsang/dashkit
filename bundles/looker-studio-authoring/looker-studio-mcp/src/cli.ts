@@ -29,7 +29,7 @@ import {
 import { reportSettings } from './ops3.js';
 import { addFilter, addPage, addSourceField, applyTheme, detachFilter, updateFilter, exportTheme, importTheme, listFilters, listPages, readTheme, renamePage, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
 import { readFileSync, existsSync } from 'node:fs';
-import { addParameter, alignComponents, arrangeComponents, groupComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, addImage, analyzeReportDesign, inspectDataSourcesNamed, checkView, getChartStyle, listStyleKeys, screenshotReport, setChartInteractions, setComparison, setPageLink, setChartStyle, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
+import { addParameter, alignComponents, arrangeComponents, groupComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, addImage, analyzeReportDesign, createReportFromCsv, inspectDataSourcesNamed, checkView, getChartStyle, listStyleKeys, screenshotReport, setChartInteractions, setComparison, setPageLink, setChartStyle, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
 
 const HELP = `ls-studio <comando> [opciones]
 
@@ -66,6 +66,7 @@ Paginas y tema
   align <id...> [--align left|center|right|top|middle|bottom] [--distribute horizontal|vertical] [--gap N]
         [--match width|height|both]       Alinear, distribuir, igualar tamano
   group <id...> | ungroup <id|g-...> | groups [--page <id>]   Grupos de componentes
+  new-from-csv <archivo.csv...> [--dataset N]   Informe nuevo con el CSV como origen (conector de subida)
   design [--page <id>]                 Perfil de diseno de cualquier informe (marco, tarjetas, KPIs, interacciones)
   shot [--page <id>] [--view] [--component <id>] [--out f.png]   Captura de la pagina o de un componente
   style-keys <id> [--filter regex]     Claves de estilo que acepta un componente, con su valor efectivo
@@ -261,6 +262,9 @@ async function main(): Promise<unknown> {
       return groupComponents({ op: 'ungroup', componentIds: pos.filter((x) => !x.startsWith('g-')), groupIds: pos.filter((x) => x.startsWith('g-')) });
     case 'groups':
       return groupComponents({ op: 'list', ...(typeof flags.page === 'string' ? { pageId: flags.page } : {}) });
+    case 'new-from-csv':
+      // new-from-csv <archivo.csv...> [--dataset nombre]
+      return createReportFromCsv({ files: pos, ...(typeof flags.dataset === 'string' ? { dataset: flags.dataset } : {}) });
     case 'design':
       // design [--page <id>]
       return analyzeReportDesign(typeof flags.page === 'string' ? flags.page : undefined);

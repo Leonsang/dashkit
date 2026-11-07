@@ -8,7 +8,7 @@ import {
   getReportLayout,
   sanitizeLearning,
   writesAllowed
-} from "./chunks/chunk-O3X3SSUM.js";
+} from "./chunks/chunk-EYN6X5DF.js";
 import {
   addImage,
   addParameter,
@@ -18,6 +18,7 @@ import {
   bindFieldsToComponent,
   checkView,
   createBlend,
+  createReportFromCsv,
   deleteBlend,
   deletePages,
   deleteParameter,
@@ -41,7 +42,7 @@ import {
   setText,
   updateBlend,
   updateParameter
-} from "./chunks/chunk-HLQG6ZM7.js";
+} from "./chunks/chunk-2NNBF23H.js";
 import {
   addFilter,
   addPage,
@@ -79,10 +80,10 @@ import {
   updateFilter,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-X3N7HIWA.js";
+} from "./chunks/chunk-TBJANFP6.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
-import "./chunks/chunk-PXCDDC3O.js";
+import "./chunks/chunk-VAH3IT7I.js";
 import "./chunks/chunk-FAVAKK4W.js";
 import "./chunks/chunk-GIAQTVDD.js";
 import "./chunks/chunk-BGDW2RS3.js";
@@ -36909,7 +36910,8 @@ var WRITE_TOOLS = /* @__PURE__ */ new Set([
   "group_components",
   "set_chart_style",
   "set_chart_interactions",
-  "add_image"
+  "add_image",
+  "create_report_from_csv"
 ]);
 var DESTRUCTIVE_TOOLS = /* @__PURE__ */ new Set(["delete_component", "delete_pages", "delete_blend", "delete_parameter"]);
 {
@@ -37562,6 +37564,16 @@ server.registerTool(
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true }
   },
   async (args) => run(() => addImage(args))
+);
+server.registerTool(
+  "create_report_from_csv",
+  {
+    title: "Crear un informe desde un CSV",
+    description: 'Crea un informe nuevo con uno o varios CSV (mismas columnas) como origen, con el conector "Subida de archivos CSV" de Looker Studio, y lo deja abierto en /edit. Devuelve reportId, url, dataSourceId y los campos con su nombre y tipo. La primera vez en una cuenta el conector pide autorizacion: la da el usuario (la herramienta para y lo dice). Revisa los tipos: una fecha o un numero con celdas vacias pueden llegar como texto.',
+    inputSchema: { files: external_exports.array(external_exports.string().min(1)).min(1), dataset: external_exports.string().optional().describe("Nombre del conjunto de datos (por defecto, el del archivo)") },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true }
+  },
+  async (args) => run(() => createReportFromCsv(args))
 );
 server.registerTool(
   "analyze_report_design",

@@ -27,7 +27,7 @@ import {
   reloadReport,
 } from './ops.js';
 import { loadSpec, type ReportSpec } from './spec.js';
-import { addParameter, alignComponents, arrangeComponents, groupComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, addImage, analyzeReportDesign, inspectDataSourcesNamed, checkView, getChartStyle, listStyleKeys, screenshotReport, setChartInteractions, setComparison, setPageLink, setChartStyle, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
+import { addParameter, alignComponents, arrangeComponents, groupComponents, createBlend, deleteBlend, deleteParameter, deletePages, duplicatePage, updateParameter, listBlends, movePage, addImage, analyzeReportDesign, createReportFromCsv, inspectDataSourcesNamed, checkView, getChartStyle, listStyleKeys, screenshotReport, setChartInteractions, setComparison, setPageLink, setChartStyle, setConditionalFormat, setControlParameter, setPageVisibility, setStyle, setText, updateBlend } from './ops4.js';
 import { renamePage, reportSettings } from './ops3.js';
 import { addFilter, addPage, addSourceField, detachFilter, updateFilter, applyTheme, listFilters, listPages, readTheme, seedTemplatesFromUi, synthesizeTemplates, themeLibrary, useThemePreset, uxAudit } from './ops3.js';
 
@@ -52,7 +52,7 @@ const WRITE_TOOLS = new Set([
   'set_component_box_model', 'bind_fields_to_component', 'create_component', 'apply_report_spec', 'patch_component',
   'apply_theme', 'use_theme', 'add_page', 'rename_page', 'synthesize_templates', 'seed_templates_from_menu', 'add_filter',
   'detach_filter', 'update_filter', 'create_blend', 'update_blend', 'add_parameter', 'update_parameter', 'move_page', 'set_page_visibility', 'duplicate_page',
-  'arrange_components', 'set_conditional_format', 'align_components', 'group_components', 'set_chart_style', 'set_chart_interactions', 'add_image',
+  'arrange_components', 'set_conditional_format', 'align_components', 'group_components', 'set_chart_style', 'set_chart_interactions', 'add_image', 'create_report_from_csv',
 ]);
 const DESTRUCTIVE_TOOLS = new Set(['delete_component', 'delete_pages', 'delete_blend', 'delete_parameter']);
 {
@@ -847,6 +847,21 @@ server.registerTool(
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
   },
   async (args) => run(() => addImage(args)),
+);
+
+server.registerTool(
+  'create_report_from_csv',
+  {
+    title: 'Crear un informe desde un CSV',
+    description:
+      'Crea un informe nuevo con uno o varios CSV (mismas columnas) como origen, con el conector "Subida de archivos CSV" de ' +
+      'Looker Studio, y lo deja abierto en /edit. Devuelve reportId, url, dataSourceId y los campos con su nombre y tipo. La ' +
+      'primera vez en una cuenta el conector pide autorizacion: la da el usuario (la herramienta para y lo dice). Revisa los ' +
+      'tipos: una fecha o un numero con celdas vacias pueden llegar como texto.',
+    inputSchema: { files: z.array(z.string().min(1)).min(1), dataset: z.string().optional().describe('Nombre del conjunto de datos (por defecto, el del archivo)') },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+  },
+  async (args) => run(() => createReportFromCsv(args)),
 );
 
 server.registerTool(

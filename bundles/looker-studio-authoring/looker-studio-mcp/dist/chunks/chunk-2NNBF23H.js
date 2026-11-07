@@ -5,6 +5,7 @@ import {
   createComponent,
   deleteComponent,
   evaluateOn,
+  getBrowser,
   getReportPage,
   getTemplate,
   learn,
@@ -14,8 +15,9 @@ import {
   readDataSourcesScript,
   reloadReport,
   requireEditMode,
-  resolveDataset
-} from "./chunk-X3N7HIWA.js";
+  resolveDataset,
+  setActiveReport
+} from "./chunk-TBJANFP6.js";
 import {
   arrangeScript,
   blendSnapshotScript,
@@ -35,6 +37,7 @@ import {
   navPagesScript,
   pageLinkScript,
   readChartStyleScript,
+  schemaFieldsScript,
   screenBoxesScript,
   selectedIdsScript,
   setConditionalFormatScript,
@@ -43,7 +46,7 @@ import {
   setTextScript,
   styleKeysScript,
   updateBlendScript
-} from "./chunk-PXCDDC3O.js";
+} from "./chunk-VAH3IT7I.js";
 
 // src/looker/data.ts
 var EVAL_TIMEOUT_MS = Number(process.env.LS_EVAL_TIMEOUT_MS ?? 15e3);
@@ -164,11 +167,11 @@ async function datasetFields(page, id, forceProbe = false) {
   const st = await evaluateOn(page, T, probeStartScript, { datasetId: id, template: getTemplate("kpi-metric") });
   if (!st.ok) throw new Error(`No se pudo leer el esquema del origen ${id}: ${st.error}`);
   let pr = { ready: false, fields: [] };
-  for (let i = 0; i < 24 && !pr.ready; i++) {
+  for (let i = 0; i < 80 && !pr.ready; i++) {
     await sleep(250);
-    pr = await evaluateOn(page, T, probeReadScript, i === 23);
+    pr = await evaluateOn(page, T, probeReadScript, i === 79);
   }
-  if (!pr.fields.length) throw new Error(`El origen ${id} no devolvio campos.`);
+  if (!pr.fields.length) throw new Error(`El origen ${id} no devolvio campos en 20 s.`);
   const DT = { 0: "TEXT", 2: "NUMBER", 3: "BOOLEAN", 6: "DATE", 7: "DATETIME" };
   return pr.fields.map((f) => ({ id: f.id, name: f.name, dataType: DT[f.dataType] ?? "TEXT" }));
 }
@@ -180,12 +183,19 @@ async function inspectDataSourcesNamed() {
   for (const d of list) {
     const unnamed = !d.fields.length || d.fields.some((f) => !f.name || f.name === f.id);
     if (unnamed) {
+      const fromSchema = await evaluateOn(page, T, schemaFieldsScript, d.dataSourceId).catch(() => []);
+      if (fromSchema.length) {
+        out.push({ ...d, fields: fromSchema });
+        continue;
+      }
       try {
         await ensureVisible(page);
         const named = await datasetFields(page, d.dataSourceId, true);
         out.push({ ...d, fields: named.map((f) => ({ ...f, ...d.fields.find((x) => x.id === f.id)?.type ? { type: d.fields.find((x) => x.id === f.id).type } : {} })) });
         continue;
-      } catch {
+      } catch (e) {
+        out.push({ ...d, probeError: e.message });
+        continue;
       }
     }
     out.push(d);
@@ -821,7 +831,7 @@ async function setPageLink(componentId, pageRef) {
   const { page } = await requireEditMode();
   let pageId = pageRef;
   if (pageRef.startsWith("name:")) {
-    const { listPages } = await import("./ops3-4XIANYWV.js");
+    const { listPages } = await import("./ops3-MYKDF62B.js");
     const hit = (await listPages()).find((p) => p.name === pageRef.slice(5));
     if (!hit) throw new Error(`No hay ninguna pagina llamada "${pageRef.slice(5)}".`);
     pageId = hit.id;
@@ -1039,6 +1049,118 @@ async function analyzeReportDesign(pageId) {
   if (!r.ok) throw new Error(r.error);
   return r.profile;
 }
+async function addUploadedToReport(page, stems) {
+  for (let i = 0; i < 120; i++) {
+    await sleep(1e3);
+    const st = await page.evaluate((stems2) => {
+      const vis = (e) => e.offsetParent !== null;
+      const listed = [...document.querySelectorAll("*")].some((e) => e.children.length === 0 && vis(e) && stems2.includes((e.textContent || "").trim()));
+      const confirm = [...document.querySelectorAll("[role=dialog] button, .cdk-overlay-pane button")].find((b) => vis(b) && /A.adir al informe|Add to report/i.test(b.textContent || ""));
+      const add = [...document.querySelectorAll("button")].filter((b) => vis(b) && /^(A.adir|Add)$/i.test((b.textContent || "").trim()) && !b.disabled).pop();
+      const pick = (b) => {
+        if (!b) return null;
+        const r = b.getBoundingClientRect();
+        return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+      };
+      return { listed, confirm: pick(confirm), add: pick(add), panel: !!document.querySelector("[class*=connector], [class*=data-source-picker]") || [...document.querySelectorAll("*")].some((e) => e.children.length === 0 && vis(e) && /A.adir datos al informe|Add data to report/i.test(e.textContent || "")) };
+    }, stems);
+    if (st.confirm) {
+      await page.mouse.click(st.confirm.x, st.confirm.y);
+      return;
+    }
+    if (!st.panel) return;
+    if (st.listed && st.add) {
+      await page.mouse.click(st.add.x, st.add.y);
+      await sleep(2500);
+    }
+  }
+}
+async function createReportFromCsv(o) {
+  const { resolve, basename, extname } = await import("node:path");
+  const { existsSync } = await import("node:fs");
+  const files = o.files.map((f) => resolve(f));
+  for (const f of files) {
+    if (!existsSync(f)) throw new Error(`No existe ${f}.`);
+    if (![".csv", ".tsv"].includes(extname(f).toLowerCase())) throw new Error(`${basename(f)}: el conector de subida acepta CSV o TSV.`);
+  }
+  const dataset = (o.dataset ?? basename(files[0]).replace(/\.(csv|tsv)$/i, "")).slice(0, 80);
+  const page = await (await getBrowser()).newPage();
+  await page.goto("https://datastudio.google.com/reporting/create", { waitUntil: "domcontentloaded" });
+  await ensureVisible(page);
+  const textEl = async (re, timeoutMs) => {
+    for (let t = 0; t < timeoutMs; t += 500) {
+      const h = await page.evaluateHandle((src) => {
+        const rx = new RegExp(src, "i");
+        return [...document.querySelectorAll("*")].find((e) => e.children.length === 0 && e.offsetParent && rx.test((e.textContent || "").trim())) || null;
+      }, re.source);
+      if (await h.evaluate((e) => !!e)) return h.asElement();
+      await sleep(500);
+    }
+    return null;
+  };
+  const tile = await textEl(/^(Subida de archivos CSV|File Upload|CSV file upload)$/, 3e4);
+  if (!tile) throw new Error('No aparecio el conector "Subida de archivos CSV" en "Anadir datos al informe".');
+  await tile.click();
+  let state = "";
+  for (let i = 0; i < 60 && !state; i++) {
+    await sleep(500);
+    state = await page.evaluate(() => {
+      const bs = [...document.querySelectorAll("button")].filter((b) => b.offsetParent);
+      if (bs.some((b) => /^(AUTORIZAR|AUTHORIZE)$/i.test((b.innerText || "").trim()))) return "auth";
+      if (bs.some((b) => /Crear conjunto|Create dataset/i.test(b.innerText || ""))) return "ready";
+      return "";
+    });
+  }
+  const needsAuth = state === "auth";
+  if (needsAuth) throw new Error("Looker Studio pide autorizar una vez el conector de subida de CSV (guarda los archivos en Google Cloud Storage). Es una decision del usuario: que pulse AUTORIZAR en la pestana abierta y repite.");
+  const create = await page.evaluateHandle(() => [...document.querySelectorAll("button")].find((b) => /Crear conjunto|Create dataset/i.test(b.innerText || "") && b.offsetParent) || null);
+  if (!await create.evaluate((e) => !!e)) throw new Error('No se encontro "Crear conjunto de datos".');
+  await create.asElement().click();
+  await sleep(1500);
+  const input = await page.evaluateHandle(() => {
+    const d = [...document.querySelectorAll("[role=dialog], .cdk-overlay-pane")].pop();
+    return d && d.querySelector("input") || null;
+  });
+  if (!await input.evaluate((e) => !!e)) throw new Error("No se abrio el dialogo para nombrar el conjunto de datos.");
+  await input.asElement().click({ clickCount: 3 });
+  await page.keyboard.type(dataset);
+  const pt = await page.evaluate(() => {
+    const d = [...document.querySelectorAll("[role=dialog], .cdk-overlay-pane")].pop();
+    const b = [...d.querySelectorAll("button")].find((x) => /Continue|Continuar/i.test(x.textContent || ""));
+    const r = b.getBoundingClientRect();
+    return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+  });
+  const [chooser] = await Promise.all([page.waitForFileChooser({ timeout: 15e3 }), page.mouse.click(pt.x, pt.y)]);
+  await chooser.accept(files);
+  await addUploadedToReport(page, files.map((f) => basename(f).replace(/\.(csv|tsv)$/i, "")));
+  let ds;
+  for (let i = 0; i < 180 && !ds; i++) {
+    await sleep(1e3);
+    const r = await evaluateOn(page, T, readDataSourcesScript).catch(() => null);
+    const list = r ? Array.isArray(r.dataSources) ? r.dataSources : Object.values(r.dataSources) : [];
+    ds = list.find((d) => !!d);
+  }
+  if (!ds) throw new Error("La subida no anadio ningun origen al informe en 3 minutos (mira la pestana).");
+  const reportId = await page.evaluate(() => {
+    const r = window.angular.element(document.body).injector().get("legoUndoRedoService").report;
+    return String(r.config.id || "");
+  });
+  if (!reportId) throw new Error("No se pudo leer el id del informe nuevo.");
+  setActiveReport(reportId);
+  await page.goto(`https://datastudio.google.com/reporting/${reportId}/edit`, { waitUntil: "domcontentloaded" });
+  await waitRendered(page);
+  const named = await inspectDataSourcesNamed().catch(() => null);
+  const source = named ? named.dataSources.find((d) => d.dataSourceId === ds.dataSourceId) : null;
+  return {
+    ok: true,
+    reportId,
+    url: `https://datastudio.google.com/reporting/${reportId}/edit`,
+    dataSourceId: ds.dataSourceId,
+    dataset,
+    fields: source ? source.fields : ds.fields,
+    note: 'El informe se llama "Informe sin titulo" (renombrarlo aun no tiene herramienta). Revisa los tipos: una fecha o un numero con celdas vacias pueden llegar como texto; corrigelo con add_source_field (p. ej. PARSE_DATE).'
+  };
+}
 async function getChartStyle(componentId) {
   const r = await evaluateOn(await getReportPage(), T, readChartStyleScript, componentId);
   if (!r.ok) throw new Error(r.error);
@@ -1094,6 +1216,7 @@ export {
   screenshotReport,
   checkView,
   analyzeReportDesign,
+  createReportFromCsv,
   getChartStyle,
   setChartStyle,
   setStyle

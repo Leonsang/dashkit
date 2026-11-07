@@ -20,6 +20,7 @@ import {
   navPagesScript,
   pageLinkScript,
   readChartStyleScript,
+  schemaFieldsScript,
   screenBoxesScript,
   selectedIdsScript,
   setConditionalFormatScript,
@@ -28,7 +29,7 @@ import {
   setTextScript,
   styleKeysScript,
   updateBlendScript
-} from "./chunk-PXCDDC3O.js";
+} from "./chunk-VAH3IT7I.js";
 import "./chunk-5QDPZ4I5.js";
 export {
   arrangeScript,
@@ -51,6 +52,7 @@ export {
   navPagesScript,
   pageLinkScript,
   readChartStyleScript,
+  schemaFieldsScript,
   screenBoxesScript,
   selectedIdsScript,
   setConditionalFormatScript,

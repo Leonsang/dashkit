@@ -1310,3 +1310,26 @@ export function designProfileScript(pageId?: string): { ok: boolean; error?: str
     return { ok: false, error: String(e && e.message) };
   }
 }
+
+/**
+ * Fields of a data source from the report's own schema (report.getDatasourceSchema), even when no chart uses
+ * them yet (verified 2026-11-07 on a source just uploaded from a CSV). Semantic 32 = text, 33 = number;
+ * a field with an aggregation label is a metric.
+ */
+export function schemaFieldsScript(datasetId: string): Array<{ id: string; name: string; dataType: string; type: string }> {
+  const w = window as any;
+  try {
+    const report = w.angular.element(document.body).injector().get('legoUndoRedoService').report;
+    const sch = report.getDatasourceSchema(datasetId);
+    const list = Object.values((sch && sch.concepts) || {}) as any[];
+    return list.map((v) => {
+      const sem = (v.getSemantic && v.getSemantic()) || [];
+      const s0 = Array.isArray(sem) ? sem[0] : sem;
+      const dataType = s0 === 32 ? 'TEXT' : s0 === 33 ? 'NUMBER' : s0 === 34 ? 'BOOLEAN' : typeof s0 === 'number' && s0 < 32 ? 'DATE' : String(s0 ?? 'TEXT');
+      const agg = v.getAggregationTypeDisplayLabel ? String(v.getAggregationTypeDisplayLabel() || '') : '';
+      return { id: String(v.getName()), name: String(v.getDisplayName()), dataType, type: agg ? 'METRIC' : 'DIMENSION' };
+    }).filter((f) => f.id && !/record_count_system_field/.test(f.id));
+  } catch {
+    return [];
+  }
+}

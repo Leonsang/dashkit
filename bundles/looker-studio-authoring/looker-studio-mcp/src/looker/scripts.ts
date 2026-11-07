@@ -404,7 +404,23 @@ export async function bindFieldsScript(args: BindFieldsArgs): Promise<BindFields
   let concepts: any = {};
   try { concepts = (comp.getSchema && comp.getSchema()?.qe?.concepts) || {}; } catch { /* fall back */ }
   if (!Object.keys(concepts).length) {
-    try { concepts = report.getDatasourceSchema(dsId).qe.concepts || {}; } catch { return fail(`No se pudo leer el esquema del origen ${dsId}.`); }
+    try {
+      const sch = report.getDatasourceSchema(dsId);
+      concepts = (sch && sch.qe && sch.qe.concepts) || {};
+      // A source no chart has used yet (e.g. just uploaded from a CSV) comes as sch.concepts, class objects
+      // with getters (verified 2026-11-07): normalise to the plain shape used below.
+      if (!Object.keys(concepts).length && sch && sch.concepts) {
+        concepts = {};
+        for (const v of Object.values(sch.concepts) as any[]) {
+          const sem = (v.getSemantic && v.getSemantic()) || [];
+          const s0 = Array.isArray(sem) ? sem[0] : sem;
+          const isMetric = !!(v.getAggregationTypeDisplayLabel && v.getAggregationTypeDisplayLabel());
+          const name = String(v.getName());
+          concepts[name] = { name, id: String(v.getId ? v.getId() : name), displayName: String(v.getDisplayName()), namespace: String(v.getNamespace ? v.getNamespace() : 't0'),
+            type: isMetric ? 1 : 0, dataType: s0 === 33 ? 2 : s0 === 34 ? 3 : s0 === 32 ? 0 : 6 };
+        }
+      }
+    } catch { return fail(`No se pudo leer el esquema del origen ${dsId}.`); }
   }
   if (!Object.keys(concepts).length) return fail(`Esquema del origen ${dsId} vacio (aun no cargado).`);
   const list = Object.values(concepts) as any[];

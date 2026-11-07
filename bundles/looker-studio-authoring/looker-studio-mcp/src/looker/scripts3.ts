@@ -371,7 +371,14 @@ export function probeStartScript(args: { datasetId: string; template?: any }): {
     // An empty report has nothing to clone: fall back to a learned template (kpi-metric).
     if (!base && !args.template) return { ok: false, error: 'Sin componentes para clonar ni plantilla kpi-metric.' };
     const cfg = base ? base.duplicateConfig() : JSON.parse(JSON.stringify(args.template));
-    if (!base) cfg.id = 'cd-probe' + Math.random().toString(36).slice(2, 10);
+    if (!base) {
+      cfg.id = 'cd-probe' + Math.random().toString(36).slice(2, 10);
+      // the learned template carries fields of another report's source: start empty so the schema query
+      // is just "what fields does this source have"
+      const k = cfg.config.datasource.keys;
+      for (const n of ['dimensions', 'metrics', 'sortData', 'filters']) if (k[n]) delete k[n].value;
+      cfg.conceptDefs = {};
+    }
     cfg.config.datasource.keys.dataset = { stateKey: 'ds', dominant: 2, value: { id: datasetId } };
     Object.assign(cfg.attribute, { left: 0, top: 0, width: 10, height: 10 });
     const tmp = page.addComponent(cfg);

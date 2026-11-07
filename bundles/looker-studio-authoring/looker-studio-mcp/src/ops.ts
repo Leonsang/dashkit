@@ -5,7 +5,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from 'puppeteer-core';
-import { evaluateOn, getBrowser, getReportPage, REPORT_URL_RE } from './browser.js';
+import { evaluateOn, getBrowser, getReportPage, REPORT_URL_RE, setActiveReport } from './browser.js';
 import { getTemplate, knownFix, learn, saveTemplate, seedKnowledge, summary } from './knowledge.js';
 import { log } from './log.js';
 import { requireEditMode } from './looker/report.js';
@@ -107,8 +107,10 @@ export async function waitReady(page: Page, timeoutMs = 45_000): Promise<void> {
 /** Opens (or reuses) a tab on the given report URL and waits for the editor. */
 export async function openReport(url: string): Promise<{ url: string }> {
   const browser = await getBrowser();
-  const target = browser.targets().find((t) => t.type() === 'page' && REPORT_URL_RE.test(t.url()));
-  const page = (target && (await target.page())) || (await browser.newPage());
+  // the active report's tab (see setActiveReport), or a new one
+  const target = browser.targets().some((t) => t.type() === 'page' && REPORT_URL_RE.test(t.url()));
+  const page = target ? await getReportPage() : await browser.newPage();
+  setActiveReport(url);
   // Bring to front BEFORE navigating: in a hidden tab the editor does not boot
   // (observed 2026-11-03: it ends on the home page with the model empty).
   if (target) await settleSaves(page, 1500);
@@ -172,6 +174,7 @@ export async function copyReport(source: string, name?: string): Promise<{ sourc
   }
   await waitReady(page);
   const id = reportId(page.url());
+  setActiveReport(id);
   if (id === sourceId) throw new Error('La URL final es la del original, no la de una copia.');
   learn('note', 'report_copy', { text: 'Linking API /reporting/create?c.reportId= -> Editar y compartir -> Confirmar y guardar' });
   return { sourceId, id, url: page.url(), name: copyName };
@@ -247,11 +250,25 @@ export async function diagnoseWithKnowledge(): Promise<DiagnoseResult & { issues
 // ---------------------------------------------------------------------------
 
 export async function resolveDataset(page: Page, sel: string | undefined): Promise<string | undefined> {
-  if (!sel) return undefined;
+  if (!sel) {
+    // A report with a single source: use it, so a component cloned from another report's template does not
+    // keep pointing at that report's source ("Falta la fuente de datos").
+    const ds0 = await evaluateOn(page, T, readDataSourcesScript).catch(() => null);
+    const list0 = ds0 ? (Array.isArray(ds0.dataSources) ? ds0.dataSources : Object.values(ds0.dataSources as Record<string, never>)) : [];
+    return list0.length === 1 ? (list0[0] as { dataSourceId: string }).dataSourceId : undefined;
+  }
   if (!sel.startsWith('@')) return sel;
   const field = sel.slice(1).toLowerCase();
   const ds = await evaluateOn(page, T, readDataSourcesScript);
   let hit = ds.dataSources.find((d) => d.fields.some((f) => f.id.toLowerCase() === field || f.name.toLowerCase() === field));
+  if (!hit) {
+    // the report's own schema knows the fields of a source no chart uses yet
+    const { schemaFieldsScript } = await import('./looker/scripts4.js');
+    for (const d of ds.dataSources.filter((x) => !x.fields.length)) {
+      const fs = await evaluateOn(page, T, schemaFieldsScript, d.dataSourceId).catch(() => []);
+      if (fs.some((f) => f.id.toLowerCase() === field || f.name.toLowerCase() === field)) return d.dataSourceId;
+    }
+  }
   if (!hit) {
     // Sources no component uses yet have an empty schema: probe them with a temporary, unsaved component.
     for (const d of ds.dataSources.filter((x) => !x.fields.length)) {

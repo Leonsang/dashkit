@@ -19,7 +19,7 @@ import {
 import {
   navDispatchScript,
   navPagesScript
-} from "./chunk-PXCDDC3O.js";
+} from "./chunk-VAH3IT7I.js";
 import {
   CDPSessionEvent,
   CdpBrowser,
@@ -1502,6 +1502,10 @@ var {
 } = puppeteer;
 var puppeteer_core_default = puppeteer;
 
+// src/browser.ts
+import { readFileSync, writeFileSync } from "node:fs";
+import { tmpdir as tmpdir2 } from "node:os";
+
 // src/log.ts
 function log(...args) {
   process.stderr.write(
@@ -1568,6 +1572,25 @@ async function pageState(page) {
     return { visible: false, focused: false };
   }
 }
+function activeReportFile() {
+  return `${tmpdir2()}/ls-studio-active-report.txt`;
+}
+function setActiveReport(urlOrId) {
+  const m = /reporting\/([^/?#]+)/.exec(urlOrId);
+  const id = m ? m[1] : urlOrId;
+  if (!id || id === "create") return;
+  try {
+    writeFileSync(activeReportFile(), id);
+  } catch {
+  }
+}
+function activeReport() {
+  try {
+    return readFileSync(activeReportFile(), "utf8").trim() || null;
+  } catch {
+    return null;
+  }
+}
 async function getReportPage() {
   const browser = await getBrowser();
   const pages = (await Promise.all(
@@ -1580,6 +1603,9 @@ async function getReportPage() {
   }
   for (const p of pages) await keepActive(p);
   if (pages.length === 1) return lastPage = pages[0];
+  const active = activeReport();
+  const preferred = active ? pages.find((p) => p.url().includes(`/reporting/${active}`)) : void 0;
+  if (preferred) return lastPage = preferred;
   const states = await Promise.all(pages.map(async (p) => ({ page: p, ...await pageState(p) })));
   const pick = states.find((s) => s.visible && s.focused) ?? states.find((s) => s.visible) ?? states.find((s) => s.page === lastPage) ?? states[0];
   lastPage = pick.page;
@@ -1620,7 +1646,7 @@ async function evaluateOn(page, timeoutMs, fn, ...args) {
 }
 
 // src/knowledge.ts
-import { appendFileSync, existsSync as existsSync3, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync as existsSync3, mkdirSync, readdirSync, readFileSync as readFileSync2, writeFileSync as writeFileSync2 } from "node:fs";
 import { homedir } from "node:os";
 import { join as join3 } from "node:path";
 
@@ -1651,7 +1677,7 @@ function ensure() {
 }
 function readLearnings() {
   if (!existsSync3(LOG)) return [];
-  return readFileSync(LOG, "utf8").split("\n").filter(Boolean).map((l) => {
+  return readFileSync2(LOG, "utf8").split("\n").filter(Boolean).map((l) => {
     try {
       return JSON.parse(l);
     } catch {
@@ -1673,19 +1699,19 @@ function saveTemplate(type, config, origin) {
   ensure();
   const file = join3(TPL, `${safe(type)}.json`);
   if (existsSync3(file)) return false;
-  writeFileSync(file, JSON.stringify({ type, capturedAt: (/* @__PURE__ */ new Date()).toISOString(), origin, config }, null, 2));
+  writeFileSync2(file, JSON.stringify({ type, capturedAt: (/* @__PURE__ */ new Date()).toISOString(), origin, config }, null, 2));
   learn("template", type, origin);
   return true;
 }
 function getTemplate(type) {
   const file = join3(TPL, `${safe(type)}.json`);
   if (!existsSync3(file)) return void 0;
-  return JSON.parse(readFileSync(file, "utf8")).config;
+  return JSON.parse(readFileSync2(file, "utf8")).config;
 }
 function listTemplates() {
   if (!existsSync3(TPL)) return [];
   return readdirSync(TPL).filter((f) => f.endsWith(".json")).map((f) => {
-    const j = JSON.parse(readFileSync(join3(TPL, f), "utf8"));
+    const j = JSON.parse(readFileSync2(join3(TPL, f), "utf8"));
     return { type: j.type, capturedAt: j.capturedAt, origin: j.origin };
   });
 }
@@ -2114,7 +2140,25 @@ async function bindFieldsScript(args) {
   }
   if (!Object.keys(concepts).length) {
     try {
-      concepts = report.getDatasourceSchema(dsId).qe.concepts || {};
+      const sch = report.getDatasourceSchema(dsId);
+      concepts = sch && sch.qe && sch.qe.concepts || {};
+      if (!Object.keys(concepts).length && sch && sch.concepts) {
+        concepts = {};
+        for (const v of Object.values(sch.concepts)) {
+          const sem = v.getSemantic && v.getSemantic() || [];
+          const s0 = Array.isArray(sem) ? sem[0] : sem;
+          const isMetric = !!(v.getAggregationTypeDisplayLabel && v.getAggregationTypeDisplayLabel());
+          const name = String(v.getName());
+          concepts[name] = {
+            name,
+            id: String(v.getId ? v.getId() : name),
+            displayName: String(v.getDisplayName()),
+            namespace: String(v.getNamespace ? v.getNamespace() : "t0"),
+            type: isMetric ? 1 : 0,
+            dataType: s0 === 33 ? 2 : s0 === 34 ? 3 : s0 === 32 ? 0 : 6
+          };
+        }
+      }
     } catch {
       return fail(`No se pudo leer el esquema del origen ${dsId}.`);
     }
@@ -3205,7 +3249,12 @@ function probeStartScript(args) {
     const base = all.find((c) => c.config.config.display.type === "kpi-metric") || all.find((c) => c.config.config.datasource && c.config.config.datasource.keys);
     if (!base && !args.template) return { ok: false, error: "Sin componentes para clonar ni plantilla kpi-metric." };
     const cfg = base ? base.duplicateConfig() : JSON.parse(JSON.stringify(args.template));
-    if (!base) cfg.id = "cd-probe" + Math.random().toString(36).slice(2, 10);
+    if (!base) {
+      cfg.id = "cd-probe" + Math.random().toString(36).slice(2, 10);
+      const k = cfg.config.datasource.keys;
+      for (const n of ["dimensions", "metrics", "sortData", "filters"]) if (k[n]) delete k[n].value;
+      cfg.conceptDefs = {};
+    }
     cfg.config.datasource.keys.dataset = { stateKey: "ds", dominant: 2, value: { id: datasetId } };
     Object.assign(cfg.attribute, { left: 0, top: 0, width: 10, height: 10 });
     const tmp = page.addComponent(cfg);
@@ -3271,11 +3320,11 @@ function reportSettingsScript(patch) {
 }
 
 // src/ops.ts
-import { existsSync as existsSync4, mkdirSync as mkdirSync2, readFileSync as readFileSync3, writeFileSync as writeFileSync2 } from "node:fs";
+import { existsSync as existsSync4, mkdirSync as mkdirSync2, readFileSync as readFileSync4, writeFileSync as writeFileSync3 } from "node:fs";
 import { join as join4 } from "node:path";
 
 // src/spec.ts
-import { readFileSync as readFileSync2 } from "node:fs";
+import { readFileSync as readFileSync3 } from "node:fs";
 var KNOWN_TYPES = [
   "simple-linechart",
   "simple-barchart",
@@ -3317,7 +3366,7 @@ var KNOWN_TYPES = [
 ];
 var NON_DATA = /* @__PURE__ */ new Set(["simple-description", "image-component", "arrow", "placeholder", "shape", "ellipse", "generic-shape", "framed-external-content", "button"]);
 function loadSpec(file) {
-  const spec = JSON.parse(readFileSync2(file, "utf8"));
+  const spec = JSON.parse(readFileSync3(file, "utf8"));
   if (!spec || !Array.isArray(spec.pages)) throw new Error(`${file}: falta "pages" (array).`);
   return spec;
 }
@@ -3589,8 +3638,9 @@ async function waitReady(page, timeoutMs = 45e3) {
 }
 async function openReport(url) {
   const browser = await getBrowser();
-  const target = browser.targets().find((t) => t.type() === "page" && REPORT_URL_RE.test(t.url()));
-  const page = target && await target.page() || await browser.newPage();
+  const target = browser.targets().some((t) => t.type() === "page" && REPORT_URL_RE.test(t.url()));
+  const page = target ? await getReportPage() : await browser.newPage();
+  setActiveReport(url);
   if (target) await settleSaves(page, 1500);
   await page.bringToFront();
   await page.goto(url, { waitUntil: "networkidle2", timeout: 9e4 });
@@ -3636,6 +3686,7 @@ async function copyReport(source, name) {
   }
   await waitReady(page);
   const id = reportId(page.url());
+  setActiveReport(id);
   if (id === sourceId) throw new Error("La URL final es la del original, no la de una copia.");
   learn("note", "report_copy", { text: "Linking API /reporting/create?c.reportId= -> Editar y compartir -> Confirmar y guardar" });
   return { sourceId, id, url: page.url(), name: copyName };
@@ -3660,7 +3711,7 @@ async function exportReport(file) {
   const res = await evaluateOn(page, T, exportReportScript);
   for (const t of res.types) learn("display_type", t, { seenIn: res.reportId });
   const learned = await captureTemplatesOn(page);
-  if (file) writeFileSync2(file, JSON.stringify(res, null, 2));
+  if (file) writeFileSync3(file, JSON.stringify(res, null, 2));
   return { ...res, learnedTemplates: learned, ...file ? { file } : {} };
 }
 async function captureTemplatesOn(page) {
@@ -3691,11 +3742,22 @@ async function diagnoseWithKnowledge() {
   return { ...res, issues };
 }
 async function resolveDataset(page, sel) {
-  if (!sel) return void 0;
+  if (!sel) {
+    const ds0 = await evaluateOn(page, T, readDataSourcesScript).catch(() => null);
+    const list0 = ds0 ? Array.isArray(ds0.dataSources) ? ds0.dataSources : Object.values(ds0.dataSources) : [];
+    return list0.length === 1 ? list0[0].dataSourceId : void 0;
+  }
   if (!sel.startsWith("@")) return sel;
   const field = sel.slice(1).toLowerCase();
   const ds = await evaluateOn(page, T, readDataSourcesScript);
   let hit = ds.dataSources.find((d) => d.fields.some((f) => f.id.toLowerCase() === field || f.name.toLowerCase() === field));
+  if (!hit) {
+    const { schemaFieldsScript } = await import("./scripts4-5BB2LMYX.js");
+    for (const d of ds.dataSources.filter((x) => !x.fields.length)) {
+      const fs4 = await evaluateOn(page, T, schemaFieldsScript, d.dataSourceId).catch(() => []);
+      if (fs4.some((f) => f.id.toLowerCase() === field || f.name.toLowerCase() === field)) return d.dataSourceId;
+    }
+  }
   if (!hit) {
     for (const d of ds.dataSources.filter((x) => !x.fields.length)) {
       const st = await evaluateOn(page, T, probeStartScript, { datasetId: d.dataSourceId, template: getTemplate("kpi-metric") });
@@ -3718,7 +3780,7 @@ async function createComponent(o) {
   const hasFields = !!(o.dimensions?.length || o.metrics?.length || o.slots && Object.keys(o.slots).length);
   const NO_DIMS = ["gauge-viz", "bulletchart", "kpi-metric"];
   const t0 = Date.now();
-  const { ensureSeedScript } = await import("./scripts4-ROWZRC3K.js");
+  const { ensureSeedScript } = await import("./scripts4-5BB2LMYX.js");
   const seed = await evaluateOn(page, T, ensureSeedScript, o.pageId);
   if (seed.seedId) await sleep(1500);
   const res = await evaluateOn(page, T, createComponentScript, {
@@ -3761,10 +3823,10 @@ async function createComponent(o) {
 }
 async function deleteComponent(componentId) {
   const page = await editPage();
-  const { componentLevelScript } = await import("./scripts4-ROWZRC3K.js");
+  const { componentLevelScript } = await import("./scripts4-5BB2LMYX.js");
   if (await evaluateOn(page, T, componentLevelScript, componentId) === "report") {
-    const { arrangeComponents } = await import("./ops4-HTQW36Z5.js");
-    const { listPages: listPages2 } = await import("./ops3-4XIANYWV.js");
+    const { arrangeComponents } = await import("./ops4-PI7UXRN7.js");
+    const { listPages: listPages2 } = await import("./ops3-MYKDF62B.js");
     await arrangeComponents([componentId], "page", (await listPages2())[0].id);
   }
   const t0 = Date.now();
@@ -3799,9 +3861,9 @@ async function applySpec(specOrFile, opts = {}) {
     result.actions = components.map((c) => ({ key: c.key, action: "skip", error: "lint con errores" }));
     return result;
   }
-  const state = statePath && existsSync4(statePath) ? JSON.parse(readFileSync3(statePath, "utf8")) : { reportId: null, keys: {} };
+  const state = statePath && existsSync4(statePath) ? JSON.parse(readFileSync4(statePath, "utf8")) : { reportId: null, keys: {} };
   const page = opts.dryRun ? await getReportPage() : await editPage();
-  const { ensureVisible } = await import("./ops4-HTQW36Z5.js");
+  const { ensureVisible } = await import("./ops4-PI7UXRN7.js");
   if (!opts.dryRun) await ensureVisible(page);
   const info = await evaluateOn(page, T, pageInfoScript);
   if (state.reportId && state.reportId !== info.internalReportId) {
@@ -3810,11 +3872,11 @@ async function applySpec(specOrFile, opts = {}) {
   }
   state.reportId = info.internalReportId;
   if (!opts.dryRun) {
-    const { tmpdir: tmpdir2 } = await import("node:os");
-    const dir = join4(process.env.LS_BACKUP_DIR ?? join4(tmpdir2(), "ls-studio-backups"));
+    const { tmpdir: tmpdir3 } = await import("node:os");
+    const dir = join4(process.env.LS_BACKUP_DIR ?? join4(tmpdir3(), "ls-studio-backups"));
     mkdirSync2(dir, { recursive: true });
     const file = join4(dir, `${info.internalReportId}-${(/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-")}.json`);
-    writeFileSync2(file, JSON.stringify(await evaluateOn(page, T, exportReportScript), null, 2));
+    writeFileSync3(file, JSON.stringify(await evaluateOn(page, T, exportReportScript), null, 2));
     result.backup = file;
   }
   if (spec.theme && !opts.dryRun) result.theme = await applyTheme(spec.theme);
@@ -3858,7 +3920,7 @@ async function applySpec(specOrFile, opts = {}) {
         const extra = await patchIfNeeded(page, existingId, c);
         result.actions.push({ key: c.key, action: "update", componentId: existingId, ...extra.length ? { patched: extra } : {} });
       } else if (c.type === "image-component" && c.image) {
-        const { addImage } = await import("./ops4-HTQW36Z5.js");
+        const { addImage } = await import("./ops4-PI7UXRN7.js");
         const { dirname: dirname5, resolve } = await import("node:path");
         const base = typeof specOrFile === "string" ? dirname5(specOrFile) : process.cwd();
         const r = await addImage({ path: resolve(base, c.image), box: { x: c.x, y: c.y, width: c.w, height: c.h }, ...pageId ? { pageId } : {} });
@@ -3895,7 +3957,7 @@ async function applySpec(specOrFile, opts = {}) {
         }
       } else result.actions.push({ key: c.key, action: exists ? "update" : "create", error: e.message });
     }
-    if (statePath) writeFileSync2(statePath, JSON.stringify(state, null, 2));
+    if (statePath) writeFileSync3(statePath, JSON.stringify(state, null, 2));
   }
   if (!opts.dryRun) {
     const filterLog = [];
@@ -3924,7 +3986,7 @@ async function applySpec(specOrFile, opts = {}) {
     }
     if (filterLog.length) result.filters = filterLog;
     {
-      const { arrangeComponents } = await import("./ops4-HTQW36Z5.js");
+      const { arrangeComponents } = await import("./ops4-PI7UXRN7.js");
       const inside = (p, q) => p !== q && q.x >= p.x && q.y >= p.y && q.x + q.w <= p.x + p.w && q.y + q.h <= p.y + p.h;
       const level = (c) => c.reportLevel ? "report" : c.page;
       const live = components.filter((c) => state.keys[c.key]);
@@ -3962,50 +4024,50 @@ async function patchIfNeeded(page, id, c) {
   }
   if (c.text !== void 0) {
     const t = typeof c.text === "string" ? { text: c.text } : c.text;
-    const { setText } = await import("./ops4-HTQW36Z5.js");
+    const { setText } = await import("./ops4-PI7UXRN7.js");
     await setText(id, t.text, { ...t.size ? { size: t.size } : {}, ...t.bold ? { bold: true } : {}, ...t.color ? { color: t.color } : {}, ...t.align ? { align: t.align } : {} });
     changes.push("text");
   }
   if (c.style) {
-    const { setStyle } = await import("./ops4-HTQW36Z5.js");
+    const { setStyle } = await import("./ops4-PI7UXRN7.js");
     await setStyle(id, c.style);
     changes.push("style");
   }
   if (c.conditional) {
-    const { setConditionalFormat } = await import("./ops4-HTQW36Z5.js");
+    const { setConditionalFormat } = await import("./ops4-PI7UXRN7.js");
     await setConditionalFormat(id, c.conditional);
     changes.push(`conditional:${c.conditional.length}`);
   }
   if (c.chartStyle) {
-    const { setChartStyle } = await import("./ops4-HTQW36Z5.js");
+    const { setChartStyle } = await import("./ops4-PI7UXRN7.js");
     await setChartStyle({ ...c.chartStyle, componentId: id, reload: false });
     changes.push("chartStyle");
   }
   if (c.comparison) {
-    const { setComparison } = await import("./ops4-HTQW36Z5.js");
+    const { setComparison } = await import("./ops4-PI7UXRN7.js");
     await setComparison(id, c.comparison);
     changes.push(`comparison:${c.comparison}`);
   }
   if (c.linkPage) {
-    const { setPageLink } = await import("./ops4-HTQW36Z5.js");
+    const { setPageLink } = await import("./ops4-PI7UXRN7.js");
     await setPageLink(id, c.linkPage);
     changes.push("linkPage");
   }
   if (c.reportLevel) {
-    const { componentLevelScript } = await import("./scripts4-ROWZRC3K.js");
+    const { componentLevelScript } = await import("./scripts4-5BB2LMYX.js");
     if (await evaluateOn(page, T, componentLevelScript, id) === "page") {
-      const { arrangeComponents } = await import("./ops4-HTQW36Z5.js");
+      const { arrangeComponents } = await import("./ops4-PI7UXRN7.js");
       await arrangeComponents([id], "report", c.page && !c.page.startsWith("name:") && c.page !== "active" ? c.page : void 0);
       changes.push("reportLevel");
     }
   }
   if (c.interactions) {
-    const { setChartInteractions } = await import("./ops4-HTQW36Z5.js");
+    const { setChartInteractions } = await import("./ops4-PI7UXRN7.js");
     await setChartInteractions({ componentId: id, ...c.interactions, reload: false });
     changes.push("interactions");
   }
   if (c.parameter) {
-    const { setControlParameter } = await import("./ops4-HTQW36Z5.js");
+    const { setControlParameter } = await import("./ops4-PI7UXRN7.js");
     await setControlParameter(id, c.parameter);
     changes.push(`parameter:${c.parameter}`);
   }
@@ -4039,7 +4101,7 @@ async function findOrphans(specFiles) {
   const known = /* @__PURE__ */ new Set();
   for (const f of specFiles) {
     const st = f.replace(/\.json$/i, "") + ".state.json";
-    if (existsSync4(st)) for (const id of Object.values(JSON.parse(readFileSync3(st, "utf8")).keys)) known.add(id);
+    if (existsSync4(st)) for (const id of Object.values(JSON.parse(readFileSync4(st, "utf8")).keys)) known.add(id);
   }
   const ex = await exportReport();
   return ex.pages.flatMap(
@@ -4048,15 +4110,15 @@ async function findOrphans(specFiles) {
 }
 
 // src/ops3.ts
-import { existsSync as existsSync5, readFileSync as readFileSync5, readdirSync as readdirSync2, writeFileSync as writeFileSync3 } from "node:fs";
+import { existsSync as existsSync5, readFileSync as readFileSync6, readdirSync as readdirSync2, writeFileSync as writeFileSync4 } from "node:fs";
 import { join as join6 } from "node:path";
 
 // src/theme.ts
-import { readFileSync as readFileSync4 } from "node:fs";
+import { readFileSync as readFileSync5 } from "node:fs";
 import { join as join5 } from "node:path";
 var BASE = join5(packageRoot(), "themes", "base-theme.json");
 function baseTheme() {
-  return JSON.parse(readFileSync4(BASE, "utf8"));
+  return JSON.parse(readFileSync5(BASE, "utf8"));
 }
 function toThemeContent(t, base = baseTheme()) {
   const c = JSON.parse(JSON.stringify(base));
@@ -4280,7 +4342,7 @@ function themeLibrary() {
 async function useThemePreset(idOrName) {
   const { page } = await requireEditMode();
   const lib = themeLibrary().library.find((t) => t.name === idOrName);
-  if (lib) return applyTheme(JSON.parse(readFileSync5(lib.file, "utf8")));
+  if (lib) return applyTheme(JSON.parse(readFileSync6(lib.file, "utf8")));
   const id = THEME_PRESETS[idOrName] ? idOrName : Object.entries(THEME_PRESETS).find(([, n]) => n.toLowerCase() === idOrName.toLowerCase())?.[0];
   if (!id) throw new Error(`Tema "${idOrName}" no encontrado. Usa theme presets para ver los disponibles.`);
   const w = watchSaves(page);
@@ -4294,11 +4356,11 @@ async function useThemePreset(idOrName) {
 async function exportTheme(file) {
   const t = await readTheme();
   if (!t.raw) throw new Error(`El informe usa el tema predefinido "${t.themeConfig}": no hay colores que exportar (aplica uno personalizado o importa de la biblioteca).`);
-  writeFileSync3(file, JSON.stringify({ friendly: t.theme, raw: t.raw }, null, 2));
+  writeFileSync4(file, JSON.stringify({ friendly: t.theme, raw: t.raw }, null, 2));
   return { file, theme: t.theme };
 }
 async function importTheme(file) {
-  const j = JSON.parse(readFileSync5(file, "utf8"));
+  const j = JSON.parse(readFileSync6(file, "utf8"));
   return applyTheme(j.friendly ?? j);
 }
 async function listFilters() {
@@ -4644,7 +4706,7 @@ async function addSourceField(opts) {
   });
   const open = async () => {
     if (!await clickText("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) {
-      const { selectSourceChart } = await import("./ops4-HTQW36Z5.js");
+      const { selectSourceChart } = await import("./ops4-PI7UXRN7.js");
       await selectSourceChart(page, opts.source && opts.source.startsWith("@") ? opts.source : void 0);
       if (!await clickText("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) throw new Error('No se encontro "Anadir un campo" en el panel Datos.');
     }
@@ -4661,7 +4723,7 @@ async function addSourceField(opts) {
     let src = await editorSource();
     const byField = !!opts.source && opts.source.startsWith("@");
     if (byField) {
-      const { selectSourceChart } = await import("./ops4-HTQW36Z5.js");
+      const { selectSourceChart } = await import("./ops4-PI7UXRN7.js");
       await clickText("button", /^(Cancelar|Cancel)$/);
       await close();
       await selectSourceChart(page, opts.source);
@@ -4717,6 +4779,8 @@ async function addSourceField(opts) {
 
 export {
   log,
+  getBrowser,
+  setActiveReport,
   getReportPage,
   disconnectIfConnected,
   evaluate,

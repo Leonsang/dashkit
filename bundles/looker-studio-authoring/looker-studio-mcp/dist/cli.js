@@ -5,7 +5,7 @@ import {
   getComponentConfig,
   getReportLayout,
   sanitizeLearning
-} from "./chunks/chunk-O3X3SSUM.js";
+} from "./chunks/chunk-EYN6X5DF.js";
 import {
   addImage,
   addParameter,
@@ -15,6 +15,7 @@ import {
   bindFieldsToComponent,
   checkView,
   createBlend,
+  createReportFromCsv,
   deleteBlend,
   deletePages,
   deleteParameter,
@@ -38,7 +39,7 @@ import {
   setText,
   updateBlend,
   updateParameter
-} from "./chunks/chunk-HLQG6ZM7.js";
+} from "./chunks/chunk-2NNBF23H.js";
 import {
   addFilter,
   addPage,
@@ -77,10 +78,10 @@ import {
   updateFilter,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-X3N7HIWA.js";
+} from "./chunks/chunk-TBJANFP6.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
-import "./chunks/chunk-PXCDDC3O.js";
+import "./chunks/chunk-VAH3IT7I.js";
 import "./chunks/chunk-FAVAKK4W.js";
 import "./chunks/chunk-GIAQTVDD.js";
 import "./chunks/chunk-BGDW2RS3.js";
@@ -125,6 +126,7 @@ Paginas y tema
   align <id...> [--align left|center|right|top|middle|bottom] [--distribute horizontal|vertical] [--gap N]
         [--match width|height|both]       Alinear, distribuir, igualar tamano
   group <id...> | ungroup <id|g-...> | groups [--page <id>]   Grupos de componentes
+  new-from-csv <archivo.csv...> [--dataset N]   Informe nuevo con el CSV como origen (conector de subida)
   design [--page <id>]                 Perfil de diseno de cualquier informe (marco, tarjetas, KPIs, interacciones)
   shot [--page <id>] [--view] [--component <id>] [--out f.png]   Captura de la pagina o de un componente
   style-keys <id> [--filter regex]     Claves de estilo que acepta un componente, con su valor efectivo
@@ -313,6 +315,8 @@ async function main() {
       return groupComponents({ op: "ungroup", componentIds: pos.filter((x) => !x.startsWith("g-")), groupIds: pos.filter((x) => x.startsWith("g-")) });
     case "groups":
       return groupComponents({ op: "list", ...typeof flags.page === "string" ? { pageId: flags.page } : {} });
+    case "new-from-csv":
+      return createReportFromCsv({ files: pos, ...typeof flags.dataset === "string" ? { dataset: flags.dataset } : {} });
     case "design":
       return analyzeReportDesign(typeof flags.page === "string" ? flags.page : void 0);
     case "shot":

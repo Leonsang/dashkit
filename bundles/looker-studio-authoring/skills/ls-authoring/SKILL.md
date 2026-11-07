@@ -20,6 +20,10 @@ se guardan con el servicio de guardado de la interfaz. No hay API pública detr�
    `open_report url=...` abre otro informe; solo acepta URLs de informes de Looker Studio o Data Studio.
 3. **Trabaja sobre una copia**: `copy_report report=<url|id>` crea una copia del usuario y la abre en
    `/edit`. Edita el original solo si el usuario lo pide explícitamente.
+   **Si solo hay un archivo de datos:** `create_report_from_csv files=[...]` (CLI `new-from-csv datos.csv`) crea un
+   informe nuevo con el CSV como origen y lo deja abierto en `/edit` (ver `campos.md`).
+   Con varias pestañas de informes abiertas, todas las herramientas trabajan sobre el último que abriste,
+   copiaste o creaste.
 4. **Diagnostica lo que hay**: `diagnose_report` y `get_report_layout`.
 
 Permisos del servidor (variables de entorno):

@@ -8,6 +8,23 @@ Las reglas del modelo (embebido o reutilizable, credenciales, ids, blends, pará
 visible, el que se usa en `bind`, el spec y las fórmulas) y su `id` interno (`_n900455703_`). En un origen recién
 conectado ningún gráfico usa aún sus campos; la herramienta lo sondea con un componente temporal para leer los
 nombres.
+
+## Informe nuevo desde un CSV: create_report_from_csv
+
+`create_report_from_csv files=["datos.csv"] dataset?` (CLI `new-from-csv datos.csv --dataset nombre`) crea un
+informe con el conector «Subida de archivos CSV» de Looker Studio: nuevo informe, «Crear conjunto de datos»,
+subida y «Añadir al informe». Devuelve `reportId`, `url`, `dataSourceId` y los campos con nombre y tipo.
+
+- **Autorización:** la primera vez en una cuenta, el conector pide autorizar Google Cloud Storage. Es del
+  usuario: la herramienta para y lo dice.
+- **Tipos:** el CSV llega como texto en las columnas de fecha y en las numéricas con celdas vacías. Crea campos
+  de origen con `add_source_field` (el origen subido es incrustado en el informe, no reutilizable):
+  `PARSE_DATE("%Y-%m-%d", fecha)` para la fecha, `CAST(valoracion AS NUMBER)` para un número con huecos.
+- **Varios CSV** con las mismas columnas forman un solo origen; con columnas distintas, crea un informe y añade
+  los demás orígenes después (aún sin herramienta), o únelos antes en un solo CSV.
+- Un informe con un solo origen: `create_component` y `bind` lo usan sin indicar `dataset`.
+- El informe se queda como «Informe sin título»: renombrarlo aún no tiene herramienta.
+- Verificado el 2026-11-07 con `bench/datos/cafe_brisa.csv` (6.182 filas, 19 columnas).
 ## Ver los orígenes: inspect_data_sources
 
 Devuelve cada origen con `dataSourceId`, los límites de dimensiones y métricas, qué componentes lo usan

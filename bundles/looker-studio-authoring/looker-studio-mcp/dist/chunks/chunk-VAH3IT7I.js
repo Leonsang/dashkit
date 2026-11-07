@@ -1196,6 +1196,23 @@ function designProfileScript(pageId) {
     return { ok: false, error: String(e && e.message) };
   }
 }
+function schemaFieldsScript(datasetId) {
+  const w = window;
+  try {
+    const report = w.angular.element(document.body).injector().get("legoUndoRedoService").report;
+    const sch = report.getDatasourceSchema(datasetId);
+    const list = Object.values(sch && sch.concepts || {});
+    return list.map((v) => {
+      const sem = v.getSemantic && v.getSemantic() || [];
+      const s0 = Array.isArray(sem) ? sem[0] : sem;
+      const dataType = s0 === 32 ? "TEXT" : s0 === 33 ? "NUMBER" : s0 === 34 ? "BOOLEAN" : typeof s0 === "number" && s0 < 32 ? "DATE" : String(s0 ?? "TEXT");
+      const agg = v.getAggregationTypeDisplayLabel ? String(v.getAggregationTypeDisplayLabel() || "") : "";
+      return { id: String(v.getName()), name: String(v.getDisplayName()), dataType, type: agg ? "METRIC" : "DIMENSION" };
+    }).filter((f) => f.id && !/record_count_system_field/.test(f.id));
+  } catch {
+    return [];
+  }
+}
 
 export {
   navPagesScript,
@@ -1225,5 +1242,6 @@ export {
   componentLevelScript,
   styleKeysScript,
   screenBoxesScript,
-  designProfileScript
+  designProfileScript,
+  schemaFieldsScript
 };
