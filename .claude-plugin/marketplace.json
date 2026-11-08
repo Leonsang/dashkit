@@ -99,6 +99,19 @@
       "license": "MIT",
       "category": "looker-studio",
       "homepage": "https://github.com/leonsang/dashkit/tree/main/bundles/looker-studio-guardrails"
+    },
+    {
+      "name": "dataviz-engineering",
+      "source": "./bundles/dataviz-engineering",
+      "description": "Data visualization engineering: perceptual chart selection, honest encodings, CVD-safe color palettes, accessibility (WCAG AA), and high-performance rendering for large datasets. Cross-platform (Power BI, Tableau, Looker Studio, D3, Vega).",
+      "version": "0.1.0",
+      "author": {
+        "name": "Erick Sang C",
+        "url": "https://github.com/leonsang"
+      },
+      "license": "MIT",
+      "category": "data-visualization",
+      "homepage": "https://github.com/leonsang/dashkit/tree/main/bundles/dataviz-engineering"
     }
   ]
 }
