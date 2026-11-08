@@ -57,7 +57,7 @@ function resolveSpec(spec) {
   const floorGrid = (v) => Math.floor(v / grid) * grid;
   const out = [];
   for (const p of spec.pages) {
-    const page = p.page ?? (p.name ? `name:${p.name}` : "active");
+    const page = p.page && !(p.page === "active" && p.name) ? p.page : p.name ? `name:${p.name}` : "active";
     for (const c of p.components) {
       if ("row" in c) {
         const { y, h } = c.row;
@@ -86,6 +86,8 @@ function resolveSpec(spec) {
             ...it.filters ? { filters: it.filters } : {},
             ...it.variant ? { variant: it.variant } : {},
             ...it.slots ? { slots: it.slots } : {},
+            ...it.sort ? { sort: it.sort } : {},
+            ...it.rows ? { rows: it.rows } : {},
             ...it.text !== void 0 ? { text: it.text } : {},
             ...it.parameter ? { parameter: it.parameter } : {},
             ...it.style ? { style: it.style } : {},
@@ -119,6 +121,8 @@ function resolveSpec(spec) {
           ...c.filters ? { filters: c.filters } : {},
           ...c.variant ? { variant: c.variant } : {},
           ...c.slots ? { slots: c.slots } : {},
+          ...c.sort ? { sort: c.sort } : {},
+          ...c.rows ? { rows: c.rows } : {},
           ...c.text !== void 0 ? { text: c.text } : {},
           ...c.parameter ? { parameter: c.parameter } : {},
           ...c.style ? { style: c.style } : {},
@@ -174,9 +178,10 @@ function expandCards(list) {
         style: { background: { color: k.iconBackground ?? "#1A73E8", opacity: 1 }, border: { color: "#FFFFFF", opacity: 0, size: 0, style: "solid", radius: Math.round(tile / 4) } }
       });
       const ic = Math.round(tile / 2);
-      out.push({ key: `${c.key}__icon`, type: "image-component", x: c.x + 20 + (tile - ic) / 2, y: ty + (tile - ic) / 2, w: ic, h: ic, ...shared, image: k.icon });
+      out.push({ key: `${c.key}__icon`, type: "image-component", x: c.x + 20 + (tile - ic) / 2, y: ty + (tile - ic) / 2, w: ic, h: ic, ...shared, image: k.icon, style: clear });
       const left = 20 + tile + 10;
-      out.push({ ...c, x: c.x + left, y: c.y + inset, w: c.w - left - inset, h: c.h - 2 * inset, style: { ...clear, fontSize: "24px", ...c.style ?? {} } });
+      const cmpLabel = c.comparison && c.comparison !== "none" ? { compareLabel: c.comparison === "previous_year" ? "vs. a\xF1o anterior" : "vs. periodo anterior" } : {};
+      out.push({ ...c, x: c.x + left, y: c.y + inset, w: c.w - left - inset, h: c.h - 2 * inset, style: { ...clear, fontSize: "24px", ...cmpLabel, ...c.style ?? {} } });
       continue;
     }
     const titleH = 0;
