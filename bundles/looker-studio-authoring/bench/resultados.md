@@ -37,3 +37,51 @@ había pasado ese paso sin incidencias).
 4. `pivot-table` con una sola dimensión da reason 9; los ejes del gráfico de burbujas no usan el alias `as`.
 5. `new-from-csv` deja una página vacía delante y el informe sin nombre; `add_source_field` devuelve un
    `source` equivocado; tras `reload`, el esquema del origen puede llegar vacío.
+
+---
+
+# Ronda 2 (2026-11-07, tras arreglar los fallos de la ronda 1)
+
+Mismo escenario y mismo prompt. Arreglos entre rondas: commits `7044527`, `0582eb8`, `3b02233`, `66e032d`
+(esquema de orígenes tras un cambio interno del editor, tablas que no se guardaban, guardados aplazados en
+ventanas tapadas, dimensión de periodo y comparación, área de dibujo fija, tabla dinámica de una dimensión,
+página vacía inicial, cambio de informe silencioso, ámbito del origen en `add_source_field`, cabeceras de
+tabla, falsos positivos de `audit_ux`).
+
+| | Haiku (ronda 2) | Sonnet (ronda 2) |
+|---|---|---|
+| Rúbrica automática | 83 | 85 → **100** con `audit_ux` y el puntuador corregidos |
+| Visual (manual, 0–10) | 7 | 8,5 |
+| Comparación con el periodo anterior visible | No (falló el campo de fecha) | Sí (+47 % vs. año anterior) |
+| Tokens / llamadas / duración | 204k / 66 / 20,5 min | 137k / 32 / 16,5 min |
+| Intervenciones humanas | 0 | 0 |
+
+Haiku perdió la fecha por el fallo de `add_source_field` (ámbito ilegible) y trabajó un rato sobre otro informe
+abierto; los dos se arreglaron después. Una tercera ejecución de Haiku se paró en el mismo campo (antes del
+arreglo con el elemento `<datasource-scope>`).
+
+# Escenario 2: replicar un diseño de marca (`escenario-diseno.md`)
+
+Diseño de referencia hecho en Claude Design (lienzo «Café Brisa · tableros»: marca, resumen y operación),
+exportado a `bench/diseno/`. Puntuación base (rúbrica) y fidelidad al diseño (`puntuar.mjs --diseno`).
+
+| | Haiku | Sonnet |
+|---|---|---|
+| Rúbrica base | 95 | 95 |
+| Fidelidad automática | 90 (fondo blanco) | 85 (+10 a mano: fondo crema con una forma a nivel de informe que el puntuador no ve; fuente Roboto) |
+| Visual (manual, 0–10) | 7: marco, banner, KPI con icono y comparación, mapa de calor y burbujas; página blanca, tarjetas invisibles, texto en serif, comparación cortada, barras por hora ordenadas por valor | 8,5: casi igual al diseño (crema, tarjetas blancas, línea por hora, burbujas con nombre, banner, KPI); faltan la línea de objetivo, el centro del donut y las barras de la tabla |
+| Tokens / llamadas / duración | 199k / 57 / 18,5 min | 219k / 77 / 29,3 min |
+| Intervenciones humanas | 0 | 0 |
+
+## Lo que el escenario 2 enseña de dashkit (por arreglar)
+
+1. Las fuentes de Looker Studio no están documentadas: `Inter` se acepta y se pinta en serif.
+2. `fill` es el color de la página (ya documentado tras esta ronda); `background` no la pinta.
+3. `card.icon` pinta el icono sobre un disco blanco del tema que lo tapa.
+4. No hay líneas ni bandas de referencia, ni orden de un gráfico de barras por su dimensión.
+5. Un KPI de 250 px corta la frase de comparación: falta un ancho mínimo o un texto de comparación corto
+   (`compareLabel`) en la documentación.
+6. La navegación propia de Looker sigue visible con `nav-top`.
+7. Un botón con fondo de opacidad 0 se pinta blanco.
+8. `theme set` parcial no se fusiona como dice la documentación.
+9. La salida JSON de la CLI se mezcla con las líneas de registro en stdout.

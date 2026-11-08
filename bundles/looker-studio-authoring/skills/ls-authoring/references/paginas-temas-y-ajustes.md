@@ -49,6 +49,10 @@ real y se guarda como tema personalizado del informe:
 
 Es `examples/tema-marca.json`. `increase` y `decrease` son los colores de subida y bajada de los scorecards.
 
+**`fill` es el color de la página** (el lienzo que ve el lector) y a la vez el relleno por defecto de los
+componentes; `background` no pinta la página. Para «página crema con tarjetas blancas»: `fill` crema, y las
+tarjetas con su propio fondo blanco (`card.background` en el spec, o una forma blanca debajo).
+
 **Predefinidos:** los 27 del editor, por id o por nombre (Cosecha = `t-harvest`, Eucalipto =
 `t-eucalyptus`, Pop = `t-pop`, Niebla = `t-fog`...). `audit_ux` no puede comprobar sus colores y lo avisa:
 para controlar marca y contraste, aplica un tema propio.

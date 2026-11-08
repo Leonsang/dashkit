@@ -102,11 +102,17 @@ if (process.argv.includes('--diseno')) {
   const prof = (Array.isArray(pages) ? pages : []).map((p) => ({ id: p.id, d: ls('design', '--page', p.id), lay: ls('layout', '--page', p.id) }));
   const d0 = prof[0] ? prof[0].d : {};
   const th = d0.theme || {};
-  fadd('tema_fondo', near(th.fill, '#F5EFE6') ? 10 : 0, 10, th.fill);
+  // el fondo de página puede ser el del tema o una forma crema que cubra el lienzo
+  const shapeCols = prof.flatMap((p) => ((p.d.page && p.d.page.shapeColors) || []).map((x) => String(x.color)));
+  const bgShape = shapeCols.some((c) => near(c, '#F5EFE6', 12));
+  fadd('tema_fondo', near(th.fill, '#F5EFE6', 12) || bgShape ? 10 : 0, 10, `${th.fill}${bgShape ? ' + forma crema' : ''}`);
   fadd('tema_acento', near(th.accent, '#A8541F') ? 10 : 0, 10, th.accent);
   fadd('tipografia', /playfair|inter/i.test(th.font || '') ? 5 : 0, 5, th.font);
   const sh = d0.shell || {};
-  fadd('barra_lateral', sh.sideBar ? (near(sh.sideBar.color, '#2A1B14', 60) ? 15 : 8) : 0, 15, sh.sideBar ? sh.sideBar.color : 'sin barra');
+  // una forma que ocupa casi todo el lienzo es el fondo, no la barra: entonces vale una forma espresso
+  const darkShape = shapeCols.some((c) => near(c, '#2A1B14', 30));
+  const sideOk = sh.sideBar && (near(sh.sideBar.color, '#2A1B14', 60) || ((sh.sideBar.box || [])[2] >= 1000 && darkShape));
+  fadd('barra_lateral', sideOk ? 15 : sh.sideBar ? 8 : 0, 15, sh.sideBar ? `${sh.sideBar.color}${darkShape ? ', forma espresso' : ''}` : 'sin barra');
   const nav = (sh.navItems || []).filter((n) => n.toPage).length;
   fadd('navegacion', nav >= 2 ? 10 : nav === 1 ? 5 : 0, 10, `${nav} enlaces a paginas`);
   const imgs = prof.reduce((n, p) => n + ((p.lay.components || []).filter((c) => /image/.test(c.type)).length), 0);
