@@ -21,3 +21,5 @@ construir dos tableros, verificándolos como el lector.
 | `puntuar.mjs` | Puntuador automático con la CLI de dashkit |
 | `datos/` | Generador y CSV ficticio |
 | `resultados.md` | Resultados por modelo |
+| `escenario-diseno.md`, `diseno/` | Escenario 2: replicar un diseño de marca hecho en Claude Design |
+| `video/` | Resumen gráfico del benchmark (HyperFrames): `video/resumen-benchmark.mp4`; se edita en `video/index.html` y `video/compositions/`, y se vuelve a generar con `npx hyperframes render` |

@@ -1,0 +1,27 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; font-family: "Inter", sans-serif; color: #2a1b14; }
+    #intro-wrap { position: absolute; left: 192px; top: 300px; width: 1536px; display: flex; flex-direction: column; gap: 36px; }
+    #intro-kicker { font-size: 30px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #a8541f; }
+    #intro-title { font-family: "Playfair Display", serif; font-size: 96px; line-height: 1.05; font-weight: 700; }
+    #intro-sub { font-size: 32px; color: #6b5a4e; }
+    #intro-rule { width: 0; height: 6px; background: #a8541f; border-radius: 3px; }
+  </style>
+  <div id="root" data-composition-id="intro" data-width="1920" data-height="1080">
+    <div id="intro-wrap" class="clip" data-start="0" data-duration="5.5">
+      <span id="intro-kicker">Benchmark de dashkit · Looker Studio</span>
+      <h1 id="intro-title">¿Puede un modelo pequeño construir tableros solo?</h1>
+      <div id="intro-rule"></div>
+      <span id="intro-sub">Haiku frente a Sonnet · mismo CSV, mismas herramientas, sin ayuda humana · 7 nov 2026</span>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#intro-title", { scale: 1 }, { scale: 1.015, duration: 5, ease: "none" }, 0);
+    tl.fromTo("#intro-kicker", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 0.2);
+    tl.fromTo("#intro-rule", { width: 0 }, { width: 220, duration: 0.6, ease: "power2.inOut" }, 0.9);
+    tl.fromTo("#intro-sub", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 0.3);
+    tl.to("#intro-wrap", { opacity: 0, y: -20, duration: 0.35, ease: "power2.in" }, 5.1);
+    window.__timelines["intro"] = tl;
+  </script>
+</template>

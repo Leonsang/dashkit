@@ -1,0 +1,36 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; font-family: "Inter", sans-serif; color: #2a1b14; }
+    #u-wrap { position: absolute; left: 192px; top: 150px; width: 1536px; height: 780px; }
+    #u-kicker { font-size: 30px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #a8541f; }
+    #u-title { margin-top: 14px; font-family: "Playfair Display", serif; font-size: 60px; font-weight: 700; }
+    #u-table { position: absolute; left: 0; top: 230px; width: 1536px; display: grid; grid-template-columns: 420px repeat(3, 1fr); row-gap: 30px; align-items: baseline; }
+    .u-h { font-size: 28px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #6b5a4e; }
+    .u-m { font-size: 40px; font-weight: 700; }
+    .u-v { font-family: "Playfair Display", serif; font-size: 72px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    #u-zero { position: absolute; left: 0; top: 640px; font-size: 32px; }
+    #u-zero b { color: #3d7466; }
+  </style>
+  <div id="root" data-composition-id="uso" data-width="1920" data-height="1080">
+    <div id="u-wrap" class="clip" data-start="0" data-duration="5.5">
+      <div id="u-kicker">Coste del escenario 2</div>
+      <h2 id="u-title">Lo que costó a cada modelo</h2>
+      <div id="u-table">
+        <span></span><span class="u-h">Tokens</span><span class="u-h">Minutos</span><span class="u-h">Llamadas</span>
+        <span class="u-m" id="u-l1" style="color: #3d7466">Haiku</span><span class="u-v" id="u-a1">199 mil</span><span class="u-v" id="u-a2">18,5</span><span class="u-v" id="u-a3">57</span>
+        <span class="u-m" id="u-l2" style="color: #a8541f">Sonnet</span><span class="u-v" id="u-b1">219 mil</span><span class="u-v" id="u-b2">29,3</span><span class="u-v" id="u-b3">77</span>
+      </div>
+      <div id="u-zero"><b>0</b> intervenciones humanas en todas las ejecuciones</div>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#u-kicker", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.1);
+    tl.fromTo("#u-title", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.25);
+    tl.fromTo(["#u-l1", "#u-a1", "#u-a2", "#u-a3"], { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.12 }, 0.8);
+    tl.fromTo(["#u-l2", "#u-b1", "#u-b2", "#u-b3"], { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.12 }, 1.6);
+    tl.fromTo("#u-zero", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 2.6);
+    tl.to("#u-wrap", { opacity: 0, duration: 0.35, ease: "power2.in" }, 5.1);
+    window.__timelines["uso"] = tl;
+  </script>
+</template>

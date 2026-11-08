@@ -1,0 +1,53 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; font-family: "Inter", sans-serif; color: #2a1b14; }
+    #d-wrap { position: absolute; left: 120px; top: 90px; width: 1680px; height: 900px; }
+    #d-kicker { font-size: 30px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #a8541f; }
+    #d-title { margin-top: 14px; font-family: "Playfair Display", serif; font-size: 56px; font-weight: 700; line-height: 1.1; }
+    #d-row { position: absolute; left: 0; top: 200px; width: 1680px; display: grid; grid-template-columns: repeat(3, 528px); gap: 48px; }
+    .d-col { display: flex; flex-direction: column; gap: 18px; }
+    .d-img { width: 528px; height: 397px; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 30px rgba(42, 27, 20, 0.18); }
+    .d-img img { width: 528px; height: 397px; object-fit: cover; display: block; }
+    .d-name { font-size: 30px; font-weight: 700; }
+    .d-stats { display: flex; gap: 34px; }
+    .d-stat { display: flex; flex-direction: column; gap: 2px; }
+    .d-stat b { font-family: "Playfair Display", serif; font-size: 52px; font-variant-numeric: tabular-nums; }
+    .d-stat span { font-size: 28px; color: #6b5a4e; }
+    .d-ref .d-name { color: #6b5a4e; }
+    .d-ref-note { font-size: 28px; color: #6b5a4e; line-height: 1.4; }
+  </style>
+  <div id="root" data-composition-id="diseno" data-width="1920" data-height="1080">
+    <div id="d-wrap" class="clip" data-start="0" data-duration="10">
+      <div id="d-kicker">Escenario 2 · replicar un diseño de marca</div>
+      <h2 id="d-title">El diseño de Claude Design, rehecho en Looker Studio</h2>
+      <div id="d-row">
+        <div class="d-col d-ref" id="d-c1">
+          <div class="d-img"><img src="assets/diseno-resumen.jpg" alt="Diseño de referencia" /></div>
+          <span class="d-name">Referencia</span>
+          <span class="d-ref-note">Marca, barra lateral, banner con ilustración, KPI con icono y comparación, ocho gráficos</span>
+        </div>
+        <div class="d-col" id="d-c2">
+          <div class="d-img"><img src="assets/sonnet-resumen.jpg" alt="Tablero hecho por Sonnet" /></div>
+          <span class="d-name" style="color: #a8541f">Sonnet</span>
+          <div class="d-stats"><div class="d-stat"><b>95</b><span>fidelidad</span></div><div class="d-stat"><b>8,5</b><span>visual (0–10)</span></div></div>
+        </div>
+        <div class="d-col" id="d-c3">
+          <div class="d-img"><img src="assets/haiku-resumen.jpg" alt="Tablero hecho por Haiku" /></div>
+          <span class="d-name" style="color: #3d7466">Haiku</span>
+          <div class="d-stats"><div class="d-stat"><b>90</b><span>fidelidad</span></div><div class="d-stat"><b>7</b><span>visual (0–10)</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#d-kicker", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.1);
+    tl.fromTo("#d-title", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.25);
+    tl.fromTo("#d-c1", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.8);
+    tl.fromTo("#d-c2", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 2.4);
+    tl.fromTo("#d-c3", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 3.6);
+    tl.fromTo(".d-img img", { scale: 1 }, { scale: 1.06, duration: 5.6, ease: "none" }, 4.0);
+    tl.to("#d-wrap", { opacity: 0, duration: 0.35, ease: "power2.in" }, 9.6);
+    window.__timelines["diseno"] = tl;
+  </script>
+</template>

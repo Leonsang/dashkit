@@ -1,0 +1,24 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; font-family: "Inter", sans-serif; color: #f5efe6; }
+    #c-bg { position: absolute; inset: 0; background: #2a1b14; }
+    #c-wrap { position: absolute; left: 192px; top: 330px; width: 1536px; display: flex; flex-direction: column; gap: 34px; }
+    #c-line { font-family: "Playfair Display", serif; font-size: 80px; line-height: 1.1; font-weight: 700; }
+    #c-line em { font-style: normal; color: #d9b48a; }
+    #c-src { font-size: 28px; color: #d9cbbe; }
+  </style>
+  <div id="root" data-composition-id="cierre" data-width="1920" data-height="1080">
+    <div id="c-bg" class="clip" data-start="0" data-duration="5.5"></div>
+    <div id="c-wrap" class="clip" data-start="0" data-duration="5.5">
+      <p id="c-line">Un modelo pequeño <em>sí construye</em> los tableros; el grande pule el diseño.</p>
+      <span id="c-src">dashkit · bench/resultados.md · todas las cifras de las ejecuciones del 7 nov 2026</span>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#c-bg", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0);
+    tl.fromTo("#c-line", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.3);
+    tl.fromTo("#c-src", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 1.0);
+    window.__timelines["cierre"] = tl;
+  </script>
+</template>
