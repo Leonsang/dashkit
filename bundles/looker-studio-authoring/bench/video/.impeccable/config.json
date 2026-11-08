@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-11-08T00:48:22.206Z",
+        "reason": "Claude: the video uses the Café Brisa brand palette (crema #F5EFE6) defined in the benchmark design, not a default"
+      },
+      {
+        "rule": "oversized-h1",
+        "value": "*",
+        "files": [
+          "compositions/intro.html"
+        ],
+        "createdAt": "2026-11-08T00:48:22.591Z",
+        "reason": "Claude: title card of a video, the question is the only element on screen for 5 s"
+      }
+    ]
+  }
+}

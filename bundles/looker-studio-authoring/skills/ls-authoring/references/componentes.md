@@ -101,7 +101,8 @@ CLI: `patch <id> --date-days 28 --strip-styles`, `patch <id> --text "Ventas 2025
 `patch <id> --parameter metrica`, `patch <id> --style '{"hideMetric":false}'`. En el spec, `style`.
 
 **Series temporales:** `simple-linechart` solo acepta una dimensión de fecha (con un número como `anio_mes`
-o un texto da reason 266). Para una tendencia mensual usa una fecha de inicio de mes y
+o un texto da reason 266). Para una serie por hora del día u otro número, usa barras con `sort: "dimension"`
+y `rows` (ver «Orden y número de filas»). Para una tendencia mensual usa una fecha de inicio de mes y
 `missingDataDisplayType: "linearInterpolation"`. `bind` ordena las tendencias (línea, área, combinado) por
 su primera dimensión ascendente, y alinea con ese orden el orden inicial que el editor guarda aparte
 (`behavior.onSort`): en un gráfico combinado nuevo el editor lo pone por "Número de registros" y es el que

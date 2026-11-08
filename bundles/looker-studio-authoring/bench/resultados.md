@@ -85,3 +85,18 @@ exportado a `bench/diseno/`. Puntuación base (rúbrica) y fidelidad al diseño 
 7. Un botón con fondo de opacidad 0 se pinta blanco.
 8. `theme set` parcial no se fusiona como dice la documentación.
 9. La salida JSON de la CLI se mezcla con las líneas de registro en stdout.
+
+## Escenario 2, ronda 2 (tras el commit `7acd882`)
+
+| | Haiku | Sonnet |
+|---|---|---|
+| Rúbrica base | 95 | 90 |
+| Fidelidad automática | 85 (fondo blanco, Roboto) | 85 (Roboto; el puntuador no ve sus tarjetas de KPI hechas a mano, que sí llevan icono) |
+| Visual (manual, 0–10) | 7,5 (antes 7): comparación cabe, iconos limpios, sans; fondo blanco, iconos de navegación sobre el texto, falta la serie del año anterior, barras por hora por valor | 9 (antes 8,5): crema, tarjetas blancas con icono, Playfair en títulos, barras horizontales, serie del año anterior |
+| Tokens / llamadas / duración | 205k / 58 / 24,6 min | 218k / 74 / 36,2 min |
+| Intervenciones humanas | 0 | 0 |
+
+Fallos de dashkit de esta ronda: `apply` fundía dos páginas cuando la primera tenía nombre y `page: "active"`
+(corregido); Haiku no encontró `sort` porque «Series temporales» no lo nombraba (documentado). Siguen
+abiertos: líneas de referencia, ocultar la navegación de Looker, texto en el centro del donut, barras en
+tablas, botón transparente pintado de blanco, alineación del texto de los botones.

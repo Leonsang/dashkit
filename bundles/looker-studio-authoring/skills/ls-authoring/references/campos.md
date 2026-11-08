@@ -91,6 +91,9 @@ CLI: `fields add --name es_online --formula 'canal = "Online"' [--source "<nombr
   todos los gráficos del informe que lo usan.
 - Es lo que necesitan las **casillas** y los **botones de filtro predefinido**: un campo **booleano del
   origen**. Sin campo da reason 265; con uno que no es booleano, 116.
+- **Funciones:** las del editor de Looker Studio, no las de SQL: `LEFT` no existe (usa `LEFT_TEXT(texto, n)` o
+  `SUBSTR`), y para convertir, `CAST(x AS NUMBER)` o `PARSE_DATE`. Un error «Operador que no se admite» es una
+  función que el editor no conoce.
 - **Sheets:** TRUE/FALSE llega como texto. Conviértelo: `UPPER(devuelto) IN ("TRUE","SI")`.
 - **`source`:** el nombre del origen en el panel Datos, si hay más de uno (con uno solo no hace falta y se
   ignora). La respuesta trae `dataSourceId`, el origen donde quedó el campo.

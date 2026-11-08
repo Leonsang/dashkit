@@ -182,7 +182,10 @@ export function resolveSpec(spec: ReportSpec): ResolvedComponent[] {
   const floorGrid = (v: number) => Math.floor(v / grid) * grid;
   const out: ResolvedComponent[] = [];
   for (const p of spec.pages) {
-    const page = p.page ?? (p.name ? `name:${p.name}` : 'active');
+    // A page with a name is found or created by that name, even with page "active": otherwise the name is
+    // lost and, in a new report, the active page was also reused for the next named page (benchmark
+    // 2026-11-07: two pages built on one).
+    const page = p.page && !(p.page === 'active' && p.name) ? p.page : (p.name ? `name:${p.name}` : 'active');
     for (const c of p.components) {
       if ('row' in c) {
         const { y, h } = c.row;

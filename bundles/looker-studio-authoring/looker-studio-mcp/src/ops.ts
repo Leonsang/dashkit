@@ -480,7 +480,9 @@ export async function applySpec(specOrFile: string | ReportSpec, opts: { dryRun?
       let created = false;
       // A new report (e.g. from create_report_from_csv) starts with one empty, untitled page: use it for the
       // spec's first missing page instead of leaving it empty in front of the others (benchmark 2026-11-07).
-      const blank = !hit && !opts.dryRun ? pages.find((p) => p.components === 0 && /^((p[aá]gina|page|untitled page|p[aá]gina sin t[ií]tulo)(\s*\d+)?)?$/i.test(String(p.name).trim()) && !wanted.includes(p.name) && !Object.values(pageIds).includes(p.id)) : undefined;
+      // the page open now is where page "active" components go: never rename it for another page
+      const usesActive = components.some((x) => x.page === 'active');
+      const blank = !hit && !opts.dryRun && !usesActive ? pages.find((p) => p.components === 0 && /^((p[aá]gina|page|untitled page|p[aá]gina sin t[ií]tulo)(\s*\d+)?)?$/i.test(String(p.name).trim()) && !wanted.includes(p.name) && !Object.values(pageIds).includes(p.id)) : undefined;
       if (blank) {
         const { renamePage } = await import('./ops3.js');
         await renamePage(blank.id, name);
