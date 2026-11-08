@@ -96,7 +96,7 @@ const CLI = [
   ['diagnose', 'diagnose_report', ''],
   ['export [-o f.json]', 'export_report', 'MCP: `file`, dentro de `LS_WORKSPACE`'],
   ['box <id> --x --y --w --h --padding', 'set_component_box_model', 'MCP: `position{x,y}`, `dimensions{width,height}`, `padding`'],
-  ['bind <id> --dims --metrics [--append]', 'bind_fields_to_component', 'MCP: `mode=append`'],
+  ['bind <id> --dims --metrics [--append] [--sort ...] [--rows N]', 'bind_fields_to_component', 'MCP: `mode=append`, `sort`, `rows`'],
   ['create --type t[@variante] --box x,y,w,h', 'create_component', 'MCP: `box{x,y,width,height}`; `type` también admite `@variante`; `slots` solo en MCP y spec'],
   ['delete <id>', 'delete_component', 'MCP: además `LS_ALLOW_DELETE=1`'],
   ['patch <id> --date-days N --strip-styles --parameter P --text T', 'patch_component', 'MCP: `parameter`, `text`, `textSize`, `textBold`, `textColor`'],

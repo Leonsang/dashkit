@@ -12,7 +12,7 @@ motor y no lleva el control de `LS_ALLOW_WRITE`.
 | `get_report_layout` | pageId | Lista los componentes de una pagina del informe con su caja y estilo: [{id, type, x, y, width, height, style:{padding:{top,right,bottom,left}, backgroundColor, borderColor, borderWidth, borderRadius}}], mas el tamano del lienzo. | `componentes.md` |
 | `set_component_box_model` | **componentId**, padding, dimensions, position | Cambia padding, tamano y/o posicion de UN componente. | `componentes.md` |
 | `inspect_data_sources` | — | Lista las fuentes de datos del informe y sus campos: [{dataSourceId, name, fields:[{id, name, type: DIMENSION\|METRIC, dataType}]}]. | `campos.md` |
-| `bind_fields_to_component` | **componentId**, **dimensions**, **metrics**, mode | Asigna dimensiones y metricas a un componente (grafico, tabla, scorecard). | `campos.md` |
+| `bind_fields_to_component` | **componentId**, **dimensions**, **metrics**, mode, rows, sort | Asigna dimensiones y metricas a un componente (grafico, tabla, scorecard). | `campos.md` |
 | `diagnose_report` | — | Recorre todas las paginas y devuelve problemas detectados: componentes en error, campos que no existen en el esquema del origen (tipico tras migraciones UA->GA4 o cambios de origen), conceptos qt_ huerfanos, graficos sin metricas, componentes fuera del lienzo o de la reticula, paginas con demasiados graficos y mensajes de error visibles en el canvas. | `revision.md` |
 | `get_component_config` | **componentId** | Devuelve el JSON interno completo de un componente (attribute, config.display.keys, config.datasource.keys, conceptDefs). | `revision.md` |
 | `open_report` | **url** | Navega la pestana del informe (o una nueva) a la URL indicada y espera a que cargue el editor. | `SKILL.md` |
@@ -87,7 +87,7 @@ Cada comando de la CLI tiene su herramienta MCP. Lo que cambia, en la última co
 | `diagnose` | `diagnose_report` | — |
 | `export [-o f.json]` | `export_report` | MCP: `file`, dentro de `LS_WORKSPACE` |
 | `box <id> --x --y --w --h --padding` | `set_component_box_model` | MCP: `position{x,y}`, `dimensions{width,height}`, `padding` |
-| `bind <id> --dims --metrics [--append]` | `bind_fields_to_component` | MCP: `mode=append` |
+| `bind <id> --dims --metrics [--append] [--sort ...] [--rows N]` | `bind_fields_to_component` | MCP: `mode=append`, `sort`, `rows` |
 | `create --type t[@variante] --box x,y,w,h` | `create_component` | MCP: `box{x,y,width,height}`; `type` también admite `@variante`; `slots` solo en MCP y spec |
 | `delete <id>` | `delete_component` | MCP: además `LS_ALLOW_DELETE=1` |
 | `patch <id> --date-days N --strip-styles --parameter P --text T` | `patch_component` | MCP: `parameter`, `text`, `textSize`, `textBold`, `textColor` |

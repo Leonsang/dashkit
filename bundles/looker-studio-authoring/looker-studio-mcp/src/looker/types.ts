@@ -139,7 +139,13 @@ export interface BindFieldsArgs {
   clearDimensions?: boolean;
   /** Extra concept slots by conceptKey: { x_metric: ["SUM(a)"], breakdown: ["canal"] }. */
   slots?: Record<string, string[]>;
+  /** Order of the chart: by its first dimension (asc/desc) or its first metric. Default: time charts by
+   * dimension ascending, the rest by metric descending. */
+  sort?: SortMode;
+  /** How many rows (bars, slices, table rows) the chart shows; templates bring 10. */
+  rows?: number;
 }
+export type SortMode = 'dimension' | 'dimension_desc' | 'metric' | 'metric_asc';
 
 export interface BindFieldsResult {
   ok: boolean;

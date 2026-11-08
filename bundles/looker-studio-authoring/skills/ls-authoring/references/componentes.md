@@ -209,7 +209,9 @@ Patrones tomados de plantillas publicadas (verificado el 2026-11-07); todos se d
   una que ya exista con `card.id`) y mete
   el componente dentro con un margen (`inset`, 10 por defecto), sin fondo ni borde propios y con su título.
 - **Scorecard con `icon`:** a la izquierda, un cuadro del color de acento (`<key>__tile`, `iconBackground`)
-  con el icono en blanco (`<key>__icon`); el valor pasa a la derecha y baja a 24 px para que quepa.
+  con el icono encima (`<key>__icon`, sin fondo ni borde propios); el valor pasa a la derecha y baja a 24 px
+  para que quepa. Con `comparison`, la frase del editor («en comparación con: año anterior») no cabe en la
+  tarjeta: se cambia por `compareLabel` «vs. año anterior» o «vs. periodo anterior» (otra, con `style`).
 - Al aplicar, las formas de las tarjetas se mandan al fondo de su página, también cuando envuelven
   componentes que ya existían.
 - Con el tema `panel-lateral` (fondo de página gris claro, sin borde por componente) las tarjetas blancas
@@ -235,6 +237,9 @@ origen: un nombre como `fecha`/`date`/`dia`, si no la primera fecha). Para otra 
 (CLI `--date-field`; en el spec, `dateField`). Si el origen no tiene ninguna fecha (un CSV con la fecha como
 texto), la herramienta falla y lo dice: crea antes un campo de fecha con `add_source_field`
 (`PARSE_DATE("%Y-%m-%d", fecha)`).
+
+**Texto de la comparación:** la clave de estilo `compareLabel` acepta texto libre (`style: {"compareLabel":
+"vs. año anterior"}`); en tarjetas estrechas, úsala.
 
 El periodo anterior es del mismo largo que el del control de periodo: con un control que abarca todos los
 datos (p. ej. `dateRangeDays: 1100` en un histórico de dos años), el anterior queda vacío y el scorecard dice
@@ -265,6 +270,13 @@ botón, se queda con el clic: pon la etiqueta como texto del botón. Con `report
 texto salen en todas las páginas: es la barra lateral de navegación (ver el arquetipo «panel con barra
 lateral» en `ls-diseno-layout`).
 
+### Orden y número de filas: `sort` y `rows`
+
+Por defecto, las tendencias se ordenan por su fecha ascendente y el resto por la primera métrica
+descendente. Para unas barras en su orden natural (horas, días de la semana, tramos), `sort: "dimension"`
+(también `dimension_desc`, `metric`, `metric_asc`); las plantillas muestran 10 filas, `rows: 24` muestra más.
+En el spec, `sort` y `rows`; en `bind`, los mismos parámetros (CLI `bind <id> --sort dimension --rows 24`).
+
 ## Capas y nivel de informe: arrange_components
 
 `arrange_components componentIds op` (CLI `arrange <id...> --to <op>`):
@@ -284,6 +296,13 @@ cambio persiste al recargar y el componente conserva su id.
 Solo si el usuario lo pide. Necesita `LS_ALLOW_DELETE=1` además de `LS_ALLOW_WRITE=1`. CLI: `delete <id>`.
 
 ## Lo que no se puede (todavía)
+
+- **Líneas y bandas de referencia** (un objetivo de 5 min): las claves `referenceLine*` existen y se guardan
+  (`referenceLineNumberValue`, `referenceLineLabel`, `referenceLineColor`...), pero aún no se sabe qué valor de
+  `referenceLineType` las pinta: con `null`, 1 o 2 no aparecen. Alternativa: el objetivo en el título o una
+  forma fina encima del gráfico.
+- **Texto en el centro de un donut** y **barras dentro de una tabla** (la columna «peso»): no hay clave conocida;
+  usa un cuadro de texto encima o el formato condicional.
 
 - **Estilo de tablas, mapas y scorecards por nombre:** solo `set_chart_style` (gráficos) y
   `set_conditional_format`. Lo demás lo manda el tema (`paginas-temas-y-ajustes.md`); una clave suelta del

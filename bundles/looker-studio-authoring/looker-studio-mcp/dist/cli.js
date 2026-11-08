@@ -5,7 +5,7 @@ import {
   getComponentConfig,
   getReportLayout,
   sanitizeLearning
-} from "./chunks/chunk-IOVHFG3I.js";
+} from "./chunks/chunk-ONDTBMPU.js";
 import {
   addImage,
   addParameter,
@@ -39,7 +39,7 @@ import {
   setText,
   updateBlend,
   updateParameter
-} from "./chunks/chunk-IRM7BWVU.js";
+} from "./chunks/chunk-LNV76OVF.js";
 import {
   addFilter,
   addPage,
@@ -78,7 +78,7 @@ import {
   updateFilter,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-7T2JYYHB.js";
+} from "./chunks/chunk-LTKWOZSF.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
 import "./chunks/chunk-KBCVDAPW.js";
@@ -110,7 +110,7 @@ Lectura
 
 Escritura (modo /edit)
   box <id> [--x N --y N] [--w N --h N] [--padding N]
-  bind <id> [--dims a,b] [--metrics "SUM(x),AVG(y)"] [--append]
+  bind <id> [--dims a,b] [--metrics "SUM(x),AVG(y)"] [--append] [--sort dimension|dimension_desc|metric|metric_asc] [--rows N]
   create --type <tipo[@variante]> --box x,y,w,h [--page <id>] [--dataset <id|@campo>]
          [--dims a,b] [--metrics m1,m2] [--padding N]
   delete <id>
@@ -242,7 +242,9 @@ async function main() {
         componentId: need(pos[0], "componentId"),
         dimensions: list(flags.dims),
         metrics: list(flags.metrics),
-        mode: flags.append ? "append" : "replace"
+        mode: flags.append ? "append" : "replace",
+        ...typeof flags.sort === "string" ? { sort: flags.sort } : {},
+        ...typeof flags.rows === "string" ? { rows: Number(flags.rows) } : {}
       });
     case "create": {
       const box = list(flags.box).map(Number);

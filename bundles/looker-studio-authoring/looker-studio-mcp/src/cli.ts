@@ -50,7 +50,7 @@ Lectura
 
 Escritura (modo /edit)
   box <id> [--x N --y N] [--w N --h N] [--padding N]
-  bind <id> [--dims a,b] [--metrics "SUM(x),AVG(y)"] [--append]
+  bind <id> [--dims a,b] [--metrics "SUM(x),AVG(y)"] [--append] [--sort dimension|dimension_desc|metric|metric_asc] [--rows N]
   create --type <tipo[@variante]> --box x,y,w,h [--page <id>] [--dataset <id|@campo>]
          [--dims a,b] [--metrics m1,m2] [--padding N]
   delete <id>
@@ -185,6 +185,8 @@ async function main(): Promise<unknown> {
         dimensions: list(flags.dims),
         metrics: list(flags.metrics),
         mode: flags.append ? 'append' : 'replace',
+        ...(typeof flags.sort === 'string' ? { sort: flags.sort as never } : {}),
+        ...(typeof flags.rows === 'string' ? { rows: Number(flags.rows) } : {}),
       });
     case 'create': {
       const box = list(flags.box).map(Number);

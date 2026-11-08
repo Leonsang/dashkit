@@ -18,7 +18,7 @@ import {
   resolveDataset,
   revealIfHidden,
   setActiveReport
-} from "./chunk-7T2JYYHB.js";
+} from "./chunk-LTKWOZSF.js";
 import {
   arrangeScript,
   blendSnapshotScript,
@@ -819,7 +819,7 @@ async function setPageLink(componentId, pageRef) {
   const { page } = await requireEditMode();
   let pageId = pageRef;
   if (pageRef.startsWith("name:")) {
-    const { listPages } = await import("./ops3-2TFZGTNO.js");
+    const { listPages } = await import("./ops3-CGGWBZEU.js");
     const hit = (await listPages()).find((p) => p.name === pageRef.slice(5));
     if (!hit) throw new Error(`No hay ninguna pagina llamada "${pageRef.slice(5)}".`);
     pageId = hit.id;

@@ -66,7 +66,21 @@ export async function applyTheme(theme: FriendlyTheme) {
     throw new Error(`El guardado del tema fue rechazado (${w.statuses.join(',')}); se recargo el informe.`);
   }
   learn('note', 'theme_applied', { text: r.created ? 'theme resource created' : 'theme resource updated' });
-  return { ...r, saves: w.statuses };
+  // A font Looker Studio does not offer is saved without error and drawn with a fallback serif (Inter,
+  // benchmark 2026-11-07). The editor loads the theme's fonts once it repaints: check they arrived.
+  const wanted = [...new Set([theme.font, theme.accentFont].filter((x): x is string => !!x))];
+  let missing: string[] = [];
+  if (wanted.length) {
+    for (let i = 0; i < 12; i++) {
+      missing = await page.evaluate((fams: string[]) => {
+        const loaded = new Set([...(document as any).fonts].filter((f: any) => f.status === 'loaded').map((f: any) => String(f.family).replace(/["']/g, '')));
+        return fams.filter((f) => !loaded.has(f));
+      }, wanted).catch(() => []);
+      if (!missing.length) break;
+      await sleep(500);
+    }
+  }
+  return { ...r, saves: w.statuses, ...(missing.length ? { warning: `La fuente ${missing.join(', ')} no llego a cargarse: Looker Studio no la ofrece y la pinta con otra (serif). Usa una del desplegable de fuentes del editor (p. ej. Roboto, Open Sans, Lato, Montserrat, Raleway, Oswald, Lora, Playfair Display) y vuelve a aplicar.` } : {}) };
 }
 
 // ---- theme presets / library -----------------------------------------------------
@@ -558,7 +572,7 @@ export async function addSourceField(opts: { name: string; formula: string; sour
     await open();
     // The scope chip renders a moment after the editor: an empty read made the first call fail as
     // "reusable (unknown scope)" (benchmark 2026-11-07). Read again until it shows.
-    const readSource = async () => { let r = await editorSource(); for (let i = 0; i < 12 && !r.scope; i++) { await sleep(500); r = await editorSource(); } return r; };
+    const readSource = async () => { let r = await editorSource(); for (let i = 0; i < 24 && !r.scope; i++) { await sleep(500); r = await editorSource(); } return r; };
     let src = await readSource();
     // With a single source in the report there is nothing to choose: a name is not looked up in the panel
     // (clicking the source's name there opens the data source editor and takes the tab off the report).

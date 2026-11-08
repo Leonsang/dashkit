@@ -262,7 +262,7 @@ La biblioteca `themes/library/` incluye `marca-azul`, `oscuro-accesible`, `alto-
 ```bash
 node dist/cli.js report settings                                   # leer
 node dist/cli.js report settings --viewer-filter-bar on --cross-filter on
-node dist/cli.js report settings --set viewModeNav=nav-top,viewModeScale=scale-fit
+node dist/cli.js report settings --set viewModeNav=nav-left,viewModeScale=scale-fit
 node dist/cli.js pages rename <pageId> "Nombre"                    # modelo + nombre visible en la navegacion
 node dist/cli.js orphans examples/*.spec.json                      # componentes que ningun spec referencia
 ```

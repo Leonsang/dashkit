@@ -661,7 +661,20 @@ export async function bindFieldsScript(args: BindFieldsArgs): Promise<BindFields
     const dimIsDate = !!firstDimField && concepts[firstDimField] && (concepts[firstDimField].dataType === 6 || concepts[firstDimField].dataType === 7);
     // Trend charts read left to right: order by their first dimension ascending even when it is not a
     // date type (a month number like anio_mes, or a "YYYY-MM" text), not by a metric.
-    if (isTimeType && firstDim && !(sd && sd[0] && sd[0].sortColumn === firstDim && sd[0].sortDir === 0)) {
+    if (args.rows && args.rows > 0) {
+      if (typeof comp.setDataSourceKeyValue === 'function') comp.setDataSourceKeyValue('row', Math.round(args.rows), true, true);
+      warnings.push(`Filas: ${Math.round(args.rows)}.`);
+    }
+    const firstMet = cur('metrics')[0];
+    const want = args.sort ? (/^dimension/.test(args.sort) ? firstDim : firstMet) : undefined;
+    if (args.sort && want) {
+      // explicit order (e.g. hours or a fixed category order on a bar chart): 0 asc, 1 desc
+      const dir = args.sort === 'dimension' || args.sort === 'metric_asc' ? 0 : 1;
+      const v = [{ sortDir: dir, sortColumn: want }];
+      if (typeof comp.setDataSourceKeyValue === 'function') comp.setDataSourceKeyValue('sortData', v, true, true);
+      else k.sortData = { stateKey: 'sortData', dominant: 2, value: v };
+      warnings.push(`Orden: ${/^dimension/.test(args.sort) ? 'primera dimension' : 'primera metrica'} ${dir === 0 ? 'ascendente' : 'descendente'}.`);
+    } else if (isTimeType && firstDim && !(sd && sd[0] && sd[0].sortColumn === firstDim && sd[0].sortDir === 0)) {
       const v = [{ sortDir: 0, sortColumn: firstDim }];
       if (typeof comp.setDataSourceKeyValue === 'function') comp.setDataSourceKeyValue('sortData', v, true, true);
       else k.sortData = { stateKey: 'sortData', dominant: 2, value: v };

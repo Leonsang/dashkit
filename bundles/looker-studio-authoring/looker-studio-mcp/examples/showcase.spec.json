@@ -3,7 +3,7 @@
   "canvasWidth": 1330,
   "canvasHeight": 980,
   "themePreset": "panel-lateral",
-  "settings": { "width": 1330, "height": 980, "viewModeNav": "nav-top", "viewModeMargin": "margin-no" },
+  "settings": { "width": 1330, "height": 980, "viewModeNav": "nav-left", "viewModeMargin": "margin-no" },
   "defaults": { "dataset": "@ingresos", "padding": 12 },
   "pages": [
     {

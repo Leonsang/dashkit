@@ -37,8 +37,8 @@ El tema manda sobre el estilo de todos los componentes: define colores y fuentes
 | Predefinidos y biblioteca | `list_theme_presets` | `theme presets` |
 | Aplicar uno de ellos | `use_theme theme="Cosecha"` | `theme use Cosecha` |
 
-**Tema propio** (`apply_theme`, o `theme` en el spec). Se fusiona sobre un tema base capturado de un informe
-real y se guarda como tema personalizado del informe:
+**Tema propio** (`apply_theme`, o `theme` en el spec). Se fusiona sobre el tema actual del informe (lo que no
+indiques se queda como estaba) y se guarda como tema personalizado del informe:
 
 ```json
 {"font": "Roboto", "text": "#202124", "header": "#202124", "fill": "#ffffff", "accent": "#1a73e8",
@@ -48,6 +48,11 @@ real y se guarda como tema personalizado del informe:
 ```
 
 Es `examples/tema-marca.json`. `increase` y `decrease` son los colores de subida y bajada de los scorecards.
+
+**Fuentes:** solo las del desplegable de fuentes del editor. Un nombre que no está (p. ej. `Inter`) se guarda
+sin error y se pinta en serif; `apply_theme` comprueba que la fuente llegó a cargarse y, si no, lo avisa en
+`warning`. Funcionan, entre otras: Roboto, Open Sans, Lato, Montserrat, Raleway, Oswald, Lora, Playfair
+Display (verificado el 2026-11-07).
 
 **`fill` es el color de la página** (el lienzo que ve el lector) y a la vez el relleno por defecto de los
 componentes; `background` no pinta la página. Para «página crema con tarjetas blancas»: `fill` crema, y las
@@ -86,7 +91,7 @@ clave=valor,...]`.
 |---|---|
 | `viewerFilterBar` | Barra de filtros de lectores (`true`/`false`) |
 | `crossFilterByDefault` | Filtro cruzado activo en los gráficos nuevos |
-| `viewModeNav` | Navegación en modo vista, p. ej. `nav-top` |
+| `viewModeNav` | Navegación en modo vista: `nav-left` (lateral) o `nav-tab` (pestañas). `nav-top` no existe. Ocultarla del todo aún no se ha conseguido (`nav-hidden` se guarda pero el propietario la sigue viendo) |
 | `viewModeHeader` | Cabecera en modo vista |
 | `viewModeScale` | Escala en modo vista, p. ej. `scale-fit` |
 | `viewModeMargin`, `viewModeMaxWidth` | Margen y ancho máximo en modo vista |

@@ -2450,7 +2450,19 @@ async function bindFieldsScript(args) {
     const firstDim = cur("dimensions")[0];
     const firstDimField = firstDim && comp.config.conceptDefs[firstDim]?.queryTimeTransformation?.dataTransformation?.sourceFieldName;
     const dimIsDate = !!firstDimField && concepts[firstDimField] && (concepts[firstDimField].dataType === 6 || concepts[firstDimField].dataType === 7);
-    if (isTimeType && firstDim && !(sd && sd[0] && sd[0].sortColumn === firstDim && sd[0].sortDir === 0)) {
+    if (args.rows && args.rows > 0) {
+      if (typeof comp.setDataSourceKeyValue === "function") comp.setDataSourceKeyValue("row", Math.round(args.rows), true, true);
+      warnings.push(`Filas: ${Math.round(args.rows)}.`);
+    }
+    const firstMet = cur("metrics")[0];
+    const want = args.sort ? /^dimension/.test(args.sort) ? firstDim : firstMet : void 0;
+    if (args.sort && want) {
+      const dir = args.sort === "dimension" || args.sort === "metric_asc" ? 0 : 1;
+      const v = [{ sortDir: dir, sortColumn: want }];
+      if (typeof comp.setDataSourceKeyValue === "function") comp.setDataSourceKeyValue("sortData", v, true, true);
+      else k.sortData = { stateKey: "sortData", dominant: 2, value: v };
+      warnings.push(`Orden: ${/^dimension/.test(args.sort) ? "primera dimension" : "primera metrica"} ${dir === 0 ? "ascendente" : "descendente"}.`);
+    } else if (isTimeType && firstDim && !(sd && sd[0] && sd[0].sortColumn === firstDim && sd[0].sortDir === 0)) {
       const v = [{ sortDir: 0, sortColumn: firstDim }];
       if (typeof comp.setDataSourceKeyValue === "function") comp.setDataSourceKeyValue("sortData", v, true, true);
       else k.sortData = { stateKey: "sortData", dominant: 2, value: v };
@@ -3517,6 +3529,8 @@ function resolveSpec(spec) {
             ...it.filters ? { filters: it.filters } : {},
             ...it.variant ? { variant: it.variant } : {},
             ...it.slots ? { slots: it.slots } : {},
+            ...it.sort ? { sort: it.sort } : {},
+            ...it.rows ? { rows: it.rows } : {},
             ...it.text !== void 0 ? { text: it.text } : {},
             ...it.parameter ? { parameter: it.parameter } : {},
             ...it.style ? { style: it.style } : {},
@@ -3550,6 +3564,8 @@ function resolveSpec(spec) {
           ...c.filters ? { filters: c.filters } : {},
           ...c.variant ? { variant: c.variant } : {},
           ...c.slots ? { slots: c.slots } : {},
+          ...c.sort ? { sort: c.sort } : {},
+          ...c.rows ? { rows: c.rows } : {},
           ...c.text !== void 0 ? { text: c.text } : {},
           ...c.parameter ? { parameter: c.parameter } : {},
           ...c.style ? { style: c.style } : {},
@@ -3605,9 +3621,10 @@ function expandCards(list) {
         style: { background: { color: k.iconBackground ?? "#1A73E8", opacity: 1 }, border: { color: "#FFFFFF", opacity: 0, size: 0, style: "solid", radius: Math.round(tile / 4) } }
       });
       const ic = Math.round(tile / 2);
-      out.push({ key: `${c.key}__icon`, type: "image-component", x: c.x + 20 + (tile - ic) / 2, y: ty + (tile - ic) / 2, w: ic, h: ic, ...shared, image: k.icon });
+      out.push({ key: `${c.key}__icon`, type: "image-component", x: c.x + 20 + (tile - ic) / 2, y: ty + (tile - ic) / 2, w: ic, h: ic, ...shared, image: k.icon, style: clear });
       const left = 20 + tile + 10;
-      out.push({ ...c, x: c.x + left, y: c.y + inset, w: c.w - left - inset, h: c.h - 2 * inset, style: { ...clear, fontSize: "24px", ...c.style ?? {} } });
+      const cmpLabel = c.comparison && c.comparison !== "none" ? { compareLabel: c.comparison === "previous_year" ? "vs. a\xF1o anterior" : "vs. periodo anterior" } : {};
+      out.push({ ...c, x: c.x + left, y: c.y + inset, w: c.w - left - inset, h: c.h - 2 * inset, style: { ...clear, fontSize: "24px", ...cmpLabel, ...c.style ?? {} } });
       continue;
     }
     const titleH = 0;
@@ -3901,7 +3918,7 @@ async function createComponent(o) {
   }
   const page = await editPage();
   const datasetId = await resolveDataset(page, o.dataset);
-  const hasFields = !!(o.dimensions?.length || o.metrics?.length || o.slots && Object.keys(o.slots).length);
+  const hasFields = !!(o.dimensions?.length || o.metrics?.length || o.slots && Object.keys(o.slots).length || o.sort || o.rows);
   const NO_DIMS = ["gauge-viz", "bulletchart", "kpi-metric"];
   const t0 = Date.now();
   const { ensureSeedScript } = await import("./scripts4-ADA4C2PA.js");
@@ -3929,7 +3946,9 @@ async function createComponent(o) {
       dimensions: o.dimensions ?? [],
       metrics: o.metrics ?? [],
       ...NO_DIMS.includes(o.type) && !o.dimensions?.length ? { clearDimensions: true } : {},
-      ...o.slots ? { slots: o.slots } : {}
+      ...o.slots ? { slots: o.slots } : {},
+      ...o.sort ? { sort: o.sort } : {},
+      ...o.rows ? { rows: o.rows } : {}
     });
   }
   const b = bound;
@@ -3961,8 +3980,8 @@ async function deleteComponent(componentId) {
   const page = await editPage();
   const { componentLevelScript } = await import("./scripts4-ADA4C2PA.js");
   if (await evaluateOn(page, T, componentLevelScript, componentId) === "report") {
-    const { arrangeComponents } = await import("./ops4-5ZDR5WYP.js");
-    const { listPages: listPages2 } = await import("./ops3-2TFZGTNO.js");
+    const { arrangeComponents } = await import("./ops4-MIMAFBET.js");
+    const { listPages: listPages2 } = await import("./ops3-CGGWBZEU.js");
     await arrangeComponents([componentId], "page", (await listPages2())[0].id);
   }
   const t0 = Date.now();
@@ -3999,7 +4018,7 @@ async function applySpec(specOrFile, opts = {}) {
   }
   const state = statePath && existsSync4(statePath) ? JSON.parse(readFileSync4(statePath, "utf8")) : { reportId: null, keys: {} };
   const page = opts.dryRun ? await getReportPage() : await editPage();
-  const { ensureVisible } = await import("./ops4-5ZDR5WYP.js");
+  const { ensureVisible } = await import("./ops4-MIMAFBET.js");
   if (!opts.dryRun) await ensureVisible(page);
   const info = await evaluateOn(page, T, pageInfoScript);
   if (state.reportId && state.reportId !== info.internalReportId) {
@@ -4028,7 +4047,7 @@ async function applySpec(specOrFile, opts = {}) {
       let created = false;
       const blank = !hit && !opts.dryRun ? pages.find((p) => p.components === 0 && /^((p[aá]gina|page|untitled page|p[aá]gina sin t[ií]tulo)(\s*\d+)?)?$/i.test(String(p.name).trim()) && !wanted.includes(p.name) && !Object.values(pageIds).includes(p.id)) : void 0;
       if (blank) {
-        const { renamePage: renamePage2 } = await import("./ops3-2TFZGTNO.js");
+        const { renamePage: renamePage2 } = await import("./ops3-CGGWBZEU.js");
         await renamePage2(blank.id, name);
         pages = await listPages();
         hit = pages.find((p) => p.id === blank.id);
@@ -4064,7 +4083,7 @@ async function applySpec(specOrFile, opts = {}) {
         const extra = await patchIfNeeded(page, existingId, c);
         result.actions.push({ key: c.key, action: "update", componentId: existingId, ...extra.length ? { patched: extra } : {} });
       } else if (c.type === "image-component" && c.image) {
-        const { addImage } = await import("./ops4-5ZDR5WYP.js");
+        const { addImage } = await import("./ops4-MIMAFBET.js");
         const { dirname: dirname5, resolve } = await import("node:path");
         const base = typeof specOrFile === "string" ? dirname5(specOrFile) : process.cwd();
         const r = await addImage({ path: resolve(base, c.image), box: { x: c.x, y: c.y, width: c.w, height: c.h }, ...pageId ? { pageId } : {} });
@@ -4081,7 +4100,9 @@ async function applySpec(specOrFile, opts = {}) {
           dimensions: c.dimensions,
           metrics: c.metrics,
           ...c.padding !== void 0 ? { padding: c.padding } : {},
-          ...c.slots ? { slots: c.slots } : {}
+          ...c.slots ? { slots: c.slots } : {},
+          ...c.sort ? { sort: c.sort } : {},
+          ...c.rows ? { rows: c.rows } : {}
         });
         state.keys[c.key] = r.componentId;
         const extra = await patchIfNeeded(page, r.componentId, c);
@@ -4130,7 +4151,7 @@ async function applySpec(specOrFile, opts = {}) {
     }
     if (filterLog.length) result.filters = filterLog;
     {
-      const { arrangeComponents } = await import("./ops4-5ZDR5WYP.js");
+      const { arrangeComponents } = await import("./ops4-MIMAFBET.js");
       const inside = (p, q) => p !== q && q.x >= p.x && q.y >= p.y && q.x + q.w <= p.x + p.w && q.y + q.h <= p.y + p.h;
       const level = (c) => c.reportLevel ? "report" : c.page;
       const live = components.filter((c) => state.keys[c.key]);
@@ -4168,50 +4189,50 @@ async function patchIfNeeded(page, id, c) {
   }
   if (c.text !== void 0) {
     const t = typeof c.text === "string" ? { text: c.text } : c.text;
-    const { setText } = await import("./ops4-5ZDR5WYP.js");
+    const { setText } = await import("./ops4-MIMAFBET.js");
     await setText(id, t.text, { ...t.size ? { size: t.size } : {}, ...t.bold ? { bold: true } : {}, ...t.color ? { color: t.color } : {}, ...t.align ? { align: t.align } : {} });
     changes.push("text");
   }
   if (c.style) {
-    const { setStyle } = await import("./ops4-5ZDR5WYP.js");
+    const { setStyle } = await import("./ops4-MIMAFBET.js");
     await setStyle(id, c.style);
     changes.push("style");
   }
   if (c.conditional) {
-    const { setConditionalFormat } = await import("./ops4-5ZDR5WYP.js");
+    const { setConditionalFormat } = await import("./ops4-MIMAFBET.js");
     await setConditionalFormat(id, c.conditional);
     changes.push(`conditional:${c.conditional.length}`);
   }
   if (c.chartStyle) {
-    const { setChartStyle } = await import("./ops4-5ZDR5WYP.js");
+    const { setChartStyle } = await import("./ops4-MIMAFBET.js");
     await setChartStyle({ ...c.chartStyle, componentId: id, reload: false });
     changes.push("chartStyle");
   }
   if (c.comparison) {
-    const { setComparison } = await import("./ops4-5ZDR5WYP.js");
+    const { setComparison } = await import("./ops4-MIMAFBET.js");
     await setComparison(id, c.comparison, c.dateField);
     changes.push(`comparison:${c.comparison}`);
   }
   if (c.linkPage) {
-    const { setPageLink } = await import("./ops4-5ZDR5WYP.js");
+    const { setPageLink } = await import("./ops4-MIMAFBET.js");
     await setPageLink(id, c.linkPage);
     changes.push("linkPage");
   }
   if (c.reportLevel) {
     const { componentLevelScript } = await import("./scripts4-ADA4C2PA.js");
     if (await evaluateOn(page, T, componentLevelScript, id) === "page") {
-      const { arrangeComponents } = await import("./ops4-5ZDR5WYP.js");
+      const { arrangeComponents } = await import("./ops4-MIMAFBET.js");
       await arrangeComponents([id], "report", c.page && !c.page.startsWith("name:") && c.page !== "active" ? c.page : void 0);
       changes.push("reportLevel");
     }
   }
   if (c.interactions) {
-    const { setChartInteractions } = await import("./ops4-5ZDR5WYP.js");
+    const { setChartInteractions } = await import("./ops4-MIMAFBET.js");
     await setChartInteractions({ componentId: id, ...c.interactions, reload: false });
     changes.push("interactions");
   }
   if (c.parameter) {
-    const { setControlParameter } = await import("./ops4-5ZDR5WYP.js");
+    const { setControlParameter } = await import("./ops4-MIMAFBET.js");
     await setControlParameter(id, c.parameter);
     changes.push(`parameter:${c.parameter}`);
   }
@@ -4230,13 +4251,15 @@ async function updateExisting(page, id, c) {
     dimensions: { width: c.w, height: c.h },
     ...c.padding !== void 0 ? { padding: { top: c.padding, right: c.padding, bottom: c.padding, left: c.padding } } : {}
   });
-  if (c.dimensions.length || c.metrics.length || c.slots) {
+  if (c.dimensions.length || c.metrics.length || c.slots || c.sort || c.rows) {
     const r = await evaluateOn(page, T + 1e4, bindFieldsScript, {
       componentId: id,
       dimensions: c.dimensions,
       metrics: c.metrics,
       ...["gauge-viz", "bulletchart", "kpi-metric"].includes(c.type) && !c.dimensions.length ? { clearDimensions: true } : {},
-      ...c.slots ? { slots: c.slots } : {}
+      ...c.slots ? { slots: c.slots } : {},
+      ...c.sort ? { sort: c.sort } : {},
+      ...c.rows ? { rows: c.rows } : {}
     });
     if (!r.ok) throw new Error(r.error);
   }
@@ -4450,7 +4473,19 @@ async function applyTheme(theme) {
     throw new Error(`El guardado del tema fue rechazado (${w.statuses.join(",")}); se recargo el informe.`);
   }
   learn("note", "theme_applied", { text: r.created ? "theme resource created" : "theme resource updated" });
-  return { ...r, saves: w.statuses };
+  const wanted = [...new Set([theme.font, theme.accentFont].filter((x) => !!x))];
+  let missing = [];
+  if (wanted.length) {
+    for (let i = 0; i < 12; i++) {
+      missing = await page.evaluate((fams) => {
+        const loaded = new Set([...document.fonts].filter((f) => f.status === "loaded").map((f) => String(f.family).replace(/["']/g, "")));
+        return fams.filter((f) => !loaded.has(f));
+      }, wanted).catch(() => []);
+      if (!missing.length) break;
+      await sleep2(500);
+    }
+  }
+  return { ...r, saves: w.statuses, ...missing.length ? { warning: `La fuente ${missing.join(", ")} no llego a cargarse: Looker Studio no la ofrece y la pinta con otra (serif). Usa una del desplegable de fuentes del editor (p. ej. Roboto, Open Sans, Lato, Montserrat, Raleway, Oswald, Lora, Playfair Display) y vuelve a aplicar.` } : {} };
 }
 var THEME_PRESETS = {
   "t-default-modern": "Predeterminado (moderno)",
@@ -4872,7 +4907,7 @@ async function addSourceField(opts) {
   });
   const open = async () => {
     if (!await clickText("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) {
-      const { selectSourceChart } = await import("./ops4-5ZDR5WYP.js");
+      const { selectSourceChart } = await import("./ops4-MIMAFBET.js");
       await selectSourceChart(page, opts.source && opts.source.startsWith("@") ? opts.source : void 0);
       if (!await clickText("button", /^(add_circle\s*)?(Añadir un campo|Add a field)$/)) throw new Error('No se encontro "Anadir un campo" en el panel Datos.');
     }
@@ -4888,7 +4923,7 @@ async function addSourceField(opts) {
     await open();
     const readSource = async () => {
       let r = await editorSource();
-      for (let i = 0; i < 12 && !r.scope; i++) {
+      for (let i = 0; i < 24 && !r.scope; i++) {
         await sleep2(500);
         r = await editorSource();
       }
@@ -4899,7 +4934,7 @@ async function addSourceField(opts) {
     if (opts.source && !opts.source.startsWith("@") && dsList.length === 1) opts = { ...opts, source: void 0 };
     const byField = !!opts.source && opts.source.startsWith("@");
     if (byField) {
-      const { selectSourceChart } = await import("./ops4-5ZDR5WYP.js");
+      const { selectSourceChart } = await import("./ops4-MIMAFBET.js");
       await clickText("button", /^(Cancelar|Cancel)$/);
       await close();
       await selectSourceChart(page, opts.source);

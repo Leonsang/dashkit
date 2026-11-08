@@ -8,7 +8,7 @@ import {
   getReportLayout,
   sanitizeLearning,
   writesAllowed
-} from "./chunks/chunk-IOVHFG3I.js";
+} from "./chunks/chunk-ONDTBMPU.js";
 import {
   addImage,
   addParameter,
@@ -42,7 +42,7 @@ import {
   setText,
   updateBlend,
   updateParameter
-} from "./chunks/chunk-IRM7BWVU.js";
+} from "./chunks/chunk-LNV76OVF.js";
 import {
   addFilter,
   addPage,
@@ -80,7 +80,7 @@ import {
   updateFilter,
   useThemePreset,
   uxAudit
-} from "./chunks/chunk-7T2JYYHB.js";
+} from "./chunks/chunk-LTKWOZSF.js";
 import "./chunks/chunk-5J4RMU5E.js";
 import "./chunks/chunk-Y34SSGZY.js";
 import "./chunks/chunk-KBCVDAPW.js";
@@ -37010,7 +37010,9 @@ server.registerTool(
       componentId: external_exports.string().min(1).describe("Id del componente (cd-..., de get_report_layout)"),
       dimensions: external_exports.array(external_exports.string().min(1)).describe("Campos dimension, en orden ([] = no tocar)"),
       metrics: external_exports.array(external_exports.string().min(1)).describe('Campos metrica, en orden ([] = no tocar). Admite agregacion: "SUM(ingresos)", "AVG(valoracion)", "COUNT_DISTINCT(id_pedido)", COUNT, MAX, MIN, NONE. Si el campo es una dimension del origen (Sheets/CSV) y no se indica, usa SUM para numeros y COUNT_DISTINCT para texto.'),
-      mode: external_exports.enum(["replace", "append"]).optional().describe("replace (defecto) o append")
+      mode: external_exports.enum(["replace", "append"]).optional().describe("replace (defecto) o append"),
+      rows: external_exports.number().int().min(1).max(5e3).optional().describe("Cuantas barras, porciones o filas muestra (las plantillas traen 10)"),
+      sort: external_exports.enum(["dimension", "dimension_desc", "metric", "metric_asc"]).optional().describe("Orden del grafico: por su primera dimension (horas, categorias en su orden) o su primera metrica. Por defecto: tendencias por dimension, el resto por metrica descendente")
     },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true }
   },

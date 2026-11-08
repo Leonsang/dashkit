@@ -201,6 +201,8 @@ server.registerTool(
       dimensions: z.array(z.string().min(1)).describe('Campos dimension, en orden ([] = no tocar)'),
       metrics: z.array(z.string().min(1)).describe('Campos metrica, en orden ([] = no tocar). Admite agregacion: "SUM(ingresos)", "AVG(valoracion)", "COUNT_DISTINCT(id_pedido)", COUNT, MAX, MIN, NONE. Si el campo es una dimension del origen (Sheets/CSV) y no se indica, usa SUM para numeros y COUNT_DISTINCT para texto.'),
       mode: z.enum(['replace', 'append']).optional().describe('replace (defecto) o append'),
+      rows: z.number().int().min(1).max(5000).optional().describe('Cuantas barras, porciones o filas muestra (las plantillas traen 10)'),
+      sort: z.enum(['dimension', 'dimension_desc', 'metric', 'metric_asc']).optional().describe('Orden del grafico: por su primera dimension (horas, categorias en su orden) o su primera metrica. Por defecto: tendencias por dimension, el resto por metrica descendente'),
     },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
   },

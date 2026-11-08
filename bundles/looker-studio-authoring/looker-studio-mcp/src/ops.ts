@@ -307,6 +307,8 @@ export interface CreateOptions {
   metrics?: string[];
   padding?: number;
   slots?: Record<string, string[]>;
+  sort?: import('./looker/types.js').SortMode;
+  rows?: number;
 }
 
 export async function createComponent(o: CreateOptions): Promise<CreateComponentResult & { bound?: unknown; fix?: unknown }> {
@@ -316,7 +318,7 @@ export async function createComponent(o: CreateOptions): Promise<CreateComponent
   }
   const page = await editPage();
   const datasetId = await resolveDataset(page, o.dataset);
-  const hasFields = !!(o.dimensions?.length || o.metrics?.length || (o.slots && Object.keys(o.slots).length));
+  const hasFields = !!(o.dimensions?.length || o.metrics?.length || (o.slots && Object.keys(o.slots).length) || o.sort || o.rows);
   const NO_DIMS = ['gauge-viz', 'bulletchart', 'kpi-metric'];
   const t0 = Date.now();
   // Empty report: mint ids from a temporary seed made by the editor's own factory.
@@ -344,6 +346,8 @@ export async function createComponent(o: CreateOptions): Promise<CreateComponent
       componentId: res.componentId!, dimensions: o.dimensions ?? [], metrics: o.metrics ?? [],
       ...(NO_DIMS.includes(o.type) && !o.dimensions?.length ? { clearDimensions: true } : {}),
       ...(o.slots ? { slots: o.slots } : {}),
+      ...(o.sort ? { sort: o.sort } : {}),
+      ...(o.rows ? { rows: o.rows } : {}),
     });
   }
   // The save waits for the fields (deferSave): a bind that fails leaves a component that is never saved and
@@ -530,6 +534,8 @@ export async function applySpec(specOrFile: string | ReportSpec, opts: { dryRun?
           ...(pageId ? { pageId } : {}), ...(c.dataset ? { dataset: c.dataset } : {}),
           dimensions: c.dimensions, metrics: c.metrics, ...(c.padding !== undefined ? { padding: c.padding } : {}),
           ...(c.slots ? { slots: c.slots } : {}),
+          ...(c.sort ? { sort: c.sort } : {}),
+          ...(c.rows ? { rows: c.rows } : {}),
         });
         state.keys[c.key] = r.componentId!;
         const extra = await patchIfNeeded(page, r.componentId!, c);
@@ -672,11 +678,13 @@ async function updateExisting(page: Page, id: string, c: ResolvedComponent): Pro
     dimensions: { width: c.w, height: c.h },
     ...(c.padding !== undefined ? { padding: { top: c.padding, right: c.padding, bottom: c.padding, left: c.padding } } : {}),
   });
-  if (c.dimensions.length || c.metrics.length || c.slots) {
+  if (c.dimensions.length || c.metrics.length || c.slots || c.sort || c.rows) {
     const r = await evaluateOn(page, T + 10_000, bindFieldsScript, {
       componentId: id, dimensions: c.dimensions, metrics: c.metrics,
       ...(['gauge-viz', 'bulletchart', 'kpi-metric'].includes(c.type) && !c.dimensions.length ? { clearDimensions: true } : {}),
       ...(c.slots ? { slots: c.slots } : {}),
+      ...(c.sort ? { sort: c.sort } : {}),
+      ...(c.rows ? { rows: c.rows } : {}),
     });
     if (!r.ok) throw new Error(r.error);
   }

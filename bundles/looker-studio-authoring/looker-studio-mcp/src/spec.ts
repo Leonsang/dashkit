@@ -42,6 +42,10 @@ export interface SpecComponent {
   variant?: string;
   /** Extra concept slots (scatter x_metric/y_metric/bubble_size, breakdown, color...). */
   slots?: Record<string, string[]>;
+  /** Chart order: 'dimension' (asc), 'dimension_desc', 'metric' (desc), 'metric_asc'. */
+  sort?: 'dimension' | 'dimension_desc' | 'metric' | 'metric_asc';
+  /** How many bars, slices or rows the chart shows (templates bring 10). */
+  rows?: number;
   /** Text box (simple-description) content: a string, or {text, size, bold, color}; "
 " separates lines. */
   text?: string | { text: string; size?: number; bold?: boolean; color?: string; align?: 'left' | 'center' | 'right' };
@@ -129,6 +133,10 @@ export interface ResolvedComponent extends Required<Pick<SpecComponent, 'key' | 
   filters?: import('./ops3.js').FilterSpec[];
   variant?: string;
   slots?: Record<string, string[]>;
+  /** Chart order: 'dimension' (asc), 'dimension_desc', 'metric' (desc), 'metric_asc'. */
+  sort?: 'dimension' | 'dimension_desc' | 'metric' | 'metric_asc';
+  /** How many bars, slices or rows the chart shows (templates bring 10). */
+  rows?: number;
   text?: SpecComponent['text'];
   parameter?: string;
   style?: Record<string, unknown>;
@@ -195,6 +203,8 @@ export function resolveSpec(spec: ReportSpec): ResolvedComponent[] {
             ...(it.filters ? { filters: it.filters } : {}),
             ...(it.variant ? { variant: it.variant } : {}),
             ...(it.slots ? { slots: it.slots } : {}),
+            ...(it.sort ? { sort: it.sort } : {}),
+            ...(it.rows ? { rows: it.rows } : {}),
             ...(it.text !== undefined ? { text: it.text } : {}),
             ...(it.parameter ? { parameter: it.parameter } : {}),
             ...(it.style ? { style: it.style } : {}),
@@ -219,6 +229,8 @@ export function resolveSpec(spec: ReportSpec): ResolvedComponent[] {
           ...(c.filters ? { filters: c.filters } : {}),
           ...(c.variant ? { variant: c.variant } : {}),
           ...(c.slots ? { slots: c.slots } : {}),
+          ...(c.sort ? { sort: c.sort } : {}),
+          ...(c.rows ? { rows: c.rows } : {}),
           ...(c.text !== undefined ? { text: c.text } : {}),
           ...(c.parameter ? { parameter: c.parameter } : {}),
           ...(c.style ? { style: c.style } : {}),
@@ -262,9 +274,12 @@ function expandCards(list: ResolvedComponent[]): ResolvedComponent[] {
       out.push({ key: `${c.key}__tile`, type: 'generic-shape', x: c.x + 20, y: ty, w: tile, h: tile, ...shared,
         style: { background: { color: k.iconBackground ?? '#1A73E8', opacity: 1 }, border: { color: '#FFFFFF', opacity: 0, size: 0, style: 'solid', radius: Math.round(tile / 4) } } });
       const ic = Math.round(tile / 2);
-      out.push({ key: `${c.key}__icon`, type: 'image-component', x: c.x + 20 + (tile - ic) / 2, y: ty + (tile - ic) / 2, w: ic, h: ic, ...shared, image: k.icon });
+      // the image would take the theme's fill and radius: a white disc over the tile that hides the glyph
+      out.push({ key: `${c.key}__icon`, type: 'image-component', x: c.x + 20 + (tile - ic) / 2, y: ty + (tile - ic) / 2, w: ic, h: ic, ...shared, image: k.icon, style: clear });
       const left = 20 + tile + 10;
-      out.push({ ...c, x: c.x + left, y: c.y + inset, w: c.w - left - inset, h: c.h - 2 * inset, style: { ...clear, fontSize: '24px', ...(c.style ?? {}) } });
+      // the editor's comparison text ("en comparación con: año anterior") does not fit a card: a short label
+      const cmpLabel = c.comparison && c.comparison !== 'none' ? { compareLabel: c.comparison === 'previous_year' ? 'vs. año anterior' : 'vs. periodo anterior' } : {};
+      out.push({ ...c, x: c.x + left, y: c.y + inset, w: c.w - left - inset, h: c.h - 2 * inset, style: { ...clear, fontSize: '24px', ...cmpLabel, ...(c.style ?? {}) } });
       continue;
     }
     // With no background or border of its own, the title is drawn inside the component's box, at its top.
