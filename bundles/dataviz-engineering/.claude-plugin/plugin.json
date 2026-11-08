@@ -1,0 +1,10 @@
+{
+  "name": "dataviz-engineering",
+  "version": "0.1.0",
+  "description": "Data visualization engineering: perceptual chart selection, honest encodings, CVD-safe color palettes, accessibility (WCAG AA), and high-performance rendering for large datasets. Cross-platform (Power BI, Tableau, Looker Studio, D3, Vega).",
+  "author": { "name": "Erick Sang C", "url": "https://github.com/leonsang" },
+  "homepage": "https://github.com/leonsang/dashkit/tree/main/bundles/dataviz-engineering",
+  "repository": "https://github.com/leonsang/dashkit",
+  "license": "MIT",
+  "keywords": ["data-visualization", "charts", "accessibility", "color", "performance"]
+}
