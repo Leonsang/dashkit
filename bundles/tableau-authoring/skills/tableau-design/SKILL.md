@@ -30,6 +30,7 @@ dice **cómo** construirlo con `tableu`. Cada regla cita su fuente oficial en
 | `references/accesibilidad.md` | WCAG 2.2 AA: títulos, contraste, no solo color, orden de lectura |
 | `references/antipatrones.md` | Revisar un diseño propio o ajeno: qué falla y cómo se arregla |
 | `references/fuentes.md` | La documentación oficial de cada regla |
+| Skill `dataviz-engineering` (otro bundle) | Elección de gráfico por pregunta, paletas validadas para daltonismo, y trabajar contra un diseño de referencia: apuntar, pedir o generar |
 
 ## 1. La jerarquía del contenido
 

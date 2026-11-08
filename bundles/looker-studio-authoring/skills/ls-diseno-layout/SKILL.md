@@ -9,6 +9,10 @@ description: "Diseño y layout de informes de Looker Studio / Data Studio: modo 
 >
 > Leyenda: **[OFICIAL]** = documentado por Google/W3C. **[CONVENCIÓN]** = práctica habitual de la comunidad, no es un límite de Google.
 
+> **Con un diseño de referencia** (Claude Design, PNG, HTML, Figma) o para generarlo: skill
+> `dataviz-engineering` (bundle del mismo nombre), `references/diseno-de-referencia.md`. Esta skill da el
+> layout de Looker Studio; aquella, la elección de gráfico, la paleta validada y el mapeo diseño → componentes.
+
 ## 1. Modo de layout
 - Hay dos modos: **Freeform** (lienzo con posiciones en px) y **Responsive** (rejilla de 12 columnas que se adapta al dispositivo). Se cambia en *Tema y diseño > Diseño > Modo de diseño*. [OFICIAL]
 - Desde el 31-mar-2025 los "modern charts" son el valor por defecto en informes nuevos. [OFICIAL]

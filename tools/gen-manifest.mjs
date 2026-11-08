@@ -237,6 +237,13 @@ const BUILTIN = {
     plugin: true,
     hooks: ["report-spec lint after any *.spec.json edit; errors block", "apply --dry-run plan when a browser is on the CDP port"],
   },
+  "dataviz-engineering": {
+    title: "Data visualization engineering",
+    description:
+      "Platform-agnostic chart craft: the question picks the chart, quantities in position and length, one y axis, palettes checked for colour blindness and contrast, rendering at real volume. Works against a reference design (points at a Claude Design canvas, PNG, HTML or Figma, asks for one or helps generate it) and hands a mapping to the Power BI, Tableau or Looker Studio author. A dataviz-engineer subagent.",
+    prereqs: { required: [], optional: [] },
+    plugin: true,
+  },
 };
 const list = (dir, keep) => (existsSync(dir) ? readdirSync(dir).filter(keep).sort() : []);
 for (const [id, meta] of Object.entries(BUILTIN)) {

@@ -539,6 +539,33 @@
         "license": "GPL-3.0",
         "homepage": "https://github.com/data-goblin/power-bi-agentic-development"
       }
+    },
+    {
+      "id": "dataviz-engineering",
+      "kind": "builtin",
+      "title": "Data visualization engineering",
+      "description": "Platform-agnostic chart craft: the question picks the chart, quantities in position and length, one y axis, palettes checked for colour blindness and contrast, rendering at real volume. Works against a reference design (points at a Claude Design canvas, PNG, HTML or Figma, asks for one or helps generate it) and hands a mapping to the Power BI, Tableau or Looker Studio author. A dataviz-engineer subagent.",
+      "dir": "dataviz-engineering",
+      "skills": [
+        "dataviz-engineering"
+      ],
+      "agents": [
+        "dataviz-engineer.md"
+      ],
+      "prereqs": {
+        "required": [],
+        "optional": []
+      },
+      "marketplace": {
+        "repo": "leonsang/dashkit",
+        "name": "dashkit",
+        "plugin": "dataviz-engineering"
+      },
+      "credit": {
+        "author": "dashkit",
+        "license": "MIT",
+        "homepage": "https://github.com/leonsang/dashkit"
+      }
     }
   ]
 }

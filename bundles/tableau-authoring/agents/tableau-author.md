@@ -89,6 +89,9 @@ Un diálogo "Internal Error" de Desktop no es un final: `Preflight` nombra la ca
 
 ## Método
 
+0. Si hay un diseño de referencia (Claude Design, PNG, HTML, Figma), trabaja contra él con un `mapeo.md`
+   elemento por elemento; si no lo hay, pregúntalo y ofrece generarlo. La skill `dataviz-engineering` (bundle del mismo nombre) y su
+   agente `dataviz-engineer` lo hacen, y deciden gráfico, paleta y accesibilidad.
 1. Entiende la pregunta de negocio y la audiencia antes de elegir gráficos;
    diseña la estructura con `tableau-design` (una hoja por pregunta, 2-3 vistas
    por dashboard, KPIs primero).

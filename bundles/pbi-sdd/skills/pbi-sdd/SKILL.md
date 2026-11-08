@@ -64,6 +64,7 @@ job.
 |---|---|
 | Requirements rounds, locked report spec | `powerbi-report-planning` |
 | Page archetypes, charts, colour, layout | `powerbi-report-design` |
+| A reference design (Claude Design, PNG, HTML, Figma) to point at, ask for or generate; chart choice and palettes checked for colour blindness | `dataviz-engineering` (dashkit bundle) |
 | Writing pages and visuals (PBIR) | `powerbi-report-authoring` |
 | Measures, tables, relationships | `semantic-model-authoring`, `tmdl` |
 | Downloading a published report | `powerbi-report-management` |

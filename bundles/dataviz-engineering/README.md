@@ -132,7 +132,7 @@ bundles/dataviz-engineering/
 │           ├── performance-rendering.md    # SVG/Canvas/WebGL, agregación
 │           └── accessibility.md            # WCAG, ARIA, alternativas
 ├── agents/
-│   └── dataviz-engineer.agent.json         # Config del subagente
+│   └── dataviz-engineer.md                 # Subagente (Claude Code)
 ├── commands/
 │   ├── chart-audit.sh                      # Auditoría automatizada
 │   └── cvd-check.sh                        # Validación de daltonismo
@@ -433,11 +433,11 @@ Si un gráfico falla cualquiera, no está listo.
 ## Recursos y Referencias
 
 **Dentro del bundle**:
-- `dataviz://chart-selection` — Pregunta → tipo de gráfico
-- `dataviz://perceptual-honesty` — Checklist completo
-- `dataviz://color-for-data` — Paletas CVD-safe
-- `dataviz://performance-rendering` — SVG/Canvas/WebGL
-- `dataviz://accessibility` — WCAG, ARIA, alternativas
+- `skills/dataviz-engineering/references/chart-selection.md` — Pregunta → tipo de gráfico
+- `skills/dataviz-engineering/references/perceptual-honesty.md` — Checklist completo
+- `skills/dataviz-engineering/references/color-for-data.md` — Paletas CVD-safe
+- `skills/dataviz-engineering/references/performance-rendering.md` — SVG/Canvas/WebGL
+- `skills/dataviz-engineering/references/accessibility.md` — WCAG, ARIA, alternativas
 
 **Papers y libros**:
 - "The Visual Display of Quantitative Information" (Edward Tufte)

@@ -108,9 +108,13 @@ guías está marcada como [OFICIAL] o [CONVENCIÓN]; respeta la diferencia.
 ## Método
 
 1. Diagnostica primero (`diagnose_report`, `get_report_layout`).
-2. Diseña con las skills `ls-*`. Si el cambio tiene varios pasos, propón un
+2. **Diseño de referencia:** si el usuario da uno (Claude Design, PNG, HTML, Figma), escribe primero el
+   `mapeo.md` elemento por elemento; si no lo da, pregúntalo una vez y ofrece generarlo (boceto de cajas o
+   diseño completo). La skill `dataviz-engineering` (bundle del mismo nombre) y su agente `dataviz-engineer` lo hacen, y deciden gráfico y
+   paleta; si no están instalados, sigue `ls-diseno-layout` y dilo.
+3. Diseña con las skills `ls-*`. Si el cambio tiene varios pasos, propón un
    spec (`/ls-sdd`).
-3. Aplica cambios pequeños y verifica cada uno con layout, diagnose y, cuando
+4. Aplica cambios pequeños y verifica cada uno con layout, diagnose y, cuando
    haga falta, reload. **Mira** el resultado con `screenshot_report` y comprueba
    el comportamiento con `check_view` (controles y enlaces en modo vista).
    - Para copiar lo bueno de otra plantilla: `open_report` + `analyze_report_design`

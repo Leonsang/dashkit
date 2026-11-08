@@ -159,6 +159,17 @@ Checks that run automatically, without being asked:
 
 </details>
 
+<details>
+<summary><strong>Data visualization engineering</strong> &ensp;<code>dataviz-engineering</code> &ensp;dashkit · 1 skill</summary>
+
+Platform-agnostic chart craft: the question picks the chart, quantities in position and length, one y axis, palettes checked for colour blindness and contrast, rendering at real volume. Works against a reference design (points at a Claude Design canvas, PNG, HTML or Figma, asks for one or helps generate it) and hands a mapping to the Power BI, Tableau or Looker Studio author. A dataviz-engineer subagent.
+
+| Skill | What it does |
+|---|---|
+| [`dataviz-engineering`](../bundles/dataviz-engineering/skills/dataviz-engineering/SKILL.md) | Chart choice by question, honest encodings, colour-blind-safe palettes, accessibility, rendering at volume, and working against a reference design. |
+
+</details>
+
 ## From data-goblin
 
 Installed by Claude Code or Copilot CLI themselves. dashkit never copies these files: the project's

@@ -106,7 +106,7 @@ interacción a 60fps.
 
 ### Color Como Dato (seguro para daltonismo, acoplado a estructura)
 
-Lee `dataviz://color-for-data` para detalles completos. Resumen:
+Lee `references/color-for-data.md` para detalles completos. Resumen:
 
 **Categórica**: matices distintos, seguro para CVD — máximo ~7 o el ojo no puede retenerlos
 ```
@@ -186,11 +186,13 @@ Medir tiempo de frame al conteo REAL de filas, no a la muestra de 200 filas del 
 
 ## 📚 Referencias
 
-- `dataviz://chart-selection` — tabla de pregunta → tipo de gráfico → encoding
-- `dataviz://perceptual-honesty` — checklist completo antes de enviar
-- `dataviz://color-for-data` — guía de paletas seguras para CVD por tipo de datos
-- `dataviz://performance-rendering` — cruces SVG/Canvas/WebGL y técnicas de agregación
-- `dataviz://accessibility` — patrones de interacción accesible y ARIA
+- `references/chart-selection.md` — tabla de pregunta → tipo de gráfico → encoding
+- `references/perceptual-honesty.md` — checklist completo antes de enviar
+- `references/color-for-data.md` — guía de paletas seguras para CVD por tipo de datos
+- `references/performance-rendering.md` — cruces SVG/Canvas/WebGL y técnicas de agregación
+- `references/accessibility.md` — patrones de interacción accesible y ARIA
+- `references/diseno-de-referencia.md` — trabajar contra un diseño: apuntar a uno (Claude Design, PNG, HTML,
+  Figma), pedirlo si falta o generarlo, y el `mapeo.md` que se entrega al agente de la plataforma
 
 ## 🎯 Tus Métricas de Éxito
 
@@ -232,6 +234,21 @@ Medir tiempo de frame al conteo REAL de filas, no a la muestra de 200 filas del 
   para reportes y emails
 - Patrones de interacción accesible: gráficos operables por teclado, roles ARIA, sonificación
   y alternativas de tabla de datos, y soporte de reduced-motion
+
+## 🧭 En dashkit
+
+Este skill decide qué se dibuja; los bundles de cada plataforma lo construyen. El flujo:
+
+1. **Diseño de referencia** (`references/diseno-de-referencia.md`): apunta al que dé el usuario, pídelo si
+   falta o genéralo (boceto de cajas o diseño completo en Claude Design, con cifras reales y la marca).
+2. **`mapeo.md`**: cada elemento del diseño, su caja, el gráfico elegido con estas reglas y la herramienta.
+3. **Construcción** con el agente de la plataforma; **revisión** con sus herramientas de auditoría.
+
+| Plataforma | Construye | Elige y estiliza gráficos | Audita |
+|---|---|---|---|
+| Looker Studio | agente `looker-studio-author`, spec (`apply_report_spec`) | `set_chart_style` (series, ejes, leyenda), `sort`/`rows` en el spec, tema con `series` y `fill` | `audit_ux` (contraste, paleta, un solo eje, leyendas), `diagnose_report`, `screenshot_report` |
+| Tableau | agente `tableau-author` (MCP `tableu`) | skill `tableau-design` (color, tipografía, arquetipos) | `tableau_operations Lint`, imágenes exportadas |
+| Power BI | skill `pbi-sdd` y los de autoría de Power BI | tema JSON (colores de datos) | revisión del spec del informe |
 
 ## 🔧 Aplicación por Plataforma
 
